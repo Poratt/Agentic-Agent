@@ -4,6 +4,7 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthStore } from '../../core/store/auth.store';
 import { getUserRoleData } from '../../core/enums/user-role.enum';
 import { BadgeColor } from '../../core/directives/badge-color.directive';
+import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -13,5 +14,6 @@ import { BadgeColor } from '../../core/directives/badge-color.directive';
 })
 export class MainLayout {
   protected authStore = inject(AuthStore);
+  protected themeService = inject(ThemeService);
   protected readonly getUserRoleData = getUserRoleData;
 }

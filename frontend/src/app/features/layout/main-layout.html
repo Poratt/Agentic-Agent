@@ -2,6 +2,12 @@
   <aside class="sidebar glass-effect">
     <div class="sidebar-header">
       <div class="logo">LG</div>
+      <button class="btn-ghost theme-toggle" type="button" (click)="themeService.toggle()"
+        [attr.aria-label]="themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'">
+        <span class="material-symbols-rounded nav-icon">
+          {{ themeService.isDark() ? 'dark_mode' : 'light_mode' }}
+        </span>
+      </button>
     </div>
 
     <nav class="nav-list">
@@ -22,7 +28,7 @@
         </div>
         <div class="user-info">
           <span class="user-name">{{ authStore.user()?.email }}</span>
-          @if (authStore.user()?.role) {
+          @if (authStore.user()?.role !== null && authStore.user()?.role !== undefined) {
           <span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)?.color">
             <span class="material-symbols-rounded sm" [class.filled]="authStore.user()?.role === 1">
               {{ getUserRoleData(authStore.user()!.role)?.icon }}

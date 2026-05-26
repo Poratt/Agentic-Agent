@@ -4,20 +4,20 @@ import { PrimeNGConfigType, providePrimeNG } from 'primeng/config';
 import { MessageService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
 
-export const DARK_MODE_SELECTOR = '.dark-mode';
+export const DARK_MODE_SELECTOR = '[data-theme="dark"]';
 
 const PRIMARY_PALETTE = {
-  50: 'var(--primary-50)',
-  100: 'var(--primary-100)',
-  200: 'var(--primary-200)',
-  300: 'var(--primary-300)',
-  400: 'var(--primary-400)',
-  500: 'var(--primary-500)',
-  600: 'var(--primary-600)',
-  700: 'var(--primary-700)',
-  800: 'var(--primary-800)',
-  900: 'var(--primary-900)',
-  950: 'var(--primary-900)',
+  50: 'color-mix(in srgb, var(--color-primary) 10%, white)',
+  100: 'color-mix(in srgb, var(--color-primary) 18%, white)',
+  200: 'color-mix(in srgb, var(--color-primary) 30%, white)',
+  300: 'color-mix(in srgb, var(--color-primary) 45%, white)',
+  400: 'color-mix(in srgb, var(--color-primary) 65%, white)',
+  500: 'var(--color-primary)',
+  600: 'color-mix(in srgb, var(--color-primary) 85%, black)',
+  700: 'color-mix(in srgb, var(--color-primary) 70%, black)',
+  800: 'color-mix(in srgb, var(--color-primary) 55%, black)',
+  900: 'color-mix(in srgb, var(--color-primary) 40%, black)',
+  950: 'color-mix(in srgb, var(--color-primary) 30%, black)',
 };
 
 export const AppThemePreset = definePreset(Aura, {
@@ -27,7 +27,7 @@ export const AppThemePreset = definePreset(Aura, {
       light: {
         primary: {
           color: '{primary.500}',
-          inverseColor: '#ffffff',
+          inverseColor: 'var(--color-white)',
           hoverColor: '{primary.600}',
           activeColor: '{primary.700}',
         },
@@ -35,7 +35,7 @@ export const AppThemePreset = definePreset(Aura, {
       dark: {
         primary: {
           color: '{primary.400}',
-          inverseColor: '#000000',
+          inverseColor: 'var(--color-bg)',
           hoverColor: '{primary.300}',
           activeColor: '{primary.200}',
         },

@@ -1,46 +1,20 @@
 :root {
-  /* --- Luxury Glassmorphism Palette --- */
-
-  /* Dark Mode (Default) */
-  --color-primary: #00D4FF;
-  --color-primary-glow: rgba(0, 212, 255, 0.25);
-  --color-secondary: #A855F7;
-  --color-secondary-glow: rgba(168, 85, 247, 0.25);
-  --color-bg: #0A0F1E;
-  --color-bg-gradient: radial-gradient(circle at top left, #0D1117, #0A0F1E);
-  --color-surface: rgba(255, 255, 255, 0.06);
-  --color-border: rgba(255, 255, 255, 0.10);
-  --color-text-primary: #F8FAFC;
-  --color-text-secondary: #94A3B8;
-
   /* Global Neutral Constants */
   --color-white: #FFFFFF;
-  --color-input-bg: rgba(255, 255, 255, 0.05);
 
-  /* Success Status */
+  /* Status (shared across themes) */
   --color-success: #10B981;
   --color-success-glow: rgba(16, 185, 129, 0.25);
 
-  /* Danger/Error Status */
   --color-danger: #EF4444;
   --color-danger-glow: rgba(239, 68, 68, 0.25);
   --color-danger-bg: rgba(239, 68, 68, 0.1);
   --color-danger-border: rgba(239, 68, 68, 0.3);
 
-  /* Info/Blue Status */
   --color-info: #3B82F6;
   --color-info-glow: rgba(59, 130, 246, 0.25);
   --color-info-bg: rgba(59, 130, 246, 0.1);
   --color-info-border: rgba(59, 130, 246, 0.3);
-
-  /* Light Mode Tokens */
-  --color-primary-light: #0077A8;
-  --color-secondary-light: #7C3AED;
-  --color-bg-light: #F0F4F8;
-  --color-surface-light: rgba(255, 255, 255, 0.65);
-  --color-border-light: rgba(0, 0, 0, 0.10);
-  --color-text-primary-light: #0F172A;
-  --color-text-secondary-light: #475569;
 
   /* --- Typography --- */
   --font-main: 'Heebo', 'Inter', sans-serif;
@@ -79,11 +53,40 @@
   --transition-standard: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* --- Luxury Glassmorphism Palette --- */
+  --color-primary: #00D4FF;
+  --color-primary-glow: rgba(0, 212, 255, 0.25);
+  --color-secondary: #A855F7;
+  --color-secondary-glow: rgba(168, 85, 247, 0.25);
+  --color-bg: #0A0F1E;
+  --color-bg-gradient: radial-gradient(circle at top left, #0D1117, #0A0F1E);
+  --color-surface: rgba(255, 255, 255, 0.06);
+  --color-border: rgba(255, 255, 255, 0.10);
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-input-bg: rgba(255, 255, 255, 0.05);
+}
+
 [data-theme="light"] {
+  color-scheme: light;
+
+  /* Light Mode Tokens */
+  --color-primary-light: #0077A8;
+  --color-secondary-light: #7C3AED;
+  --color-bg-light: #F0F4F8;
+  --color-surface-light: rgba(255, 255, 255, 0.65);
+  --color-border-light: rgba(0, 0, 0, 0.10);
+  --color-text-primary-light: #0F172A;
+  --color-text-secondary-light: #475569;
+
   --color-primary: var(--color-primary-light);
   --color-bg: var(--color-bg-light);
   --color-surface: var(--color-surface-light);
   --color-border: var(--color-border-light);
   --color-text-primary: var(--color-text-primary-light);
   --color-text-secondary: var(--color-text-secondary-light);
+  --color-input-bg: rgba(0, 0, 0, 0.04);
 }

@@ -41,8 +41,11 @@
           </div>
           <div class="metric-details">
             <span class="detail-item">{{ authStore.user()?.email }}</span>
-            @if (authStore.user()?.role) {
-              <span class="badge badge-info">
+            @if (authStore.user()?.role !== null && authStore.user()?.role !== undefined) {
+              <span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)?.color">
+                <span class="material-symbols-rounded sm" [class.filled]="authStore.user()?.role === 1">
+                  {{ getUserRoleData(authStore.user()!.role)?.icon }}
+                </span>
                 {{ getUserRoleData(authStore.user()!.role)?.heLabel }}
               </span>
             }

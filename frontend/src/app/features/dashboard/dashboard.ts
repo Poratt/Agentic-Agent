@@ -4,11 +4,12 @@ import { AuthStore } from '../../core/store/auth.store';
 import { UsersStore } from '../../core/store/users.store';
 import { PageStates } from '../../core/enums/page-states.enum';
 import { getUserRoleData } from '../../core/enums/user-role.enum';
+import { BadgeColor } from '../../core/directives/badge-color.directive';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BadgeColor],
   templateUrl: './dashboard.html',
 })
 export class Dashboard implements OnInit {
