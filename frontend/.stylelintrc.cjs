@@ -1,0 +1,37 @@
+module.exports = {
+  extends: ['stylelint-config-standard'],
+  customSyntax: 'postcss-scss',
+  rules: {
+    // Keep it strict but compatible with our current Tailwind/PostCSS CSS.
+    'selector-class-pattern': null,
+    'no-descending-specificity': null,
+    'import-notation': null,
+    'no-invalid-position-at-import-rule': null,
+    'at-rule-empty-line-before': null,
+    'rule-empty-line-before': null,
+    'declaration-empty-line-before': null,
+    'custom-property-empty-line-before': null,
+    'declaration-block-single-line-max-declarations': null,
+    'keyframes-name-pattern': null,
+    'color-function-notation': null,
+    'color-function-alias-notation': null,
+    'alpha-value-notation': null,
+    'hue-degree-notation': null,
+    'value-keyword-case': null,
+    'length-zero-no-unit': null,
+    'font-family-no-missing-generic-family-keyword': null,
+    'function-url-quotes': null,
+    'comment-empty-line-before': null,
+    'property-no-deprecated': null,
+    'property-no-vendor-prefix': null,
+    'declaration-block-no-duplicate-properties': null,
+    'color-hex-length': null,
+    'font-family-name-quotes': null,
+    'at-rule-no-unknown': [
+      true,
+      {
+        ignoreAtRules: ['tailwind', 'apply', 'layer', 'config'],
+      },
+    ],
+  },
+};

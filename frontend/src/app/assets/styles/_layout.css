@@ -1,0 +1,267 @@
+/* --- Root Layout Wrapper --- */
+.main-wrapper {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background: var(--color-bg-gradient);
+  color: var(--color-text-primary);
+  overflow: hidden;
+
+  /* --- Sidebar --- */
+  .sidebar {
+    width: 280px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-6);
+    border-left: 1px solid var(--color-border);
+    z-index: 10;
+
+    .sidebar-header {
+      margin-bottom: var(--space-12);
+      display: flex;
+      justify-content: center;
+    }
+
+    /* --- Sidebar Nav List --- */
+    .nav-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        padding: var(--space-3) var(--space-4);
+        border-radius: var(--radius-md);
+        text-decoration: none;
+        color: var(--color-text-secondary);
+        transition: var(--transition-standard);
+        cursor: pointer;
+
+        &:hover,
+        &.active {
+          background: var(--color-surface);
+          color: var(--color-primary);
+        }
+
+        .nav-icon {
+          font-size: var(--font-size-xl); /* הגדלה מיוחלת של אייקוני התפריט */
+          width: 24px;
+          height: 24px;
+        }
+
+        .nav-label {
+          font-size: var(--font-size-md);
+          font-weight: var(--font-weight-medium);
+        }
+      }
+    }
+
+    /* --- Sidebar Footer & User Profile --- */
+    .sidebar-footer {
+      margin-top: auto;
+      padding: var(--space-4);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+
+      .user-profile {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        text-align: right;
+
+        .user-avatar {
+          width: 40px;
+          height: 40px;
+          background: var(--color-primary);
+          color: var(--color-white);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: var(--font-weight-bold);
+        }
+
+        .user-info {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-1);
+          overflow: hidden;
+
+          .user-name {
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-semibold);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+      }
+
+      .logout-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-3);
+        width: 100%;
+        padding: var(--space-3);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--color-border);
+        background: transparent;
+        color: var(--color-text-secondary);
+        cursor: pointer;
+        transition: var(--transition-standard);
+
+        &:hover {
+          background: var(--color-danger-bg);
+          color: var(--color-danger);
+          border-color: var(--color-danger-border);
+        }
+      }
+    }
+  }
+
+  /* --- Main Content Area --- */
+  .main-content,
+  .page-content {
+    flex: 1;
+    padding: var(--space-8);
+    overflow-y: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* --- Generic Grid --- */
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+}
+
+/* --- Generic Metric Cards --- */
+.metric-card {
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 200px;
+
+  .metric-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+    color: var(--color-text-secondary);
+
+    .metric-icon {
+      font-size: var(--font-size-xl);
+      color: var(--color-primary);
+    }
+  }
+
+  .metric-value {
+    font-size: var(--font-size-huge);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    text-align: center;
+  }
+
+  .metric-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    text-align: center;
+
+    .detail-item {
+      font-size: var(--font-size-md);
+      font-weight: var(--font-weight-medium);
+    }
+
+    .detail-badge {
+      font-size: var(--font-size-xs);
+      background: var(--color-surface);
+      padding: var(--space-1) var(--space-3);
+      border-radius: var(--radius-sm);
+      color: var(--color-text-secondary);
+    }
+  }
+}
+
+/* --- Generic Table Layouts --- */
+.table-container {
+  padding: var(--space-4);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+
+  th {
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  td {
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+
+    &.table-actions {
+      text-align: center;
+      width: 150px;
+    }
+  }
+}
+
+/* עיצוב משופר ויוקרתי של כפתורי הפעולות בתוך הטבלה - אייקונים בלבד ללא רקע וגבולות */
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: center;
+  align-items: center;
+
+  button {
+    background: transparent;
+    border: none;
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-standard);
+
+    &.btn-ghost {
+      color: var(--color-text-secondary);
+      border: none; /* ביטול הגבול הכללי */
+
+      &:hover {
+        background: var(--color-surface);
+        color: var(--color-primary);
+      }
+    }
+
+    &.btn-danger {
+      color: var(--color-danger);
+      border: none; /* ביטול הגבול הכללי */
+
+      &:hover {
+        background: var(--color-danger-bg);
+        color: var(--color-danger);
+      }
+    }
+  }
+}

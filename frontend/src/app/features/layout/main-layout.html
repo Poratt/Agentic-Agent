@@ -1,0 +1,45 @@
+<div class="main-wrapper">
+  <aside class="sidebar glass-effect">
+    <div class="sidebar-header">
+      <div class="logo">LG</div>
+    </div>
+
+    <nav class="nav-list">
+      <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
+        <span class="material-symbols-rounded nav-icon">dashboard</span>
+        <span class="nav-label">לוח בקרה</span>
+      </a>
+      <a routerLink="/users" routerLinkActive="active" class="nav-item">
+        <span class="material-symbols-rounded nav-icon">group</span>
+        <span class="nav-label">ניהול משתמשים</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer glass-effect">
+      <div class="user-profile">
+        <div class="user-avatar">
+          {{ authStore.user()?.email ? (authStore.user()?.email![0].toUpperCase()) : '?' }}
+        </div>
+        <div class="user-info">
+          <span class="user-name">{{ authStore.user()?.email }}</span>
+          @if (authStore.user()?.role) {
+          <span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)?.color">
+            <span class="material-symbols-rounded sm" [class.filled]="authStore.user()?.role === 1">
+              {{ getUserRoleData(authStore.user()!.role)?.icon }}
+            </span>
+            {{ getUserRoleData(authStore.user()!.role)?.heLabel }}
+          </span>
+          }
+        </div>
+      </div>
+      <button (click)="authStore.logout()" class="btn-ghost logout-btn">
+        <span class="material-symbols-rounded nav-icon">logout</span>
+        <span>התנתקות</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

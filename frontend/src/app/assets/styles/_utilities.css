@@ -1,0 +1,102 @@
+.link {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: var(--transition-standard);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-primary);
+  }
+}
+
+.divider {
+  margin: var(--space-6) 0;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--color-border);
+  }
+
+  span {
+    padding: 0 var(--space-4);
+  }
+}
+
+.glass-effect {
+  position: relative;
+  isolation: isolate;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: -1;
+  }
+}
+
+/* עיצוב ה-Badges הגלובלי - תומך כעת בצורה מושלמת בגבולות דינמיים ובירושת צבע מלאה של האייקון */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border: 1px solid transparent; /* בסיס גבול הכרחי לצורך דריסה דינמית */
+
+  /* הבטחה שהאייקון בפנים יירש את הצבע הדינמי מההורה */
+  .material-symbols-rounded {
+    color: inherit;
+  }
+
+  &.badge-danger {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger-border);
+  }
+
+  &.badge-info {
+    background: var(--color-info-bg);
+    color: var(--color-info);
+    border: 1px solid var(--color-info-border);
+  }
+}
+
+/* API Status Pulse Animations */
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-success);
+  font-weight: var(--font-weight-medium);
+
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--color-success);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--color-success-glow);
+    animation: pulse 2s infinite;
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
