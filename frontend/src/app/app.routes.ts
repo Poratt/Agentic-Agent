@@ -14,6 +14,7 @@ export const routes: Routes = [
     children: [
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard').then(m => m.Dashboard) },
       { path: 'users', loadComponent: () => import('./features/users/users-management').then(m => m.UsersManagement) },
+      { path: 'chat', loadComponent: () => import('./features/chat/chat').then(m => m.Chat) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

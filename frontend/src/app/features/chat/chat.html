@@ -1,0 +1,38 @@
+<div class="chat-root-container">
+	<header class="chat-header">
+		<h1>שיחה עם סוכן חכם</h1>
+		<p class="subtitle">התייעץ וקבל מידע בזמן אמת מהסוכן האישי שלך</p>
+	</header>
+
+	<div class="glass-effect chat-history" [autoScrollBottom]="true" [autoScrollBottomTrigger]="messages().length">
+		@for (msg of messages(); track $index) {
+		<div class="chat-message-row" [ngClass]="msg.role === 'user' ? 'user-message' : 'assistant-message'">
+			<div class="message-meta">
+				<span class="material-symbols-rounded role-icon">
+					{{ msg.role === 'user' ? 'person' : 'smart_toy' }}
+				</span>
+				<strong>{{ msg.role === 'user' ? 'אתה' : 'סוכן AI' }}</strong>
+			</div>
+			<div class="message-body" [aiFormat]="msg.content"></div>
+		</div>
+		}
+
+		@if (messages().length === 0) {
+		<div class="empty-chat-state">
+			<span class="material-symbols-rounded xl">forum</span>
+			<h3>אין הודעות כרגע</h3>
+			<p>כתוב הודעה למטה כדי להתחיל את השיחה עם הסוכן.</p>
+		</div>
+		}
+	</div>
+
+	<div class="chat-input-area">
+		<form [formGroup]="chatForm" (ngSubmit)="sendMessage()">
+			<input type="text" formControlName="prompt" placeholder="הקלד את הודעתך כאן..." autocomplete="off">
+			<button type="submit" class="btn-primary" [disabled]="chatForm.invalid || loading()">
+				<span class="material-symbols-rounded">send</span>
+				<span>שלח</span>
+			</button>
+		</form>
+	</div>
+</div>

@@ -3,11 +3,12 @@
   "paths": {
     "/auth/register": {
       "post": {
-        "description": "Creates a new user account using email/password (or whatever fields are defined in the DTO). Returns the created user payload.",
+        "description": "Creates a new user in the database using the provided credentials. Required fields (from RegisterDto): email (string, valid email format), password (string, min 6 chars), username? (string, optional). Returns the newly created User entity (without password). Returns 400 if email is already taken or DTO validation fails. This endpoint is public — no token required.",
         "operationId": "AuthController_register",
         "parameters": [],
         "requestBody": {
           "required": true,
+          "description": "Registration payload. Example: { \"email\": \"user@example.com\", \"password\": \"secret123\", \"username\": \"myName\" }.",
           "content": {
             "application/json": {
               "schema": {
@@ -18,7 +19,7 @@
         },
         "responses": {
           "201": {
-            "description": "User registered successfully",
+            "description": "User created successfully. Returns the User entity: id (number), email (string), username (string), role (\"user\" | \"admin\"), createdAt (ISO date). Password is never returned.",
             "content": {
               "application/json": {
                 "schema": {
@@ -28,22 +29,22 @@
             }
           },
           "400": {
-            "description": "Bad Request"
+            "description": "DTO validation failed (missing fields, invalid email format, weak password) or email is already registered."
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Not applicable for this endpoint."
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Not applicable for this endpoint."
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not applicable for this endpoint."
           },
           "500": {
-            "description": "Internal Server Error"
+            "description": "Unexpected server error."
           }
         },
-        "summary": "Register",
+        "summary": "Register a new user account",
         "tags": [
           "auth"
         ]
@@ -51,11 +52,12 @@
     },
     "/auth/login": {
       "post": {
-        "description": "Authenticates the user and sets auth cookies/headers as configured by the service. Returns a user payload on success.",
+        "description": "Validates the provided credentials against the database. On success: sets the access token and refresh token as HTTP-only cookies (or Authorization header — depending on AuthService configuration) and returns the User entity. Required fields (from LoginDto): email (string), password (string). Returns 401 if email does not exist or password does not match. This endpoint is public — no token required.",
         "operationId": "AuthController_login",
         "parameters": [],
         "requestBody": {
           "required": true,
+          "description": "Login credentials. Example: { \"email\": \"user@example.com\", \"password\": \"secret123\" }.",
           "content": {
             "application/json": {
               "schema": {
@@ -66,7 +68,7 @@
         },
         "responses": {
           "200": {
-            "description": "User logged in successfully",
+            "description": "Login successful. Returns the User entity (id, email, username, role, createdAt). Auth tokens are set as cookies/headers by the service.",
             "content": {
               "application/json": {
                 "schema": {
@@ -76,22 +78,22 @@
             }
           },
           "400": {
-            "description": "Bad Request"
+            "description": "DTO validation failed (missing or malformed fields)."
           },
           "401": {
-            "description": "Invalid credentials"
+            "description": "Invalid credentials — email not found or password does not match."
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Not applicable for this endpoint."
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not applicable for this endpoint."
           },
           "500": {
-            "description": "Internal Server Error"
+            "description": "Unexpected server error."
           }
         },
-        "summary": "Login",
+        "summary": "Login with email and password",
         "tags": [
           "auth"
         ]
@@ -99,12 +101,12 @@
     },
     "/auth/refresh": {
       "post": {
-        "description": "Uses the refresh token (guard-protected) to issue a new access token and update cookies/headers as needed.",
+        "description": "JwtRefreshGuard reads the refresh token from the cookie or Authorization header. If valid, AuthService issues a new access token and writes it to cookies/headers. req.user is populated by the guard with: sub (userId), refreshToken (raw string). Returns 401 if the refresh token is absent, expired, or does not match the stored hash. Call this endpoint when the access token has expired (typically 401 on any protected route).",
         "operationId": "AuthController_refresh",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Access token refreshed successfully",
+            "description": "New access token issued. Returns the User entity. Updated tokens are set in cookies/headers by the service.",
             "content": {
               "application/json": {
                 "schema": {
@@ -114,22 +116,22 @@
             }
           },
           "400": {
-            "description": "Bad Request"
+            "description": "Malformed request."
           },
           "401": {
-            "description": "Missing/invalid refresh token"
+            "description": "Refresh token is missing, expired, or does not match the stored token hash."
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Not applicable for this endpoint."
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not applicable for this endpoint."
           },
           "500": {
-            "description": "Internal Server Error"
+            "description": "Unexpected server error."
           }
         },
-        "summary": "Refresh access token",
+        "summary": "Refresh access token using refresh token",
         "tags": [
           "auth"
         ]
@@ -137,27 +139,27 @@
     },
     "/auth/logout": {
       "post": {
-        "description": "Invalidates the current session (if applicable) and clears auth cookies/headers. Requires a valid access token.",
+        "description": "Reads the authenticated user from req.user (populated by JwtAuthGuard). Calls AuthService.logout(userId, res) which: (1) clears the refresh token hash from the database, (2) clears auth cookies/headers from the response. After this call, the refresh token is revoked and the access token will be rejected on the next request (or expire naturally). Requires Authorization: Bearer <accessToken> header.",
         "operationId": "AuthController_logout",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "User logged out successfully"
+            "description": "Logout successful. Session cleared. Returns ServiceResultContainer with success=true."
           },
           "400": {
-            "description": "Bad Request"
+            "description": "Malformed request."
           },
           "401": {
-            "description": "Missing/invalid access token"
+            "description": "Access token is missing, expired, or invalid."
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Not applicable for this endpoint."
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not applicable for this endpoint."
           },
           "500": {
-            "description": "Internal Server Error"
+            "description": "Unexpected server error."
           }
         },
         "security": [
@@ -165,7 +167,7 @@
             "bearer": []
           }
         ],
-        "summary": "Logout",
+        "summary": "Logout and invalidate session [JWT required]",
         "tags": [
           "auth"
         ]
@@ -173,12 +175,12 @@
     },
     "/auth/me": {
       "get": {
-        "description": "Returns the authenticated user context extracted from the access token / session. Useful to hydrate the frontend session state.",
+        "description": "Reads req.user as populated by JwtAuthGuard (decoded from the access token). No database query is made. Returns a ServiceResultContainer<JwtPayload> where result contains: sub (userId number), email (string), role (\"user\" | \"admin\"), iat (issued-at timestamp), exp (expiry timestamp). Use this to check who is logged in or to verify the token is still valid. Requires Authorization: Bearer <accessToken> header.",
         "operationId": "AuthController_me",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Current user retrieved successfully",
+            "description": "ServiceResultContainer with success=true and result = JwtPayload (sub, email, role, iat, exp). No database round-trip.",
             "content": {
               "application/json": {
                 "schema": {
@@ -188,19 +190,19 @@
             }
           },
           "400": {
-            "description": "Bad Request"
+            "description": "Malformed request."
           },
           "401": {
-            "description": "Missing/invalid access token"
+            "description": "Access token is missing, expired, or invalid."
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Not applicable for this endpoint."
           },
           "404": {
-            "description": "Not Found"
+            "description": "Not applicable for this endpoint."
           },
           "500": {
-            "description": "Internal Server Error"
+            "description": "Unexpected server error."
           }
         },
         "security": [
@@ -208,7 +210,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get current user",
+        "summary": "Get current authenticated user [JWT required]",
         "tags": [
           "auth"
         ]
@@ -216,18 +218,18 @@
     },
     "/users": {
       "get": {
-        "description": "Returns a list of users with safe/public fields only. Requires authentication.",
+        "description": "Returns every user in the system with safe/public fields only (id, username, email, role, createdAt). Passwords and sensitive tokens are never included. Use this endpoint to discover user IDs before calling GET /users/:id.",
         "operationId": "UsersController_list",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Array of users (safe fields). Each item contains: id (number), username (string), email (string), role (string: \"admin\" | \"user\"), createdAt (ISO date string)."
           },
           "401": {
-            "description": "Missing/invalid access token"
+            "description": "No valid JWT Bearer token was provided. Add the Authorization header: \"Bearer <token>\"."
           },
           "500": {
-            "description": "Internal server error"
+            "description": "Unexpected server error."
           }
         },
         "security": [
@@ -235,7 +237,7 @@
             "bearer": []
           }
         ],
-        "summary": "List users (safe fields)",
+        "summary": "List all users",
         "tags": [
           "users"
         ]
@@ -243,18 +245,18 @@
     },
     "/users/me": {
       "get": {
-        "description": "Returns the JWT payload extracted by the auth guard for the current request.",
+        "description": "Reads the JWT payload that was decoded by JwtAuthGuard and returns it as a ServiceResultContainer<JwtPayload>. Fields: sub (userId number), email (string), role (string), iat (number), exp (number). No database query is made — data comes directly from the token.",
         "operationId": "UsersController_me",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "ServiceResultContainer with success=true and result = JwtPayload object (sub, email, role, iat, exp)."
           },
           "401": {
-            "description": "Missing/invalid access token"
+            "description": "Missing or expired JWT token."
           },
           "500": {
-            "description": "Internal server error"
+            "description": "Unexpected server error."
           }
         },
         "security": [
@@ -262,7 +264,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get current user",
+        "summary": "Get current authenticated user",
         "tags": [
           "users"
         ]
@@ -270,14 +272,14 @@
     },
     "/users/{id}": {
       "get": {
-        "description": "Returns a single user by id with safe/public fields only.",
+        "description": "Fetches a single user record by numeric id with safe/public fields only. Throws 404 if the user does not exist. Use GET /users first to discover valid IDs.",
         "operationId": "UsersController_getById",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "User numeric id",
+            "description": "The unique numeric database id of the user (e.g. 1, 42). Must be a positive integer — ParseIntPipe will reject anything else.",
             "schema": {
               "type": "number"
             }
@@ -285,16 +287,16 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Single user object (safe fields): id, username, email, role, createdAt."
           },
           "401": {
-            "description": "Missing/invalid access token"
+            "description": "Missing or expired JWT token."
           },
           "404": {
-            "description": "User not found"
+            "description": "No user found with the given id."
           },
           "500": {
-            "description": "Internal server error"
+            "description": "Unexpected server error."
           }
         },
         "security": [
@@ -302,20 +304,20 @@
             "bearer": []
           }
         ],
-        "summary": "Get user by id (safe fields)",
+        "summary": "Get user by id",
         "tags": [
           "users"
         ]
       },
       "patch": {
-        "description": "Updates user fields. Admin-only endpoint.",
+        "description": "Updates one or more fields of the user identified by :id. Send only the fields you want to change (partial update). Available fields in UpdateUserDto: username? (string), email? (string). Role changes must use PATCH /users/:id/role instead. Requires admin privileges.",
         "operationId": "UsersController_update",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "User numeric id",
+            "description": "Numeric id of the user to update.",
             "schema": {
               "type": "number"
             }
@@ -323,6 +325,7 @@
         ],
         "requestBody": {
           "required": true,
+          "description": "Partial user data. All fields are optional. Example: { \"username\": \"newName\" } or { \"email\": \"new@example.com\" }.",
           "content": {
             "application/json": {
               "schema": {
@@ -333,22 +336,19 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
+            "description": "Updated user record (safe fields)."
           },
           "401": {
-            "description": "Missing/invalid access token"
+            "description": "Missing or expired JWT token."
           },
           "403": {
-            "description": "Forbidden (admin only)"
+            "description": "Authenticated user does not have the admin role. AdminGuard rejected the request."
           },
           "404": {
-            "description": "User not found"
+            "description": "No user found with the given id."
           },
           "500": {
-            "description": "Internal server error"
+            "description": "Unexpected server error."
           }
         },
         "security": [
@@ -356,20 +356,20 @@
             "bearer": []
           }
         ],
-        "summary": "Update user details",
+        "summary": "Update user details [Admin]",
         "tags": [
           "users"
         ]
       },
       "delete": {
-        "description": "Deletes a user. Admin-only endpoint. This action is irreversible.",
+        "description": "Hard-deletes the user record from the database. IRREVERSIBLE — no soft-delete or recycle bin. Double-check the id before calling this endpoint. Requires admin privileges.",
         "operationId": "UsersController_delete",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "User numeric id",
+            "description": "Numeric id of the user to delete.",
             "schema": {
               "type": "number"
             }
@@ -377,19 +377,19 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Deletion confirmed. Returns ServiceResultContainer with success=true."
           },
           "401": {
-            "description": "Missing/invalid access token"
+            "description": "Missing or expired JWT token."
           },
           "403": {
-            "description": "Forbidden (admin only)"
+            "description": "Authenticated user is not an admin."
           },
           "404": {
-            "description": "User not found"
+            "description": "No user found with the given id."
           },
           "500": {
-            "description": "Internal server error"
+            "description": "Unexpected server error."
           }
         },
         "security": [
@@ -397,7 +397,7 @@
             "bearer": []
           }
         ],
-        "summary": "Delete user",
+        "summary": "Delete user permanently [Admin]",
         "tags": [
           "users"
         ]
@@ -405,14 +405,14 @@
     },
     "/users/{id}/role": {
       "patch": {
-        "description": "Changes the role for a user. Admin-only endpoint.",
+        "description": "Sets the role field of the user identified by :id. Valid roles (from UpdateUserRoleDto): \"admin\" | \"user\". Use this endpoint exclusively for role changes; other user fields are updated via PATCH /users/:id. Requires admin privileges.",
         "operationId": "UsersController_updateRole",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "User numeric id",
+            "description": "Numeric id of the user whose role will change.",
             "schema": {
               "type": "number"
             }
@@ -420,6 +420,7 @@
         ],
         "requestBody": {
           "required": true,
+          "description": "Role payload. Required field: role (string enum: \"admin\" | \"user\"). Example: { \"role\": \"admin\" }.",
           "content": {
             "application/json": {
               "schema": {
@@ -430,22 +431,19 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
+            "description": "Role updated successfully. Returns ServiceResultContainer with updated user."
           },
           "401": {
-            "description": "Missing/invalid access token"
+            "description": "Missing or expired JWT token."
           },
           "403": {
-            "description": "Forbidden (admin only)"
+            "description": "Authenticated user is not an admin."
           },
           "404": {
-            "description": "User not found"
+            "description": "No user found with the given id."
           },
           "500": {
-            "description": "Internal server error"
+            "description": "Unexpected server error."
           }
         },
         "security": [
@@ -453,54 +451,13 @@
             "bearer": []
           }
         ],
-        "summary": "Update user role",
+        "summary": "Change user role [Admin]",
         "tags": [
           "users"
         ]
       }
     },
-    "/ai-agent/query": {
-      "post": {
-        "description": "Sends a prompt to the AI agent and returns a single structured response. Use this when you do not need streaming.",
-        "operationId": "AdminAgentController_query",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AgentRequestDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "AI response generated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing/invalid access token"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Query AI agent (single response)",
-        "tags": [
-          "AI Agent"
-        ]
-      }
-    },
-    "/ai-agent/query-stream": {
+    "/admin-agent/query-stream": {
       "post": {
         "description": "Streams the model output back to the client using Server-Sent Events (SSE). Recommended for long generations.",
         "operationId": "AdminAgentController_streamChat",
@@ -533,9 +490,9 @@
             "bearer": []
           }
         ],
-        "summary": "Query AI agent (stream)",
+        "summary": "Query Admin agent (stream)",
         "tags": [
-          "AI Agent"
+          "Admin Agent"
         ]
       }
     }
@@ -553,22 +510,27 @@
       "RegisterDto": {
         "type": "object",
         "properties": {
-          "email": {
-            "type": "string",
-            "example": "user@domain.com"
-          },
           "fullName": {
             "type": "string",
-            "example": "John Doe"
+            "example": "John Doe",
+            "description": "Full display name for the new account. Required - must be a non-empty string. Validation: returns 400 if missing, empty, or whitespace-only. Uniqueness: not required to be unique."
+          },
+          "email": {
+            "type": "string",
+            "example": "admin@admin.com",
+            "format": "email",
+            "description": "Email address for the new account. Required - must be a valid email format and must be unique. Validation: returns 400 if the email format is invalid. Uniqueness: returns 400 if already registered."
           },
           "password": {
             "type": "string",
-            "example": "password123"
+            "example": "admin",
+            "minLength": 4,
+            "description": "Password for the new account. Minimum 4 characters. Required - stored as a bcrypt hash (never stored as plain text). Validation: returns 400 if shorter than 4 characters."
           }
         },
         "required": [
-          "email",
           "fullName",
+          "email",
           "password"
         ]
       },
@@ -648,11 +610,15 @@
         "properties": {
           "email": {
             "type": "string",
-            "example": "admin@admin.com"
+            "example": "admin@admin.com",
+            "format": "email",
+            "description": "Registered email address of the user. Must be a valid email format (user@domain.com). Case-insensitive — \"Admin@Admin.com\" and \"admin@admin.com\" are treated as the same."
           },
           "password": {
             "type": "string",
-            "example": "admin"
+            "example": "admin",
+            "minLength": 4,
+            "description": "Account password. Minimum 4 characters. Sent as plain text over HTTPS — hashing is handled server-side. Returns 401 if this does not match the stored hash."
           }
         },
         "required": [
@@ -660,27 +626,36 @@
           "password"
         ]
       },
+      "UserRole": {
+        "type": "number",
+        "enum": [
+          1,
+          2
+        ],
+        "description": "New role for the user. Optional — omit to keep the current role. Validation: must be a valid UserRole value; returns 400 if invalid. Accepted values: \"user\" | \"admin\". Prefer using PATCH /users/:id/role for role-only changes (more explicit and easier to audit)."
+      },
       "UpdateUserDto": {
         "type": "object",
         "properties": {
           "fullName": {
             "type": "string",
-            "description": "Full name of the user",
-            "example": "John Updated"
+            "example": "John Updated",
+            "description": "Full display name of the user. Optional — omit this field to leave the current value unchanged. Validation: if provided, must be a string and must not be empty (whitespace-only is rejected). Returns 400 if the value is empty while provided."
           },
           "email": {
             "type": "string",
-            "description": "User email address",
-            "example": "updated@example.com"
+            "example": "updated@example.com",
+            "format": "email",
+            "description": "New email address for the user. Optional — omit to keep the current email. Validation: must be a valid email format if provided; returns 400 if invalid. Uniqueness: returns 400 if the email is already taken by another account."
           },
           "role": {
-            "type": "number",
-            "description": "User role within the system",
-            "enum": [
-              1,
-              2
-            ],
-            "example": 2
+            "example": 2,
+            "description": "New role for the user. Optional — omit to keep the current role. Validation: must be a valid UserRole value; returns 400 if invalid. Accepted values: \"user\" | \"admin\". Prefer using PATCH /users/:id/role for role-only changes (more explicit and easier to audit).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRole"
+              }
+            ]
           }
         }
       },
@@ -688,11 +663,12 @@
         "type": "object",
         "properties": {
           "role": {
-            "type": "number",
             "example": 2,
-            "enum": [
-              1,
-              2
+            "description": "The new role to assign to the user. Required — this DTO represents a role-only update. Accepted values: \"user\" (standard access) | \"admin\" (full system access). Validation: returns 400 if the value is not a valid UserRole enum member. Security note: use \"admin\" with caution — it grants access to admin-only endpoints.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRole"
+              }
             ]
           }
         },
@@ -711,18 +687,6 @@
         },
         "required": [
           "prompt"
-        ]
-      },
-      "AgentResponseDto": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "description": "Markdown response from the AI agent"
-          }
-        },
-        "required": [
-          "message"
         ]
       }
     }

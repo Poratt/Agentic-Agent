@@ -1,4 +1,12 @@
-.btn-primary, .btn-submit {
+button {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-standard);
+}
+
+.btn-primary {
   width: 100%;
   padding: var(--space-4);
   background: linear-gradient(135deg, var(--color-primary), #00B8D9);

@@ -4,35 +4,21 @@ import OpenAI from 'openai';
 
 export type LlmToolSchema = {
   type: 'function';
-  function: {
+  function?: {
     name: string;
     description?: string;
     parameters: Record<string, unknown>;
   };
 };
 
-export type LlmToolCall = {
-  id?: string;
-  type: 'function';
-  function: {
-    name: string;
-    arguments?: string;
-  };
-};
-
 export type LlmResponse = {
   content: string | null;
-  toolCalls: LlmToolCall[];
 };
 
 export interface LlmRequest {
   prompt: string;
   systemContext?: string;
-  tools?: LlmToolSchema[];
-  messageHistory?: (
-    | { role: 'user' | 'assistant'; content: string }
-    | { role: 'tool'; content: string; tool_call_id: string }
-  )[];
+  messageHistory?: { role: 'user' | 'assistant'; content: string }[];
   providerOverride?: 'openrouter' | 'nvidia';
   modelOverride?: string;
 }
@@ -147,7 +133,7 @@ export class LlmService {
   }
 
   async generateResponse(llmRequest: LlmRequest): Promise<LlmResponse> {
-    const { prompt, systemContext, tools, messageHistory, providerOverride, modelOverride } = llmRequest;
+    const { prompt, systemContext, messageHistory, providerOverride, modelOverride } = llmRequest;
     const client = this.getClient(providerOverride);
     const activeModel = modelOverride || this.model;
 
@@ -165,7 +151,6 @@ export class LlmService {
           ...(messageHistory?.length ? messageHistory : []),
           { role: 'user', content: prompt },
         ],
-        tools,
         temperature: 0.2,
       });
 
@@ -179,14 +164,13 @@ export class LlmService {
 
     const message = completion.choices[0].message;
     const content = typeof message?.content === 'string' ? message.content : null;
-    const toolCalls = ((message as any)?.tool_calls ?? []) as LlmToolCall[];
 
-    this.logger.log(`Response OK: content=${content?.length ?? 0} chars, toolCalls=${toolCalls.length}`);
-    return { content, toolCalls };
+    this.logger.log(`Response OK: content=${content?.length ?? 0} chars`);
+    return { content };
   }
 
   async *generateStream(llmRequest: LlmRequest): AsyncIterable<string> {
-    const { prompt, systemContext, tools, messageHistory, providerOverride, modelOverride } = llmRequest;
+    const { prompt, systemContext, messageHistory, providerOverride, modelOverride } = llmRequest;
     const client = this.getClient(providerOverride);
     const activeModel = modelOverride || this.model;
 
@@ -207,12 +191,11 @@ export class LlmService {
               ...(messageHistory?.length ? messageHistory : []),
               { role: 'user', content: prompt },
             ],
-            tools: tools as any,
             temperature: 0.7,
           });
         },
         'generateStream',
-      ) as any; 
+      ) as any;
 
       for await (const chunk of stream) {
         const token = chunk.choices[0]?.delta?.content;

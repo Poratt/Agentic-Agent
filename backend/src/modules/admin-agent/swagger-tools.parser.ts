@@ -1,6 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs';
-import { LlmToolSchema } from './llm.service';
+
+interface LlmToolFunctionSchema {
+  name: string;
+  description?: string;
+  parameters?: Record<string, any>;
+}
+
+export interface LlmToolSchema {
+  type: 'function';
+  function?: LlmToolFunctionSchema;
+}
 
 @Injectable()
 export class SwaggerToolsParser {

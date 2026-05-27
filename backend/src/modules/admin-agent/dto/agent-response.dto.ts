@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+// import { ApiProperty } from '@nestjs/swagger';
 
-export class AgentResponseDto {
-  @ApiProperty({ description: 'Markdown response from the AI agent' })
-  message!: string;
-}
+// export class AgentResponseDto {
+//   @ApiProperty({ description: 'Markdown response from the AI agent' })
+//   message!: string;
+// }

@@ -3,7 +3,7 @@ import { HttpModule } from '@nestjs/axios';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
 import { AdminAgentController } from './admin-agent.controller';
-import { AdminAgent } from './admin-agent.service';
+import { AdminAgentService } from './admin-agent.service';
 import { LlmService } from './llm.service';
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
@@ -15,9 +15,10 @@ import { SwaggerToolsParser } from './swagger-tools.parser';
     HttpModule,
     TypeOrmModule.forFeature([User, ChatMessage]),
     UsersModule,
-    AuthModule, // הוספת ייבוא אבטחה לצורך יצירת טוקני מערכת לסוכן
+    AuthModule,
   ],
   controllers: [AdminAgentController],
-  providers: [AdminAgent, LlmService, SwaggerToolsParser],
+  providers: [AdminAgentService, LlmService, SwaggerToolsParser],
+  exports: [AdminAgentService],
 })
 export class AdminAgentModule {}

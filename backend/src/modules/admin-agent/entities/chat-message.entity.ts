@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
 
-
 @Entity('chat_messages')
 @Index(['userId', 'createdAt'])
 export class ChatMessage {
