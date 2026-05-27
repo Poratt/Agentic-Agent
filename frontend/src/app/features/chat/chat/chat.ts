@@ -92,10 +92,11 @@ export class Chat implements OnInit, OnDestroy {
 			return [...prev, userMsg];
 		});
 
-		// 2. הכנת הודעת עוזר ריקה לצורך הזרמה
+		// 2. הכנת הודעת עוזר ריקה עם מערך steps ריק
 		const assistantMsg: IChatMessage = {
 			role: 'assistant',
 			content: '',
+			steps: [],
 		};
 
 		this.messages.update((prev) => {
@@ -104,17 +105,33 @@ export class Chat implements OnInit, OnDestroy {
 
 		this.loading.set(true);
 
+		// בדיקה האם זו ההודעה הראשונה בשיחה לצורך עדכון כותרת ה-Sidebar בסיום
+		const isFirstMessage = this.messages().length <= 2;
+
 		this.chatService.sendMessageStream(promptValue, currentId).subscribe({
-			next: (chunk) => {
-				this.messages.update((prev) => {
-					const updated = [...prev];
-					const lastIndex = updated.length - 1;
-					updated[lastIndex] = {
-						...updated[lastIndex],
-						content: updated[lastIndex].content + chunk,
-					};
-					return updated;
-				});
+			next: (event) => {
+				if (event.type === 'step' && event.message) {
+					this.messages.update((prev) => {
+						const updated = [...prev];
+						const lastIndex = updated.length - 1;
+						const currentSteps = updated[lastIndex].steps || [];
+						updated[lastIndex] = {
+							...updated[lastIndex],
+							steps: [...currentSteps, event.message!],
+						};
+						return updated;
+					});
+				} else if (event.type === 'token' && event.content) {
+					this.messages.update((prev) => {
+						const updated = [...prev];
+						const lastIndex = updated.length - 1;
+						updated[lastIndex] = {
+							...updated[lastIndex],
+							content: updated[lastIndex].content + event.content!,
+						};
+						return updated;
+					});
+				}
 			},
 			error: (err) => {
 				this.loading.set(false);

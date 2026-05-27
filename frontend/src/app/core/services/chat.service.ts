@@ -29,9 +29,13 @@ export class ChatService {
 		return this.http.delete<void>(`${this.base}/sessions/${sessionId}`);
 	}
 
-	sendMessageStream(prompt: string, sessionId?: number): Observable<string> {
-		return new Observable<string>((observer) => {
+	sendMessageStream(
+		prompt: string,
+		sessionId?: number,
+	): Observable<{ type: 'step' | 'token'; message?: string; content?: string }> {
+		return new Observable((observer) => {
 			const controller = new AbortController();
+			let buffer = '';
 
 			fetch(`${this.base}/query-stream`, {
 				method: 'POST',
@@ -63,11 +67,35 @@ export class ChatService {
 								break;
 							}
 
-							const chunk = decoder.decode(value, { stream: true });
-							if (chunk) {
-								observer.next(chunk);
+							buffer += decoder.decode(value, { stream: true });
+							const lines = buffer.split('\n');
+
+							// שומרים את השורה האחרונה למקרה שהיא מקוטעת
+							buffer = lines.pop() || '';
+
+							for (const line of lines) {
+								const trimmed = line.trim();
+								if (trimmed) {
+									try {
+										const parsed = JSON.parse(trimmed);
+										observer.next(parsed);
+									} catch (err) {
+										console.warn('Failed to parse line-JSON streaming chunk:', trimmed, err);
+									}
+								}
 							}
 						}
+
+						// עיבוד השאריות שנותרו בחוצץ
+						if (buffer.trim()) {
+							try {
+								const parsed = JSON.parse(buffer.trim());
+								observer.next(parsed);
+							} catch (err) {
+								console.warn('Failed to parse trailing-JSON streaming chunk:', buffer, err);
+							}
+						}
+
 						observer.complete();
 					} catch (err) {
 						observer.error(err);

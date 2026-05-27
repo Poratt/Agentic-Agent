@@ -18,35 +18,34 @@ export class AdminAgentService implements OnModuleInit {
     private readonly swaggerToolsParser: SwaggerToolsParser,
     private readonly agentSessionService: AgentSessionService,
     private readonly agentToolExecutorService: AgentToolExecutorService,
-  ) { }
+  ) {}
 
   onModuleInit(): void {
     this.logger.log('AdminAgentService initialized. Orchestrator ready.');
     setTimeout(() => {
       this.printParsedSwaggerTools();
-
     }, 1000);
   }
 
   private printParsedSwaggerTools(): void {
     try {
       const tools = this.swaggerToolsParser.getTools();
-      this.logger.log(`------------------------ START SWAGGER-TOOLS-PARSER OUTPUT: LOADED ${tools.length} TOOLS ------------------------`);
-
-      // eslint-disable-next-line no-console
-      // console.log(JSON.stringify(tools, null, 2));
-      const fnWidth = Math.max(...tools.map(fn => fn.function?.name.length || 0));
+      this.logger.log(`--- START SWAGGER-TOOLS-PARSER OUTPUT: LOADED ${tools.length} TOOLS ---`);
+      
+      const fnWidth = Math.max(...tools.map((fn) => {
+        return fn.function?.name.length || 0;
+      }));
 
       tools.forEach((tool) => {
         const functionName = tool.function?.name;
         if (functionName) {
           const endpoint = this.swaggerToolsParser.getEndpoint(functionName);
           // eslint-disable-next-line no-console
-          this.logger.log(`Tool Name: "${functionName.padEnd(fnWidth)}" | ${endpoint?.path}, ${endpoint?.method.toLocaleUpperCase()} `);
+          this.logger.log(`Tool Name: "${functionName.padEnd(fnWidth)}" | ${endpoint?.path}, ${endpoint?.method.toUpperCase()} `);
         }
       });
 
-      this.logger.log('-------------------------------- END OF PARSED SWAGGER TOOLS OUTPUT --------------------------------');
+      this.logger.log('--- END OF PARSED SWAGGER TOOLS OUTPUT ---');
     } catch (error: any) {
       this.logger.error(`Failed to execute swagger tools parser logging: ${error.message}`);
     }
@@ -114,7 +113,10 @@ export class AdminAgentService implements OnModuleInit {
     userId: number,
     requestedSessionId?: number,
   ): AsyncIterable<string> {
+    yield JSON.stringify({ type: 'step', message: '🔍 מאתחל את שיחת הסוכן ומחבר היסטוריה...' }) + '\n';
     const session = await this.agentSessionService.getOrCreateSession(userId, requestedSessionId);
+
+    yield JSON.stringify({ type: 'step', message: '📝 מנתח את כותרת השיחה הנוכחית...' }) + '\n';
     await this.agentSessionService.updateSessionTitleIfDefault(session, prompt);
     await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt);
 
@@ -122,6 +124,7 @@ export class AdminAgentService implements OnModuleInit {
     const dynamicSystemContext = SYSTEM_CONTEXT.replace(/{{CURRENT_USER_ID}}/g, String(userId));
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration = iteration + 1) {
+      yield JSON.stringify({ type: 'step', message: '🤔 מנתח את הבקשה ומכין תוכנית עבודה...' }) + '\n';
       const history = await this.agentSessionService.loadHistory(session.id, userId);
 
       const llmResponse = await this.llmService.generateResponse({
@@ -141,10 +144,24 @@ export class AdminAgentService implements OnModuleInit {
         );
 
         for (const call of llmResponse.toolCalls) {
+          const args = JSON.parse(call.function.arguments || '{}');
+          const description = this.agentToolExecutorService.getSemanticActionDescription(call.function.name, args);
+          
+          yield JSON.stringify({ type: 'step', message: `⚙️ מפעיל כלי: ${description}...` }) + '\n';
+
           const resultData = await this.agentToolExecutorService.executeToolCall(call, userId);
+          
+          if (resultData.includes('error')) {
+            yield JSON.stringify({ type: 'step', message: '❌ ביצוע השלב נכשל עקב מגבלות אבטחה או שגיאת שרת.' }) + '\n';
+          } else {
+            yield JSON.stringify({ type: 'step', message: '✅ השלב בושל בהצלחה!' }) + '\n';
+          }
+
           await this.agentSessionService.saveMessage(userId, session.id, 'tool', resultData, call.id);
         }
       } else {
+        yield JSON.stringify({ type: 'step', message: '✍️ מגבש תשובה סופית ומזרים נתונים...' }) + '\n';
+
         let accumulatedResponse = '';
         try {
           const stream = this.llmService.generateStream({
@@ -156,7 +173,7 @@ export class AdminAgentService implements OnModuleInit {
 
           for await (const chunk of stream) {
             accumulatedResponse += chunk;
-            yield chunk;
+            yield JSON.stringify({ type: 'token', content: chunk }) + '\n';
           }
         } catch (error) {
           this.logger.error('Failed to stream response from LLM Service', error);
@@ -170,6 +187,6 @@ export class AdminAgentService implements OnModuleInit {
       }
     }
 
-    yield 'תקשורת הסוכן הופסקה עקב הגעה למספר האיטרציות המרבי.';
+    yield JSON.stringify({ type: 'token', content: 'תקשורת הסוכן הופסקה עקב הגעה למספר האיטרציות המרבי.' }) + '\n';
   }
 }

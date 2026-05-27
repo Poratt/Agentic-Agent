@@ -4,4 +4,5 @@ export interface IChatMessage {
   role: 'user' | 'assistant' | 'tool';
   content: string;
   createdAt?: Date;
+  steps?: string[];
 }
