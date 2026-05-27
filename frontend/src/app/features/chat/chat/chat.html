@@ -4,8 +4,16 @@
 		<p class="subtitle">התייעץ וקבל מידע בזמן אמת מהסוכן האישי שלך</p>
 	</header>
 
+	@if (historyLoading()) {
+	<div class="chat-history-loader">
+		<span class="custom-loader"></span>
+		<p>טוען את היסטוריית השיחה...</p>
+	</div>
+	} @else {
 	<div class="glass-effect chat-history" [autoScrollBottom]="true" [autoScrollBottomTrigger]="messages().length">
 		@for (msg of messages(); track $index) {
+		<!-- הצגת הודעות המשתמש והעוזר בלבד וסינון הודעות הכלים הפנימיות -->
+		@if (msg.role !== 'tool') {
 		<div class="chat-message-row" [ngClass]="msg.role === 'user' ? 'user-message' : 'assistant-message'">
 			<div class="message-meta">
 				<span class="material-symbols-rounded role-icon">
@@ -16,20 +24,22 @@
 			<div class="message-body" [aiFormat]="msg.content"></div>
 		</div>
 		}
+		}
 
 		@if (messages().length === 0) {
 		<div class="empty-chat-state">
 			<span class="material-symbols-rounded xl">forum</span>
-			<h3>אין הודעות כרגע</h3>
-			<p>כתוב הודעה למטה כדי להתחיל את השיחה עם הסוכן.</p>
+			<h3>שיחה חדשה התחילה</h3>
+			<p>כתוב הודעה למטה כדי להתחיל להתייעץ עם סוכן ה-AI שלך.</p>
 		</div>
 		}
 	</div>
+	}
 
 	<div class="chat-input-area">
 		<form [formGroup]="chatForm" (ngSubmit)="sendMessage()">
 			<input type="text" formControlName="prompt" placeholder="הקלד את הודעתך כאן..." autocomplete="off">
-			<button type="submit" class="btn-primary" [disabled]="chatForm.invalid || loading()">
+			<button type="submit" class="btn-primary" [disabled]="chatForm.invalid || loading() || historyLoading()">
 				<span class="material-symbols-rounded">send</span>
 				<span>שלח</span>
 			</button>

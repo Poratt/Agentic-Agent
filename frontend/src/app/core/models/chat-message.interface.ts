@@ -1,6 +1,7 @@
 export interface IChatMessage {
   id?: number;
-  role: 'user' | 'assistant';
+  sessionId?: number;
+  role: 'user' | 'assistant' | 'tool';
   content: string;
   createdAt?: Date;
 }

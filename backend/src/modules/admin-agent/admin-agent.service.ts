@@ -1,142 +1,175 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ChatMessage } from './entities/chat-message.entity';
 import { LlmService } from './llm.service';
-import { SwaggerToolsParser } from './swagger-tools.parser';
-import { IChatHistoryItem } from './interfaces/chat-history-item.interface';
+import { AgentSessionService } from './services/agent-session.service';
+import { AgentToolExecutorService } from './services/agent-tool-executor.service';
+import { ChatSession } from './entities/chat-session.entity';
+import { ChatMessage } from './entities/chat-message.entity';
+import { SYSTEM_CONTEXT } from './constants/system-context.constant';
+import { SwaggerToolsParser } from './services/swagger-tools.parser';
+
+const MAX_ITERATIONS = 5;
 
 @Injectable()
 export class AdminAgentService implements OnModuleInit {
   private readonly logger = new Logger(AdminAgentService.name);
 
   constructor(
-    @InjectRepository(ChatMessage)
-    private readonly chatMessageRepository: Repository<ChatMessage>,
     private readonly llmService: LlmService,
     private readonly swaggerToolsParser: SwaggerToolsParser,
-  ) {}
+    private readonly agentSessionService: AgentSessionService,
+    private readonly agentToolExecutorService: AgentToolExecutorService,
+  ) { }
 
   onModuleInit(): void {
-    this.logger.log('AdminAgentService initialized. Streaming mode prepared without tools.');
-    this.printParsedSwaggerTools();
+    this.logger.log('AdminAgentService initialized. Orchestrator ready.');
+    setTimeout(() => {
+      this.printParsedSwaggerTools();
+
+    }, 1000);
   }
 
   private printParsedSwaggerTools(): void {
     try {
       const tools = this.swaggerToolsParser.getTools();
-      this.logger.log(`--- START SWAGGER-TOOLS-PARSER OUTPUT: LOADED ${tools.length} TOOLS ---`);
-      
+      this.logger.log(`------------------------ START SWAGGER-TOOLS-PARSER OUTPUT: LOADED ${tools.length} TOOLS ------------------------`);
+
       // eslint-disable-next-line no-console
-      console.log(JSON.stringify(tools, null, 2));
+      // console.log(JSON.stringify(tools, null, 2));
+      const fnWidth = Math.max(...tools.map(fn => fn.function?.name.length || 0));
 
       tools.forEach((tool) => {
         const functionName = tool.function?.name;
         if (functionName) {
           const endpoint = this.swaggerToolsParser.getEndpoint(functionName);
           // eslint-disable-next-line no-console
-          console.log(`Tool Name: "${functionName}" | Endpoint:`, endpoint);
+          this.logger.log(`Tool Name: "${functionName.padEnd(fnWidth)}" | ${endpoint?.path}, ${endpoint?.method.toLocaleUpperCase()} `);
         }
       });
 
-      this.logger.log('--- END OF PARSED SWAGGER TOOLS OUTPUT ---');
+      this.logger.log('-------------------------------- END OF PARSED SWAGGER TOOLS OUTPUT --------------------------------');
     } catch (error: any) {
       this.logger.error(`Failed to execute swagger tools parser logging: ${error.message}`);
     }
   }
 
-  async queryDatabase(prompt: string, userId: number): Promise<string> {
-    const userMessage = this.chatMessageRepository.create({
-      userId,
-      role: 'user',
-      content: prompt,
-      toolCallId: null,
-    });
-    await this.chatMessageRepository.save(userMessage);
-
-    const history = await this.chatMessageRepository.find({
-      where: { userId },
-      order: { createdAt: 'ASC' },
-    });
-
-    const formattedHistory: IChatHistoryItem[] = history
-      .filter((message) => {
-        return message.role === 'user' || message.role === 'assistant';
-      })
-      .map((message) => {
-        return {
-          role: message.role as 'user' | 'assistant',
-          content: message.content,
-        };
-      });
-
-    const response = await this.llmService.generateResponse({
-      prompt,
-      messageHistory: formattedHistory,
-    });
-
-    const assistantContent = response.content || '';
-    const assistantMessage = this.chatMessageRepository.create({
-      userId,
-      role: 'assistant',
-      content: assistantContent,
-      toolCallId: null,
-    });
-    await this.chatMessageRepository.save(assistantMessage);
-
-    return assistantContent;
+  async getSessions(userId: number, limit?: number): Promise<ChatSession[]> {
+    return this.agentSessionService.getSessions(userId, limit);
   }
 
-  async *queryDatabaseStream(prompt: string, userId: number): AsyncIterable<string> {
-    const userMessage = this.chatMessageRepository.create({
-      userId,
-      role: 'user',
-      content: prompt,
-      toolCallId: null,
-    });
-    await this.chatMessageRepository.save(userMessage);
+  async getSessionMessages(sessionId: number, userId: number): Promise<ChatMessage[]> {
+    return this.agentSessionService.getSessionMessages(sessionId, userId);
+  }
 
-    const history = await this.chatMessageRepository.find({
-      where: { userId },
-      order: { createdAt: 'ASC' },
-    });
+  async createSession(userId: number): Promise<ChatSession> {
+    return this.agentSessionService.createSession(userId);
+  }
 
-    const formattedHistory: IChatHistoryItem[] = history
-      .filter((message) => {
-        return message.role === 'user' || message.role === 'assistant';
-      })
-      .map((message) => {
-        return {
-          role: message.role as 'user' | 'assistant',
-          content: message.content,
-        };
-      });
+  async deleteSession(sessionId: number, userId: number): Promise<void> {
+    return this.agentSessionService.deleteSession(sessionId, userId);
+  }
 
-    let accumulatedResponse = '';
+  async queryDatabase(prompt: string, userId: number, requestedSessionId?: number): Promise<string> {
+    const session = await this.agentSessionService.getOrCreateSession(userId, requestedSessionId);
+    await this.agentSessionService.updateSessionTitleIfDefault(session, prompt);
+    await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt);
 
-    try {
-      const stream = this.llmService.generateStream({
+    const tools = this.swaggerToolsParser.getTools();
+    const dynamicSystemContext = SYSTEM_CONTEXT.replace(/{{CURRENT_USER_ID}}/g, String(userId));
+
+    for (let iteration = 0; iteration < MAX_ITERATIONS; iteration = iteration + 1) {
+      const history = await this.agentSessionService.loadHistory(session.id, userId);
+
+      const llmResponse = await this.llmService.generateResponse({
         prompt,
-        messageHistory: formattedHistory,
+        systemContext: dynamicSystemContext,
+        messageHistory: history,
+        tools,
       });
 
-      for await (const chunk of stream) {
-        accumulatedResponse += chunk;
-        yield chunk;
+      if (llmResponse.toolCalls && llmResponse.toolCalls.length > 0) {
+        await this.agentSessionService.saveMessage(
+          userId,
+          session.id,
+          'assistant',
+          JSON.stringify(llmResponse.toolCalls),
+          'YES_TOOL_CALLS',
+        );
+
+        for (const call of llmResponse.toolCalls) {
+          const resultData = await this.agentToolExecutorService.executeToolCall(call, userId);
+          await this.agentSessionService.saveMessage(userId, session.id, 'tool', resultData, call.id);
+        }
+      } else {
+        const assistantContent = llmResponse.content || '';
+        await this.agentSessionService.saveMessage(userId, session.id, 'assistant', assistantContent);
+        return assistantContent;
       }
-    } catch (error) {
-      this.logger.error('Failed to stream response from LLM Service', error);
-      throw error;
     }
 
-    if (accumulatedResponse.length > 0) {
-      const assistantMessage = this.chatMessageRepository.create({
-        userId,
-        role: 'assistant',
-        content: accumulatedResponse,
-        toolCallId: null,
+    return 'תקשורת הסוכן הופסקה עקב הגעה למספר האיטרציות המרבי.';
+  }
+
+  async *queryDatabaseStream(
+    prompt: string,
+    userId: number,
+    requestedSessionId?: number,
+  ): AsyncIterable<string> {
+    const session = await this.agentSessionService.getOrCreateSession(userId, requestedSessionId);
+    await this.agentSessionService.updateSessionTitleIfDefault(session, prompt);
+    await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt);
+
+    const tools = this.swaggerToolsParser.getTools();
+    const dynamicSystemContext = SYSTEM_CONTEXT.replace(/{{CURRENT_USER_ID}}/g, String(userId));
+
+    for (let iteration = 0; iteration < MAX_ITERATIONS; iteration = iteration + 1) {
+      const history = await this.agentSessionService.loadHistory(session.id, userId);
+
+      const llmResponse = await this.llmService.generateResponse({
+        prompt,
+        systemContext: dynamicSystemContext,
+        messageHistory: history,
+        tools,
       });
-      await this.chatMessageRepository.save(assistantMessage);
+
+      if (llmResponse.toolCalls && llmResponse.toolCalls.length > 0) {
+        await this.agentSessionService.saveMessage(
+          userId,
+          session.id,
+          'assistant',
+          JSON.stringify(llmResponse.toolCalls),
+          'YES_TOOL_CALLS',
+        );
+
+        for (const call of llmResponse.toolCalls) {
+          const resultData = await this.agentToolExecutorService.executeToolCall(call, userId);
+          await this.agentSessionService.saveMessage(userId, session.id, 'tool', resultData, call.id);
+        }
+      } else {
+        let accumulatedResponse = '';
+        try {
+          const stream = this.llmService.generateStream({
+            prompt,
+            systemContext: dynamicSystemContext,
+            messageHistory: history,
+            tools,
+          });
+
+          for await (const chunk of stream) {
+            accumulatedResponse += chunk;
+            yield chunk;
+          }
+        } catch (error) {
+          this.logger.error('Failed to stream response from LLM Service', error);
+          throw error;
+        }
+
+        if (accumulatedResponse.length > 0) {
+          await this.agentSessionService.saveMessage(userId, session.id, 'assistant', accumulatedResponse);
+        }
+        return;
+      }
     }
+
+    yield 'תקשורת הסוכן הופסקה עקב הגעה למספר האיטרציות המרבי.';
   }
 }

@@ -1,0 +1,34 @@
+<div class="archive-container">
+	<div class="search-box">
+		<span class="material-symbols-rounded">search</span>
+		<input type="text" [value]="searchQuery()" (input)="onSearchChange($event)" placeholder="חפש שיחה לפי כותרת..."
+			autocomplete="off">
+	</div>
+
+	<div class="sessions-archive-list">
+		@for (session of filteredSessions(); track session.id) {
+		<div class="archive-item" [class.active]="chatStore.currentSessionId() === session.id">
+			<div class="item-info" (click)="selectSession(session.id)">
+				<span class="material-symbols-rounded">chat_bubble</span>
+				<div class="text-group">
+					<span class="title">{{ session.title }}</span>
+					<span class="date">{{ session.updatedAt | date:'short' }}</span>
+				</div>
+			</div>
+
+			<!-- שימוש במחלקת ה-btn-ghost הגנרית מה-Design System -->
+			<button class="btn-ghost btn-delete-compact" type="button" (click)="deleteSession($event, session.id)"
+				title="מחק שיחה">
+				<span class="material-symbols-rounded sm">delete</span>
+			</button>
+		</div>
+		}
+
+		@if (filteredSessions().length === 0) {
+		<div class="empty-archive">
+			<span class="material-symbols-rounded lg">search_off</span>
+			<p>לא נמצאו שיחות תואמות.</p>
+		</div>
+		}
+	</div>
+</div>

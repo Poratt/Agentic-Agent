@@ -457,9 +457,121 @@
         ]
       }
     },
+    "/admin-agent/sessions": {
+      "get": {
+        "description": "Retrieves all past chat sessions belonging to the authenticated user.",
+        "operationId": "AdminAgentController_getSessions",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Limit the number of recent sessions.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sessions retrieved successfully."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all chat sessions",
+        "tags": [
+          "Admin Agent"
+        ]
+      },
+      "post": {
+        "description": "Creates a new empty chat session belonging to the authenticated user.",
+        "operationId": "AdminAgentController_createSession",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Chat session created successfully."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new chat session",
+        "tags": [
+          "Admin Agent"
+        ]
+      }
+    },
+    "/admin-agent/sessions/{id}/messages": {
+      "get": {
+        "description": "Retrieves all historical chat messages belonging to a specific session ID.",
+        "operationId": "AdminAgentController_getSessionMessages",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The unique numeric ID of the chat session.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historical messages loaded successfully."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get session messages history",
+        "tags": [
+          "Admin Agent"
+        ]
+      }
+    },
+    "/admin-agent/sessions/{id}": {
+      "delete": {
+        "description": "Deletes a specific chat session and all its messages permanently.",
+        "operationId": "AdminAgentController_deleteSession",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The chat session ID to delete.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Chat session deleted successfully."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete chat session",
+        "tags": [
+          "Admin Agent"
+        ]
+      }
+    },
     "/admin-agent/query-stream": {
       "post": {
-        "description": "Streams the model output back to the client using Server-Sent Events (SSE). Recommended for long generations.",
+        "description": "Streams the model output back to the client. Supports persisting within a specific session.",
         "operationId": "AdminAgentController_streamChat",
         "parameters": [],
         "requestBody": {
@@ -681,8 +793,13 @@
         "properties": {
           "prompt": {
             "type": "string",
-            "description": "The user prompt that will be sent to the AI agent. This should include enough context and the desired output format.",
+            "description": "The user prompt that will be sent to the AI agent.",
             "example": "Write a short summary of the following text..."
+          },
+          "sessionId": {
+            "type": "number",
+            "description": "The specific chat session ID associated with this message thread.",
+            "example": 42
           }
         },
         "required": [

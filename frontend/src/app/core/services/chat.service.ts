@@ -1,23 +1,44 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { IChatSession } from '../models/chat-session.interface';
+import { IChatMessage } from '../models/chat-message.interface';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class ChatService {
-	private apiUrl = `${environment.apiUrl}/admin-agent/query-stream`;
+	private http = inject(HttpClient);
+	private base = `${environment.apiUrl}/admin-agent`;
 
-	sendMessageStream(prompt: string): Observable<string> {
+	listSessions(limit?: number): Observable<IChatSession[]> {
+		const url = limit ? `${this.base}/sessions?limit=${limit}` : `${this.base}/sessions`;
+		return this.http.get<IChatSession[]>(url);
+	}
+
+	getSessionMessages(sessionId: number): Observable<IChatMessage[]> {
+		return this.http.get<IChatMessage[]>(`${this.base}/sessions/${sessionId}/messages`);
+	}
+
+	createSession(): Observable<IChatSession> {
+		return this.http.post<IChatSession>(`${this.base}/sessions`, {});
+	}
+
+	deleteSession(sessionId: number): Observable<void> {
+		return this.http.delete<void>(`${this.base}/sessions/${sessionId}`);
+	}
+
+	sendMessageStream(prompt: string, sessionId?: number): Observable<string> {
 		return new Observable<string>((observer) => {
 			const controller = new AbortController();
 
-			fetch(this.apiUrl, {
+			fetch(`${this.base}/query-stream`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({ prompt }),
+				body: JSON.stringify({ prompt, sessionId }),
 				credentials: 'include',
 				signal: controller.signal,
 			})

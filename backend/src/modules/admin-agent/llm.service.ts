@@ -7,18 +7,34 @@ export type LlmToolSchema = {
   function?: {
     name: string;
     description?: string;
-    parameters: Record<string, unknown>;
+    parameters?: any;
+  };
+};
+
+export type LlmToolCall = {
+  id: string;
+  type: 'function';
+  function: {
+    name: string;
+    arguments: string;
   };
 };
 
 export type LlmResponse = {
   content: string | null;
+  toolCalls?: LlmToolCall[];
 };
+
+export type LlmMessage =
+  | { role: 'user'; content: string }
+  | { role: 'assistant'; content: string | null; tool_calls?: LlmToolCall[] }
+  | { role: 'tool'; tool_call_id: string; content: string };
 
 export interface LlmRequest {
   prompt: string;
   systemContext?: string;
-  messageHistory?: { role: 'user' | 'assistant'; content: string }[];
+  tools?: LlmToolSchema[];
+  messageHistory?: LlmMessage[];
   providerOverride?: 'openrouter' | 'nvidia';
   modelOverride?: string;
 }
@@ -133,7 +149,7 @@ export class LlmService {
   }
 
   async generateResponse(llmRequest: LlmRequest): Promise<LlmResponse> {
-    const { prompt, systemContext, messageHistory, providerOverride, modelOverride } = llmRequest;
+    const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools } = llmRequest;
     const client = this.getClient(providerOverride);
     const activeModel = modelOverride || this.model;
 
@@ -151,6 +167,7 @@ export class LlmService {
           ...(messageHistory?.length ? messageHistory : []),
           { role: 'user', content: prompt },
         ],
+        tools: tools && tools.length > 0 ? (tools as any) : undefined,
         temperature: 0.2,
       });
 
@@ -164,13 +181,14 @@ export class LlmService {
 
     const message = completion.choices[0].message;
     const content = typeof message?.content === 'string' ? message.content : null;
+    const toolCalls = (message.tool_calls || []) as LlmToolCall[];
 
-    this.logger.log(`Response OK: content=${content?.length ?? 0} chars`);
-    return { content };
+    this.logger.log(`Response OK: content=${content?.length ?? 0} chars, toolCalls=${toolCalls.length}`);
+    return { content, toolCalls };
   }
 
   async *generateStream(llmRequest: LlmRequest): AsyncIterable<string> {
-    const { prompt, systemContext, messageHistory, providerOverride, modelOverride } = llmRequest;
+    const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools } = llmRequest;
     const client = this.getClient(providerOverride);
     const activeModel = modelOverride || this.model;
 
@@ -191,6 +209,7 @@ export class LlmService {
               ...(messageHistory?.length ? messageHistory : []),
               { role: 'user', content: prompt },
             ],
+            tools: tools && tools.length > 0 ? (tools as any) : undefined,
             temperature: 0.7,
           });
         },

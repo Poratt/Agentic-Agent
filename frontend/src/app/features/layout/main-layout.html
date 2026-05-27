@@ -19,10 +19,33 @@
         <span class="material-symbols-rounded nav-icon">group</span>
         <span class="nav-label">ניהול משתמשים</span>
       </a>
+      
+      <!-- פריט ניווט ראשי לצ'אט -->
       <a routerLink="/chat" routerLinkActive="active" class="nav-item">
         <span class="material-symbols-rounded nav-icon">chat</span>
         <span class="nav-label">שיחה עם סוכן</span>
       </a>
+
+      <!-- רשימה פנימית מדורגת של 5 השיחות האחרונות -->
+      @if (chatStore.recentSessions().length > 0) {
+        <div class="nested-sessions-list">
+          @for (session of chatStore.recentSessions(); track session.id) {
+            <a [routerLink]="['/chat']" [queryParams]="{ sessionId: session.id }" 
+               class="session-sub-item" [class.active]="chatStore.currentSessionId() === session.id">
+              <span class="material-symbols-rounded">chat_bubble</span>
+              <span class="session-title-label">{{ session.title }}</span>
+            </a>
+          }
+
+          <!-- כפתור "כל השיחות..." לפתיחת פופאפ ארכיון כל השיחות -->
+          @if (chatStore.sessions().length > 5) {
+            <button class="btn-show-all-sessions" type="button" (click)="openAllSessionsDialog()">
+              <span class="material-symbols-rounded">database</span>
+              <span>כל השיחות...</span>
+            </button>
+          }
+        </div>
+      }
     </nav>
 
     <div class="sidebar-footer glass-effect">
