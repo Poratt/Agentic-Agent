@@ -1,3 +1,5 @@
+// FILE: frontend/src/app/core/directives/ai-format.directive.ts
+
 import { Directive, ElementRef, input, OnChanges, Renderer2, inject } from '@angular/core';
 
 @Directive({
@@ -18,16 +20,15 @@ export class AiFormat implements OnChanges {
   private roleBadge(text: string): string {
     const t = text.trim();
     if (t === 'מנהל' || t.toLowerCase() === 'admin') {
-      return `<span class="ai-role-badge ai-role-admin">${t}</span>`;
+      return `<span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="material-symbols-rounded sm">shield</span>מנהל</span>`;
     }
     if (t === 'משתמש' || t.toLowerCase() === 'user') {
-      return `<span class="ai-role-badge ai-role-user">${t}</span>`;
+      return `<span class="badge badge-info"><span class="material-symbols-rounded sm">person</span>משתמש</span>`;
     }
     return `<strong>${t}</strong>`;
   }
 
   private parse(text: string): string {
-    // שלב 1: חילוץ טבלאות לפני שה-Markdown הכללי מלכלך את השורות ב-<br>
     const TABLE_PLACEHOLDER = '§TABLE§';
     const tables: string[] = [];
 
@@ -36,7 +37,6 @@ export class AiFormat implements OnChanges {
       return TABLE_PLACEHOLDER + (tables.length - 1) + '§';
     });
 
-    // שלב 2: עיבוד Markdown כללי לשאר הטקסט
     let processed = withTables
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -55,13 +55,30 @@ export class AiFormat implements OnChanges {
       .replace(/^---$/gm, '<hr>')
       .replace(/\n/g, '<br>');
 
-    // ניקוי וצמצום של ירידות שורה כפולות או מיותרות ליד תגיות בלוק מבניות
     processed = processed
       .replace(/(<br>\s*){2,}/gi, '<br>')
       .replace(/<br>\s*<(h1|h2|h3|hr|ul|li|table|thead|tbody|tr|div|pre)/gi, '<$1')
       .replace(/<\/(h1|h2|h3|hr|ul|li|table|thead|tbody|tr|div|pre)>\s*<br>/gi, '</$1>');
 
-    // שלב 3: החזרת הטבלאות המעובדות למקומן
+    // הוספת החלפת תפקידים דינמית בטקסט חופשי וברשימות
+    processed = processed
+      .replace(
+        /(תפקיד|Role):\s*(מנהל|Admin)/g,
+        `$1: <span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="material-symbols-rounded sm">shield</span>מנהל</span>`
+      )
+      .replace(
+        /(תפקיד|Role):\s*(משתמש|User)/g,
+        `$1: <span class="badge badge-info"><span class="material-symbols-rounded sm">person</span>משתמש</span>`
+      )
+      .replace(
+        /\b(Admin|מנהל)\s*\(ID:\s*(\d+)\)/gi,
+        `<span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="material-symbols-rounded sm">shield</span>מנהל</span> (ID: $2)`
+      )
+      .replace(
+        /\b(User|משתמש)\s*\(ID:\s*(\d+)\)/gi,
+        `<span class="badge badge-info"><span class="material-symbols-rounded sm">person</span>משתמש</span> (ID: $2)`
+      );
+
     return processed.replace(/§TABLE§(\d+)§/g, (_, i) => {
       return tables[+i];
     });

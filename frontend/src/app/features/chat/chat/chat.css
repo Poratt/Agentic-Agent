@@ -87,17 +87,17 @@
 				display: flex;
 				align-items: center;
 				gap: var(--space-2);
-				font-size: var(--font-size-xs);
+				font-size: var(--font-size-sm);
 				color: var(--color-text-secondary);
 				margin-bottom: var(--space-2);
 
 				.role-icon {
-					font-size: var(--font-size-sm);
+					font-size: var(--font-size-xxl);
 				}
 			}
 
 			.message-body {
-				font-size: var(--font-size-md);
+				font-size: var(--font-size-sm);
 				color: var(--color-text-primary);
 			}
 

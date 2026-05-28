@@ -4,6 +4,7 @@ button {
   align-items: center;
   justify-content: center;
   transition: var(--transition-standard);
+  font-family: inherit;
 }
 
 .btn-primary {
@@ -13,7 +14,6 @@ button {
   border: none;
   border-radius: var(--radius-sm);
   color: var(--color-white);
-  font-family: var(--font-main);
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;

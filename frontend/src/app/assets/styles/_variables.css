@@ -83,6 +83,7 @@
   --color-text-secondary-light: #475569;
 
   --color-primary: var(--color-primary-light);
+  --color-secondary: var(--color-secondary-light);
   --color-bg: var(--color-bg-light);
   --color-surface: var(--color-surface-light);
   --color-border: var(--color-border-light);
