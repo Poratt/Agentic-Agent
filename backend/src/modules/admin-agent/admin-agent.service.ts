@@ -8,6 +8,15 @@ import { SYSTEM_CONTEXT } from './constants/system-context.constant';
 import { SwaggerToolsParser } from './services/swagger-tools.parser';
 
 const MAX_ITERATIONS = 5;
+const STEP_ICONS = {
+  init: 'search',
+  title: 'edit_note',
+  thinking: 'psychology',
+  tool: 'settings',
+  error: 'error',
+  success: 'check_circle',
+  finalizing: 'draw',
+} as const;
 
 @Injectable()
 export class AdminAgentService implements OnModuleInit {
@@ -113,10 +122,10 @@ export class AdminAgentService implements OnModuleInit {
     userId: number,
     requestedSessionId?: number,
   ): AsyncIterable<string> {
-    yield JSON.stringify({ type: 'step', message: '🔍 מאתחל את שיחת הסוכן ומחבר היסטוריה...' }) + '\n';
+    yield JSON.stringify({ type: 'step', icon: STEP_ICONS.init, message: 'מאתחל את שיחת הסוכן ומחבר היסטוריה...' }) + '\n';
     const session = await this.agentSessionService.getOrCreateSession(userId, requestedSessionId);
 
-    yield JSON.stringify({ type: 'step', message: '📝 מנתח את כותרת השיחה הנוכחית...' }) + '\n';
+    yield JSON.stringify({ type: 'step', icon: STEP_ICONS.title, message: 'מנתח את כותרת השיחה הנוכחית...' }) + '\n';
     await this.agentSessionService.updateSessionTitleIfDefault(session, prompt);
     await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt);
 
@@ -124,7 +133,7 @@ export class AdminAgentService implements OnModuleInit {
     const dynamicSystemContext = SYSTEM_CONTEXT.replace(/{{CURRENT_USER_ID}}/g, String(userId));
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration = iteration + 1) {
-      yield JSON.stringify({ type: 'step', message: '🤔 מנתח את הבקשה ומכין תוכנית עבודה...' }) + '\n';
+      yield JSON.stringify({ type: 'step', icon: STEP_ICONS.thinking, message: 'מנתח את הבקשה ומכין תוכנית עבודה...' }) + '\n';
       const history = await this.agentSessionService.loadHistory(session.id, userId);
 
       const llmResponse = await this.llmService.generateResponse({
@@ -147,20 +156,20 @@ export class AdminAgentService implements OnModuleInit {
           const args = JSON.parse(call.function.arguments || '{}');
           const description = this.agentToolExecutorService.getSemanticActionDescription(call.function.name, args);
           
-          yield JSON.stringify({ type: 'step', message: `⚙️ מפעיל כלי: ${description}...` }) + '\n';
+          yield JSON.stringify({ type: 'step', icon: STEP_ICONS.tool, message: `מפעיל כלי: ${description}...` }) + '\n';
 
           const resultData = await this.agentToolExecutorService.executeToolCall(call, userId);
           
           if (resultData.includes('error')) {
-            yield JSON.stringify({ type: 'step', message: '❌ ביצוע השלב נכשל עקב מגבלות אבטחה או שגיאת שרת.' }) + '\n';
+            yield JSON.stringify({ type: 'step', icon: STEP_ICONS.error, message: 'ביצוע השלב נכשל עקב מגבלות אבטחה או שגיאת שרת.' }) + '\n';
           } else {
-            yield JSON.stringify({ type: 'step', message: '✅ השלב בושל בהצלחה!' }) + '\n';
+            yield JSON.stringify({ type: 'step', icon: STEP_ICONS.success, message: 'השלב בוצע בהצלחה!' }) + '\n';
           }
 
           await this.agentSessionService.saveMessage(userId, session.id, 'tool', resultData, call.id);
         }
       } else {
-        yield JSON.stringify({ type: 'step', message: '✍️ מגבש תשובה סופית ומזרים נתונים...' }) + '\n';
+        yield JSON.stringify({ type: 'step', icon: STEP_ICONS.finalizing, message: 'מגבש תשובה סופית ומזרים נתונים...' }) + '\n';
 
         let accumulatedResponse = '';
         try {

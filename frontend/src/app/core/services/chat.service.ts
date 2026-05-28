@@ -3,7 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { IChatSession } from '../models/chat-session.interface';
-import { IChatMessage } from '../models/chat-message.interface';
+import { IChatMessage, IChatStep } from '../models/chat-message.interface';
+
+export type ChatStreamEvent =
+	| ({ type: 'step' } & IChatStep)
+	| { type: 'token'; content?: string };
 
 @Injectable({
 	providedIn: 'root',
@@ -32,7 +36,7 @@ export class ChatService {
 	sendMessageStream(
 		prompt: string,
 		sessionId?: number,
-	): Observable<{ type: 'step' | 'token'; message?: string; content?: string }> {
+	): Observable<ChatStreamEvent> {
 		return new Observable((observer) => {
 			const controller = new AbortController();
 			let buffer = '';

@@ -114,6 +114,10 @@
 				&[open] {
 					background: rgba(0, 212, 255, 0.02);
 					border-color: var(--color-primary-glow);
+
+					.expand-icon {
+						transform: rotate(180deg);
+					}
 				}
 
 				.thinking-summary {
@@ -134,7 +138,17 @@
 
 					.summary-icon {
 						font-size: var(--font-size-md);
-						animation: pulse 2s infinite;
+
+						&.thinking {
+							animation: pulse 2s infinite;
+						}
+					}
+
+					.expand-icon {
+						margin-inline-end: auto;
+						font-size: var(--font-size-lg);
+						transform-origin: center;
+						transition: transform 0.2s ease;
 					}
 				}
 
@@ -154,6 +168,11 @@
 						gap: var(--space-2);
 						color: var(--color-text-secondary);
 						animation: fadeIn 0.3s ease-in-out forwards;
+
+						.material-symbols-rounded {
+							color: var(--color-primary);
+							font-size: var(--font-size-md);
+						}
 					}
 				}
 			}

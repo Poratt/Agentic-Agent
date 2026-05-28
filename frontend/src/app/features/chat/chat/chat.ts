@@ -110,14 +110,14 @@ export class Chat implements OnInit, OnDestroy {
 
 		this.chatService.sendMessageStream(promptValue, currentId).subscribe({
 			next: (event) => {
-				if (event.type === 'step' && event.message) {
+				if (event.type === 'step' && event.message && event.icon) {
 					this.messages.update((prev) => {
 						const updated = [...prev];
 						const lastIndex = updated.length - 1;
 						const currentSteps = updated[lastIndex].steps || [];
 						updated[lastIndex] = {
 							...updated[lastIndex],
-							steps: [...currentSteps, event.message!],
+							steps: [...currentSteps, { icon: event.icon, message: event.message }],
 						};
 						return updated;
 					});
