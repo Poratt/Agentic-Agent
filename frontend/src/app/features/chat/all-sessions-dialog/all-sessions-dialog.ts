@@ -9,10 +9,13 @@ import { ChatStore } from '../../../core/store/chat.store';
 	imports: [CommonModule],
 	templateUrl: './all-sessions-dialog.html',
 	styleUrl: './all-sessions-dialog.css',
+	host: {
+		'(click)': 'onOverlayClick($event)',
+	},
 })
 export class AllSessionsDialog {
 	protected chatStore = inject(ChatStore);
-	private ref = inject(DynamicDialogRef);
+	public ref = inject(DynamicDialogRef);
 
 	searchQuery = signal<string>('');
 
@@ -43,6 +46,13 @@ export class AllSessionsDialog {
 
 		if (confirm('האם אתה בטוח שברצונך למחוק שיחה זו?')) {
 			this.chatStore.deleteSession(sessionId);
+		}
+	}
+
+	onOverlayClick(event: Event) {
+		const target = event.target as HTMLElement;
+		if (target.classList.contains('p-dialog')) {
+			this.ref.close();
 		}
 	}
 }

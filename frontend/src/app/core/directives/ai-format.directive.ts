@@ -20,10 +20,10 @@ export class AiFormat implements OnChanges {
   private roleBadge(text: string): string {
     const t = text.trim();
     if (t === 'מנהל' || t.toLowerCase() === 'admin') {
-      return `<span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="material-symbols-rounded sm">shield</span>מנהל</span>`;
+      return `<span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="ph sm">shield</span>מנהל</span>`;
     }
     if (t === 'משתמש' || t.toLowerCase() === 'user') {
-      return `<span class="badge badge-info"><span class="material-symbols-rounded sm">person</span>משתמש</span>`;
+      return `<span class="badge badge-info"><span class="ph sm">person</span>משתמש</span>`;
     }
     return `<strong>${t}</strong>`;
   }
@@ -64,19 +64,19 @@ export class AiFormat implements OnChanges {
     processed = processed
       .replace(
         /(תפקיד|Role):\s*(מנהל|Admin)/g,
-        `$1: <span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="material-symbols-rounded sm">shield</span>מנהל</span>`
+        `$1: <span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="ph sm">shield</span>מנהל</span>`
       )
       .replace(
         /(תפקיד|Role):\s*(משתמש|User)/g,
-        `$1: <span class="badge badge-info"><span class="material-symbols-rounded sm">person</span>משתמש</span>`
+        `$1: <span class="badge badge-info"><span class="ph sm">person</span>משתמש</span>`
       )
       .replace(
         /\b(Admin|מנהל)\s*\(ID:\s*(\d+)\)/gi,
-        `<span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="material-symbols-rounded sm">shield</span>מנהל</span> (ID: $2)`
+        `<span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="ph sm">shield</span>מנהל</span> (ID: $2)`
       )
       .replace(
         /\b(User|משתמש)\s*\(ID:\s*(\d+)\)/gi,
-        `<span class="badge badge-info"><span class="material-symbols-rounded sm">person</span>משתמש</span> (ID: $2)`
+        `<span class="badge badge-info"><span class="ph sm">person</span>משתמש</span> (ID: $2)`
       );
 
     return processed.replace(/§TABLE§(\d+)§/g, (_, i) => {

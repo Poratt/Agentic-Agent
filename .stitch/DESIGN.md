@@ -48,5 +48,5 @@
 - **Danger Buttons:** `.btn-danger` (Red outline/background, shifts to solid red on hover).
 - **Ghost Buttons:** `.btn-ghost` (Transparent background, outlines border and shifts text color on hover).
 - **Form Fields:** `input`, `textarea`, `select` must use `var(--color-input-bg)`, solid border, and outline-glow on `:focus`.
-- **Global Badges:** `.badge` component with dynamic background using custom directive `[badgeColor]`. Uses semantic icons (`.material-symbols-rounded`).
+- **Global Badges:** `.badge` component with dynamic background using custom directive `[badgeColor]`. Uses semantic icons (`.ph`).
 - **Real-Time Status Indicators:** `.status-indicator` containing a pulsing green dot (`.pulse-dot`) to represent API connectivity and system health.

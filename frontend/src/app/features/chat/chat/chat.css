@@ -144,6 +144,10 @@
 						}
 					}
 
+					.summary-label {
+						display: inline;
+					}
+
 					.expand-icon {
 						margin-inline-end: auto;
 						font-size: var(--font-size-lg);
@@ -169,7 +173,7 @@
 						color: var(--color-text-secondary);
 						animation: fadeIn 0.3s ease-in-out forwards;
 
-						.material-symbols-rounded {
+						.ph {
 							color: var(--color-primary);
 							font-size: var(--font-size-md);
 						}

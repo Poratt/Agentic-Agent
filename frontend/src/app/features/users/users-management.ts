@@ -23,6 +23,8 @@ export class UsersManagement implements OnInit {
 
   ngOnInit() {
     this.usersStore.loadUsers();
+    console.log(this.getUserRoleData(1)?.icon);
+    
   }
 
   toggleRole(userId: number, currentRole: UserRole) {
@@ -30,9 +32,21 @@ export class UsersManagement implements OnInit {
     this.usersStore.updateUserRole(userId, targetRole);
   }
 
+getUserRoleIcon(role: UserRole) {
+  const icon = this.getUserRoleData(role)?.icon ?? '';
+  return {
+    ph: true,
+    [icon]: !!icon,
+    sm: true,
+  };
+}
+
+
   deleteUser(userId: number) {
     if (confirm('האם אתה בטוח שברצונך למחוק משתמש זה? פעולה זו אינה הפיכה.')) {
       this.usersStore.deleteUser(userId);
     }
   }
+
+
 }

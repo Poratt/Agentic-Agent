@@ -51,14 +51,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
+  gap: var(--space-1);
+  padding: 2px var(--space-2) 2px var(--space-3);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
-  border: 1px solid transparent; /* בסיס גבול הכרחי לצורך דריסה דינמית */
+  border: 1px solid transparent; 
 
   /* הבטחה שהאייקון בפנים יירש את הצבע הדינמי מההורה */
+  .ph,
   .material-symbols-rounded {
     color: inherit;
   }

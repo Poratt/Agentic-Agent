@@ -7,24 +7,22 @@
 			(click)="themeService.toggle()"
 			[attr.aria-label]="themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
 		>
-			<span class="material-symbols-rounded nav-icon">
-				{{ themeService.isDark() ? 'dark_mode' : 'light_mode' }}
-			</span>
+			<i class="ph nav-icon" [class.ph-moon]="themeService.isDark()" [class.ph-sun]="!themeService.isDark()"></i>
 		</button>
 	</div>
 
 	<nav class="nav-list">
 		<a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
-			<span class="material-symbols-rounded nav-icon">dashboard</span>
+			<i class="ph ph-squares-four nav-icon"></i>
 			<span class="nav-label">לוח בקרה</span>
 		</a>
 		<a routerLink="/users" routerLinkActive="active" class="nav-item">
-			<span class="material-symbols-rounded nav-icon">group</span>
+			<i class="ph ph-users nav-icon"></i>
 			<span class="nav-label">ניהול משתמשים</span>
 		</a>
 
 		<a routerLink="/chat" routerLinkActive="active" class="nav-item">
-			<span class="material-symbols-rounded nav-icon">chat</span>
+			<i class="ph ph-chat-circle-text nav-icon"></i>
 			<span class="nav-label">שיחה עם סוכן</span>
 		</a>
 
@@ -37,14 +35,14 @@
 						class="session-sub-item"
 						[class.active]="chatStore.currentSessionId() === session.id"
 					>
-						<span class="material-symbols-rounded">chat_bubble</span>
+						<i class="ph ph-chat-centered-text"></i>
 						<span class="session-title-label">{{ session.title }}</span>
 					</a>
 				}
 
 				@if (chatStore.sessions().length > 5) {
 					<button class="btn-show-all-sessions" type="button" (click)="openAllSessionsDialog()">
-						<span class="material-symbols-rounded">database</span>
+						<i class="ph ph-database"></i>
 						<span>כל השיחות...</span>
 					</button>
 				}
@@ -61,18 +59,15 @@
 				<span class="user-name">{{ authStore.user()?.email }}</span>
 				@if (authStore.user()?.role !== null && authStore.user()?.role !== undefined) {
 					<span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)?.color">
-						<span class="material-symbols-rounded sm" [class.filled]="authStore.user()?.role === 1">
-							{{ getUserRoleData(authStore.user()!.role)?.icon }}
-						</span>
+						<i class="ph sm" [ngClass]="getUserRoleData(authStore.user()!.role)?.icon"></i>
 						{{ getUserRoleData(authStore.user()!.role)?.heLabel }}
 					</span>
 				}
 			</div>
 		</div>
 		<button (click)="authStore.logout()" class="btn-ghost logout-btn">
-			<span class="material-symbols-rounded nav-icon">logout</span>
+			<i class="ph ph-sign-out ph-fill nav-icon"></i>
 			<span>התנתקות</span>
 		</button>
 	</div>
 </aside>
-

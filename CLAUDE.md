@@ -7,6 +7,7 @@
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
 
 Before implementing:
+- **Analyze the 'blast radius'**: Ask "What unexpected side effects could this have on unrelated parts of the system?" and "Could this change break something elsewhere?"
 - State your assumptions explicitly. If uncertain, ask.
 - If multiple interpretations exist, present them - don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
@@ -97,6 +98,7 @@ All styles live in `frontend/src/app/assets/styles/`:
 ### Class Naming Convention
 - Generic names only: `.page`, `.card`, `.form`, `.form-group`, `.page-header`, `.page-footer`
 - NEVER component-specific names like `.login-page`, `.login-card`
+- **Strict Global Naming**: NEVER create or generalize global utility classes (e.g., `.sm`, `.lg`) without first running a project-wide search (`Grep`) to ensure the name isn't already used. Avoid introducing generic names that could collide with other libraries or elements.
 - Glassmorphism via `::before` pseudo-element ONLY — never `backdrop-filter` directly on element
 
 ### Glassmorphism Pattern (MANDATORY)

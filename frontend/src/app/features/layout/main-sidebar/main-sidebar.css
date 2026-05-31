@@ -152,11 +152,6 @@
 			color: var(--color-primary);
 		}
 
-		.material-symbols-rounded {
-			font-size: var(--font-size-sm);
-			width: 16px;
-			height: 16px;
-		}
 
 		.session-title-label {
 			white-space: nowrap;
@@ -184,10 +179,5 @@
 			border-radius: var(--radius-sm);
 		}
 
-		.material-symbols-rounded {
-			font-size: var(--font-size-sm);
-			width: 16px;
-			height: 16px;
-		}
 	}
 }

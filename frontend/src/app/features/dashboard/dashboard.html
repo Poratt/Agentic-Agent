@@ -6,14 +6,14 @@
   }
   @case (PageStates.Error) {
     <div class="page-state error-state">
-      <span class="icon material-symbols-rounded">error</span>
+      <span class="icon ph ph-warning"></span>
       <h4 class="title">אירעה שגיאה בטעינת הנתונים.</h4>
       <p class="subtitle">אנא נסה שוב מאוחר יותר.</p>
     </div>
   }
   @case (PageStates.Empty) {
     <div class="page-state empty-state">
-      <span class="icon material-symbols-rounded">analytics</span>
+      <span class="icon ph ph-chart-bar"></span>
       <h4 class="title">אין נתונים זמינים.</h4>
       <p class="subtitle">לא נמצאו מדדים להצגה כרגע.</p>
     </div>
@@ -28,7 +28,7 @@
       <div class="grid-3">
         <div class="glass-effect card metric-card">
           <div class="metric-header">
-            <span class="material-symbols-rounded metric-icon">people</span>
+            <span class="ph ph-users metric-icon"></span>
             <h3>משתמשים רשומים</h3>
           </div>
           <div class="metric-value">{{ usersStore.users().length }}</div>
@@ -36,16 +36,14 @@
 
         <div class="glass-effect card metric-card">
           <div class="metric-header">
-            <span class="material-symbols-rounded metric-icon">account_circle</span>
+            <span class="ph ph-user metric-icon"></span>
             <h3>חיבור פעיל</h3>
           </div>
           <div class="metric-details">
             <span class="detail-item">{{ authStore.user()?.email }}</span>
             @if (authStore.user()?.role !== null && authStore.user()?.role !== undefined) {
               <span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)?.color">
-                <span class="material-symbols-rounded sm" [class.filled]="authStore.user()?.role === 1">
-                  {{ getUserRoleData(authStore.user()!.role)?.icon }}
-                </span>
+                <span class="ph sm" [ngClass]="getUserRoleData(authStore.user()!.role)?.icon"></span>
                 {{ getUserRoleData(authStore.user()!.role)?.heLabel }}
               </span>
             }
@@ -54,7 +52,7 @@
 
         <div class="glass-effect card metric-card">
           <div class="metric-header">
-            <span class="material-symbols-rounded metric-icon">dns</span>
+            <span class="ph ph-globe metric-icon"></span>
             <h3>סטטוס מערכת</h3>
           </div>
           <div class="metric-details">
