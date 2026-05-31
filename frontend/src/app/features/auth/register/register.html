@@ -37,7 +37,7 @@
         }
       </div>
 
-      <button type="submit" class="btn-primary" [disabled]="registerForm.invalid || authStore.loading()">
+      <button type="submit" class="primary-btn" [disabled]="registerForm.invalid || authStore.loading()">
         {{ authStore.loading() ? 'טוען...' : 'הרשמה' }}
       </button>
     </form>

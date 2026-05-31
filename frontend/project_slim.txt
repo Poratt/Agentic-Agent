@@ -1,0 +1,3756 @@
+﻿
+========================================
+FILE: src\app\core\config\primeng-define-preset.ts
+========================================
+
+import Aura from '@primeuix/themes/aura';
+import { definePreset } from '@primeuix/themes';
+import { PrimeNGConfigType, providePrimeNG } from 'primeng/config';
+import { MessageService } from 'primeng/api';
+import { DialogService } from 'primeng/dynamicdialog';
+
+export const DARK_MODE_SELECTOR = '[data-theme="dark"]';
+
+const PRIMARY_PALETTE = {
+  50: 'color-mix(in srgb, var(--color-primary) 10%, white)',
+  100: 'color-mix(in srgb, var(--color-primary) 18%, white)',
+  200: 'color-mix(in srgb, var(--color-primary) 30%, white)',
+  300: 'color-mix(in srgb, var(--color-primary) 45%, white)',
+  400: 'color-mix(in srgb, var(--color-primary) 65%, white)',
+  500: 'var(--color-primary)',
+  600: 'color-mix(in srgb, var(--color-primary) 85%, black)',
+  700: 'color-mix(in srgb, var(--color-primary) 70%, black)',
+  800: 'color-mix(in srgb, var(--color-primary) 55%, black)',
+  900: 'color-mix(in srgb, var(--color-primary) 40%, black)',
+  950: 'color-mix(in srgb, var(--color-primary) 30%, black)',
+};
+
+export const AppThemePreset = definePreset(Aura, {
+  semantic: {
+    primary: PRIMARY_PALETTE,
+    colorScheme: {
+      light: {
+        primary: {
+          color: '{primary.500}',
+          inverseColor: 'var(--color-white)',
+          hoverColor: '{primary.600}',
+          activeColor: '{primary.700}',
+        },
+      },
+      dark: {
+        primary: {
+          color: '{primary.400}',
+          inverseColor: 'var(--color-bg)',
+          hoverColor: '{primary.300}',
+          activeColor: '{primary.200}',
+        },
+      },
+    },
+  },
+});
+
+export const AppPrimeConfig: PrimeNGConfigType = {
+  theme: {
+    preset: AppThemePreset,
+    options: {
+      darkModeSelector: DARK_MODE_SELECTOR,
+    },
+  },
+  ripple: true,
+  overlayAppendTo: 'body',
+  inputVariant: 'filled',
+  pt: {
+    button: {},
+    pagination: {},
+    menu: {
+      list: { class: '' },
+      item: { class: '' },
+      itemContent: { class: '' },
+      itemLink: { class: '' },
+      itemIcon: { class: '' },
+      itemLabel: { class: '' },
+      separator: { class: '' },
+      submenuLabel: { class: '!' },
+    },
+  },
+};
+
+export const PRIME_NG_PROVIDERS = [providePrimeNG(AppPrimeConfig), MessageService, DialogService];
+
+========================================
+FILE: src\app\core\directives\access-to.directive.ts
+========================================
+
+import { Directive, inject, Input, TemplateRef, ViewContainerRef } from '@angular/core';
+import { UserRole } from '../enums/user-role.enum';
+import { AuthStore } from '../store/auth.store';
+
+@Directive({
+  selector: '[accessTo]',
+  standalone: true,
+})
+export class AccessToDirective {
+  private templateRef = inject(TemplateRef<unknown>);
+  private vcr = inject(ViewContainerRef);
+  private authStore = inject(AuthStore);
+
+  @Input() set accessTo(roles: UserRole[]) {
+    const userRole = this.authStore.user()?.role;
+    const hasAccess = roles.includes(userRole as UserRole);
+
+    this.vcr.clear();
+    if (hasAccess) {
+      this.vcr.createEmbeddedView(this.templateRef);
+    }
+  }
+}
+
+========================================
+FILE: src\app\core\directives\ai-format.directive.ts
+========================================
+
+// FILE: frontend/src/app/core/directives/ai-format.directive.ts
+
+import { Directive, ElementRef, input, OnChanges, Renderer2, inject } from '@angular/core';
+
+@Directive({
+  selector: '[aiFormat]',
+  standalone: true,
+})
+export class AiFormat implements OnChanges {
+  aiFormat = input<string>('');
+
+  private el = inject(ElementRef);
+  private renderer = inject(Renderer2);
+
+  ngOnChanges() {
+    const raw = this.aiFormat() ?? '';
+    this.renderer.setProperty(this.el.nativeElement, 'innerHTML', this.parse(raw));
+  }
+
+  private roleBadge(text: string): string {
+    const t = text.trim();
+    if (t === '׳׳ ׳”׳' || t.toLowerCase() === 'admin') {
+      return `<span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="ph sm">shield</span>׳׳ ׳”׳</span>`;
+    }
+    if (t === '׳׳©׳×׳׳©' || t.toLowerCase() === 'user') {
+      return `<span class="badge badge-info"><span class="ph sm">person</span>׳׳©׳×׳׳©</span>`;
+    }
+    return `<strong>${t}</strong>`;
+  }
+
+  private parse(text: string): string {
+    const TABLE_PLACEHOLDER = 'ֲ§TABLEֲ§';
+    const tables: string[] = [];
+
+    const withTables = text.replace(/((?:^\|.+\|[ \t]*\n?)+)/gm, (block) => {
+      tables.push(this.parseTable(block));
+      return TABLE_PLACEHOLDER + (tables.length - 1) + 'ֲ§';
+    });
+
+    let processed = withTables
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^\* (.+)$/gm, '<li>$1</li>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/(<li>[\s\S]*?<\/li>)/g, (match) => {
+        return `<ul>${match}</ul>`;
+      })
+      .replace(/^---$/gm, '<hr>')
+      .replace(/\n/g, '<br>');
+
+    processed = processed
+      .replace(/(<br>\s*){2,}/gi, '<br>')
+      .replace(/<br>\s*<(h1|h2|h3|hr|ul|li|table|thead|tbody|tr|div|pre)/gi, '<$1')
+      .replace(/<\/(h1|h2|h3|hr|ul|li|table|thead|tbody|tr|div|pre)>\s*<br>/gi, '</$1>');
+
+    // ׳”׳•׳¡׳₪׳× ׳”׳—׳׳₪׳× ׳×׳₪׳§׳™׳“׳™׳ ׳“׳™׳ ׳׳™׳× ׳‘׳˜׳§׳¡׳˜ ׳—׳•׳₪׳©׳™ ׳•׳‘׳¨׳©׳™׳׳•׳×
+    processed = processed
+      .replace(
+        /(׳×׳₪׳§׳™׳“|Role):\s*(׳׳ ׳”׳|Admin)/g,
+        `$1: <span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="ph sm">shield</span>׳׳ ׳”׳</span>`
+      )
+      .replace(
+        /(׳×׳₪׳§׳™׳“|Role):\s*(׳׳©׳×׳׳©|User)/g,
+        `$1: <span class="badge badge-info"><span class="ph sm">person</span>׳׳©׳×׳׳©</span>`
+      )
+      .replace(
+        /\b(Admin|׳׳ ׳”׳)\s*\(ID:\s*(\d+)\)/gi,
+        `<span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="ph sm">shield</span>׳׳ ׳”׳</span> (ID: $2)`
+      )
+      .replace(
+        /\b(User|׳׳©׳×׳׳©)\s*\(ID:\s*(\d+)\)/gi,
+        `<span class="badge badge-info"><span class="ph sm">person</span>׳׳©׳×׳׳©</span> (ID: $2)`
+      );
+
+    return processed.replace(/ֲ§TABLEֲ§(\d+)ֲ§/g, (_, i) => {
+      return tables[+i];
+    });
+  }
+
+  private parseTable(block: string): string {
+    const lines = block
+      .trim()
+      .split('\n')
+      .filter((l) => {
+        return l.trim();
+      });
+    if (lines.length < 2) {
+      return block;
+    }
+
+    const inlineMarkdown = (cellText: string): string => {
+      return cellText
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>');
+    };
+
+    const parseRow = (line: string): string[] => {
+      return line
+        .replace(/^\||\|$/g, '')
+        .split('|')
+        .map((c) => {
+          return c.trim();
+        });
+    };
+
+    const isSeparator = (line: string) => {
+      return /^\|?[\s\-|: ]+\|?$/.test(line) && line.includes('-');
+    };
+
+    const headerCells = parseRow(lines[0]);
+    const dataLines = lines.slice(1).filter((l) => {
+      return !isSeparator(l);
+    });
+
+    const roleColIndex = headerCells.findIndex((h) => {
+      const cleanH = h.replace(/\*/g, '').trim();
+      return cleanH === '׳×׳₪׳§׳™׳“' || cleanH.toLowerCase() === 'role';
+    });
+
+    const thead = `<thead><tr>${headerCells
+      .map((h) => {
+        return `<th><span class="ai-table-header">${inlineMarkdown(h)}</span></th>`;
+      })
+      .join('')}</tr></thead>`;
+
+    const tbody = `<tbody>${dataLines
+      .map((line) => {
+        const cells = parseRow(line);
+        const tds = cells
+          .map((c, i) => {
+            const formattedContent = inlineMarkdown(c);
+
+            if (i === roleColIndex) {
+              const cleanTextForBadge = c.replace(/\*/g, '').trim();
+              return `<td>${this.roleBadge(cleanTextForBadge)}</td>`;
+            }
+
+            return `<td>${formattedContent}</td>`;
+          })
+          .join('');
+        return `<tr>${tds}</tr>`;
+      })
+      .join('')}</tbody>`;
+
+    return `<div class="ai-table-wrap"><table class="ai-table">${thead}${tbody}</table></div>`;
+  }
+}
+
+========================================
+FILE: src\app\core\directives\auto-scroll-bottom.directive.ts
+========================================
+
+import {
+  AfterViewInit,
+  Directive,
+  ElementRef,
+  inject,
+  Input,
+  NgZone,
+  OnDestroy,
+} from '@angular/core';
+
+@Directive({
+  selector: '[autoScrollBottom]',
+  standalone: true,
+})
+export class AutoScrollBottomDirective implements AfterViewInit, OnDestroy {
+  private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private ngZone = inject(NgZone);
+
+  private observer?: MutationObserver;
+
+  @Input() autoScrollBottom: boolean = true;
+
+  @Input() set autoScrollBottomTrigger(_: unknown) {
+    if (!this.autoScrollBottom) return;
+    this.scrollToBottom();
+  }
+
+  ngAfterViewInit(): void {
+    if (!this.autoScrollBottom) return;
+
+    this.ngZone.runOutsideAngular(() => {
+      this.observer = new MutationObserver(() => this.scrollToBottom());
+      this.observer.observe(this.host.nativeElement, { childList: true, subtree: true });
+    });
+
+    this.scrollToBottom();
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+    this.observer = undefined;
+  }
+
+  private scrollToBottom(): void {
+    const el = this.host.nativeElement;
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
+  }
+}
+
+========================================
+FILE: src\app\core\directives\badge-color.directive.ts
+========================================
+
+import { Directive, ElementRef, Renderer2, inject, input, effect } from '@angular/core';
+
+@Directive({
+	selector: '[badgeColor]',
+	standalone: true,
+})
+export class BadgeColor {
+	badgeColor = input<string | undefined>('');
+
+	private el = inject(ElementRef);
+	private renderer = inject(Renderer2);
+
+	constructor() {
+		effect(() => {
+			const color = this.badgeColor() || '#94A3B8';
+			const nativeEl = this.el.nativeElement;
+
+			this.renderer.setStyle(nativeEl, 'color', color);
+			this.renderer.setStyle(nativeEl, 'background', color + '1a');
+			this.renderer.setStyle(nativeEl, 'border-color', color + '4d');
+		});
+	}
+}
+
+========================================
+FILE: src\app\core\enums\page-states.enum.ts
+========================================
+
+export enum PageStates {
+  Loading = 1,
+  Ready,
+  Error,
+  Empty,
+}
+
+
+========================================
+FILE: src\app\core\enums\user-role.enum.ts
+========================================
+
+import { EnumData } from '../models/enum-data.model';
+
+export enum UserRole {
+  Admin = 1,
+  User,
+}
+
+export const UserRoleOptions: EnumData[] = [
+  {
+    enumValue: UserRole.Admin,
+    label: 'Admin',
+    heLabel: '׳׳ ׳”׳',
+    description: 'Administrator with full system access and management permissions',
+    icon: 'ph ph-shield ph-fill ',
+    tooltip: 'Full access administrator',
+    color: '#835588'
+  },
+  {
+    enumValue: UserRole.User,
+    label: 'User',
+    heLabel: '׳׳©׳×׳׳©',
+    description: 'Regular user with standard access to the system',
+    icon: 'ph ph-user',
+    tooltip: 'Standard user account',
+    color: '#931188'
+  },
+];
+
+export function getUserRoleData(role: UserRole): EnumData | undefined {
+  return UserRoleOptions.find((data) => data.enumValue === role);
+}
+
+========================================
+FILE: src\app\core\guards\auth.guard.ts
+========================================
+
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { catchError, map, of, tap } from 'rxjs';
+import { AuthService } from '../services/auth.service';
+import { AuthStore } from '../store/auth.store';
+
+export const authGuard: CanActivateFn = () => {
+  const authStore = inject(AuthStore);
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authStore.user()) return of(true);
+
+  return authService.me().pipe(
+    tap((res) => {
+      authStore.user.set(res.result);
+    }),
+    map(() => true),
+    catchError(() => {
+      router.navigate(['/login']);
+      return of(false);
+    }),
+  );
+};
+
+========================================
+FILE: src\app\core\interceptors\auth.interceptor.ts
+========================================
+
+import { HttpInterceptorFn, HttpRequest, HttpHandlerFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, switchMap, throwError } from 'rxjs';
+import { AuthService } from '../services/auth.service';
+import { AuthStore } from '../store/auth.store';
+
+
+export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
+  const authService = inject(AuthService);
+  const authStore = inject(AuthStore);
+  const router = inject(Router);
+
+  return next(req).pipe(
+    catchError((err) => {
+      if (err.status !== 401) {
+        return throwError(() => {
+          return err;
+        });
+      }
+      
+      if (req.url.includes('/auth/refresh') || req.url.includes('/auth/login') || req.url.includes('/auth/logout') || req.url.includes('/auth/me')) {
+        return throwError(() => err);
+      }
+
+      return authService.refresh().pipe(
+        switchMap(() => {
+          return next(req);
+        }),
+        catchError((refreshErr) => {
+          authStore.logout();
+          router.navigate(['/login']);
+          return throwError(() => {
+            return refreshErr;
+          });
+        })
+      );
+    })
+  );
+};
+
+========================================
+FILE: src\app\core\interceptors\with-credentials.interceptor.ts
+========================================
+
+import { HttpInterceptorFn } from '@angular/common/http';
+import { environment } from '../../environments/environment';
+
+export const withCredentialsInterceptor: HttpInterceptorFn = (req, next) => {
+  const isApiCall = req.url.startsWith(environment.apiUrl);
+  if (!isApiCall) return next(req);
+
+  if (req.withCredentials) return next(req);
+
+  return next(req.clone({ withCredentials: true }));
+};
+
+
+========================================
+FILE: src\app\core\models\chat-message.interface.ts
+========================================
+
+export interface IChatStep {
+  icon: string;
+  message: string;
+}
+
+export interface IChatMessage {
+  id?: number;
+  sessionId?: number;
+  role: 'user' | 'assistant' | 'tool';
+  content: string;
+  createdAt?: Date;
+  steps?: IChatStep[];
+}
+
+========================================
+FILE: src\app\core\models\chat-session.interface.ts
+========================================
+
+export interface IChatSession {
+  id: number;
+  userId: number;
+  title: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+========================================
+FILE: src\app\core\models\enum-data.model.ts
+========================================
+
+import { Severity } from "./severity.model";
+
+export type EnumData = {
+  enumValue: number;
+  label: string;
+  heLabel?: string;
+  description?: string;
+  icon?: string;
+  logo?: string;
+  alt?: string;
+  tooltip?: string;
+  tailwind?: string;
+  className?: string;
+  severity?: Severity;
+  color?: string;
+}
+
+========================================
+FILE: src\app\core\models\service-result-container.model.ts
+========================================
+
+export interface ServiceResultContainer<T> {
+	success: boolean;
+	message: string;
+	result: T;
+	error?: string[];
+	retryAfter?: string;
+	statusCode?: number;
+}
+
+========================================
+FILE: src\app\core\models\severity.model.ts
+========================================
+
+export type Severity =
+	'success' |
+	'info' |
+	'warn' |
+	'danger' |
+	'secondary' |
+	'contrast' | 
+	undefined;
+
+========================================
+FILE: src\app\core\models\user-for-login.interface.ts
+========================================
+
+export interface UserForLogin {
+  email: string;
+  password: string;
+}
+
+========================================
+FILE: src\app\core\models\user.interface.ts
+========================================
+
+import { UserRole } from "../enums/user-role.enum";
+
+export interface User {
+  id: number;
+  email: string;
+  fullName?: string;
+  role: UserRole;
+  createdAt: Date;
+  updatedAt: Date;
+  lastLoginAt?: Date;
+  password?: string;
+  refreshToken: string | null;
+}
+
+========================================
+FILE: src\app\core\services\auth.service.ts
+========================================
+
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { User } from '../models/user.interface';
+import { ServiceResultContainer } from '../models/service-result-container.model';
+import { UserForLogin } from '../models/user-for-login.interface';
+
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/auth`;
+
+  login(payload: UserForLogin) {
+    return this.http.post<ServiceResultContainer<User>>(`${this.base}/login`, payload);
+  }
+
+  register(payload: UserForLogin) {
+    return this.http.post<ServiceResultContainer<User>>(`${this.base}/register`, payload);
+  }
+
+  refresh() {
+    return this.http.post<ServiceResultContainer<User>>(`${this.base}/refresh`, {});
+  }
+
+  logout() {
+    return this.http.post<ServiceResultContainer<{ ok: true }>>(`${this.base}/logout`, {});
+  }
+
+  me() {
+    return this.http.get<ServiceResultContainer<User>>(`${this.base}/me`);
+  }
+
+  async checkSession(): Promise<User | null> {
+    try {
+      const me = await firstValueFrom(this.me());
+      return me.result ?? null;
+    } catch {
+      try {
+        const refreshed = await firstValueFrom(this.refresh());
+        return refreshed.result ?? null;
+      } catch {
+        return null;
+      }
+    }
+  }
+}
+
+========================================
+FILE: src\app\core\services\chat.service.ts
+========================================
+
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { IChatSession } from '../models/chat-session.interface';
+import { IChatMessage, IChatStep } from '../models/chat-message.interface';
+
+export type ChatStreamEvent =
+	| ({ type: 'step' } & IChatStep)
+	| { type: 'token'; content?: string };
+
+@Injectable({
+	providedIn: 'root',
+})
+export class ChatService {
+	private http = inject(HttpClient);
+	private base = `${environment.apiUrl}/admin-agent`;
+
+	listSessions(limit?: number): Observable<IChatSession[]> {
+		const url = limit ? `${this.base}/sessions?limit=${limit}` : `${this.base}/sessions`;
+		return this.http.get<IChatSession[]>(url);
+	}
+
+	getSessionMessages(sessionId: number): Observable<IChatMessage[]> {
+		return this.http.get<IChatMessage[]>(`${this.base}/sessions/${sessionId}/messages`);
+	}
+
+	createSession(): Observable<IChatSession> {
+		return this.http.post<IChatSession>(`${this.base}/sessions`, {});
+	}
+
+	deleteSession(sessionId: number): Observable<void> {
+		return this.http.delete<void>(`${this.base}/sessions/${sessionId}`);
+	}
+
+	sendMessageStream(
+		prompt: string,
+		sessionId?: number,
+	): Observable<ChatStreamEvent> {
+		return new Observable((observer) => {
+			const controller = new AbortController();
+			let buffer = '';
+
+			fetch(`${this.base}/query-stream`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ prompt, sessionId }),
+				credentials: 'include',
+				signal: controller.signal,
+			})
+				.then(async (response) => {
+					if (!response.ok) {
+						observer.error(new Error(`Failed to initialize stream: ${response.statusText}`));
+						return;
+					}
+
+					const reader = response.body?.getReader();
+					const decoder = new TextDecoder('utf-8');
+
+					if (!reader) {
+						observer.error(new Error('Response body reader is not available'));
+						return;
+					}
+
+					try {
+						while (true) {
+							const { done, value } = await reader.read();
+							if (done) {
+								break;
+							}
+
+							buffer += decoder.decode(value, { stream: true });
+							const lines = buffer.split('\n');
+
+							// ׳©׳•׳׳¨׳™׳ ׳׳× ׳”׳©׳•׳¨׳” ׳”׳׳—׳¨׳•׳ ׳” ׳׳׳§׳¨׳” ׳©׳”׳™׳ ׳׳§׳•׳˜׳¢׳×
+							buffer = lines.pop() || '';
+
+							for (const line of lines) {
+								const trimmed = line.trim();
+								if (trimmed) {
+									try {
+										const parsed = JSON.parse(trimmed);
+										observer.next(parsed);
+									} catch (err) {
+										console.warn('Failed to parse line-JSON streaming chunk:', trimmed, err);
+									}
+								}
+							}
+						}
+
+						// ׳¢׳™׳‘׳•׳“ ׳”׳©׳׳¨׳™׳•׳× ׳©׳ ׳•׳×׳¨׳• ׳‘׳—׳•׳¦׳¥
+						if (buffer.trim()) {
+							try {
+								const parsed = JSON.parse(buffer.trim());
+								observer.next(parsed);
+							} catch (err) {
+								console.warn('Failed to parse trailing-JSON streaming chunk:', buffer, err);
+							}
+						}
+
+						observer.complete();
+					} catch (err) {
+						observer.error(err);
+					}
+				})
+				.catch((err) => {
+					observer.error(err);
+				});
+
+			return () => {
+				controller.abort();
+			};
+		});
+	}
+}
+
+========================================
+FILE: src\app\core\services\theme.service.ts
+========================================
+
+import { Injectable, computed, signal } from '@angular/core';
+
+export type ThemeMode = 'dark' | 'light';
+
+const THEME_STORAGE_KEY = 'theme';
+
+@Injectable({ providedIn: 'root' })
+export class ThemeService {
+  private readonly modeSignal = signal<ThemeMode>('dark');
+
+  public readonly mode = this.modeSignal.asReadonly();
+  public readonly isDark = computed(() => this.modeSignal() === 'dark');
+
+  public init(): void {
+    const stored = this.readStoredMode();
+    const mode = stored ?? this.getSystemPreferredMode();
+    this.applyMode(mode);
+  }
+
+  public toggle(): void {
+    const next: ThemeMode = this.modeSignal() === 'dark' ? 'light' : 'dark';
+    this.applyMode(next);
+    this.persistMode(next);
+  }
+
+  public setMode(mode: ThemeMode): void {
+    this.applyMode(mode);
+    this.persistMode(mode);
+  }
+
+  private applyMode(mode: ThemeMode): void {
+    this.modeSignal.set(mode);
+    document.documentElement.setAttribute('data-theme', mode);
+  }
+
+  private persistMode(mode: ThemeMode): void {
+    localStorage.setItem(THEME_STORAGE_KEY, mode);
+  }
+
+  private readStoredMode(): ThemeMode | null {
+    const value = localStorage.getItem(THEME_STORAGE_KEY);
+    if (value === 'dark' || value === 'light') {
+      return value;
+    }
+    return null;
+  }
+
+  private getSystemPreferredMode(): ThemeMode {
+    return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? 'dark' : 'light';
+  }
+}
+
+
+========================================
+FILE: src\app\core\services\user.service.ts
+========================================
+
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
+import { ServiceResultContainer } from '../models/service-result-container.model';
+import { User } from '../models/user.interface';
+import { UserRole } from '../enums/user-role.enum';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class UserService {
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/users`;
+
+  list(): Observable<ServiceResultContainer<User[]>> {
+    return this.http.get<ServiceResultContainer<User[]>>(`${this.base}`);
+  }
+
+  getById(id: number): Observable<ServiceResultContainer<User>> {
+    return this.http.get<ServiceResultContainer<User>>(`${this.base}/${id}`);
+  }
+
+  update(id: number, user: Partial<User>): Observable<ServiceResultContainer<User>> {
+    return this.http.patch<ServiceResultContainer<User>>(`${this.base}/${id}`, user);
+  }
+
+  delete(id: number): Observable<ServiceResultContainer<{ deleted: boolean }>> {
+    return this.http.delete<ServiceResultContainer<{ deleted: boolean }>>(`${this.base}/${id}`);
+  }
+
+  updateRole(id: number, role: UserRole): Observable<ServiceResultContainer<User>> {
+    return this.http.patch<ServiceResultContainer<User>>(`${this.base}/${id}/role`, { role });
+  }
+}
+
+========================================
+FILE: src\app\core\store\auth.store.ts
+========================================
+
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+import { User } from '../models/user.interface';
+import { UserForLogin } from '../models/user-for-login.interface';
+
+@Injectable({ providedIn: 'root' })
+export class AuthStore {
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
+  user = signal<User | null>(null);
+  userRole = computed(() => this.user()?.role);
+  loading = signal<boolean>(false);
+  error = signal<string | null>(null);
+
+  login(payload: UserForLogin) {
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.authService.login(payload).subscribe({
+      next: (res) => {
+        this.user.set(res.result);
+        this.loading.set(false);
+        this.router.navigate(['/']);
+      },
+      error: (err) => {
+        this.error.set(err?.error?.message ?? 'Login failed');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  register(payload: UserForLogin) {
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.authService.register(payload).subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.error.set(err?.error?.message ?? 'Registration failed');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  logout() {
+    this.authService.logout().subscribe({
+      next: () => {
+        this.user.set(null);
+        this.router.navigate(['/login']);
+      },
+      error: () => {
+        this.user.set(null);
+        this.router.navigate(['/login']);
+      },
+    });
+  }
+
+  loadMe() {
+    this.loading.set(true);
+
+    this.authService.me().subscribe({
+      next: (res) => {
+        this.user.set(res.result);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.user.set(null);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  clearError() {
+    this.error.set(null);
+  }
+}
+
+========================================
+FILE: src\app\core\store\chat.store.ts
+========================================
+
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { Router } from '@angular/router';
+import { ChatService } from '../services/chat.service';
+import { IChatSession } from '../models/chat-session.interface';
+
+@Injectable({
+	providedIn: 'root',
+})
+export class ChatStore {
+	private chatService = inject(ChatService);
+	private router = inject(Router);
+
+	sessions = signal<IChatSession[]>([]);
+	currentSessionId = signal<number | null>(null);
+	loading = signal<boolean>(false);
+	error = signal<string | null>(null);
+
+	recentSessions = computed(() => {
+		return this.sessions().slice(0, 5);
+	});
+
+	loadSessions(limit?: number) {
+		this.loading.set(true);
+		this.error.set(null);
+
+		this.chatService.listSessions(limit).subscribe({
+			next: (res) => {
+				this.sessions.set(res ?? []);
+				this.loading.set(false);
+			},
+			error: (err) => {
+				this.error.set(err?.message ?? '׳ ׳›׳©׳ ׳‘׳˜׳¢׳™׳ ׳× ׳”׳©׳™׳—׳•׳×.');
+				this.loading.set(false);
+			},
+		});
+	}
+
+	createSession() {
+		this.loading.set(true);
+		this.error.set(null);
+
+		this.chatService.createSession().subscribe({
+			next: (session) => {
+				this.sessions.update((prev) => {
+					return [session, ...prev];
+				});
+				this.currentSessionId.set(session.id);
+				this.loading.set(false);
+				this.router.navigate(['/chat'], { queryParams: { sessionId: session.id } });
+			},
+			error: (err) => {
+				this.error.set(err?.message ?? '׳ ׳›׳©׳ ׳‘׳™׳¦׳™׳¨׳× ׳©׳™׳—׳” ׳—׳“׳©׳”.');
+				this.loading.set(false);
+			},
+		});
+	}
+
+	deleteSession(sessionId: number) {
+		this.loading.set(true);
+		this.error.set(null);
+
+		this.chatService.deleteSession(sessionId).subscribe({
+			next: () => {
+				this.sessions.update((prev) => {
+					return prev.filter((s) => {
+						return s.id !== sessionId;
+					});
+				});
+
+				if (this.currentSessionId() === sessionId) {
+					this.currentSessionId.set(null);
+					this.router.navigate(['/chat']);
+				}
+
+				this.loading.set(false);
+			},
+			error: (err) => {
+				this.error.set(err?.message ?? '׳ ׳›׳©׳ ׳‘׳׳—׳™׳§׳× ׳”׳©׳™׳—׳”.');
+				this.loading.set(false);
+			},
+		});
+	}
+
+	clearError() {
+		this.error.set(null);
+	}
+}
+
+========================================
+FILE: src\app\core\store\users.store.ts
+========================================
+
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { UserService } from '../services/user.service';
+import { User } from '../models/user.interface';
+import { UserRole } from '../enums/user-role.enum';
+import { PageStates } from '../enums/page-states.enum';
+import { finalize } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class UsersStore {
+  private userService = inject(UserService);
+
+  // State
+  private _users = signal<User[]>([]);
+  private _loading = signal<boolean>(false);
+  private _error = signal<string | null>(null);
+
+  // Selectors
+  users = computed(() => {
+    return this._users();
+  });
+
+  loading = computed(() => {
+    return this._loading();
+  });
+
+  error = computed(() => {
+    return this._error();
+  });
+
+  pageState = computed<PageStates>(() => {
+    if (this._loading() && this._users().length === 0) {
+      return PageStates.Loading;
+    }
+
+    if (this._error()) {
+      return PageStates.Error;
+    }
+
+    if (this._users().length === 0) {
+      return PageStates.Empty;
+    }
+
+    return PageStates.Ready;
+  });
+
+  // Actions
+  loadUsers() {
+    this._loading.set(true);
+    this._error.set(null);
+
+    this.userService
+      .list()
+      .pipe(
+        finalize(() => {
+          this._loading.set(false);
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          this._users.set(res.result ?? []);
+        },
+        error: (err) => {
+          this._error.set(err?.error?.message ?? 'Failed to load users');
+        },
+      });
+  }
+
+  updateUser(userId: number, userData: Partial<User>) {
+    this._loading.set(true);
+    this.userService
+      .update(userId, userData)
+      .pipe(
+        finalize(() => {
+          this._loading.set(false);
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          const updatedUser = res.result;
+          this._users.update((users) =>
+            users.map((u) => (u.id === updatedUser.id ? updatedUser : u)),
+          );
+        },
+        error: (err) => {
+          this._error.set(err?.error?.message ?? 'Failed to update user');
+        },
+      });
+  }
+
+  deleteUser(userId: number) {
+    this._loading.set(true);
+    this.userService
+      .delete(userId)
+      .pipe(
+        finalize(() => {
+          this._loading.set(false);
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this._users.update((users) => users.filter((u) => u.id !== userId));
+        },
+        error: (err) => {
+          this._error.set(err?.error?.message ?? 'Failed to delete user');
+        },
+      });
+  }
+
+  updateUserRole(userId: number, role: UserRole) {
+    this._loading.set(true);
+    this.userService
+      .updateRole(userId, role)
+      .pipe(
+        finalize(() => {
+          this._loading.set(false);
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          const updatedUser = res.result;
+          this._users.update((users) =>
+            users.map((u) => (u.id === updatedUser.id ? updatedUser : u)),
+          );
+        },
+        error: (err) => {
+          this._error.set(err?.error?.message ?? 'Failed to update role');
+        },
+      });
+  }
+
+  clearError() {
+    this._error.set(null);
+  }
+}
+
+========================================
+FILE: src\app\features\auth\login\login.html
+========================================
+
+<div class="page">
+  <div class="glass-effect card auth-card">
+    <div class="page-header">
+      <div class="logo">LG</div>
+      <h1>׳‘׳¨׳•׳›׳™׳ ׳”׳‘׳׳™׳</h1>
+      <p class="subtitle">׳׳ ׳ ׳”׳™׳›׳ ׳¡׳• ׳׳—׳©׳‘׳•׳ ׳›׳ ׳›׳“׳™ ׳׳”׳׳©׳™׳</p>
+    </div>
+
+    @if (authStore.error()) {
+      <div class="error-badge">
+        {{ authStore.error() }}
+      </div>
+    }
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="form">
+      <div class="form-group">
+        <label for="email">׳׳™׳׳™׳™׳ ׳׳• ׳©׳ ׳׳©׳×׳׳©</label>
+        <input id="email" type="email" formControlName="email" placeholder="example@mail.com">
+        @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+          <span class="error-text">׳׳™׳׳™׳™׳ ׳׳ ׳×׳§׳™׳</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="password">׳¡׳™׳¡׳׳”</label>
+        <input id="password" type="password" formControlName="password" placeholder="ג€¢ג€¢ג€¢ג€¢ג€¢ג€¢ג€¢ג€¢">
+        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+          <span class="error-text">׳¡׳™׳¡׳׳” ׳ ׳“׳¨׳©׳×</span>
+        }
+      </div>
+
+      <button type="submit" class="primary-btn" [disabled]="loginForm.invalid || authStore.loading()">
+        {{ authStore.loading() ? '׳˜׳•׳¢׳...' : '׳›׳ ׳™׳¡׳”' }}
+      </button>
+    </form>
+
+    <div class="page-footer">
+      <a href="#" class="link">׳©׳›׳—׳×׳™ ׳¡׳™׳¡׳׳”</a>
+      <div class="divider"><span>׳׳•</span></div>
+      <a routerLink="/register" class="link">׳¢׳“׳™׳™׳ ׳׳™׳ ׳׳ ׳—׳©׳‘׳•׳? <strong>׳”׳¨׳©׳׳”</strong></a>
+    </div>
+  </div>
+</div>
+
+========================================
+FILE: src\app\features\auth\login\login.ts
+========================================
+
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { AuthStore } from '../../../core/store/auth.store';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  templateUrl: './login.html',
+})
+export class Login {
+  protected authStore = inject(AuthStore);
+  private fb = inject(FormBuilder);
+
+  loginForm: FormGroup = this.fb.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required]]
+  });
+
+  onSubmit() {
+    if (this.loginForm.valid) {
+      this.authStore.login(this.loginForm.value);
+    }
+  }
+}
+
+========================================
+FILE: src\app\features\auth\register\register.html
+========================================
+
+<div class="page">
+  <div class="glass-effect card auth-card">
+    <div class="page-header">
+      <div class="logo">RG</div>
+      <h1>׳”׳¨׳©׳׳”</h1>
+      <p class="subtitle">׳¦׳¨׳• ׳—׳©׳‘׳•׳ ׳—׳“׳© ׳›׳“׳™ ׳׳”׳×׳—׳™׳</p>
+    </div>
+
+    @if (authStore.error()) {
+      <div class="error-badge">
+        {{ authStore.error() }}
+      </div>
+    }
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="form">
+      <div class="form-group">
+        <label for="fullName">׳©׳ ׳׳׳</label>
+        <input id="fullName" type="text" formControlName="fullName" placeholder="׳™׳©׳¨׳׳ ׳™׳©׳¨׳׳׳™">
+        @if (registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched) {
+          <span class="error-text">׳©׳ ׳׳׳ ׳ ׳“׳¨׳©</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="email">׳׳™׳׳™׳™׳</label>
+        <input id="email" type="email" formControlName="email" placeholder="example@mail.com">
+        @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+          <span class="error-text">׳׳™׳׳™׳™׳ ׳׳ ׳×׳§׳™׳</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="password">׳¡׳™׳¡׳׳”</label>
+        <input id="password" type="password" formControlName="password" placeholder="ג€¢ג€¢ג€¢ג€¢ג€¢ג€¢ג€¢ג€¢">
+        @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+          <span class="error-text">׳¡׳™׳¡׳׳” ׳—׳™׳™׳‘׳× ׳׳”׳™׳•׳× ׳׳₪׳—׳•׳× 6 ׳×׳•׳•׳™׳</span>
+        }
+      </div>
+
+      <button type="submit" class="primary-btn" [disabled]="registerForm.invalid || authStore.loading()">
+        {{ authStore.loading() ? '׳˜׳•׳¢׳...' : '׳”׳¨׳©׳׳”' }}
+      </button>
+    </form>
+
+    <div class="page-footer">
+      <a routerLink="/login" class="link">׳›׳‘׳¨ ׳™׳© ׳׳ ׳—׳©׳‘׳•׳? <strong>׳”׳×׳—׳‘׳¨׳•׳×</strong></a>
+    </div>
+  </div>
+</div>
+
+========================================
+FILE: src\app\features\auth\register\register.ts
+========================================
+
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { AuthStore } from '../../../core/store/auth.store';
+
+@Component({
+  selector: 'app-register',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  templateUrl: './register.html',
+})
+export class Register {
+  protected authStore = inject(AuthStore);
+  private fb = inject(FormBuilder);
+
+  registerForm: FormGroup = this.fb.group({
+    fullName: ['', [Validators.required]],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]]
+  });
+
+  onSubmit() {
+    if (this.registerForm.valid) {
+      this.authStore.register(this.registerForm.value);
+    }
+  }
+}
+
+========================================
+FILE: src\app\features\chat\all-sessions-dialog\all-sessions-dialog.css
+========================================
+
+.archive-container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-4);
+	max-height: 450px;
+	direction: rtl;
+
+	.search-box {
+		position: relative;
+		display: flex;
+		align-items: center;
+
+		.ph {
+			position: absolute;
+			right: var(--space-3);
+			color: var(--color-text-secondary);
+			font-size: var(--font-size-lg);
+			pointer-events: none;
+		}
+
+		/* ׳”-input ׳׳¢׳•׳¦׳‘ ׳’׳׳•׳‘׳׳™׳× ׳‘-_forms.css, ׳׳ ׳• ׳׳•׳¡׳™׳₪׳™׳ ׳¨׳§ ׳¨׳™׳•׳•׳— ׳™׳׳ ׳™ ׳§׳ ׳‘׳©׳‘׳™׳ ׳”׳׳™׳™׳§׳•׳ */
+		input {
+			padding-right: var(--space-12);
+		}
+	}
+
+	.sessions-archive-list {
+		flex: 1;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+		padding: var(--space-1);
+
+		.archive-item {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: var(--space-3) var(--space-4);
+			background: rgba(255, 255, 255, 0.02);
+			border: 1px solid var(--color-border);
+			border-radius: var(--radius-md);
+			transition: var(--transition-standard);
+
+			&:hover {
+				background: var(--color-input-bg);
+				border-color: var(--color-primary-glow);
+			}
+
+			&.active {
+				border-color: var(--color-primary);
+				background: var(--color-primary-glow);
+			}
+
+			.item-info {
+				flex: 1;
+				display: flex;
+				align-items: center;
+				gap: var(--space-3);
+				cursor: pointer;
+
+				.ph {
+					color: var(--color-primary);
+				}
+
+				.text-group {
+					display: flex;
+					flex-direction: column;
+					gap: var(--space-1);
+
+					.title {
+						font-size: var(--font-size-md);
+						font-weight: var(--font-weight-semibold);
+						color: var(--color-text-primary);
+					}
+
+					.date {
+						font-size: var(--font-size-xs);
+						color: var(--color-text-secondary);
+					}
+				}
+			}
+
+			/* ׳›׳₪׳×׳•׳¨ ׳”׳׳—׳™׳§׳” ׳”׳§׳•׳׳₪׳§׳˜׳™ ׳”׳“׳•׳¨׳¡ ׳׳× transparent-btn ׳”׳’׳ ׳¨׳™ ׳¨׳§ ׳¢׳ hover ׳-danger */
+			.btn-delete-compact {
+				padding: var(--space-2);
+				border-radius: var(--radius-sm);
+
+				&:hover {
+					color: var(--color-danger);
+					background: var(--color-danger-bg);
+					border-color: var(--color-danger-border);
+				}
+			}
+		}
+
+		.empty-archive {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			padding: var(--space-12) 0;
+			color: var(--color-text-secondary);
+			gap: var(--space-2);
+
+			span {
+				color: var(--color-primary);
+			}
+		}
+	}
+}
+
+========================================
+FILE: src\app\features\chat\all-sessions-dialog\all-sessions-dialog.html
+========================================
+
+<div class="archive-container">
+	<div class="search-box">
+		<i class="ph ph-magnifying-glass"></i>
+		<input type="text" [value]="searchQuery()" (input)="onSearchChange($event)" placeholder="׳—׳₪׳© ׳©׳™׳—׳” ׳׳₪׳™ ׳›׳•׳×׳¨׳×..."
+			autocomplete="off">
+	</div>
+
+	<div class="sessions-archive-list">
+		@for (session of filteredSessions(); track session.id) {
+		<div class="archive-item" [class.active]="chatStore.currentSessionId() === session.id">
+			<div class="item-info" (click)="selectSession(session.id)">
+				<i class="ph ph-chat-centered-text"></i>
+				<div class="text-group">
+					<span class="title">{{ session.title }}</span>
+					<span class="date">{{ session.updatedAt | date:'short' }}</span>
+				</div>
+			</div>
+
+			<!-- ׳©׳™׳׳•׳© ׳‘׳׳—׳׳§׳× transparent-btn ׳”׳’׳ ׳¨׳™׳× ׳׳”-Design System -->
+			<button class="transparent-btn btn-delete-compact" type="button" (click)="deleteSession($event, session.id)"
+				title="׳׳—׳§ ׳©׳™׳—׳”">
+				<i class="ph ph-trash sm"></i>
+			</button>
+		</div>
+		}
+
+		@if (filteredSessions().length === 0) {
+		<div class="empty-archive">
+			<i class="ph ph-magnifying-glass lg"></i>
+			<p>׳׳ ׳ ׳׳¦׳׳• ׳©׳™׳—׳•׳× ׳×׳•׳׳׳•׳×.</p>
+		</div>
+		}
+	</div>
+</div>
+
+========================================
+FILE: src\app\features\chat\all-sessions-dialog\all-sessions-dialog.ts
+========================================
+
+import { Component, inject, signal, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { ChatStore } from '../../../core/store/chat.store';
+
+@Component({
+	selector: 'app-all-sessions-dialog',
+	standalone: true,
+	imports: [CommonModule],
+	templateUrl: './all-sessions-dialog.html',
+	styleUrl: './all-sessions-dialog.css',
+	host: {
+		'(click)': 'onOverlayClick($event)',
+	},
+})
+export class AllSessionsDialog {
+	protected chatStore = inject(ChatStore);
+	public ref = inject(DynamicDialogRef);
+
+	searchQuery = signal<string>('');
+
+	filteredSessions = computed(() => {
+		const query = this.searchQuery().toLowerCase().trim();
+		const all = this.chatStore.sessions();
+
+		if (!query) {
+			return all;
+		}
+
+		return all.filter((session) => {
+			return session.title.toLowerCase().includes(query);
+		});
+	});
+
+	onSearchChange(event: Event) {
+		const input = event.target as HTMLInputElement;
+		this.searchQuery.set(input.value);
+	}
+
+	selectSession(sessionId: number) {
+		this.ref.close(sessionId);
+	}
+
+	deleteSession(event: Event, sessionId: number) {
+		event.stopPropagation();
+
+		if (confirm('׳”׳׳ ׳׳×׳” ׳‘׳˜׳•׳— ׳©׳‘׳¨׳¦׳•׳ ׳ ׳׳׳—׳•׳§ ׳©׳™׳—׳” ׳–׳•?')) {
+			this.chatStore.deleteSession(sessionId);
+		}
+	}
+
+	onOverlayClick(event: Event) {
+		const target = event.target as HTMLElement;
+		if (target.classList.contains('p-dialog')) {
+			this.ref.close();
+		}
+	}
+}
+
+========================================
+FILE: src\app\features\chat\chat\chat.css
+========================================
+
+:host {
+	display: block;
+	height: 100%;
+	width: 100%;
+}
+
+.chat-root-container {
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - var(--space-16));
+	max-height: 100%;
+	gap: var(--space-4);
+	padding: var(--space-4);
+
+	.chat-header {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+		text-align: right;
+
+		h1 {
+			font-size: var(--font-size-xl);
+			font-weight: var(--font-weight-bold);
+			color: var(--color-text-primary);
+		}
+
+		p {
+			font-size: var(--font-size-sm);
+			color: var(--color-text-secondary);
+		}
+	}
+
+	.chat-history-loader {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-4);
+		color: var(--color-text-secondary);
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+
+		.custom-loader {
+			width: 48px;
+			height: 48px;
+			border: 3px solid var(--color-border);
+			border-radius: 50%;
+			border-top-color: var(--color-primary);
+			animation: spin 1s linear infinite;
+		}
+	}
+
+	.chat-history {
+		flex: 1;
+		overflow-y: auto;
+		padding: var(--space-6);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-4);
+		border-radius: var(--radius-lg);
+
+		.chat-message-row {
+			display: flex;
+			flex-direction: column;
+			max-width: 80%;
+			padding: var(--space-4);
+			border-radius: var(--radius-md);
+			line-height: 1.6;
+
+			&.user-message {
+				align-self: flex-start;
+				background: rgba(255, 255, 255, 0.05);
+				border: 1px solid var(--color-border);
+				text-align: right;
+			}
+
+			&.assistant-message {
+				align-self: flex-end;
+				background: var(--color-surface);
+				border: 1px solid var(--color-primary-glow);
+				text-align: right;
+			}
+
+			.message-meta {
+				display: flex;
+				align-items: center;
+				gap: var(--space-2);
+				font-size: var(--font-size-sm);
+				color: var(--color-text-secondary);
+				margin-bottom: var(--space-2);
+
+				.role-icon {
+					font-size: var(--font-size-xxl);
+				}
+			}
+
+			.message-body {
+				font-size: var(--font-size-sm);
+				color: var(--color-text-primary);
+			}
+
+			.thinking-process-box {
+				margin: var(--space-2) 0 var(--space-4) 0;
+				background: rgba(255, 255, 255, 0.03);
+				border: 1px solid var(--color-border);
+				border-radius: var(--radius-md);
+				overflow: hidden;
+				font-size: var(--font-size-sm);
+				transition: var(--transition-standard);
+				text-align: right;
+
+				&[open] {
+					background: rgba(0, 212, 255, 0.02);
+					border-color: var(--color-primary-glow);
+
+					.expand-icon {
+						transform: rotate(180deg);
+					}
+				}
+
+				.thinking-summary {
+					display: flex;
+					align-items: center;
+					gap: var(--space-2);
+					padding: var(--space-2) var(--space-4);
+					font-weight: var(--font-weight-medium);
+					color: var(--color-primary);
+					cursor: pointer;
+					outline: none;
+					user-select: none;
+					list-style: none;
+
+					&::-webkit-details-marker {
+						display: none;
+					}
+
+					.summary-icon {
+						font-size: var(--font-size-md);
+
+						&.thinking {
+							animation: pulse 2s infinite;
+						}
+					}
+
+					.summary-label {
+						display: inline;
+					}
+
+					.expand-icon {
+						margin-inline-end: auto;
+						font-size: var(--font-size-lg);
+						transform-origin: center;
+						transition: transform 0.2s ease;
+					}
+				}
+
+				.steps-list {
+					list-style: none;
+					padding: 0 var(--space-4) var(--space-3) var(--space-4);
+					margin: 0;
+					display: flex;
+					flex-direction: column;
+					gap: var(--space-2);
+					border-top: 1px dashed var(--color-border);
+					padding-top: var(--space-3);
+
+					.step-item {
+						display: flex;
+						align-items: center;
+						gap: var(--space-2);
+						color: var(--color-text-secondary);
+						animation: fadeIn 0.3s ease-in-out forwards;
+
+						.ph {
+							color: var(--color-primary);
+							font-size: var(--font-size-md);
+						}
+					}
+				}
+			}
+		}
+
+		.empty-chat-state {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			height: 100%;
+			text-align: center;
+			color: var(--color-text-secondary);
+			gap: var(--space-3);
+
+			span {
+				color: var(--color-primary);
+			}
+		}
+	}
+
+	.chat-input-area {
+		display: flex;
+		gap: var(--space-3);
+		align-items: center;
+
+		form {
+			display: flex;
+			width: 100%;
+			gap: var(--space-3);
+		}
+
+		input {
+			flex: 1;
+			height: 52px;
+		}
+
+		button {
+			width: auto;
+			height: 52px;
+			padding: 0 var(--space-6);
+			margin-top: 0;
+			white-space: nowrap;
+			gap: var(--space-2);
+		}
+	}
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(2px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+========================================
+FILE: src\app\features\chat\chat\chat.html
+========================================
+
+<div class="chat-root-container">
+	<header class="chat-header">
+		<h1>׳©׳™׳—׳” ׳¢׳ ׳¡׳•׳›׳ ׳—׳›׳</h1>
+		<p class="subtitle">׳”׳×׳™׳™׳¢׳¥ ׳•׳§׳‘׳ ׳׳™׳“׳¢ ׳‘׳–׳׳ ׳׳׳× ׳׳”׳¡׳•׳›׳ ׳”׳׳™׳©׳™ ׳©׳׳</p>
+	</header>
+
+	@if (historyLoading()) {
+	<div class="chat-history-loader">
+		<span class="custom-loader"></span>
+		<p>׳˜׳•׳¢׳ ׳׳× ׳”׳™׳¡׳˜׳•׳¨׳™׳™׳× ׳”׳©׳™׳—׳”...</p>
+	</div>
+	} @else {
+	<div class="glass-effect chat-history" [autoScrollBottom]="true" [autoScrollBottomTrigger]="messages().length">
+		@for (msg of messages(); track $index) {
+		<!-- ׳”׳¦׳’׳× ׳”׳•׳“׳¢׳•׳× ׳”׳׳©׳×׳׳© ׳•׳”׳¢׳•׳–׳¨ ׳‘׳׳‘׳“ ׳•׳¡׳™׳ ׳•׳ ׳”׳•׳“׳¢׳•׳× ׳”׳›׳׳™׳ ׳”׳₪׳ ׳™׳׳™׳•׳× -->
+		@if (msg.role !== 'tool') {
+		<div class="chat-message-row" [ngClass]="msg.role === 'user' ? 'user-message' : 'assistant-message'">
+			<div class="message-meta">
+				<i class="ph role-icon" [class.ph-user]="msg.role === 'user'" [class.ph-robot]="msg.role !== 'user'"></i>
+				<strong>{{ msg.role === 'user' ? '׳׳×׳”' : '׳¡׳•׳›׳ AI' }}</strong>
+			</div>
+
+			<!-- ׳”׳¦׳’׳× ׳©׳׳‘׳™ ׳”׳—׳©׳™׳‘׳” ׳”׳׳•׳‘׳ ׳™׳ ׳‘׳¦׳•׳¨׳” ׳׳×׳§׳₪׳׳× ׳•׳¢׳“׳™׳ ׳” ׳¢׳‘׳•׳¨ ׳”׳•׳“׳¢׳•׳× ׳”׳¡׳•׳›׳ -->
+			@if (msg.role === 'assistant' && msg.steps && msg.steps.length > 0) {
+			<details class="thinking-process-box" [open]="loading() && $index === messages().length - 1">
+				<summary class="thinking-summary">
+					<i class="ph summary-icon" [class.ph-brain]="true" [class.thinking]="loading() && $index === messages().length - 1"></i>
+					<span class="summary-label">׳₪׳¢׳•׳׳•׳× ׳©׳‘׳•׳¦׳¢׳•...</span>
+					<i class="ph ph-caret-down expand-icon"></i>
+				</summary>
+				<ul class="steps-list">
+					@for (step of msg.steps; track $index) {
+					<li class="step-item">
+						<i class="ph {{ step.icon }}"></i>
+						<span>{{ step.message }}</span>
+					</li>
+					}
+				</ul>
+			</details>
+			}
+
+			<div class="message-body" [aiFormat]="msg.content"></div>
+		</div>
+		}
+		}
+
+		@if (messages().length === 0) {
+		<div class="empty-chat-state">
+			<i class="ph ph-chat-circle-text xl"></i>
+			<h3>׳©׳™׳—׳” ׳—׳“׳©׳” ׳”׳×׳—׳™׳׳”</h3>
+			<p>׳›׳×׳•׳‘ ׳”׳•׳“׳¢׳” ׳׳׳˜׳” ׳›׳“׳™ ׳׳”׳×׳—׳™׳ ׳׳”׳×׳™׳™׳¢׳¥ ׳¢׳ ׳¡׳•׳›׳ ׳”-AI ׳©׳׳.</p>
+		</div>
+		}
+	</div>
+	}
+
+	<div class="chat-input-area">
+		<form [formGroup]="chatForm" (ngSubmit)="sendMessage()">
+			<input type="text" formControlName="prompt" placeholder="׳”׳§׳׳“ ׳׳× ׳”׳•׳“׳¢׳×׳ ׳›׳׳..." autocomplete="off">
+			<button type="submit" class="primary-btn" [disabled]="chatForm.invalid || loading() || historyLoading()">
+				<i class="ph ph-arrow-up  md"></i>
+			</button>
+		</form>
+	</div>
+</div>
+
+========================================
+FILE: src\app\features\chat\chat\chat.ts
+========================================
+
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { ChatService } from '../../../core/services/chat.service';
+import { ChatStore } from '../../../core/store/chat.store';
+import { IChatMessage } from '../../../core/models/chat-message.interface';
+import { AiFormat } from '../../../core/directives/ai-format.directive';
+import { AutoScrollBottomDirective } from '../../../core/directives/auto-scroll-bottom.directive';
+
+@Component({
+	selector: 'app-chat',
+	standalone: true,
+	imports: [CommonModule, ReactiveFormsModule, AiFormat, AutoScrollBottomDirective],
+	templateUrl: './chat.html',
+	styleUrl: './chat.css',
+})
+export class Chat implements OnInit, OnDestroy {
+	private chatService = inject(ChatService);
+	protected chatStore = inject(ChatStore);
+	private route = inject(ActivatedRoute);
+	private fb = inject(FormBuilder);
+
+	messages = signal<IChatMessage[]>([]);
+	loading = signal<boolean>(false);
+	historyLoading = signal<boolean>(false);
+
+	chatForm: FormGroup = this.fb.group({
+		prompt: ['', [Validators.required, Validators.minLength(1)]],
+	});
+
+	private routeSub?: Subscription;
+
+	ngOnInit() {
+		this.routeSub = this.route.queryParams.subscribe((params) => {
+			const sessionId = params['sessionId'] ? Number(params['sessionId']) : null;
+
+			if (!sessionId) {
+				// ׳׳ ׳’׳ ׳•׳ ׳׳×׳—׳•׳ ׳׳•׳˜׳•׳׳˜׳™ - ׳™׳•׳¦׳¨ ׳©׳™׳—׳” ׳—׳“׳©׳” ׳•׳׳ ׳•׳•׳˜ ׳׳׳™׳” ׳‘׳¦׳•׳¨׳” ׳—׳׳§׳”
+				this.chatStore.createSession();
+			} else {
+				this.chatStore.currentSessionId.set(sessionId);
+				this.loadConversationHistory(sessionId);
+			}
+		});
+	}
+
+	ngOnDestroy() {
+		if (this.routeSub) {
+			this.routeSub.unsubscribe();
+		}
+	}
+
+	private loadConversationHistory(sessionId: number) {
+		this.historyLoading.set(true);
+		this.messages.set([]); // ׳ ׳™׳§׳•׳™ ׳׳™׳™׳“׳™ ׳©׳ ׳”׳׳¡׳ ׳׳׳ ׳™׳¢׳× ׳§׳₪׳™׳¦׳•׳× ׳©׳ ׳©׳™׳—׳” ׳§׳•׳“׳׳×
+
+		this.chatService.getSessionMessages(sessionId).subscribe({
+			next: (history) => {
+				this.messages.set(history ?? []);
+				this.historyLoading.set(false);
+			},
+			error: (err) => {
+				this.historyLoading.set(false);
+				this.messages.set([
+					{
+						role: 'assistant',
+						content: '[׳©׳’׳™׳׳” ׳‘׳˜׳¢׳™׳ ׳× ׳”׳™׳¡׳˜׳•׳¨׳™׳™׳× ׳”׳©׳™׳—׳”. ׳ ׳ ׳׳ ׳¡׳•׳× ׳©׳•׳‘]',
+					},
+				]);
+			},
+		});
+	}
+
+	sendMessage() {
+		const currentId = this.chatStore.currentSessionId();
+		if (this.chatForm.invalid || this.loading() || !currentId) {
+			return;
+		}
+
+		const promptValue = this.chatForm.value.prompt.trim();
+		this.chatForm.reset();
+
+		// 1. ׳©׳׳™׳¨׳× ׳”׳•׳“׳¢׳× ׳׳©׳×׳׳© ׳׳§׳•׳׳™׳×
+		const userMsg: IChatMessage = {
+			role: 'user',
+			content: promptValue,
+		};
+
+		this.messages.update((prev) => {
+			return [...prev, userMsg];
+		});
+
+		// 2. ׳”׳›׳ ׳× ׳”׳•׳“׳¢׳× ׳¢׳•׳–׳¨ ׳¨׳™׳§׳” ׳¢׳ ׳׳¢׳¨׳ steps ׳¨׳™׳§
+		const assistantMsg: IChatMessage = {
+			role: 'assistant',
+			content: '',
+			steps: [],
+		};
+
+		this.messages.update((prev) => {
+			return [...prev, assistantMsg];
+		});
+
+		this.loading.set(true);
+
+		// ׳‘׳“׳™׳§׳” ׳”׳׳ ׳–׳• ׳”׳”׳•׳“׳¢׳” ׳”׳¨׳׳©׳•׳ ׳” ׳‘׳©׳™׳—׳” ׳׳¦׳•׳¨׳ ׳¢׳“׳›׳•׳ ׳›׳•׳×׳¨׳× ׳”-Sidebar ׳‘׳¡׳™׳•׳
+		const isFirstMessage = this.messages().length <= 2;
+
+		this.chatService.sendMessageStream(promptValue, currentId).subscribe({
+			next: (event) => {
+				if (event.type === 'step' && event.message && event.icon) {
+					this.messages.update((prev) => {
+						const updated = [...prev];
+						const lastIndex = updated.length - 1;
+						const currentSteps = updated[lastIndex].steps || [];
+						updated[lastIndex] = {
+							...updated[lastIndex],
+							steps: [...currentSteps, { icon: event.icon, message: event.message }],
+						};
+						return updated;
+					});
+				} else if (event.type === 'token' && event.content) {
+					this.messages.update((prev) => {
+						const updated = [...prev];
+						const lastIndex = updated.length - 1;
+						updated[lastIndex] = {
+							...updated[lastIndex],
+							content: updated[lastIndex].content + event.content!,
+						};
+						return updated;
+					});
+				}
+			},
+			error: (err) => {
+				this.loading.set(false);
+				this.messages.update((prev) => {
+					const updated = [...prev];
+					const lastIndex = updated.length - 1;
+					updated[lastIndex] = {
+						...updated[lastIndex],
+						content: '[׳©׳’׳™׳׳” ׳‘׳§׳‘׳׳× ׳×׳’׳•׳‘׳” ׳׳”׳©׳¨׳×. ׳ ׳ ׳׳ ׳¡׳•׳× ׳©׳•׳‘]',
+					};
+					return updated;
+				});
+			},
+			complete: () => {
+				this.loading.set(false);
+				
+				// ׳¨׳™׳¢׳ ׳•׳ ׳•׳¡׳ ׳›׳¨׳•׳ ׳”-Sidebar ׳‘׳–׳׳ ׳׳׳× ׳‘׳׳™׳“׳” ׳•׳©׳ ׳”׳©׳™׳—׳” ׳”׳•׳ ׳¢׳“׳™׳™׳ "׳©׳™׳—׳” ׳—׳“׳©׳”..."
+				const currentSession = this.chatStore.sessions().find((s) => {
+					return s.id === currentId;
+				});
+
+				if (currentSession && currentSession.title === '׳©׳™׳—׳” ׳—׳“׳©׳”...') {
+					this.chatStore.loadSessions();
+				}
+			},
+		});
+	}
+}
+
+========================================
+FILE: src\app\features\dashboard\dashboard.html
+========================================
+
+@switch (pageState()) {
+  @case (PageStates.Loading) {
+    <div class="page-state loading-state">
+      <span class="custom-loader"></span>
+    </div>
+  }
+  @case (PageStates.Error) {
+    <div class="page-state error-state">
+      <span class="icon ph ph-warning"></span>
+      <h4 class="title">׳׳™׳¨׳¢׳” ׳©׳’׳™׳׳” ׳‘׳˜׳¢׳™׳ ׳× ׳”׳ ׳×׳•׳ ׳™׳.</h4>
+      <p class="subtitle">׳׳ ׳ ׳ ׳¡׳” ׳©׳•׳‘ ׳׳׳•׳—׳¨ ׳™׳•׳×׳¨.</p>
+    </div>
+  }
+  @case (PageStates.Empty) {
+    <div class="page-state empty-state">
+      <span class="icon ph ph-chart-bar"></span>
+      <h4 class="title">׳׳™׳ ׳ ׳×׳•׳ ׳™׳ ׳–׳׳™׳ ׳™׳.</h4>
+      <p class="subtitle">׳׳ ׳ ׳׳¦׳׳• ׳׳“׳“׳™׳ ׳׳”׳¦׳’׳” ׳›׳¨׳’׳¢.</p>
+    </div>
+  }
+  @case (PageStates.Ready) {
+    <div class="page-content">
+      <header class="page-header">
+        <h1>׳©׳׳•׳, {{ authStore.user()?.fullName || authStore.user()?.email }}!</h1>
+        <p class="subtitle">׳‘׳¨׳•׳›׳™׳ ׳”׳‘׳׳™׳ ׳׳׳•׳— ׳”׳‘׳§׳¨׳” ׳©׳ ׳”׳׳¢׳¨׳›׳×</p>
+      </header>
+
+      <div class="grid-3">
+        <div class="glass-effect card metric-card">
+          <div class="metric-header">
+            <span class="ph ph-users metric-icon"></span>
+            <h3>׳׳©׳×׳׳©׳™׳ ׳¨׳©׳•׳׳™׳</h3>
+          </div>
+          <div class="metric-value">{{ usersStore.users().length }}</div>
+        </div>
+
+        <div class="glass-effect card metric-card">
+          <div class="metric-header">
+            <span class="ph ph-user metric-icon"></span>
+            <h3>׳—׳™׳‘׳•׳¨ ׳₪׳¢׳™׳</h3>
+          </div>
+          <div class="metric-details">
+            <span class="detail-item">{{ authStore.user()?.email }}</span>
+            @if (authStore.user()?.role !== null && authStore.user()?.role !== undefined) {
+              <span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)?.color">
+                <span class="ph sm" [ngClass]="getUserRoleData(authStore.user()!.role)?.icon"></span>
+                {{ getUserRoleData(authStore.user()!.role)?.heLabel }}
+              </span>
+            }
+          </div>
+        </div>
+
+        <div class="glass-effect card metric-card">
+          <div class="metric-header">
+            <span class="ph ph-globe metric-icon"></span>
+            <h3>׳¡׳˜׳˜׳•׳¡ ׳׳¢׳¨׳›׳×</h3>
+          </div>
+          <div class="metric-details">
+            <div class="status-indicator">
+              <span class="pulse-dot"></span>
+              <span>׳׳¢׳¨׳›׳× ׳₪׳¢׳™׳׳” ׳•׳׳—׳•׳‘׳¨׳× ׳-API</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+}
+
+========================================
+FILE: src\app\features\dashboard\dashboard.ts
+========================================
+
+import { Component, inject, OnInit, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { AuthStore } from '../../core/store/auth.store';
+import { UsersStore } from '../../core/store/users.store';
+import { PageStates } from '../../core/enums/page-states.enum';
+import { getUserRoleData } from '../../core/enums/user-role.enum';
+import { BadgeColor } from '../../core/directives/badge-color.directive';
+
+@Component({
+  selector: 'app-dashboard',
+  standalone: true,
+  imports: [CommonModule, BadgeColor],
+  templateUrl: './dashboard.html',
+})
+export class Dashboard implements OnInit {
+  protected authStore = inject(AuthStore);
+  protected usersStore = inject(UsersStore);
+  protected readonly getUserRoleData = getUserRoleData;
+  protected readonly PageStates = PageStates;
+
+  pageState = computed(() => this.usersStore.pageState());
+
+  ngOnInit() {
+    this.usersStore.loadUsers();
+  }
+}
+
+========================================
+FILE: src\app\features\design-system\design-system.css
+========================================
+
+.design-system-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  width: 100%;
+  color: var(--color-text-primary);
+
+  .showcase-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-6);
+    padding: var(--space-8);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+
+    .eyebrow {
+      color: var(--color-primary);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-bold);
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: var(--space-2) 0;
+      font-size: var(--font-size-xxl);
+    }
+
+    p {
+      max-width: 720px;
+      margin: 0;
+    }
+  }
+
+  .theme-toggle {
+    display: inline-flex;
+    gap: var(--space-2);
+    padding: var(--space-1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-input-bg);
+
+    button {
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-4);
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--color-text-secondary);
+
+      &.active {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-primary);
+        box-shadow: var(--shadow-glow-primary);
+      }
+    }
+  }
+
+  .showcase-section,
+  .token-panel,
+  .sandbox-controls,
+  .sandbox-preview {
+    border-radius: var(--radius-lg);
+  }
+
+  .showcase-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+
+    &.two-column {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-6);
+    }
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+
+    &.compact {
+      align-items: flex-start;
+      margin-bottom: var(--space-4);
+    }
+
+    > .ph {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      border-radius: var(--radius-md);
+      background: var(--color-input-bg);
+      color: var(--color-primary);
+      font-size: var(--font-size-xl);
+    }
+
+    h2,
+    p {
+      margin: 0;
+    }
+  }
+
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--space-4);
+  }
+
+  .token-panel {
+    padding: var(--space-6);
+    border: 1px solid var(--color-border);
+
+    h3 {
+      margin-top: 0;
+    }
+  }
+
+  .token-list,
+  .type-scale,
+  .spacing-stack,
+  .pattern-list,
+  .sandbox-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .color-token,
+  .type-token,
+  .spacing-token,
+  .detail-token {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-input-bg);
+    color: var(--color-text-primary);
+    text-align: start;
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 4px var(--color-primary-glow);
+    }
+  }
+
+  .color-token {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .token-copy,
+  .spacing-copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+
+    strong,
+    small {
+      overflow-wrap: anywhere;
+    }
+
+    small {
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-xs);
+    }
+  }
+
+}
+
+========================================
+FILE: src\app\features\design-system\design-system.html
+========================================
+
+@switch (pageState()) {
+  @case (PageStates.Ready) {
+    <section class="design-system-page">
+      <header class="showcase-hero glass-effect">
+        <div>
+          <span class="eyebrow">Design tokens</span>
+          <h1>Interactive Design System Showcase</h1>
+          <p>
+            Explore the live CSS custom properties behind themes, layout primitives, patterns, and component states.
+          </p>
+        </div>
+
+        <div class="theme-toggle" role="group" aria-label="Preview theme">
+          <button type="button" [class.active]="themeMode() === 'dark'" (click)="setTheme('dark')">
+            <span class="ph ph-moon"></span>
+            Dark
+          </button>
+          <button type="button" [class.active]="themeMode() === 'light'" (click)="setTheme('light')">
+            <span class="ph ph-sun"></span>
+            Light
+          </button>
+        </div>
+      </header>
+
+      <section class="showcase-section">
+        <div class="section-heading">
+          <span class="ph ph-palette"></span>
+          <div>
+            <h2>Color Palette Explorer</h2>
+            <p>Click any token card to copy its CSS variable reference.</p>
+          </div>
+        </div>
+
+        <div class="color-grid">
+          @for (group of colorGroups(); track group.name) {
+            <article class="token-panel glass-effect">
+              <h3>{{ group.name }}</h3>
+              <div class="token-list">
+                @for (token of group.tokens; track token.name) {
+                  <button class="color-token" type="button" (click)="copyToken(token.name)" [attr.aria-label]="'Copy ' + token.name">
+                    <span class="color-swatch" [ngClass]="token.className"></span>
+                    <span class="token-copy">
+                      <strong>{{ token.name }}</strong>
+                      <small>{{ token.value }}</small>
+                    </span>
+                    <span class="copy-state">{{ copiedToken() === token.name ? 'Copied' : 'Copy' }}</span>
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="showcase-section two-column">
+        <article class="token-panel glass-effect">
+          <div class="section-heading compact">
+            <span class="ph ph-text-aa"></span>
+            <div>
+              <h2>Typography Scale</h2>
+              <p>Font family, size, and weight tokens resolved from the current theme.</p>
+            </div>
+          </div>
+
+          <div class="type-scale">
+            @for (token of typographyTokens(); track token.name) {
+              <button class="type-token" type="button" (click)="copyToken(token.name)">
+                <span class="type-preview" [ngClass]="token.className">
+                  Aa
+                </span>
+                <span>
+                  <strong>{{ token.name }}</strong>
+                  <small>{{ token.label }} ֲ· {{ token.value }}</small>
+                </span>
+              </button>
+            }
+          </div>
+        </article>
+
+        <article class="token-panel glass-effect">
+          <div class="section-heading compact">
+            <span class="ph ph-ruler"></span>
+            <div>
+              <h2>Spacing & Layout Grid</h2>
+              <p>Bounding boxes visualize the exact rhythm used for padding, margin, and gaps.</p>
+            </div>
+          </div>
+
+          <div class="spacing-stack">
+            @for (token of spacingTokens(); track token.name) {
+              <button class="spacing-token" type="button" (click)="copyToken(token.name)">
+                <span class="spacing-bar" [ngClass]="token.className"></span>
+                <span class="spacing-copy">
+                  <strong>{{ token.name }}</strong>
+                  <small>{{ token.label }} ֲ· {{ token.value }}</small>
+                </span>
+              </button>
+            }
+          </div>
+        </article>
+      </section>
+
+      <section class="showcase-section two-column">
+        <article class="token-panel glass-effect">
+          <div class="section-heading compact">
+            <span class="ph ph-corners-out"></span>
+            <div>
+              <h2>Radius & Effects</h2>
+              <p>Reusable surface details for glass panels, controls, and overlays.</p>
+            </div>
+          </div>
+
+          <div class="detail-grid">
+            @for (token of radiusTokens(); track token.name) {
+              <button class="detail-token radius-preview" type="button" (click)="copyToken(token.name)">
+                <span>{{ token.name }}</span>
+                <strong>{{ token.value }}</strong>
+              </button>
+            }
+            @for (token of effectTokens(); track token.name) {
+              <button class="detail-token effect-preview" type="button" (click)="copyToken(token.name)">
+                <span>{{ token.name }}</span>
+                <strong>{{ token.value }}</strong>
+              </button>
+            }
+          </div>
+        </article>
+
+        <article class="token-panel glass-effect">
+          <div class="section-heading compact">
+            <span class="ph ph-layout"></span>
+            <div>
+              <h2>Design Patterns Showcase</h2>
+              <p>Preview the global classes developers already use across pages.</p>
+            </div>
+          </div>
+
+          <div class="pattern-list">
+            @for (pattern of patterns; track pattern.name) {
+              <div class="pattern-row">
+                <div [class]="pattern.classList">
+                  @if (pattern.name === '.status-indicator') {
+                    <div class="status-indicator">
+                      <span class="pulse-dot"></span>
+                      <span>API connected</span>
+                    </div>
+                  } @else {
+                    <span class="ph ph-sparkle"></span>
+                    <strong>{{ pattern.name }}</strong>
+                  }
+                </div>
+                <div>
+                  <h3>{{ pattern.name }}</h3>
+                  <p>{{ pattern.description }}</p>
+                  <code>{{ pattern.code }}</code>
+                </div>
+              </div>
+            }
+          </div>
+        </article>
+      </section>
+
+      <section class="showcase-section">
+        <div class="section-heading">
+          <span class="ph ph-cursor-click"></span>
+          <div>
+            <h2>Button System</h2>
+            <p>Every global button class, size, state, and link treatment from the tokenized button stylesheet.</p>
+          </div>
+        </div>
+
+        <div class="button-showcase-grid">
+          <article class="token-panel glass-effect button-panel">
+            <h3>Theme Variants</h3>
+            <div class="button-row">
+              <button class="primary-btn" type="button">
+                <span class="ph ph-check"></span>
+                Primary
+              </button>
+              <button class="primary-btn outlined" type="button">
+                <span class="ph ph-plus"></span>
+                Primary outlined
+              </button>
+              <button class="danger-btn" type="button">
+                <span class="ph ph-warning"></span>
+                Danger
+              </button>
+              <button class="danger-btn outlined" type="button">
+                <span class="ph ph-trash"></span>
+                Danger outlined
+              </button>
+              <button class="transparent-btn" type="button">
+                <span class="ph ph-dots-three"></span>
+                Transparent
+              </button>
+            </div>
+          </article>
+
+          <article class="token-panel glass-effect button-panel">
+            <h3>Sizes</h3>
+            <div class="button-size-stack">
+              <div class="button-size-row">
+                <code>.sm</code>
+                <div class="button-row compact">
+                  <button class="primary-btn sm" type="button">Primary</button>
+                  <button class="danger-btn outlined sm" type="button">Danger</button>
+                  <button class="transparent-btn sm" type="button">Transparent</button>
+                </div>
+              </div>
+              <div class="button-size-row">
+                <code>default</code>
+                <div class="button-row compact">
+                  <button class="primary-btn" type="button">Primary</button>
+                  <button class="danger-btn outlined" type="button">Danger</button>
+                  <button class="transparent-btn" type="button">Transparent</button>
+                </div>
+              </div>
+              <div class="button-size-row">
+                <code>.lg</code>
+                <div class="button-row compact">
+                  <button class="primary-btn lg" type="button">Primary</button>
+                  <button class="danger-btn outlined lg" type="button">Danger</button>
+                  <button class="transparent-btn lg" type="button">Transparent</button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="token-panel glass-effect button-panel">
+            <h3>Icon Only</h3>
+            <div class="button-row">
+              <button class="primary-btn icon-only" type="button" aria-label="Create">
+                <span class="ph ph-plus"></span>
+              </button>
+              <button class="primary-btn outlined icon-only" type="button" aria-label="Edit">
+                <span class="ph ph-pencil-simple"></span>
+              </button>
+              <button class="danger-btn icon-only" type="button" aria-label="Delete">
+                <span class="ph ph-trash"></span>
+              </button>
+              <button class="danger-btn outlined icon-only" type="button" aria-label="Archive">
+                <span class="ph ph-archive"></span>
+              </button>
+              <button class="transparent-btn icon-only" type="button" aria-label="More actions">
+                <span class="ph ph-dots-three"></span>
+              </button>
+            </div>
+          </article>
+
+          <article class="token-panel glass-effect button-panel">
+            <h3>Disabled States</h3>
+            <div class="button-row">
+              <button class="primary-btn" type="button" disabled>Primary</button>
+              <button class="primary-btn outlined" type="button" disabled>Primary outlined</button>
+              <button class="danger-btn" type="button" disabled>Danger</button>
+              <button class="danger-btn outlined" type="button" disabled>Danger outlined</button>
+              <button class="transparent-btn" type="button" disabled>Transparent</button>
+            </div>
+          </article>
+
+          <article class="token-panel glass-effect button-panel button-panel-wide">
+            <h3>Links</h3>
+            <div class="link-samples">
+              <a href="https://angular.dev" target="_blank" rel="noreferrer">Angular documentation</a>
+              <a href="https://primeng.org" target="_blank" rel="noreferrer">PrimeNG components</a>
+              <a href="https://phosphoricons.com" target="_blank" rel="noreferrer">Phosphor icons</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="showcase-section">
+        <div class="section-heading">
+          <span class="ph ph-sliders-horizontal"></span>
+          <div>
+            <h2>Component Sandbox</h2>
+            <p>Test real controls against the current theme, spacing density, and global form/button rules.</p>
+          </div>
+        </div>
+
+        <div class="sandbox-grid">
+          <form class="sandbox-controls glass-effect" aria-label="Sandbox controls">
+            <label for="sandbox-title">Card title</label>
+            <input id="sandbox-title" type="text" [ngModel]="sandboxTitle()" (ngModelChange)="updateSandboxTitle($event)" name="sandboxTitle">
+
+            <label for="sandbox-density">Density</label>
+            <input id="sandbox-density" type="range" min="1" max="3" [ngModel]="sandboxDensity()" (ngModelChange)="sandboxDensity.set($event)" name="sandboxDensity">
+            <span class="density-label">{{ sandboxGapLabel() }}</span>
+
+            <select aria-label="Sandbox status">
+              <option>Healthy</option>
+              <option>Investigating</option>
+              <option>Offline</option>
+            </select>
+          </form>
+
+          <article
+            class="sandbox-preview glass-effect"
+            [class.density-compact]="sandboxDensity() === 1"
+            [class.density-comfortable]="sandboxDensity() === 2"
+            [class.density-spacious]="sandboxDensity() === 3"
+          >
+            <div class="sandbox-card card">
+              <div class="metric-header">
+                <span class="ph ph-chart-line-up metric-icon"></span>
+                <h3>{{ sandboxTitle() }}</h3>
+              </div>
+              <div class="metric-value">98%</div>
+              <p>PrimeNG-ready layout block using global tokenized forms, buttons, badges, and status patterns.</p>
+              <div class="sandbox-actions">
+                <button class="primary-btn" type="button">Primary action</button>
+                <button class="transparent-btn" type="button">Transparent</button>
+                <button class="danger-btn" type="button">Danger</button>
+              </div>
+              <div class="status-indicator">
+                <span class="pulse-dot"></span>
+                <span>Theme: {{ themeMode() }}</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </section>
+  }
+}
+
+========================================
+FILE: src\app\features\design-system\design-system.ts
+========================================
+
+import { CommonModule } from '@angular/common';
+import { afterNextRender, Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { PageStates } from '../../core/enums/page-states.enum';
+import { ThemeMode, ThemeService } from '../../core/services/theme.service';
+
+type ColorGroup = 'Primary' | 'Secondary' | 'Neutrals' | 'Feedback';
+type TokenCategory = 'color' | 'type' | 'space' | 'radius' | 'effect';
+
+interface TokenItem {
+  name: string;
+  label: string;
+  category: TokenCategory;
+  value: string;
+  className?: string;
+}
+
+interface ColorGroupView {
+  name: ColorGroup;
+  tokens: TokenItem[];
+}
+
+interface PatternPreview {
+  name: string;
+  classList: string;
+  description: string;
+  code: string;
+}
+
+@Component({
+  selector: 'app-design-system',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './design-system.html',
+  styleUrls: ['./design-system.css', './_design-system-showcase.css', './_design-system-tokens.css'],
+})
+export class DesignSystem {
+  private themeService = inject(ThemeService);
+
+  protected readonly PageStates = PageStates;
+  protected readonly pageState = signal(PageStates.Ready);
+  protected readonly sandboxTitle = signal('Operational Insight');
+  protected readonly sandboxDensity = signal(2);
+  protected readonly copiedToken = signal<string | null>(null);
+  protected readonly themeMode = this.themeService.mode;
+
+  protected readonly colorGroups = signal<ColorGroupView[]>([
+    {
+      name: 'Primary',
+      tokens: [
+        this.createToken('--color-primary', 'Primary accent', 'color', 'swatch-primary'),
+        this.createToken('--color-primary-glow', 'Primary glow', 'color', 'swatch-primary-glow'),
+      ],
+    },
+    {
+      name: 'Secondary',
+      tokens: [
+        this.createToken('--color-secondary', 'Secondary accent', 'color', 'swatch-secondary'),
+        this.createToken('--color-secondary-glow', 'Secondary glow', 'color', 'swatch-secondary-glow'),
+      ],
+    },
+    {
+      name: 'Neutrals',
+      tokens: [
+        this.createToken('--color-bg', 'App background', 'color', 'swatch-bg'),
+        this.createToken('--color-surface', 'Surface glass', 'color', 'swatch-surface'),
+        this.createToken('--color-border', 'Border', 'color', 'swatch-border'),
+        this.createToken('--color-text-primary', 'Text primary', 'color', 'swatch-text-primary'),
+        this.createToken('--color-text-secondary', 'Text secondary', 'color', 'swatch-text-secondary'),
+        this.createToken('--color-input-bg', 'Input background', 'color', 'swatch-input'),
+        this.createToken('--color-white', 'White constant', 'color', 'swatch-white'),
+      ],
+    },
+    {
+      name: 'Feedback',
+      tokens: [
+        this.createToken('--color-success', 'Success', 'color', 'swatch-success'),
+        this.createToken('--color-danger', 'Danger', 'color', 'swatch-danger'),
+        this.createToken('--color-danger-bg', 'Danger background', 'color', 'swatch-danger-bg'),
+        this.createToken('--color-info', 'Information', 'color', 'swatch-info'),
+        this.createToken('--color-info-bg', 'Info background', 'color', 'swatch-info-bg'),
+      ],
+    },
+  ]);
+
+  protected readonly typographyTokens = signal<TokenItem[]>([
+    this.createToken('--font-main', 'Font family', 'type', 'font-md'),
+    this.createToken('--font-size-xs', 'Micro / badge', 'type', 'font-xs'),
+    this.createToken('--font-size-sm', 'Small / caption', 'type', 'font-sm'),
+    this.createToken('--font-size-md', 'Body', 'type', 'font-md'),
+    this.createToken('--font-size-lg', 'Section header', 'type', 'font-lg'),
+    this.createToken('--font-size-xl', 'Page title', 'type', 'font-xl'),
+    this.createToken('--font-size-xxl', 'Display', 'type', 'font-xxl'),
+    this.createToken('--font-size-huge', 'Huge metric', 'type', 'font-huge'),
+    this.createToken('--font-weight-normal', 'Normal weight', 'type', 'weight-normal'),
+    this.createToken('--font-weight-medium', 'Medium weight', 'type', 'weight-medium'),
+    this.createToken('--font-weight-semibold', 'Semibold weight', 'type', 'weight-semibold'),
+    this.createToken('--font-weight-bold', 'Bold weight', 'type', 'weight-bold'),
+  ]);
+
+  protected readonly spacingTokens = signal<TokenItem[]>([
+    this.createToken('--space-1', 'Base unit', 'space', 'space-1'),
+    this.createToken('--space-2', 'Tight gap', 'space', 'space-2'),
+    this.createToken('--space-3', 'Compact padding', 'space', 'space-3'),
+    this.createToken('--space-4', 'Default padding', 'space', 'space-4'),
+    this.createToken('--space-6', 'Card gap', 'space', 'space-6'),
+    this.createToken('--space-8', 'Page rhythm', 'space', 'space-8'),
+    this.createToken('--space-12', 'Large section', 'space', 'space-12'),
+    this.createToken('--space-16', 'Hero section', 'space', 'space-16'),
+  ]);
+
+  protected readonly radiusTokens = signal<TokenItem[]>([
+    this.createToken('--radius-sm', 'Small radius', 'radius'),
+    this.createToken('--radius-md', 'Medium radius', 'radius'),
+    this.createToken('--radius-lg', 'Large radius', 'radius'),
+    this.createToken('--radius-xl', 'Extra large radius', 'radius'),
+  ]);
+
+  protected readonly effectTokens = signal<TokenItem[]>([
+    this.createToken('--shadow-soft', 'Soft elevation', 'effect'),
+    this.createToken('--shadow-glow-primary', 'Primary glow', 'effect'),
+    this.createToken('--shadow-glow-secondary', 'Secondary glow', 'effect'),
+    this.createToken('--transition-standard', 'Standard motion', 'effect'),
+  ]);
+
+  protected readonly patterns: PatternPreview[] = [
+    {
+      name: '.glass-effect',
+      classList: 'glass-effect pattern-glass',
+      description: 'Theme-aware translucent panel using surface, border, and blur tokens.',
+      code: '<section class="glass-effect card">...</section>',
+    },
+    {
+      name: '.metric-card',
+      classList: 'glass-effect card metric-card pattern-metric',
+      description: 'Dashboard metric surface with accent icon, number, and compact metadata.',
+      code: '<div class="glass-effect card metric-card">...</div>',
+    },
+    {
+      name: '.status-indicator',
+      classList: 'pattern-status',
+      description: 'Live connectivity row using the semantic success palette and pulsing dot.',
+      code: '<div class="status-indicator"><span class="pulse-dot"></span>...</div>',
+    },
+  ];
+
+  constructor() {
+    afterNextRender(() => this.refreshTokenValues());
+  }
+
+  protected setTheme(mode: ThemeMode): void {
+    this.themeService.setMode(mode);
+    queueMicrotask(() => this.refreshTokenValues());
+  }
+
+  protected copyToken(tokenName: string): void {
+    void navigator.clipboard.writeText(`var(${tokenName})`).then(() => {
+      this.copiedToken.set(tokenName);
+      window.setTimeout(() => this.copiedToken.set(null), 1400);
+    });
+  }
+
+  protected updateSandboxTitle(value: string): void {
+    this.sandboxTitle.set(value.trim() || 'Operational Insight');
+  }
+
+  protected sandboxGapLabel(): string {
+    if (this.sandboxDensity() === 1) {
+      return 'Compact';
+    }
+    if (this.sandboxDensity() === 3) {
+      return 'Spacious';
+    }
+    return 'Comfortable';
+  }
+
+  private createToken(name: string, label: string, category: TokenCategory, className?: string): TokenItem {
+    return { name, label, category, value: 'loading', className };
+  }
+
+  private refreshTokenValues(): void {
+    const styles = getComputedStyle(document.documentElement);
+
+    this.colorGroups.update(groups => groups.map(group => ({
+      ...group,
+      tokens: group.tokens.map(token => this.withResolvedValue(token, styles)),
+    })));
+    this.typographyTokens.update(tokens => tokens.map(token => this.withResolvedValue(token, styles)));
+    this.spacingTokens.update(tokens => tokens.map(token => this.withResolvedValue(token, styles)));
+    this.radiusTokens.update(tokens => tokens.map(token => this.withResolvedValue(token, styles)));
+    this.effectTokens.update(tokens => tokens.map(token => this.withResolvedValue(token, styles)));
+  }
+
+  private withResolvedValue(token: TokenItem, styles: CSSStyleDeclaration): TokenItem {
+    const value = styles.getPropertyValue(token.name).trim();
+    return { ...token, value: value || 'not defined' };
+  }
+}
+
+========================================
+FILE: src\app\features\design-system\_design-system-showcase.css
+========================================
+
+.design-system-page {
+  .type-token,
+  .spacing-token {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-3);
+  }
+
+  .type-preview {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    min-height: 56px;
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-primary);
+    font-weight: var(--font-weight-bold);
+
+    &.font-xs { font-size: var(--font-size-xs); }
+    &.font-sm { font-size: var(--font-size-sm); }
+    &.font-md { font-size: var(--font-size-md); }
+    &.font-lg { font-size: var(--font-size-lg); }
+    &.font-xl { font-size: var(--font-size-xl); }
+    &.font-xxl { font-size: var(--font-size-xxl); }
+    &.font-huge { font-size: var(--font-size-huge); }
+    &.weight-normal { font-weight: var(--font-weight-normal); }
+    &.weight-medium { font-weight: var(--font-weight-medium); }
+    &.weight-semibold { font-weight: var(--font-weight-semibold); }
+    &.weight-bold { font-weight: var(--font-weight-bold); }
+  }
+
+  .spacing-bar {
+    display: block;
+    height: var(--space-6);
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    box-shadow: var(--shadow-glow-primary);
+
+    &.space-1 { width: var(--space-1); }
+    &.space-2 { width: var(--space-2); }
+    &.space-3 { width: var(--space-3); }
+    &.space-4 { width: var(--space-4); }
+    &.space-6 { width: var(--space-6); }
+    &.space-8 { width: var(--space-8); }
+    &.space-12 { width: var(--space-12); }
+    &.space-16 { width: var(--space-16); }
+  }
+
+  .detail-grid,
+  .sandbox-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+
+  .detail-token {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-height: 96px;
+    padding: var(--space-4);
+
+    span {
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-sm);
+    }
+
+    strong {
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .radius-preview {
+    border-radius: var(--radius-xl);
+  }
+
+  .effect-preview {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .pattern-row {
+    display: grid;
+    grid-template-columns: minmax(160px, 220px) 1fr;
+    gap: var(--space-4);
+    align-items: center;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+
+    p {
+      margin: var(--space-1) 0 var(--space-2);
+    }
+
+    code {
+      color: var(--color-primary);
+      font-size: var(--font-size-xs);
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .pattern-glass,
+  .pattern-metric,
+  .pattern-status {
+    min-height: 112px;
+    display: grid;
+    place-items: center;
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    text-align: center;
+  }
+
+  .sandbox-controls,
+  .sandbox-preview {
+    padding: var(--space-6);
+    border: 1px solid var(--color-border);
+  }
+
+  .sandbox-controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .sandbox-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+
+    .metric-value {
+      text-align: start;
+    }
+
+    .primary-btn {
+      width: auto;
+    }
+  }
+
+  .density-compact {
+    .sandbox-card {
+      padding: var(--space-4);
+    }
+  }
+
+  .density-comfortable {
+    .sandbox-card {
+      padding: var(--space-6);
+    }
+  }
+
+  .density-spacious {
+    .sandbox-card {
+      padding: var(--space-8);
+    }
+  }
+}
+
+========================================
+FILE: src\app\features\design-system\_design-system-tokens.css
+========================================
+
+.design-system-page {
+  .copy-state,
+  .density-label {
+    color: var(--color-primary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .color-swatch {
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+
+    &.swatch-primary { background: var(--color-primary); }
+    &.swatch-primary-glow { background: var(--color-primary-glow); }
+    &.swatch-secondary { background: var(--color-secondary); }
+    &.swatch-secondary-glow { background: var(--color-secondary-glow); }
+    &.swatch-bg { background: var(--color-bg); }
+    &.swatch-surface { background: var(--color-surface); }
+    &.swatch-border { background: var(--color-border); }
+    &.swatch-text-primary { background: var(--color-text-primary); }
+    &.swatch-text-secondary { background: var(--color-text-secondary); }
+    &.swatch-input { background: var(--color-input-bg); }
+    &.swatch-white { background: var(--color-white); }
+    &.swatch-success { background: var(--color-success); }
+    &.swatch-danger { background: var(--color-danger); }
+    &.swatch-danger-bg { background: var(--color-danger-bg); }
+    &.swatch-info { background: var(--color-info); }
+    &.swatch-info-bg { background: var(--color-info-bg); }
+  }
+
+  @media (max-width: 900px) {
+    .showcase-hero,
+    .pattern-row {
+      grid-template-columns: 1fr;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .showcase-section {
+      &.two-column {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sandbox-grid,
+    .detail-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+========================================
+FILE: src\app\features\layout\main-layout\main-layout.html
+========================================
+
+<div class="main-wrapper">
+	<app-main-sidebar />
+
+	<main class="main-content">
+		<router-outlet></router-outlet>
+	</main>
+</div>
+
+
+========================================
+FILE: src\app\features\layout\main-layout\main-layout.ts
+========================================
+
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterOutlet } from '@angular/router';
+import { MainSidebar } from '../main-sidebar/main-sidebar';
+
+@Component({
+	selector: 'app-main-layout',
+	standalone: true,
+	imports: [CommonModule, RouterOutlet, MainSidebar],
+	templateUrl: './main-layout.html',
+})
+export class MainLayout {}
+
+
+========================================
+FILE: src\app\features\layout\main-sidebar\main-sidebar.css
+========================================
+
+/* FILE: frontend/src/app/features/layout/main-sidebar/main-sidebar.css */
+
+.sidebar {
+	width: 280px;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	padding: var(--space-6);
+	border-left: 1px solid var(--color-border);
+	z-index: 10;
+
+	.sidebar-header {
+		margin-bottom: var(--space-12);
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+
+		.theme-toggle {
+			width: 40px;
+			height: 40px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			border-radius: var(--radius-md);
+		}
+	}
+
+	.nav-list {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+
+		.nav-item {
+			display: flex;
+			align-items: center;
+			gap: var(--space-4);
+			padding: var(--space-3) var(--space-4);
+			border-radius: var(--radius-md);
+			text-decoration: none;
+			color: var(--color-text-secondary);
+			transition: var(--transition-standard);
+			cursor: pointer;
+
+			&:hover,
+			&.active {
+				background: var(--color-input-bg);
+				color: var(--color-primary);
+			}
+
+			.nav-icon {
+				font-size: var(--font-size-xl);
+				width: 24px;
+				height: 24px;
+			}
+
+			.nav-label {
+				font-size: var(--font-size-md);
+				font-weight: var(--font-weight-medium);
+			}
+		}
+	}
+
+	.sidebar-footer {
+		margin-top: auto;
+		padding: var(--space-4);
+		border-radius: var(--radius-md);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-4);
+
+		.user-profile {
+			display: flex;
+			align-items: center;
+			gap: var(--space-3);
+			text-align: right;
+
+			.user-avatar {
+				width: 40px;
+				height: 40px;
+				background: var(--color-primary);
+				color: var(--color-white);
+				border-radius: 50%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-weight: var(--font-weight-bold);
+			}
+
+			.user-info {
+				display: flex;
+				flex-direction: column;
+				gap: var(--space-1);
+				overflow: hidden;
+
+				.user-name {
+					font-size: var(--font-size-sm);
+					font-weight: var(--font-weight-semibold);
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+			}
+		}
+
+		.logout-btn {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: var(--space-3);
+			width: 100%;
+			padding: var(--space-3);
+			border-radius: var(--radius-md);
+			border: 1px solid var(--color-border);
+			background: transparent;
+			color: var(--color-text-secondary);
+			cursor: pointer;
+			transition: var(--transition-standard);
+
+			&:hover {
+				background: var(--color-danger-bg);
+				color: var(--color-danger);
+				border-color: var(--color-danger-border);
+			}
+		}
+	}
+}
+
+.nested-sessions-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+	padding-right: var(--space-6);
+	margin-top: calc(var(--space-1) * -1);
+	margin-bottom: var(--space-3);
+
+	.session-sub-item {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		padding: var(--space-2) var(--space-3);
+		border-radius: var(--radius-sm);
+		text-decoration: none;
+		color: var(--color-text-secondary);
+		font-size: var(--font-size-sm);
+		transition: var(--transition-standard);
+		cursor: pointer;
+
+		&:hover,
+		&.active {
+			background: var(--color-input-bg);
+			color: var(--color-primary);
+		}
+
+
+		.session-title-label {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+	}
+
+	.btn-show-all-sessions {
+		background: transparent;
+		border: none;
+		color: var(--color-text-secondary);
+		font-size: var(--font-size-xs);
+		padding: var(--space-2) var(--space-3);
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		cursor: pointer;
+		transition: var(--transition-standard);
+		text-align: right;
+
+		&:hover {
+			background: var(--color-input-bg);
+			color: var(--color-primary);
+			border-radius: var(--radius-sm);
+		}
+
+	}
+}
+
+========================================
+FILE: src\app\features\layout\main-sidebar\main-sidebar.html
+========================================
+
+<aside class="sidebar glass-effect">
+	<div class="sidebar-header">
+		<div class="logo">LG</div>
+		<button
+			class="transparent-btn theme-toggle icon-only"
+			type="button"
+			(click)="themeService.toggle()"
+			[attr.aria-label]="themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
+		>
+			<i class="ph nav-icon" [class.ph-moon]="themeService.isDark()" [class.ph-sun]="!themeService.isDark()"></i>
+		</button>
+	</div>
+
+	<nav class="nav-list">
+		<a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
+			<i class="ph ph-squares-four nav-icon"></i>
+			<span class="nav-label">׳׳•׳— ׳‘׳§׳¨׳”</span>
+		</a>
+		<a routerLink="/users" routerLinkActive="active" class="nav-item">
+			<i class="ph ph-users nav-icon"></i>
+			<span class="nav-label">׳ ׳™׳”׳•׳ ׳׳©׳×׳׳©׳™׳</span>
+		</a>
+
+		<a routerLink="/chat" routerLinkActive="active" class="nav-item">
+			<i class="ph ph-chat-circle-text nav-icon"></i>
+			<span class="nav-label">׳©׳™׳—׳” ׳¢׳ ׳¡׳•׳›׳</span>
+		</a>
+
+		@if (chatStore.recentSessions().length > 0) {
+			<div class="nested-sessions-list">
+				@for (session of chatStore.recentSessions(); track session.id) {
+					<a
+						[routerLink]="['/chat']"
+						[queryParams]="{ sessionId: session.id }"
+						class="session-sub-item"
+						[class.active]="chatStore.currentSessionId() === session.id"
+					>
+						<i class="ph ph-chat-centered-text"></i>
+						<span class="session-title-label">{{ session.title }}</span>
+					</a>
+				}
+
+				@if (chatStore.sessions().length > 5) {
+					<button class="btn-show-all-sessions" type="button" (click)="openAllSessionsDialog()">
+						<i class="ph ph-database"></i>
+						<span>׳›׳ ׳”׳©׳™׳—׳•׳×...</span>
+					</button>
+				}
+			</div>
+		}
+	</nav>
+
+	<div class="sidebar-footer glass-effect">
+		<div class="user-profile">
+			<div class="user-avatar">
+				{{ authStore.user()?.email ? authStore.user()?.email![0].toUpperCase() : '?' }}
+			</div>
+			<div class="user-info">
+				<span class="user-name">{{ authStore.user()?.email }}</span>
+				@if (authStore.user()?.role !== null && authStore.user()?.role !== undefined) {
+					<span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)?.color">
+						<i class="ph sm" [ngClass]="getUserRoleData(authStore.user()!.role)?.icon"></i>
+						{{ getUserRoleData(authStore.user()!.role)?.heLabel }}
+					</span>
+				}
+			</div>
+		</div>
+		<button (click)="authStore.logout()" class="transparent-btn logout-btn">
+			<i class="ph ph-sign-out ph-fill nav-icon"></i>
+			<span>׳”׳×׳ ׳×׳§׳•׳×</span>
+		</button>
+	</div>
+</aside>
+
+========================================
+FILE: src\app\features\layout\main-sidebar\main-sidebar.ts
+========================================
+
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DialogService } from 'primeng/dynamicdialog';
+import { AuthStore } from '../../../core/store/auth.store';
+import { ChatStore } from '../../../core/store/chat.store';
+import { getUserRoleData } from '../../../core/enums/user-role.enum';
+import { BadgeColor } from '../../../core/directives/badge-color.directive';
+import { ThemeService } from '../../../core/services/theme.service';
+import { AllSessionsDialog } from '../../chat/all-sessions-dialog/all-sessions-dialog';
+
+@Component({
+	selector: 'app-main-sidebar',
+	standalone: true,
+	imports: [CommonModule, RouterLink, RouterLinkActive, BadgeColor],
+	templateUrl: './main-sidebar.html',
+	styleUrl: './main-sidebar.css',
+})
+export class MainSidebar implements OnInit {
+	protected authStore = inject(AuthStore);
+	protected chatStore = inject(ChatStore);
+	protected themeService = inject(ThemeService);
+
+	private dialogService = inject(DialogService);
+	private destroyRef = inject(DestroyRef);
+	private router = inject(Router);
+
+	protected readonly getUserRoleData = getUserRoleData;
+
+	ngOnInit() {
+		this.chatStore.loadSessions();
+	}
+
+	openAllSessionsDialog() {
+		const dialogRef = this.dialogService.open(AllSessionsDialog, {
+			header: '׳”׳¡׳˜׳•׳¨׳™׳× ׳”׳©׳™׳—׳•׳×',
+			width: '500px',
+			modal: true,
+			dismissableMask: true,
+			closable: true,
+			breakpoints: {
+				'960px': '75vw',
+				'640px': '90vw',
+			},
+			style: {
+				background: 'var(--color-bg)',
+				border: '1px solid var(--color-border)',
+				'border-radius': 'var(--radius-lg)',
+			},
+		});
+
+		dialogRef?.onClose
+			?.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((selectedSessionId: number | undefined) => {
+				if (selectedSessionId) {
+					this.chatStore.currentSessionId.set(selectedSessionId);
+					this.router.navigate(['/chat'], { queryParams: { sessionId: selectedSessionId } });
+				}
+			});
+	}
+}
+
+========================================
+FILE: src\app\features\users\users-management.html
+========================================
+
+@switch (pageState()) {
+  @case (PageStates.Loading) {
+    <div class="page-state loading-state">
+      <span class="custom-loader"></span>
+    </div>
+  }
+  @case (PageStates.Error) {
+    <div class="page-state error-state">
+      <span class="icon ph ph-warning"></span>
+      <h4 class="title">׳׳™׳¨׳¢׳” ׳©׳’׳™׳׳” ׳‘׳˜׳¢׳™׳ ׳× ׳”׳׳©׳×׳׳©׳™׳.</h4>
+      <p class="subtitle">׳׳ ׳ ׳ ׳¡׳” ׳©׳•׳‘ ׳׳׳•׳—׳¨ ׳™׳•׳×׳¨.</p>
+    </div>
+  }
+  @case (PageStates.Empty) {
+    <div class="page-state empty-state">
+      <span class="icon ph ph-user-circle-minus"></span>
+      <h4 class="title">׳׳ ׳ ׳׳¦׳׳• ׳׳©׳×׳׳©׳™׳.</h4>
+      <p class="subtitle">׳׳ ׳¨׳©׳•׳׳™׳ ׳׳©׳×׳׳©׳™׳ ׳‘׳׳¢׳¨׳›׳× ׳›׳¨׳’׳¢.</p>
+    </div>
+  }
+  @case (PageStates.Ready) {
+    <div class="page-content">
+      <header class="page-header">
+        <h1>׳ ׳™׳”׳•׳ ׳׳©׳×׳׳©׳™ ׳”׳׳¢׳¨׳›׳×</h1>
+        <p class="subtitle">׳ ׳™׳”׳•׳ ׳”׳¨׳©׳׳•׳×, ׳×׳₪׳§׳™׳“׳™׳ ׳•׳׳©׳×׳׳©׳™׳ ׳¨׳©׳•׳׳™׳ ׳‘׳׳¢׳¨׳›׳×</p>
+      </header>
+
+      <div class="glass-effect card table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>׳©׳ ׳׳׳</th>
+              <th>׳׳™׳׳™׳™׳</th>
+              <th>׳×׳₪׳§׳™׳“</th>
+              <th>׳×׳׳¨׳™׳ ׳”׳¨׳©׳׳”</th>
+              @if (authStore.user()?.role === 1) {
+                <th>׳₪׳¢׳•׳׳•׳×</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of usersStore.users(); track user.id) {
+              <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.fullName || '׳׳ ׳”׳•׳’׳“׳¨' }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                  <span class="badge" [badgeColor]="getUserRoleData(user.role)?.color">
+                    <span [class]="getUserRoleData(user.role)?.icon" class="xs"></span>
+                    {{ getUserRoleData(user.role)?.heLabel }}
+                  </span>
+                </td>
+                <td>{{ user.createdAt | date:'shortDate' }}</td>
+                @if (authStore.user()?.role === 1) {
+                  <td class="table-actions">
+                    <div class="actions">
+                      <button class="transparent-btn" (click)="toggleRole(user.id, user.role)" title="׳©׳ ׳” ׳×׳₪׳§׳™׳“">
+                        <span class="ph ph-swap" ></span>
+                      </button>
+                      <button class="danger-btn outlined" (click)="deleteUser(user.id)" title="׳׳—׳§ ׳׳©׳×׳׳©">
+                        <span class="ph ph-trash"></span>
+                      </button>
+                    </div>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+}
+
+========================================
+FILE: src\app\features\users\users-management.ts
+========================================
+
+import { Component, inject, OnInit, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { AuthStore } from '../../core/store/auth.store';
+import { UsersStore } from '../../core/store/users.store';
+import { UserRole } from '../../core/enums/user-role.enum';
+import { PageStates } from '../../core/enums/page-states.enum';
+import { getUserRoleData } from '../../core/enums/user-role.enum';
+import { BadgeColor } from '../../core/directives/badge-color.directive';
+
+@Component({
+  selector: 'app-users-management',
+  standalone: true,
+  imports: [CommonModule, BadgeColor],
+  templateUrl: './users-management.html',
+})
+export class UsersManagement implements OnInit {
+  protected authStore = inject(AuthStore);
+  protected usersStore = inject(UsersStore);
+  protected readonly getUserRoleData = getUserRoleData;
+  protected readonly PageStates = PageStates;
+
+  pageState = computed(() => this.usersStore.pageState());
+
+  ngOnInit() {
+    this.usersStore.loadUsers();
+    console.log(this.getUserRoleData(1)?.icon);
+    
+  }
+
+  toggleRole(userId: number, currentRole: UserRole) {
+    const targetRole = currentRole === UserRole.Admin ? UserRole.User : UserRole.Admin;
+    this.usersStore.updateUserRole(userId, targetRole);
+  }
+
+getUserRoleIcon(role: UserRole) {
+  const icon = this.getUserRoleData(role)?.icon ?? '';
+  return {
+    ph: true,
+    [icon]: !!icon,
+    sm: true,
+  };
+}
+
+
+  deleteUser(userId: number) {
+    if (confirm('׳”׳׳ ׳׳×׳” ׳‘׳˜׳•׳— ׳©׳‘׳¨׳¦׳•׳ ׳ ׳׳׳—׳•׳§ ׳׳©׳×׳׳© ׳–׳”? ׳₪׳¢׳•׳׳” ׳–׳• ׳׳™׳ ׳” ׳”׳₪׳™׳›׳”.')) {
+      this.usersStore.deleteUser(userId);
+    }
+  }
+
+
+}
+
+========================================
+FILE: src\app\app.config.ts
+========================================
+
+import { APP_INITIALIZER, ApplicationConfig, LOCALE_ID, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+
+import { routes } from './app.routes';
+import { registerLocaleData } from '@angular/common';
+import { AuthService } from './core/services/auth.service';
+import { AuthStore } from './core/store/auth.store';
+import localeHe from '@angular/common/locales/he';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { withCredentialsInterceptor } from './core/interceptors/with-credentials.interceptor';
+import { PRIME_NG_PROVIDERS } from './core/config/primeng-define-preset';
+import { ThemeService } from './core/services/theme.service';
+
+registerLocaleData(localeHe);
+
+
+export function initializeApp(authService: AuthService, authStore: AuthStore, themeService: ThemeService) {
+  return async () => {
+    themeService.init();
+    const user = await authService.checkSession();
+    authStore.user.set(user);
+
+  };
+}
+
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideRouter(routes),
+    provideAnimationsAsync(),
+    provideHttpClient(
+      withInterceptors([withCredentialsInterceptor, authInterceptor]),
+    ),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeApp,
+      deps: [AuthService, AuthStore, ThemeService],
+      multi: true,
+    },
+    { provide: LOCALE_ID, useValue: 'he-IL' },
+    ...PRIME_NG_PROVIDERS,
+  ]
+};
+
+========================================
+FILE: src\app\app.css
+========================================
+
+
+========================================
+FILE: src\app\app.html
+========================================
+
+<router-outlet />
+
+========================================
+FILE: src\app\app.routes.ts
+========================================
+
+import { Routes } from '@angular/router';
+import { Login } from './features/auth/login/login';
+import { Register } from './features/auth/register/register';
+import { MainLayout } from './features/layout/main-layout/main-layout';
+import { authGuard } from './core/guards/auth.guard';
+
+export const routes: Routes = [
+  { path: 'login', component: Login },
+  { path: 'register', component: Register },
+  {
+    path: '',
+    canActivate: [authGuard],
+    component: MainLayout,
+    children: [
+      { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard').then(m => m.Dashboard) },
+      { path: 'users', loadComponent: () => import('./features/users/users-management').then(m => m.UsersManagement) },
+      { path: 'chat', loadComponent: () => import('./features/chat/chat/chat').then(m => m.Chat) },
+      { path: 'design-system', loadComponent: () => import('./features/design-system/design-system').then(m => m.DesignSystem) },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+    ],
+  },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+];
+
+========================================
+FILE: src\app\app.ts
+========================================
+
+import { Component, signal } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet],
+  templateUrl: './app.html',
+  styleUrl: './app.css'
+})
+export class App {
+  protected readonly title = signal('frontend');
+}
+
+========================================
+FILE: src\index.html
+========================================
+
+<!doctype html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="utf-8">
+  <title>Frontend</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/fill/style.css"
+    />
+</head>
+
+<body>
+  <app-root></app-root>
+</body>
+
+</html>
+
+========================================
+FILE: src\main.ts
+========================================
+
+import { bootstrapApplication } from '@angular/platform-browser';
+import { appConfig } from './app/app.config';
+import { App } from './app/app';
+
+bootstrapApplication(App, appConfig)
+  .catch((err) => console.error(err));
+
+========================================
+FILE: src\styles.css
+========================================
+
+@import './app/assets/styles/_variables.css';
+@import './app/assets/styles/_reset.css';
+@import './app/assets/styles/_typography.css';
+@import './app/assets/styles/_forms.css';
+@import './app/assets/styles/_buttons.css';
+@import './app/assets/styles/_layout.css';
+@import './app/assets/styles/_utilities.css';

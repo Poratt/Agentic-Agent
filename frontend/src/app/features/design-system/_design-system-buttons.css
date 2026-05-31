@@ -1,0 +1,74 @@
+.design-system-page {
+  .button-showcase-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: var(--space-4);
+  }
+
+  .button-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+
+    h3 {
+      margin: 0;
+    }
+
+    &.button-panel-wide {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .button-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+
+    &.compact {
+      gap: var(--space-2);
+    }
+
+
+  }
+
+  .button-size-stack,
+  .link-samples {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .button-size-row {
+    display: grid;
+    grid-template-columns: 88px 1fr;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-input-bg);
+
+    code {
+      color: var(--color-primary);
+      font-size: var(--font-size-xs);
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .link-samples {
+    align-items: flex-start;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-input-bg);
+  }
+
+  @media (max-width: 900px) {
+    .button-showcase-grid,
+    .button-size-row {
+      grid-template-columns: 1fr;
+    }
+  }
+}

@@ -1,0 +1,343 @@
+@switch (pageState()) {
+  @case (PageStates.Ready) {
+    <section class="design-system-page">
+      <header class="showcase-hero glass-effect">
+        <div>
+          <span class="eyebrow">Design tokens</span>
+          <h1>Interactive Design System Showcase</h1>
+          <p>
+            Explore the live CSS custom properties behind themes, layout primitives, patterns, and component states.
+          </p>
+        </div>
+
+        <div class="theme-toggle" role="group" aria-label="Preview theme">
+          <button type="button" [class.active]="themeMode() === 'dark'" (click)="setTheme('dark')">
+            <span class="ph ph-moon"></span>
+            Dark
+          </button>
+          <button type="button" [class.active]="themeMode() === 'light'" (click)="setTheme('light')">
+            <span class="ph ph-sun"></span>
+            Light
+          </button>
+        </div>
+      </header>
+
+      <section class="showcase-section">
+        <div class="section-heading">
+          <span class="ph ph-palette"></span>
+          <div>
+            <h2>Color Palette Explorer</h2>
+            <p>Click any token card to copy its CSS variable reference.</p>
+          </div>
+        </div>
+
+        <div class="color-grid">
+          @for (group of colorGroups(); track group.name) {
+            <article class="token-panel glass-effect">
+              <h3>{{ group.name }}</h3>
+              <div class="token-list">
+                @for (token of group.tokens; track token.name) {
+                  <button class="color-token" type="button" (click)="copyToken(token.name)" [attr.aria-label]="'Copy ' + token.name">
+                    <span class="color-swatch" [ngClass]="token.className"></span>
+                    <span class="token-copy">
+                      <strong>{{ token.name }}</strong>
+                      <small>{{ token.value }}</small>
+                    </span>
+                    <span class="copy-state">{{ copiedToken() === token.name ? 'Copied' : 'Copy' }}</span>
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="showcase-section two-column">
+        <article class="token-panel glass-effect">
+          <div class="section-heading compact">
+            <span class="ph ph-text-aa"></span>
+            <div>
+              <h2>Typography Scale</h2>
+              <p>Font family, size, and weight tokens resolved from the current theme.</p>
+            </div>
+          </div>
+
+          <div class="type-scale">
+            @for (token of typographyTokens(); track token.name) {
+              <button class="type-token" type="button" (click)="copyToken(token.name)">
+                <span class="type-preview" [ngClass]="token.className">
+                  Aa
+                </span>
+                <span>
+                  <strong>{{ token.name }}</strong>
+                  <small>{{ token.label }} · {{ token.value }}</small>
+                </span>
+              </button>
+            }
+          </div>
+        </article>
+
+        <article class="token-panel glass-effect">
+          <div class="section-heading compact">
+            <span class="ph ph-ruler"></span>
+            <div>
+              <h2>Spacing & Layout Grid</h2>
+              <p>Bounding boxes visualize the exact rhythm used for padding, margin, and gaps.</p>
+            </div>
+          </div>
+
+          <div class="spacing-stack">
+            @for (token of spacingTokens(); track token.name) {
+              <button class="spacing-token" type="button" (click)="copyToken(token.name)">
+                <span class="spacing-bar" [ngClass]="token.className"></span>
+                <span class="spacing-copy">
+                  <strong>{{ token.name }}</strong>
+                  <small>{{ token.label }} · {{ token.value }}</small>
+                </span>
+              </button>
+            }
+          </div>
+        </article>
+      </section>
+
+      <section class="showcase-section two-column">
+        <article class="token-panel glass-effect">
+          <div class="section-heading compact">
+            <span class="ph ph-corners-out"></span>
+            <div>
+              <h2>Radius & Effects</h2>
+              <p>Reusable surface details for glass panels, controls, and overlays.</p>
+            </div>
+          </div>
+
+          <div class="detail-grid">
+            @for (token of radiusTokens(); track token.name) {
+              <button class="detail-token radius-preview" type="button" (click)="copyToken(token.name)">
+                <span>{{ token.name }}</span>
+                <strong>{{ token.value }}</strong>
+              </button>
+            }
+            @for (token of effectTokens(); track token.name) {
+              <button class="detail-token effect-preview" type="button" (click)="copyToken(token.name)">
+                <span>{{ token.name }}</span>
+                <strong>{{ token.value }}</strong>
+              </button>
+            }
+          </div>
+        </article>
+
+        <article class="token-panel glass-effect">
+          <div class="section-heading compact">
+            <span class="ph ph-layout"></span>
+            <div>
+              <h2>Design Patterns Showcase</h2>
+              <p>Preview the global classes developers already use across pages.</p>
+            </div>
+          </div>
+
+          <div class="pattern-list">
+            @for (pattern of patterns; track pattern.name) {
+              <div class="pattern-row">
+                <div [class]="pattern.classList">
+                  @if (pattern.name === '.status-indicator') {
+                    <div class="status-indicator">
+                      <span class="pulse-dot"></span>
+                      <span>API connected</span>
+                    </div>
+                  } @else {
+                    <span class="ph ph-sparkle"></span>
+                    <strong>{{ pattern.name }}</strong>
+                  }
+                </div>
+                <div>
+                  <h3>{{ pattern.name }}</h3>
+                  <p>{{ pattern.description }}</p>
+                  <code>{{ pattern.code }}</code>
+                </div>
+              </div>
+            }
+          </div>
+        </article>
+      </section>
+
+      <section class="showcase-section">
+        <div class="section-heading">
+          <span class="ph ph-cursor-click"></span>
+          <div>
+            <h2>Button System</h2>
+            <p>Every global button class, size, state, and link treatment from the tokenized button stylesheet.</p>
+          </div>
+        </div>
+
+        <div class="button-showcase-grid">
+          <article class="token-panel glass-effect button-panel">
+            <h3>Theme Variants</h3>
+            <div class="button-row">
+              <button class="primary-btn" type="button">
+                <span class="ph ph-check"></span>
+                Primary
+              </button>
+              <button class="primary-btn outlined" type="button">
+                <span class="ph ph-plus"></span>
+                Primary outlined
+              </button>
+              <button class="danger-btn" type="button">
+                <span class="ph ph-warning"></span>
+                Danger
+              </button>
+              <button class="danger-btn outlined" type="button">
+                <span class="ph ph-trash"></span>
+                Danger outlined
+              </button>
+              <button class="transparent-btn" type="button">
+                <span class="ph ph-dots-three"></span>
+                Transparent
+              </button>
+            </div>
+          </article>
+
+          <article class="token-panel glass-effect button-panel">
+            <h3>Sizes</h3>
+            <div class="button-size-stack">
+              <div class="button-size-row">
+                <code>.sm</code>
+                <div class="button-row compact">
+                  <button class="primary-btn sm" type="button">
+                    <span class="ph ph-check"></span>Primary
+                  </button>
+                  <button class="danger-btn outlined sm" type="button">
+                    <span class="ph ph-warning"></span>Danger
+                  </button>
+                  <button class="transparent-btn sm" type="button">
+                    <span class="ph ph-cube-transparent"></span>Transparent
+                  </button>
+                </div>
+              </div>
+              <div class="button-size-row">
+                <code>default</code>
+                <div class="button-row compact">
+                  <button class="primary-btn" type="button">
+                    <span class="ph ph-check"></span>Primary
+                  </button>
+                  <button class="danger-btn outlined" type="button">
+                    <span class="ph ph-warning"></span>Danger
+                  </button>
+                  <button class="transparent-btn" type="button">
+                    <span class="ph ph-cube-transparent"></span>Transparent
+                  </button>
+                </div>
+              </div>
+              <div class="button-size-row">
+                <code>.lg</code>
+                <div class="button-row compact">
+                  <button class="primary-btn lg" type="button">
+                    <span class="ph ph-check"></span>Primary
+                  </button>
+                  <button class="danger-btn outlined lg" type="button">
+                    <span class="ph ph-warning"></span>Danger
+                  </button>
+                  <button class="transparent-btn lg" type="button">
+                    <span class="ph ph-cube-transparent"></span>Transparent
+                  </button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="token-panel glass-effect button-panel">
+            <h3>Icon Only</h3>
+            <div class="button-row">
+              <button class="primary-btn icon-only" type="button" aria-label="Create">
+                <span class="ph ph-plus"></span>
+              </button>
+              <button class="primary-btn outlined icon-only" type="button" aria-label="Edit">
+                <span class="ph ph-pencil-simple"></span>
+              </button>
+              <button class="danger-btn icon-only" type="button" aria-label="Delete">
+                <span class="ph ph-trash"></span>
+              </button>
+              <button class="danger-btn outlined icon-only" type="button" aria-label="Archive">
+                <span class="ph ph-archive"></span>
+              </button>
+              <button class="transparent-btn icon-only" type="button" aria-label="More actions">
+                <span class="ph ph-dots-three"></span>
+              </button>
+            </div>
+          </article>
+
+          <article class="token-panel glass-effect button-panel">
+            <h3>Disabled States</h3>
+            <div class="button-row">
+              <button class="primary-btn" type="button" disabled>Primary</button>
+              <button class="primary-btn outlined" type="button" disabled>Primary outlined</button>
+              <button class="danger-btn" type="button" disabled>Danger</button>
+              <button class="danger-btn outlined" type="button" disabled>Danger outlined</button>
+              <button class="transparent-btn" type="button" disabled>Transparent</button>
+            </div>
+          </article>
+
+          <article class="token-panel glass-effect button-panel button-panel-wide">
+            <h3>Links</h3>
+            <div class="link-samples">
+              <a href="https://angular.dev" target="_blank" rel="noreferrer">Angular documentation</a>
+              <a href="https://primeng.org" target="_blank" rel="noreferrer">PrimeNG components</a>
+              <a href="https://phosphoricons.com" target="_blank" rel="noreferrer">Phosphor icons</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="showcase-section">
+        <div class="section-heading">
+          <span class="ph ph-sliders-horizontal"></span>
+          <div>
+            <h2>Component Sandbox</h2>
+            <p>Test real controls against the current theme, spacing density, and global form/button rules.</p>
+          </div>
+        </div>
+
+        <div class="sandbox-grid">
+          <form class="sandbox-controls glass-effect" aria-label="Sandbox controls">
+            <label for="sandbox-title">Card title</label>
+            <input id="sandbox-title" type="text" [ngModel]="sandboxTitle()" (ngModelChange)="updateSandboxTitle($event)" name="sandboxTitle">
+
+            <label for="sandbox-density">Density</label>
+            <input id="sandbox-density" type="range" min="1" max="3" [ngModel]="sandboxDensity()" (ngModelChange)="sandboxDensity.set($event)" name="sandboxDensity">
+            <span class="density-label">{{ sandboxGapLabel() }}</span>
+
+            <select aria-label="Sandbox status">
+              <option>Healthy</option>
+              <option>Investigating</option>
+              <option>Offline</option>
+            </select>
+          </form>
+
+          <article
+            class="sandbox-preview glass-effect"
+            [class.density-compact]="sandboxDensity() === 1"
+            [class.density-comfortable]="sandboxDensity() === 2"
+            [class.density-spacious]="sandboxDensity() === 3"
+          >
+            <div class="sandbox-card card">
+              <div class="metric-header">
+                <span class="ph ph-chart-line-up metric-icon"></span>
+                <h3>{{ sandboxTitle() }}</h3>
+              </div>
+              <div class="metric-value">98%</div>
+              <p>PrimeNG-ready layout block using global tokenized forms, buttons, badges, and status patterns.</p>
+              <div class="sandbox-actions">
+                <button class="primary-btn" type="button">Primary action</button>
+                <button class="transparent-btn" type="button">Transparent</button>
+                <button class="danger-btn" type="button">Danger</button>
+              </div>
+              <div class="status-indicator">
+                <span class="pulse-dot"></span>
+                <span>Theme: {{ themeMode() }}</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </section>
+  }
+}

@@ -15,6 +15,7 @@ export const routes: Routes = [
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard').then(m => m.Dashboard) },
       { path: 'users', loadComponent: () => import('./features/users/users-management').then(m => m.UsersManagement) },
       { path: 'chat', loadComponent: () => import('./features/chat/chat/chat').then(m => m.Chat) },
+      { path: 'design-system', loadComponent: () => import('./features/design-system/design-system').then(m => m.DesignSystem) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

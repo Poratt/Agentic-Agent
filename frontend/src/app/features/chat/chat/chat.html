@@ -57,7 +57,7 @@
 	<div class="chat-input-area">
 		<form [formGroup]="chatForm" (ngSubmit)="sendMessage()">
 			<input type="text" formControlName="prompt" placeholder="הקלד את הודעתך כאן..." autocomplete="off">
-			<button type="submit" class="btn-primary" [disabled]="chatForm.invalid || loading() || historyLoading()">
+			<button type="submit" class="primary-btn" [disabled]="chatForm.invalid || loading() || historyLoading()">
 				<i class="ph ph-arrow-up  md"></i>
 			</button>
 		</form>

@@ -1,11 +1,10 @@
 <div class="archive-container">
-	<button type="button" class="btn-ghost close-btn" (click)="ref.close()">
-		<i class="ph ph-x"></i>
-	</button>
-	<div class="search-box">
-		<i class="ph ph-magnifying-glass"></i>
-		<input type="text" [value]="searchQuery()" (input)="onSearchChange($event)" placeholder="חפש שיחה לפי כותרת..."
-			autocomplete="off">
+	<div class="search-box-wrapper">
+		<div class="search-box">
+			<i class="ph ph-magnifying-glass"></i>
+			<input type="text" [value]="searchQuery()" (input)="onSearchChange($event)" placeholder="חפש שיחה לפי כותרת..."
+				autocomplete="off">
+		</div>
 	</div>
 
 	<div class="sessions-archive-list">
@@ -19,10 +18,10 @@
 				</div>
 			</div>
 
-			<!-- שימוש במחלקת ה-btn-ghost הגנרית מה-Design System -->
-			<button class="btn-ghost btn-delete-compact" type="button" (click)="deleteSession($event, session.id)"
+			<!-- שימוש במחלקת transparent-btn הגנרית מה-Design System -->
+			<button class="icon-only danger-btn outlined md" type="button" (click)="deleteSession($event, session.id)"
 				title="מחק שיחה">
-				<i class="ph ph-trash sm"></i>
+				<i class="ph ph-trash "></i>
 			</button>
 		</div>
 		}

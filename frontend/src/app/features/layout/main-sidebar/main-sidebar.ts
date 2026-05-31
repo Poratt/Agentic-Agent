@@ -34,9 +34,11 @@ export class MainSidebar implements OnInit {
 
 	openAllSessionsDialog() {
 		const dialogRef = this.dialogService.open(AllSessionsDialog, {
-			header: 'ארכיון כל השיחות',
+			header: 'הסטורית השיחות',
 			width: '500px',
 			modal: true,
+			dismissableMask: true,
+			closable: true,
 			breakpoints: {
 				'960px': '75vw',
 				'640px': '90vw',

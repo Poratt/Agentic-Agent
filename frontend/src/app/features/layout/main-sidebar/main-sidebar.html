@@ -2,7 +2,7 @@
 	<div class="sidebar-header">
 		<div class="logo">LG</div>
 		<button
-			class="btn-ghost theme-toggle"
+			class="transparent-btn theme-toggle icon-only"
 			type="button"
 			(click)="themeService.toggle()"
 			[attr.aria-label]="themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
@@ -65,7 +65,7 @@
 				}
 			</div>
 		</div>
-		<button (click)="authStore.logout()" class="btn-ghost logout-btn">
+		<button (click)="authStore.logout()" class="transparent-btn logout-btn">
 			<i class="ph ph-sign-out ph-fill nav-icon"></i>
 			<span>התנתקות</span>
 		</button>

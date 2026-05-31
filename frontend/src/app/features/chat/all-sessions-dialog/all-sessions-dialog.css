@@ -5,6 +5,9 @@
 	max-height: 450px;
 	direction: rtl;
 
+	.search-box-wrapper {
+		padding: var(--space-2);
+	}
 	.search-box {
 		position: relative;
 		display: flex;
@@ -81,17 +84,6 @@
 				}
 			}
 
-			/* כפתור המחיקה הקומפקטי הדורס את btn-ghost הגנרי רק על hover ל-danger */
-			.btn-delete-compact {
-				padding: var(--space-2);
-				border-radius: var(--radius-sm);
-
-				&:hover {
-					color: var(--color-danger);
-					background: var(--color-danger-bg);
-					border-color: var(--color-danger-border);
-				}
-			}
 		}
 
 		.empty-archive {

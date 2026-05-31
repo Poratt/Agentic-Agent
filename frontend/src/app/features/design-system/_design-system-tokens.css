@@ -1,0 +1,52 @@
+.design-system-page {
+  .copy-state,
+  .density-label {
+    color: var(--color-primary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .color-swatch {
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+
+    &.swatch-primary { background: var(--color-primary); }
+    &.swatch-primary-glow { background: var(--color-primary-glow); }
+    &.swatch-secondary { background: var(--color-secondary); }
+    &.swatch-secondary-glow { background: var(--color-secondary-glow); }
+    &.swatch-bg { background: var(--color-bg); }
+    &.swatch-surface { background: var(--color-surface); }
+    &.swatch-border { background: var(--color-border); }
+    &.swatch-text-primary { background: var(--color-text-primary); }
+    &.swatch-text-secondary { background: var(--color-text-secondary); }
+    &.swatch-input { background: var(--color-input-bg); }
+    &.swatch-white { background: var(--color-white); }
+    &.swatch-success { background: var(--color-success); }
+    &.swatch-danger { background: var(--color-danger); }
+    &.swatch-danger-bg { background: var(--color-danger-bg); }
+    &.swatch-info { background: var(--color-info); }
+    &.swatch-info-bg { background: var(--color-info-bg); }
+  }
+
+  @media (max-width: 900px) {
+    .showcase-hero,
+    .pattern-row {
+      grid-template-columns: 1fr;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .showcase-section {
+      &.two-column {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sandbox-grid,
+    .detail-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
