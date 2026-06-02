@@ -6,13 +6,13 @@ import { Subscription } from 'rxjs';
 import { ChatService } from '../../../core/services/chat.service';
 import { ChatStore } from '../../../core/store/chat.store';
 import { IChatMessage } from '../../../core/models/chat-message.interface';
-import { AiFormat } from '../../../core/directives/ai-format.directive';
 import { AutoScrollBottomDirective } from '../../../core/directives/auto-scroll-bottom.directive';
+import { ChatMessage, ChatMessageStreamState } from '../chat-message/chat-message';
 
 @Component({
 	selector: 'app-chat',
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule, AiFormat, AutoScrollBottomDirective],
+	imports: [CommonModule, ReactiveFormsModule, AutoScrollBottomDirective, ChatMessage],
 	templateUrl: './chat.html',
 	styleUrl: './chat.css',
 })
@@ -25,6 +25,8 @@ export class Chat implements OnInit, OnDestroy {
 	messages = signal<IChatMessage[]>([]);
 	loading = signal<boolean>(false);
 	historyLoading = signal<boolean>(false);
+	activeAssistantIndex = signal<number | null>(null);
+	activeStreamState = signal<ChatMessageStreamState>('idle');
 
 	chatForm: FormGroup = this.fb.group({
 		prompt: ['', [Validators.required, Validators.minLength(1)]],
@@ -36,32 +38,32 @@ export class Chat implements OnInit, OnDestroy {
 		this.routeSub = this.route.queryParams.subscribe((params) => {
 			const sessionId = params['sessionId'] ? Number(params['sessionId']) : null;
 
+			this.clearActiveStream();
+
 			if (!sessionId) {
-				// מנגנון אתחול אוטומטי - יוצר שיחה חדשה ומנווט אליה בצורה חלקה
 				this.chatStore.createSession();
-			} else {
-				this.chatStore.currentSessionId.set(sessionId);
-				this.loadConversationHistory(sessionId);
+				return;
 			}
+
+			this.chatStore.currentSessionId.set(sessionId);
+			this.loadConversationHistory(sessionId);
 		});
 	}
 
 	ngOnDestroy() {
-		if (this.routeSub) {
-			this.routeSub.unsubscribe();
-		}
+		this.routeSub?.unsubscribe();
 	}
 
 	private loadConversationHistory(sessionId: number) {
 		this.historyLoading.set(true);
-		this.messages.set([]); // ניקוי מיידי של המסך למניעת קפיצות של שיחה קודמת
+		this.messages.set([]);
 
 		this.chatService.getSessionMessages(sessionId).subscribe({
 			next: (history) => {
 				this.messages.set(history ?? []);
 				this.historyLoading.set(false);
 			},
-			error: (err) => {
+			error: () => {
 				this.historyLoading.set(false);
 				this.messages.set([
 					{
@@ -82,30 +84,22 @@ export class Chat implements OnInit, OnDestroy {
 		const promptValue = this.chatForm.value.prompt.trim();
 		this.chatForm.reset();
 
-		// 1. שמירת הודעת משתמש מקומית
 		const userMsg: IChatMessage = {
 			role: 'user',
 			content: promptValue,
 		};
 
-		this.messages.update((prev) => {
-			return [...prev, userMsg];
-		});
-
-		// 2. הכנת הודעת עוזר ריקה עם מערך steps ריק
 		const assistantMsg: IChatMessage = {
 			role: 'assistant',
 			content: '',
 			steps: [],
 		};
 
-		this.messages.update((prev) => {
-			return [...prev, assistantMsg];
-		});
-
+		this.messages.update((prev) => [...prev, userMsg, assistantMsg]);
 		this.loading.set(true);
+		this.activeAssistantIndex.set(this.messages().length - 1);
+		this.activeStreamState.set('streaming');
 
-		// בדיקה האם זו ההודעה הראשונה בשיחה לצורך עדכון כותרת ה-Sidebar בסיום
 		const isFirstMessage = this.messages().length <= 2;
 
 		this.chatService.sendMessageStream(promptValue, currentId).subscribe({
@@ -115,48 +109,79 @@ export class Chat implements OnInit, OnDestroy {
 						const updated = [...prev];
 						const lastIndex = updated.length - 1;
 						const currentSteps = updated[lastIndex].steps || [];
+
 						updated[lastIndex] = {
 							...updated[lastIndex],
 							steps: [...currentSteps, { icon: event.icon, message: event.message }],
 						};
+
 						return updated;
 					});
-				} else if (event.type === 'token' && event.content) {
+					return;
+				}
+
+				if (event.type === 'token' && event.content) {
 					this.messages.update((prev) => {
 						const updated = [...prev];
 						const lastIndex = updated.length - 1;
+
 						updated[lastIndex] = {
 							...updated[lastIndex],
 							content: updated[lastIndex].content + event.content!,
 						};
+
 						return updated;
 					});
 				}
 			},
-			error: (err) => {
+			error: () => {
 				this.loading.set(false);
+				this.activeStreamState.set('errored');
 				this.messages.update((prev) => {
 					const updated = [...prev];
 					const lastIndex = updated.length - 1;
+
 					updated[lastIndex] = {
 						...updated[lastIndex],
 						content: '[שגיאה בקבלת תגובה מהשרת. נא לנסות שוב]',
 					};
+
 					return updated;
 				});
 			},
 			complete: () => {
 				this.loading.set(false);
-				
-				// ריענון וסנכרון ה-Sidebar בזמן אמת במידה ושם השיחה הוא עדיין "שיחה חדשה..."
-				const currentSession = this.chatStore.sessions().find((s) => {
-					return s.id === currentId;
-				});
+				this.activeStreamState.set('completed');
 
-				if (currentSession && currentSession.title === 'שיחה חדשה...') {
+				const currentSession = this.chatStore.sessions().find((s) => s.id === currentId);
+
+				if (isFirstMessage || currentSession?.title === 'שיחה חדשה...') {
 					this.chatStore.loadSessions();
 				}
 			},
 		});
+	}
+
+	onPromptKeydown(event: KeyboardEvent): void {
+		if (event.key !== 'Enter' || event.shiftKey) {
+			return;
+		}
+
+		event.preventDefault();
+		this.sendMessage();
+	}
+
+	getStreamState(index: number, message: IChatMessage): ChatMessageStreamState {
+		if (message.role !== 'assistant' || this.activeAssistantIndex() !== index) {
+			return 'idle';
+		}
+
+		return this.activeStreamState();
+	}
+
+	private clearActiveStream(): void {
+		this.loading.set(false);
+		this.activeAssistantIndex.set(null);
+		this.activeStreamState.set('idle');
 	}
 }

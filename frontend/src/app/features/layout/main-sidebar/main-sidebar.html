@@ -41,10 +41,10 @@
 				}
 
 				@if (chatStore.sessions().length > 5) {
-					<button class="btn-show-all-sessions" type="button" (click)="openAllSessionsDialog()">
-						<i class="ph ph-database"></i>
+					<a routerLink="/chat/history" class="btn-show-all-sessions">
+						<i class="ph ph-hard-drives"></i>
 						<span>כל השיחות...</span>
-					</button>
+					</a>
 				}
 			</div>
 		}

@@ -1,4 +1,4 @@
-# Claude Code Project Guide — Porat Monorepo
+# Codex Project Guide — Porat Monorepo
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
@@ -74,8 +74,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## Project Overview
 Full-stack monorepo: Angular frontend + NestJS backend.
-Angular rules @`~/.CLAUDE/rules/angular-rules.md`
-NestJS rules @`~/.CLAUDE/rules/nestjs-rules.md`
+Angular rules @`~/.Codex/rules/angular-rules.md`
+NestJS rules @`~/.Codex/rules/nestjs-rules.md`
 ## CSS Architecture Rules (MANDATORY)
 
 ### File Structure
@@ -94,9 +94,6 @@ All styles live in `frontend/src/app/assets/styles/`:
 - NO hardcoded hex/rgb/px — Golden Rule #3
 - If a style could be reused in another component → it belongs in global files
 - Prefer empty component CSS over duplicating global styles
-- **MANDATORY Nesting**: Use CSS nesting for all component styles to match project patterns (e.g., `.parent { .child { ... } }`).
-- **Zero Duplication**: NEVER redefine classes that already exist in global partials (`.page`, `.page-header`, `.card`, etc.). If a global class is used, it must be applied in HTML without being redefined in the component CSS.
-- **Strict Token Audit**: Before writing CSS, read `_variables.css`. Never guess token names (e.g., use `--space-4`, NOT `--spacing-md`). If a token isn't in `_variables.css`, it doesn't exist.
 
 ### Class Naming Convention
 - Generic names only: `.page`, `.card`, `.form`, `.form-group`, `.page-header`, `.page-footer`

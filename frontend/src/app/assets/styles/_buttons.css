@@ -73,11 +73,13 @@ button {
 
   &.icon-only {
     padding: 0.5rem;
-    border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
 
+    &.rounded {
+      border-radius: 50%;
+    }
     .ph {
       display: flex;
       align-items: center;

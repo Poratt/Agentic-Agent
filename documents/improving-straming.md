@@ -62,132 +62,137 @@ This keeps streaming animation local and disposable. Switching sessions, loading
 
 ### Phase 1: Extract `ChatMessageComponent`
 
-- [ ] Create `frontend/src/app/features/chat/chat-message/chat-message.ts`.
-- [ ] Create `chat-message.html` and `chat-message.css`.
-- [ ] Make the component standalone.
-- [ ] Use `input()` for:
-  - [ ] `message: IChatMessage`.
-  - [ ] `isLatest: boolean`.
-  - [ ] `isLoading: boolean`.
-  - [ ] `isStreamingAssistant: boolean`.
-- [ ] Use `computed()` values for role classes, labels, icons, and whether thinking steps should render.
-- [ ] Move the message row HTML out of `chat.html`.
-- [ ] Replace the inline row in `chat.html` with `<app-chat-message>`.
-- [ ] Keep the parent `@for` filtering for `msg.role !== 'tool'`, or move that condition into a computed list if cleaner.
+- [x] Create `frontend/src/app/features/chat/chat-message/chat-message.ts`.
+- [x] Create `chat-message.html` and `chat-message.css`.
+- [x] Make the component standalone.
+- [x] Use `input()` for:
+  - [x] `message: IChatMessage`.
+  - [x] `streamState: ChatMessageStreamState` as the implemented stream metadata input.
+  - [x] Replaced separate `isLatest`, `isLoading`, and `isStreamingAssistant` inputs with one stream-state input.
+- [x] Use `computed()` values for role classes, labels, icons, and whether thinking steps should render.
+- [x] Move the message row HTML out of `chat.html`.
+- [x] Replace the inline row in `chat.html` with `<app-chat-message>`.
+- [x] Keep the parent `@for` filtering for `msg.role !== 'tool'`, or move that condition into a computed list if cleaner.
 
 ### Phase 2: Add Local Display Content
 
-- [ ] For non-streaming rows, render `message.content` directly.
-- [ ] For the active streaming assistant row, render a local `displayedContent` signal.
-- [ ] Track the previous canonical content length.
-- [ ] On content input changes, enqueue only the newly added text.
-- [ ] Do not replay the whole message on every signal update.
-- [ ] On history-loaded messages, initialize `displayedContent` to the full message content immediately.
+- [x] For non-streaming rows, render `message.content` directly.
+- [x] For the active streaming assistant row, render a local `displayedContent` signal.
+- [x] Track the previous canonical content length.
+- [x] On content input changes, enqueue only the newly added text.
+- [x] Do not replay the whole message on every signal update.
+- [x] On history-loaded messages, initialize `displayedContent` to the full message content immediately.
 
 ### Phase 3: Typewriter Buffer
 
-- [ ] Add a private character queue for pending streamed text.
-- [ ] Add a single active timer handle.
-- [ ] Implement a recursive `scheduleNextTick()` loop using `setTimeout`.
-- [ ] Emit characters in small chunks when the queue is large enough to avoid falling behind.
-- [ ] Keep speed consistent within a word.
-- [ ] Add slight word-boundary jitter:
-  - [ ] Base delay: around `12ms` to `18ms`.
-  - [ ] Jitter: about `-5ms` to `+10ms`.
-- [ ] Add punctuation micro-pauses for `.`, `,`, `!`, `?`, `:`, and `;`.
-- [ ] Keep punctuation pauses short enough to feel responsive: about `45ms` to `120ms`.
-- [ ] Do not add pauses inside code blocks if that is simple to detect; otherwise document as a later refinement.
+- [x] Add a private character queue for pending streamed text.
+- [x] Add a single active timer handle.
+- [x] Implement a recursive `scheduleNextTick()` loop using `setTimeout`.
+- [x] Emit characters in small chunks when the queue is large enough to avoid falling behind.
+- [x] Keep speed consistent within a word.
+- [x] Add slight word-boundary jitter:
+  - [x] Base delay implemented as `18ms`.
+  - [x] Jitter implemented as `0ms` to `17ms`.
+- [x] Add punctuation micro-pauses for `.`, `,`, `!`, `?`, `:`, and `;`.
+- [x] Keep punctuation pauses short enough to feel responsive: about `45ms` to `120ms`.
+- [x] Do not add pauses inside code blocks if that is simple to detect; otherwise document as a later refinement.
 
 ### Phase 4: Flush Mode
 
-- [ ] Add an input or derived state that tells the row when the network stream is complete.
-- [ ] When stream completion is detected, switch the active row into flush mode.
-- [ ] In flush mode, bypass word jitter and punctuation pauses.
-- [ ] Drain buffered text quickly, either with a fast delay or larger chunks per tick.
-- [ ] Only clear the typing cursor after both conditions are true:
-  - [ ] The backend stream completed.
-  - [ ] The local buffer is empty.
+- [x] Add an input or derived state that tells the row when the network stream is complete.
+- [x] When stream completion is detected, switch the active row into flush mode.
+- [x] In flush mode, bypass word jitter and punctuation pauses.
+- [x] Drain buffered text quickly, either with a fast delay or larger chunks per tick.
+- [x] Only clear the typing cursor after both conditions are true:
+  - [x] The backend stream completed.
+  - [x] The local buffer is empty.
+- [x] Add a visible typing rate cap:
+  - [x] Never append more than a small visual chunk per frame while the user can see typing.
+  - [x] Speed up gradually when the queue grows instead of jumping from character typing to text dumps.
+  - [x] Keep flush mode fast but still visibly animated unless the remaining buffer is tiny.
+  - [x] Prevent the response from switching from smooth typing into abrupt bulk insertion.
 
 ### Phase 5: Thinking-to-Typing Handoff
 
-- [ ] Define row-level states:
-  - [ ] `idle`
-  - [ ] `thinking`
-  - [ ] `transitioning`
-  - [ ] `typing`
-  - [ ] `complete`
-- [ ] Keep the thinking/tool box visible while steps are still the only content.
-- [ ] When the first content token arrives and steps exist, move to `transitioning`.
-- [ ] During `transitioning`, enqueue tokens but do not render typed characters yet.
-- [ ] Collapse the thinking box with a CSS class such as `.thinking-process-box.collapsing-out`.
-- [ ] Prefer a `transitionend` listener to know when typing may begin.
-- [ ] Add a timeout fallback matching the transition duration in case `transitionend` does not fire.
-- [ ] After the transition completes, switch to `typing` and start draining the buffer.
-- [ ] If no thinking steps exist, start typing immediately when the first token arrives.
+- [x] Define row-level states:
+  - [x] `idle`
+  - [x] `thinking`
+  - [x] `transitioning`
+  - [x] `typing`
+  - [x] `complete`
+- [x] Keep the thinking/tool box visible while steps are still the only content.
+- [x] When the first content token arrives and steps exist, move to `transitioning`.
+- [x] During `transitioning`, enqueue tokens but do not render typed characters yet.
+- [x] Collapse the thinking box with a CSS class such as `.thinking-process-box.collapsing-out`.
+- [x] Prefer a `transitionend` listener to know when typing may begin.
+- [x] Add a timeout fallback matching the transition duration in case `transitionend` does not fire.
+- [x] After the transition completes, switch to `typing` and start draining the buffer.
+- [x] If no thinking steps exist, start typing immediately when the first token arrives.
 
 ### Phase 6: Cursor and Bubble Polish
 
-- [ ] Add `.typing-active` to the active assistant row only while local typing is in progress.
-- [ ] Use a CSS pseudo-element for the blinking cursor.
-- [ ] Ensure the cursor does not appear on historical assistant messages.
-- [ ] Add a subtle one-time bubble entrance animation for newly inserted rows.
-- [ ] Keep animation distances small to avoid layout jumps.
-- [ ] Respect reduced-motion preferences with `@media (prefers-reduced-motion: reduce)`.
+- [x] Add `.typing-active` to the active assistant row only while local typing is in progress.
+- [x] Use a CSS pseudo-element for the blinking cursor.
+- [x] Ensure the cursor does not appear on historical assistant messages.
+- [x] Add a subtle one-time bubble entrance animation for newly inserted rows.
+- [x] Keep animation distances small to avoid layout jumps.
+- [x] Respect reduced-motion preferences with `@media (prefers-reduced-motion: reduce)`.
 
 ### Phase 7: `AiFormat` Rendering Strategy
 
-- [ ] Review `AiFormat` before adding a `MutationObserver`; it currently replaces the host `innerHTML` on every content change.
-- [ ] Avoid a naive observer that re-animates all parsed nodes every token.
-- [ ] Preferred approach:
-  - [ ] Add a stable wrapper or marker strategy so only newly created top-level blocks receive `.node-fade-in`.
-  - [ ] Track previously rendered top-level block count or content signature.
-  - [ ] Apply fade-in only to newly completed block-level nodes.
-- [ ] If that is too much for the first pass, defer block fade-in and ship the typewriter/cursor first.
-- [ ] Keep all generated HTML sanitized or escaped at least as safely as the current parser does.
-- [ ] Remove inline style expansion from new work; use existing design tokens and classes where possible.
+- [x] Review `AiFormat` before adding a `MutationObserver`; it currently replaces the host `innerHTML` on every content change.
+- [x] Avoid a naive observer that re-animates all parsed nodes every token.
+- [x] Add fade-in behavior for newly completed rendered blocks so Markdown output does not appear as a sudden dump after parsing.
+- [x] Preferred approach:
+  - [x] Add a stable wrapper or marker strategy so only newly created top-level blocks receive `.node-fade-in`.
+  - [x] Track previously rendered top-level block count or content signature.
+  - [x] Apply fade-in only to newly completed block-level nodes.
+- [x] If that is too much for the first pass, defer block fade-in and ship the typewriter/cursor first.
+- [x] Keep all generated HTML sanitized or escaped at least as safely as the current parser does.
+- [x] Remove inline style expansion from new work; use existing design tokens and classes where possible.
 
 ### Phase 8: Auto-Scroll Refinement
 
-- [ ] Update `AutoScrollBottomDirective` so only one animation-frame scroll can be pending at a time.
-- [ ] Keep the existing `MutationObserver`, but coalesce rapid mutations.
-- [ ] Consider scrolling only when the user is already near the bottom.
-- [ ] Do not forcibly pull the viewport down if the user has intentionally scrolled upward.
-- [ ] Add or verify `scroll-behavior: smooth` on the chat history viewport.
+- [x] Update `AutoScrollBottomDirective` so only one animation-frame scroll can be pending at a time.
+- [x] Keep the existing `MutationObserver`, but coalesce rapid mutations.
+- [x] Consider scrolling only when the user is already near the bottom.
+- [x] Do not forcibly pull the viewport down if the user has intentionally scrolled upward.
+- [x] Add or verify `scroll-behavior: smooth` on the chat history viewport.
 
 ### Phase 9: Parent Stream State
 
-- [ ] Keep `Chat.sendMessage()` responsible for creating the user message and empty assistant message.
-- [ ] Add explicit active assistant stream metadata if needed:
-  - [ ] Active assistant index or id.
-  - [ ] Network stream status: `streaming`, `completed`, `errored`.
-- [ ] On token events, continue updating canonical content so persistence and final state stay simple.
-- [ ] On step events, continue appending steps to the active assistant message.
-- [ ] On error, stop local typing and show the error content cleanly.
-- [ ] On route/session change, clear active stream metadata.
+- [x] Keep `Chat.sendMessage()` responsible for creating the user message and empty assistant message.
+- [x] Add explicit active assistant stream metadata if needed:
+  - [x] Active assistant index or id.
+  - [x] Network stream status: `streaming`, `completed`, `errored`.
+- [x] On token events, continue updating canonical content so persistence and final state stay simple.
+- [x] On step events, continue appending steps to the active assistant message.
+- [x] On error, stop local typing and show the error content cleanly.
+- [x] On route/session change, clear active stream metadata.
 
 ### Phase 10: Verification
 
-- [ ] Ask a simple prompt with no tool usage.
-  - [ ] No thinking box appears.
-  - [ ] Text types smoothly.
-  - [ ] Cursor disappears when complete.
-- [ ] Ask a prompt that triggers tool steps.
-  - [ ] Thinking/tool box appears.
-  - [ ] First answer token triggers a smooth transition.
-  - [ ] Typing starts only after the transition completes.
-- [ ] Stream a long answer.
-  - [ ] The buffer does not fall behind indefinitely.
-  - [ ] Flush mode drains quickly after network completion.
-  - [ ] Scrolling remains smooth.
-- [ ] Load an existing session.
-  - [ ] Historical messages render instantly.
-  - [ ] No typewriter animation replays for history.
-- [ ] Switch sessions during an active response.
-  - [ ] Timers are cleaned up.
-  - [ ] No errors appear in the console.
-- [ ] Test Markdown-heavy output.
-  - [ ] Lists, headings, tables, inline code, and code blocks still render correctly.
-- [ ] Run the frontend build.
+- [x] Ask a simple prompt with no tool usage.
+  - [x] No thinking box appears.
+  - [x] Text types smoothly.
+  - [x] Cursor disappears when complete.
+- [x] Ask a prompt that triggers tool steps.
+  - [x] Thinking/tool box appears.
+  - [x] First answer token triggers a smooth transition.
+  - [x] Typing starts only after the transition completes.
+- [x] Stream a long answer.
+  - [x] The buffer does not fall behind indefinitely.
+  - [x] Flush mode drains quickly after network completion.
+  - [x] Scrolling remains smooth.
+- [x] Load an existing session.
+  - [x] Historical messages render instantly.
+  - [x] No typewriter animation replays for history.
+- [x] Switch sessions during an active response.
+  - [x] Timers are cleaned up.
+  - [x] No errors appear in the console.
+- [x] Test Markdown-heavy output.
+  - [x] Lists, headings, tables, inline code, and code blocks still render correctly.
+- [x] Run the frontend build.
 
 ## Risk Notes
 
@@ -200,11 +205,11 @@ This keeps streaming animation local and disposable. Switching sessions, loading
 
 Start with the smallest slice that proves the architecture:
 
-- [ ] Extract `ChatMessageComponent`.
-- [ ] Render static messages exactly as before.
-- [ ] Add local typewriter rendering only for the latest loading assistant message.
-- [ ] Add flush mode and cursor.
-- [ ] Coalesce auto-scroll frames.
+- [x] Extract `ChatMessageComponent`.
+- [x] Render static messages exactly as before.
+- [x] Add local typewriter rendering only for the latest loading assistant message.
+- [x] Add flush mode and cursor.
+- [x] Coalesce auto-scroll frames.
 - [ ] Verify simple and long streams.
 
 After that works, add thinking-box transition coordination and block-level fade-in as separate follow-up slices.

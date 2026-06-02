@@ -1,0 +1,61 @@
+<div class="page-content">
+	<div class="page-header">
+		<div class="header-content">
+			<h1>היסטוריית שיחות</h1>
+			<p class="subtitle">ניהול וחיפוש בשיחות העבר שלך</p>
+		</div>
+		<div class="search-container">
+			<i class="ph ph-magnifying-glass search-icon"></i>
+			<input
+				type="text"
+				[ngModel]="searchQuery()"
+				(ngModelChange)="onSearchChange($event)"
+				placeholder="חפש שיחה..."
+				class="search-input"
+			/>
+		</div>
+	</div>
+
+	<div class="history-content">
+		@if (loading()) {
+			<div class="state-container">
+				<p>טוען שיחות...</p>
+			</div>
+		} @else if (filteredSessions().length === 0) {
+			<div class="state-container">
+				@if (searchQuery()) {
+					<p>לא נמצאו שיחות התואמות לחיפוש</p>
+				} @else {
+					<p>עדיין אין לך שיחות שמורות</p>
+				}
+			</div>
+		} @else {
+			<div class="sessions-list">
+				@for (session of filteredSessions(); track session.id) {
+					<div class="session-row" [class.active]="currentSessionId() === session.id">
+						@if (pendingDeleteSessionId() === session.id) {
+							<div class="delete-confirmation">
+								<span class="warning-text">האם אתה בטוח שברצונך למחוק שיחה זו?</span>
+								<div class="action-btns">
+									<button class="transparent-btn" (click)="cancelDelete()">ביטול</button>
+									<button class="danger-btn" (click)="confirmDelete()">מחק</button>
+								</div>
+							</div>
+						} @else {
+							<div class="session-info" [routerLink]="['/chat']" [queryParams]="{ sessionId: session.id }">
+								<i class="ph ph-chat-centered-text chat-icon"></i>
+								<div class="text-group">
+									<span class="title">{{ session.title }}</span>
+									<span class="date">{{ session.updatedAt | date:'shortDate' }}</span>
+								</div>
+							</div>
+							<button class="icon-only danger-btn outlined" (click)="setPendingDelete(session.id)">
+								<i class="ph ph-trash"></i>
+							</button>
+						}
+					</div>
+				}
+			</div>
+		}
+	</div>
+</div>

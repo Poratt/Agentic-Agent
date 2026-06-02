@@ -1,5 +1,3 @@
-// FILE: frontend/src/app/core/directives/ai-format.directive.ts
-
 import { Directive, ElementRef, input, OnChanges, Renderer2, inject } from '@angular/core';
 
 @Directive({
@@ -9,32 +7,59 @@ import { Directive, ElementRef, input, OnChanges, Renderer2, inject } from '@ang
 export class AiFormat implements OnChanges {
   aiFormat = input<string>('');
 
-  private el = inject(ElementRef);
+  private el = inject<ElementRef<HTMLElement>>(ElementRef);
   private renderer = inject(Renderer2);
+  private animatedBlockSignatures = new Set<string>();
 
   ngOnChanges() {
     const raw = this.aiFormat() ?? '';
     this.renderer.setProperty(this.el.nativeElement, 'innerHTML', this.parse(raw));
+    this.markNewCompletedBlocks(raw);
   }
 
   private roleBadge(text: string): string {
     const t = text.trim();
     if (t === 'מנהל' || t.toLowerCase() === 'admin') {
-      return `<span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="ph sm">shield</span>מנהל</span>`;
+      return '<span class="badge badge-admin"><span class="ph sm">shield</span>מנהל</span>';
     }
     if (t === 'משתמש' || t.toLowerCase() === 'user') {
-      return `<span class="badge badge-info"><span class="ph sm">person</span>משתמש</span>`;
+      return '<span class="badge badge-info"><span class="ph sm">person</span>משתמש</span>';
     }
     return `<strong>${t}</strong>`;
   }
 
+  private markNewCompletedBlocks(raw: string): void {
+    const blocks = Array.from(this.el.nativeElement.children) as HTMLElement[];
+    const lastBlock = blocks[blocks.length - 1];
+    const lastBlockIsStable = this.isLastBlockStable(raw);
+
+    blocks.forEach((block) => {
+      const isLast = block === lastBlock;
+      if (isLast && !lastBlockIsStable) return;
+
+      const signature = this.blockSignature(block);
+      if (this.animatedBlockSignatures.has(signature)) return;
+
+      this.animatedBlockSignatures.add(signature);
+      this.renderer.addClass(block, 'ai-node-fade-in');
+    });
+  }
+
+  private isLastBlockStable(raw: string): boolean {
+    return /\n\s*\n$/.test(raw) || /```[\s\S]*?```\s*$/.test(raw) || /\|.+\|\s*$/.test(raw);
+  }
+
+  private blockSignature(block: HTMLElement): string {
+    return `${block.tagName}:${block.textContent?.trim() ?? ''}:${block.innerHTML.length}`;
+  }
+
   private parse(text: string): string {
-    const TABLE_PLACEHOLDER = '§TABLE§';
+    const TABLE_PLACEHOLDER = 'TABLE_PLACEHOLDER_';
     const tables: string[] = [];
 
     const withTables = text.replace(/((?:^\|.+\|[ \t]*\n?)+)/gm, (block) => {
       tables.push(this.parseTable(block));
-      return TABLE_PLACEHOLDER + (tables.length - 1) + '§';
+      return `${TABLE_PLACEHOLDER}${tables.length - 1}_`;
     });
 
     let processed = withTables
@@ -60,26 +85,25 @@ export class AiFormat implements OnChanges {
       .replace(/<br>\s*<(h1|h2|h3|hr|ul|li|table|thead|tbody|tr|div|pre)/gi, '<$1')
       .replace(/<\/(h1|h2|h3|hr|ul|li|table|thead|tbody|tr|div|pre)>\s*<br>/gi, '</$1>');
 
-    // הוספת החלפת תפקידים דינמית בטקסט חופשי וברשימות
     processed = processed
       .replace(
         /(תפקיד|Role):\s*(מנהל|Admin)/g,
-        `$1: <span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="ph sm">shield</span>מנהל</span>`
+        '$1: <span class="badge badge-admin"><span class="ph sm">shield</span>מנהל</span>'
       )
       .replace(
         /(תפקיד|Role):\s*(משתמש|User)/g,
-        `$1: <span class="badge badge-info"><span class="ph sm">person</span>משתמש</span>`
+        '$1: <span class="badge badge-info"><span class="ph sm">person</span>משתמש</span>'
       )
       .replace(
         /\b(Admin|מנהל)\s*\(ID:\s*(\d+)\)/gi,
-        `<span class="badge" style="color: var(--color-secondary); background: var(--color-secondary-glow); border-color: var(--color-secondary-border);"><span class="ph sm">shield</span>מנהל</span> (ID: $2)`
+        '<span class="badge badge-admin"><span class="ph sm">shield</span>מנהל</span> (ID: $2)'
       )
       .replace(
         /\b(User|משתמש)\s*\(ID:\s*(\d+)\)/gi,
-        `<span class="badge badge-info"><span class="ph sm">person</span>משתמש</span> (ID: $2)`
+        '<span class="badge badge-info"><span class="ph sm">person</span>משתמש</span> (ID: $2)'
       );
 
-    return processed.replace(/§TABLE§(\d+)§/g, (_, i) => {
+    return processed.replace(new RegExp(`${TABLE_PLACEHOLDER}(\\d+)_`, 'g'), (_, i) => {
       return tables[+i];
     });
   }

@@ -75,6 +75,113 @@
     color: var(--color-info);
     border: 1px solid var(--color-info-border);
   }
+
+  &.badge-admin {
+    background: var(--color-secondary-glow);
+    color: var(--color-secondary);
+    border: 1px solid var(--color-secondary-border);
+  }
+}
+
+.ai-node-fade-in {
+  animation: aiNodeFadeIn var(--transition-slow) ease-out both;
+}
+
+.steps-list {
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-text-secondary);
+    opacity: 0;
+    animation: fadeIn var(--transition-slow) ease-out forwards;
+
+    .ph {
+      color: var(--color-primary);
+      font-size: var(--font-size-md);
+    }
+
+    &:nth-child(2) {
+      animation-delay: 150ms;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 300ms;
+    }
+
+    &:nth-child(4) {
+      animation-delay: 450ms;
+    }
+
+    &:nth-child(5) {
+      animation-delay: 600ms;
+    }
+
+    &:nth-child(6) {
+      animation-delay: 750ms;
+    }
+
+    &:nth-child(7) {
+      animation-delay: 900ms;
+    }
+
+    &:nth-child(8) {
+      animation-delay: 1050ms;
+    }
+
+    &:nth-child(9) {
+      animation-delay: 1200ms;
+    }
+
+    &:nth-child(n + 10) {
+      animation-delay: 1350ms;
+    }
+  }
+}
+
+@keyframes aiNodeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-1));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bubbleEnter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-1));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cursorBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-node-fade-in {
+    animation: none;
+  }
 }
 
 /* API Status Pulse Animations */

@@ -10,17 +10,34 @@ textarea,
 select {
   width: 100%;
   padding: var(--space-3) var(--space-4);
-  background: var(--color-input-bg);
-  border: 1px solid var(--color-border);
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
   border-radius: var(--radius-sm);
-  color: var(--color-text-primary);
+  color: var(--text-input);
   font-family: var(--font-main);
   font-size: var(--font-size-md);
-  transition: var(--transition-standard);
+  transition: var(--transition-colors);
   outline: none;
 
+  &::placeholder {
+    color: var(--text-placeholder);
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--bg-input-hover);
+    border-color: var(--border-input-hover);
+  }
+
   &:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 4px var(--color-primary-glow);
+    background: var(--bg-input-focus);
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 var(--space-1) var(--focus-ring);
+  }
+
+  &:disabled {
+    background: var(--bg-input-disabled);
+    border-color: var(--border-input-disabled);
+    color: var(--text-input-disabled);
+    cursor: not-allowed;
   }
 }
