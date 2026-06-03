@@ -7,44 +7,70 @@
 			(click)="themeService.toggle()"
 			[attr.aria-label]="themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
 		>
-			<i class="ph nav-icon" [class.ph-moon]="themeService.isDark()" [class.ph-sun]="!themeService.isDark()"></i>
+			<span class="ph nav-icon" [class.ph-moon]="themeService.isDark()" [class.ph-sun]="!themeService.isDark()"></span>
 		</button>
 	</div>
 
 	<nav class="nav-list">
 		<a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
-			<i class="ph ph-squares-four nav-icon"></i>
+			<span class="ph ph-squares-four nav-icon"></span>
 			<span class="nav-label">לוח בקרה</span>
 		</a>
 		<a routerLink="/users" routerLinkActive="active" class="nav-item">
-			<i class="ph ph-users nav-icon"></i>
+			<span class="ph ph-users nav-icon"></span>
 			<span class="nav-label">ניהול משתמשים</span>
 		</a>
 
 		<a routerLink="/chat" routerLinkActive="active" class="nav-item">
-			<i class="ph ph-chat-circle-text nav-icon"></i>
+			<span class="ph ph-chat-circle-text nav-icon"></span>
 			<span class="nav-label">שיחה עם סוכן</span>
 		</a>
 
 		@if (chatStore.recentSessions().length > 0) {
 			<div class="nested-sessions-list">
 				@for (session of chatStore.recentSessions(); track session.id) {
-					<a
-						[routerLink]="['/chat']"
-						[queryParams]="{ sessionId: session.id }"
-						class="session-sub-item"
-						[class.active]="chatStore.currentSessionId() === session.id"
-					>
-						<i class="ph ph-chat-centered-text"></i>
-						<span class="session-title-label">{{ session.title }}</span>
-					</a>
+					<div class="session-sub-row" [class.active]="chatStore.currentSessionId() === session.id">
+						@if (pendingDeleteSessionId() === session.id) {
+							<div class="delete-confirmation">
+								<span class="warning-text">
+									<span class="typewriter">האם למחוק שיחה זו?</span>
+								</span>
+								<div class="action-btns">
+									<button class="icon-only transparent-btn xs" (click)="cancelDelete()">
+										<span class="ph ph-x"></span>
+									</button>
+									<button class="icon-only danger-btn xs" (click)="confirmDelete()">
+										<span class="ph ph-check"></span>
+									</button>
+								</div>
+							</div>
+						} @else {
+							<a
+								[routerLink]="['/chat']"
+								[queryParams]="{ sessionId: session.id }"
+								class="session-sub-item"
+							>
+								<span class="ph ph-chat-centered-text"></span>
+								<span class="session-title-label">{{ session.title }}</span>
+							</a>
+							<button
+								type="button"
+								class="icon-only transparent-btn sm"
+								(click)="setPendingDelete($event, session.id)"
+								title="מחק שיחה"
+								aria-label="מחק שיחה"
+							>
+								<span class="ph ph-trash transparent-btn hidden-btn"></span>
+							</button>
+						}
+					</div>
 				}
 
 				@if (chatStore.sessions().length > 5) {
-					<a routerLink="/chat/history" class="btn-show-all-sessions">
-						<i class="ph ph-hard-drives"></i>
+					<button [routerLink]="['/chat/history']" class="btn-show-all-sessions">
+						<span class="ph ph-hard-drives"></span>
 						<span>כל השיחות...</span>
-					</a>
+					</button>
 				}
 			</div>
 		}
@@ -59,15 +85,15 @@
 				<span class="user-name">{{ authStore.user()?.email }}</span>
 				@if (authStore.user()?.role !== null && authStore.user()?.role !== undefined) {
 					<span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)?.color">
-						<i class="ph sm" [ngClass]="getUserRoleData(authStore.user()!.role)?.icon"></i>
+						<span class="ph sm" [ngClass]="getUserRoleData(authStore.user()!.role)?.icon"></span>
 						{{ getUserRoleData(authStore.user()!.role)?.heLabel }}
 					</span>
 				}
 			</div>
 		</div>
 		<button (click)="authStore.logout()" class="transparent-btn logout-btn">
-			<i class="ph ph-sign-out ph-fill nav-icon"></i>
-			<span>התנתקות</span>
+			<span class="ph ph-sign-out ph-fill nav-icon"></span>
+			<span>יציאה</span>
 		</button>
 	</div>
 </aside>

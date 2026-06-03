@@ -46,7 +46,7 @@
 
 			&:hover,
 			&.active {
-				background: var(--color-input-bg);
+				background: var(--color-surface-hover);
 				color: var(--color-primary);
 			}
 
@@ -142,28 +142,49 @@
 	margin-bottom: var(--space-3);
 	overflow: hidden;
 
-	.session-sub-item {
+	.session-sub-row {
 		display: flex;
 		align-items: center;
-		gap: var(--space-2);
 		width: 100%;
+		height: calc(var(--space-8) + var(--space-1));
 		min-width: 0;
-		padding: var(--space-2) var(--space-3);
+		overflow: hidden;
 		border-radius: var(--radius-sm);
-		text-decoration: none;
-		color: var(--color-text-secondary);
-		font-size: var(--font-size-sm);
 		transition: var(--transition-standard);
-		cursor: pointer;
+
+		.hidden-btn {
+			opacity: 0;
+		}
 
 		&:hover,
 		&.active {
-			background: var(--color-input-bg);
-			color: var(--color-primary);
+			background: var(--color-surface-hover);
+
+			.session-sub-item {
+				color: var(--color-primary);
+			}
+
+			.hidden-btn {
+				opacity: 1;
+			}
 		}
 
-		i {
-			flex: 0 0 auto;
+		.session-sub-item {
+			display: flex;
+			align-items: center;
+			gap: var(--space-2);
+			flex: 1;
+			min-width: 0;
+			padding: var(--space-2) var(--space-3);
+			text-decoration: none;
+			color: var(--color-text-secondary);
+			font-size: var(--font-size-sm);
+			cursor: pointer;
+
+
+			i {
+				flex: 0 0 auto;
+			}
 		}
 
 		.session-title-label {
@@ -172,7 +193,40 @@
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
+			padding: 0 var(--space-1);
 		}
+
+		.delete-confirmation {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: var(--space-1);
+			width: 100%;
+			height: 100%;
+			min-width: 0;
+			padding: 0 var(--space-1);
+			box-sizing: border-box;
+
+			.warning-text {
+				display: flex;
+				align-items: center;
+				flex: 1;
+				min-width: 0;
+				color: var(--color-danger);
+				font-size: var(--font-size-xs);
+				font-weight: var(--font-weight-medium);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			.action-btns {
+				display: flex;
+				flex: 0 0 auto;
+				gap: var(--space-1);
+			}
+		}
+
 	}
 
 	.btn-show-all-sessions {
@@ -191,12 +245,12 @@
 		text-align: right;
 
 		&:hover {
-			background: var(--color-input-bg);
+			background: var(--color-surface-hover);
 			color: var(--color-primary);
 			border-radius: var(--radius-sm);
 		}
 
-		i {
+		span.ph {
 			flex: 0 0 auto;
 		}
 	}

@@ -8,7 +8,7 @@
 	}"
 >
 	<div class="message-meta">
-		<i class="ph role-icon" [class.ph-user]="isUser()" [class.ph-robot]="!isUser()"></i>
+		<span class="ph role-icon" [class.ph-user]="isUser()" [class.ph-robot]="!isUser()"></span>
 		<strong>{{ roleLabel() }}</strong>
 	</div>
 
@@ -20,14 +20,14 @@
 		(transitionend)="onThinkingTransitionEnd($event)"
 	>
 		<summary class="thinking-summary">
-			<i class="ph summary-icon ph-brain" [class.thinking]="rowState() === 'thinking'"></i>
+			<span class="ph summary-icon ph-brain" [class.thinking]="rowState() === 'thinking'"></span>
 			<span class="summary-label">&#1508;&#1506;&#1493;&#1500;&#1493;&#1514; &#1513;&#1489;&#1493;&#1510;&#1506;&#1493;...</span>
-			<i class="ph ph-caret-down expand-icon"></i>
+			<span class="ph ph-caret-down expand-icon"></span>
 		</summary>
 		<ul class="steps-list">
 			@for (step of message().steps; track $index) {
 			<li class="step-item">
-				<i class="ph {{ step.icon }}"></i>
+				<span class="ph {{ step.icon }}"></span>
 				<span>{{ step.message }}</span>
 			</li>
 			}

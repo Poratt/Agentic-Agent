@@ -33,11 +33,11 @@
         <label for="password">סיסמה</label>
         <input id="password" type="password" formControlName="password" placeholder="••••••••">
         @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
-          <span class="error-text">סיסמה חייבת להיות לפחות 6 תווים</span>
+          <span class="error-text">סיסמה חייבת להיות לפחות 8 תווים</span>
         }
       </div>
 
-      <button type="submit" class="primary-btn" [disabled]="registerForm.invalid || authStore.loading()">
+      <button type="submit" class="primary-btn filled" [disabled]="registerForm.invalid || authStore.loading()">
         {{ authStore.loading() ? 'טוען...' : 'הרשמה' }}
       </button>
     </form>

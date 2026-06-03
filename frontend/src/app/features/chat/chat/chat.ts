@@ -1,13 +1,15 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ChatService } from '../../../core/services/chat.service';
 import { ChatStore } from '../../../core/store/chat.store';
+import { AuthStore } from '../../../core/store/auth.store';
 import { IChatMessage } from '../../../core/models/chat-message.interface';
 import { AutoScrollBottomDirective } from '../../../core/directives/auto-scroll-bottom.directive';
 import { ChatMessage, ChatMessageStreamState } from '../chat-message/chat-message';
+import { UsersStore } from '../../../core/store/users.store';
 
 @Component({
 	selector: 'app-chat',
@@ -19,6 +21,8 @@ import { ChatMessage, ChatMessageStreamState } from '../chat-message/chat-messag
 export class Chat implements OnInit, OnDestroy {
 	private chatService = inject(ChatService);
 	protected chatStore = inject(ChatStore);
+	protected userStore = inject(UsersStore);
+	protected authStore = inject(AuthStore);
 	private route = inject(ActivatedRoute);
 	private fb = inject(FormBuilder);
 
@@ -28,6 +32,21 @@ export class Chat implements OnInit, OnDestroy {
 	activeAssistantIndex = signal<number | null>(null);
 	activeStreamState = signal<ChatMessageStreamState>('idle');
 
+	currentUserProfile = computed(() => {
+		const sessionUser = this.authStore.user();
+		console.log('Session user from auth store:', sessionUser);
+		if (!sessionUser) {
+			return null;
+		}
+
+		const userId = (sessionUser as any).sub || sessionUser.id;
+		console.log('Current user ID:', userId);
+		const found = this.userStore.users().find((u) => {
+			return u.id === userId;
+		});
+		return found || null;
+	});
+
 	chatForm: FormGroup = this.fb.group({
 		prompt: ['', [Validators.required, Validators.minLength(1)]],
 	});
@@ -35,6 +54,14 @@ export class Chat implements OnInit, OnDestroy {
 	private routeSub?: Subscription;
 
 	ngOnInit() {
+		const currentUser = this.authStore.user();
+		if (currentUser) {
+			const userId = (currentUser as any).sub || currentUser.id;
+			if (userId) {
+				this.userStore.getUserById(userId);
+			}
+		}
+
 		this.routeSub = this.route.queryParams.subscribe((params) => {
 			const sessionId = params['sessionId'] ? Number(params['sessionId']) : null;
 
@@ -51,7 +78,9 @@ export class Chat implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		this.routeSub?.unsubscribe();
+		if (this.routeSub) {
+			this.routeSub.unsubscribe();
+		}
 	}
 
 	private loadConversationHistory(sessionId: number) {
@@ -95,7 +124,9 @@ export class Chat implements OnInit, OnDestroy {
 			steps: [],
 		};
 
-		this.messages.update((prev) => [...prev, userMsg, assistantMsg]);
+		this.messages.update((prev) => {
+			return [...prev, userMsg, assistantMsg];
+		});
 		this.loading.set(true);
 		this.activeAssistantIndex.set(this.messages().length - 1);
 		this.activeStreamState.set('streaming');
@@ -153,7 +184,9 @@ export class Chat implements OnInit, OnDestroy {
 				this.loading.set(false);
 				this.activeStreamState.set('completed');
 
-				const currentSession = this.chatStore.sessions().find((s) => s.id === currentId);
+				const currentSession = this.chatStore.sessions().find((s) => {
+					return s.id === currentId;
+				});
 
 				if (isFirstMessage || currentSession?.title === 'שיחה חדשה...') {
 					this.chatStore.loadSessions();

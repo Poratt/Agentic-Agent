@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 
-const passwordMinLength = 4;
+const passwordMinLength = 8;
 
 /**
  * DTO for registering (creating) a new user account.
@@ -44,6 +44,6 @@ export class RegisterDto {
       `Validation: returns 400 if shorter than ${passwordMinLength} characters.`,
   })
   @IsString()
-  @MinLength(passwordMinLength)
+  @MinLength(passwordMinLength, { message: 'הסיסמה חייבת להיות לפחות 8 תווים' })
   password!: string;
 }

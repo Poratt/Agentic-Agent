@@ -636,8 +636,8 @@
           "password": {
             "type": "string",
             "example": "admin",
-            "minLength": 4,
-            "description": "Password for the new account. Minimum 4 characters. Required - stored as a bcrypt hash (never stored as plain text). Validation: returns 400 if shorter than 4 characters."
+            "minLength": 8,
+            "description": "Password for the new account. Minimum 8 characters. Required - stored as a bcrypt hash (never stored as plain text). Validation: returns 400 if shorter than 8 characters."
           }
         },
         "required": [

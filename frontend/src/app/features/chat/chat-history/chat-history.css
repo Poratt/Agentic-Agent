@@ -2,30 +2,30 @@
 	position: relative;
 	display: flex;
 	align-items: center;
-	width: min(calc(var(--space-16) * 5), 100%);
+	width: min(var(--search-width), 100%);
 
 	.search-icon {
 		position: absolute;
 		right: var(--space-3);
-		color: var(--text-placeholder);
+		color: var(--color-text-secondary);
 		pointer-events: none;
 	}
 
 	.search-input {
 		width: 100%;
-		padding: var(--space-2) calc(var(--space-4) + var(--space-6)) var(--space-2) var(--space-4);
+		padding: var(--space-2) var(--field-icon-padding) var(--space-2) var(--space-4);
 		border-radius: var(--radius-md);
-		background: var(--bg-input);
-		border-color: var(--border-input);
-		color: var(--text-input);
+		background: var(--color-input-bg);
+		border-color: var(--color-border);
+		color: var(--color-text-primary);
 
 		&::placeholder {
-			color: var(--text-placeholder);
+			color: var(--color-text-secondary);
 		}
 
 		&:focus {
-			background: var(--bg-input-focus);
-			border-color: var(--border-focus);
+			background: var(--color-input-bg);
+			border-color: var(--color-primary);
 		}
 	}
 }
@@ -45,20 +45,24 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+		min-height: 76px;
 		padding: var(--space-4);
 		background: var(--color-surface);
-		border-bottom: 1px solid var(--border-divider);
-		border-radius: 0 0 2px 2px;
-		transition: var(--transition-colors);
+		border-bottom: 1px solid var(--color-border);
+		border-radius: 0;
+		transition: 
+			background var(--transition-fast),
+			border-color var(--transition-fast),
+			box-shadow var(--transition-fast);
 
 		&:hover {
-			background: var(--bg-surface-hover);
-			border-color: var(--border-hover);
+			background: var(--color-surface-hover);
+			border-color: var(--primary-300);
 		}
 
 		&.active {
-			background: var(--bg-surface-active);
-			border-color: var(--border-active);
+			background: var(--primary-30);
+			border-color: var(--color-primary);
 		}
 
 		.session-info {
@@ -86,6 +90,10 @@
 					color: var(--color-text-secondary);
 				}
 			}
+		}
+
+		&:has(.danger-btn:hover) {
+			border-color: var(--color-danger);
 		}
 
 		.delete-confirmation {

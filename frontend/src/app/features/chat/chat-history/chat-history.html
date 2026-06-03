@@ -5,7 +5,7 @@
 			<p class="subtitle">ניהול וחיפוש בשיחות העבר שלך</p>
 		</div>
 		<div class="search-container">
-			<i class="ph ph-magnifying-glass search-icon"></i>
+			<span class="ph ph-magnifying-glass search-icon"></span>
 			<input
 				type="text"
 				[ngModel]="searchQuery()"
@@ -35,23 +35,29 @@
 					<div class="session-row" [class.active]="currentSessionId() === session.id">
 						@if (pendingDeleteSessionId() === session.id) {
 							<div class="delete-confirmation">
-								<span class="warning-text">האם אתה בטוח שברצונך למחוק שיחה זו?</span>
+								<span class="warning-text typewriter">האם אתה בטוח שברצונך למחוק שיחה זו?</span>
 								<div class="action-btns">
-									<button class="transparent-btn" (click)="cancelDelete()">ביטול</button>
-									<button class="danger-btn" (click)="confirmDelete()">מחק</button>
+									<button class="icon-only transparent-btn" (click)="cancelDelete()">
+										<span class="ph ph-x"></span> 
+									</button>
+									<button class="icon-only danger-btn" (click)="confirmDelete()">
+										<span class="ph ph-check"></span>
+									</button>
 								</div>
 							</div>
 						} @else {
 							<div class="session-info" [routerLink]="['/chat']" [queryParams]="{ sessionId: session.id }">
-								<i class="ph ph-chat-centered-text chat-icon"></i>
+								<span class="ph ph-chat-centered-text chat-icon"></span>
 								<div class="text-group">
 									<span class="title">{{ session.title }}</span>
 									<span class="date">{{ session.updatedAt | date:'shortDate' }}</span>
 								</div>
 							</div>
-							<button class="icon-only danger-btn outlined" (click)="setPendingDelete(session.id)">
-								<i class="ph ph-trash"></i>
+							<button class="icon-only danger-btn " (click)="setPendingDelete(session.id)">
+								<span class="ph ph-trash"></span>
 							</button>
+
+
 						}
 					</div>
 				}

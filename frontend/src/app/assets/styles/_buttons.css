@@ -1,10 +1,10 @@
 /* 1. Base Button Structure - Shared by ALL buttons */
 button {
-  padding: 0.5rem 0.5rem;
+  padding: var(--space-2);
   font-family: var(--font-family);
   font-size: var(--font-size-md);
-  font-weight: 500;
-  border-radius: var(--border-radius);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
@@ -45,8 +45,21 @@ button {
   }
 
   /* Sizes */
+  &.xs {
+    padding: var(--space-1);
+    font-size: var(--font-size-xs);
+
+    svg,
+    .ph,
+    app-icon {
+      width: var(--space-3);
+      height: var(--space-3);
+      font-size: var(--font-size-xs);
+    }
+  }
+
   &.sm {
-    padding: 0.4rem 0.4rem;
+    padding: var(--space-1);
     font-size: var(--font-size-xs);
 
     svg,
@@ -59,7 +72,7 @@ button {
   }
 
   &.lg {
-    padding: 0.5rem;
+    padding: var(--space-2);
     font-size: var(--font-size-md);
 
     svg,
@@ -72,10 +85,18 @@ button {
   }
 
   &.icon-only {
-    padding: 0.5rem;
+    padding: var(--space-2);
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
+    &.xs {
+      flex: 0 0 28px;
+      width: 28px;
+      height: 28px;
+      padding: var(--space-1);
+      box-sizing: border-box;
+    }
 
     &.rounded {
       border-radius: 50%;
@@ -99,46 +120,63 @@ button {
 
 /* 2. Theme: PRIMARY */
 .primary-btn {
-  background-color: var(--primary-500);
-  color: var(--color-white);
-  border-color: var(--primary-500);
+  color: var(--color-primary);
 
   &:hover:not(:disabled) {
-    background-color: var(--primary-600);
-    border-color: var(--primary-600);
+    background-color: var(--primary-30);
+    border-color: transparent;
   }
 
   &.outlined {
     background-color: transparent;
-    color: var(--primary-500);
+    color: var(--color-primary);
     border-color: var(--primary-400);
 
     &:hover:not(:disabled) {
       background-color: var(--primary-30);
-      border-color: var(--primary-500);
+      border-color: var(--color-primary);
+    }
+  }
+
+  &.filled {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    border-color: transparent;
+
+    &:hover:not(:disabled) {
+      background-color: var(--primary-600);
+      border-color: transparent;
     }
   }
 }
 
 /* 3. Theme: DANGER */
 .danger-btn {
-  background-color: var(--red-500);
-  color: var(--color-white);
-  border-color: var(--red-500);
+  color: var(--color-danger);  
 
   &:hover:not(:disabled) {
-    background-color: var(--red-600);
-    border-color: var(--red-600);
+    background-color: var(--color-danger-bg);
   }
 
   &.outlined {
     background-color: transparent;
-    color: var(--red-500);
-    border-color: var(--red-200);
+    color: var(--color-danger);
+    border-color: var(--color-danger-border);
 
     &:hover:not(:disabled) {
-      background-color: var(--red-30);
-      border-color: var(--red-500);
+      background-color: var(--color-danger-bg);
+      border-color: var(--color-danger);
+    }
+  }
+
+  &.filled {
+    background-color: var(--color-danger);
+    color: var(--color-white);
+    border-color: transparent;
+
+    &:hover:not(:disabled) {
+      background-color: var(--red-600);
+      border-color: transparent;
     }
   }
 }
@@ -146,19 +184,19 @@ button {
 /* 4. Theme: TRANSPARENT */
 .transparent-btn {
   background-color: transparent;
-  color: var(--grey-700);
+  color: var(--color-text-secondary);
   border-color: transparent;
 
   &:hover:not(:disabled) {
-    background-color: var(--grey-50);
-    color: var(--grey-800);
+    background-color: var(--grey-30);
+    color: var(--color-text-primary);
   }
 }
 
 /* 5. Links */
 a {
   text-decoration: none;
-  color: var(--primary-500);
+  color: var(--color-primary);
   transition: color var(--transition-fast), outline-offset var(--transition-fast);
   border-radius: var(--radius-sm);
   line-height: 1;
@@ -186,7 +224,7 @@ a,
 
 .danger-btn {
   &:focus-visible {
-    outline: 2px solid var(--red-300);
+    outline: 2px solid var(--color-danger-border);
     outline-offset: 2px;
   }
 }

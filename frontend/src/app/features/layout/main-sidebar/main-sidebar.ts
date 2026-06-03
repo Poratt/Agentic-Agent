@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -24,8 +24,27 @@ export class MainSidebar implements OnInit {
 	private router = inject(Router);
 
 	protected readonly getUserRoleData = getUserRoleData;
+	pendingDeleteSessionId = signal<number | null>(null);
 
 	ngOnInit() {
 		this.chatStore.loadSessions();
+	}
+
+	setPendingDelete(event: MouseEvent, sessionId: number) {
+		event.preventDefault();
+		event.stopPropagation();
+		this.pendingDeleteSessionId.set(sessionId);
+	}
+
+	cancelDelete() {
+		this.pendingDeleteSessionId.set(null);
+	}
+
+	confirmDelete() {
+		const sessionId = this.pendingDeleteSessionId();
+		if (sessionId === null) return;
+
+		this.chatStore.deleteSession(sessionId);
+		this.pendingDeleteSessionId.set(null);
 	}
 }

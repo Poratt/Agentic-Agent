@@ -7,8 +7,7 @@
 .chat-root-container {
 	display: flex;
 	flex-direction: column;
-	height: calc(100vh - var(--space-16));
-	max-height: 100%;
+	height: 100%;
 	gap: var(--space-4);
 	padding: var(--space-4);
 

@@ -88,6 +88,34 @@ export class UsersStore {
         },
       });
   }
+  getUserById(userId: number) {
+    this._loading.set(true);
+    this.userService
+      .getById(userId)
+      .pipe(
+        finalize(() => {
+          this._loading.set(false);
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          if (!res.result) return;
+
+          this._users.update((users) => {
+            const exists = users.some((u) => u.id === res.result.id);
+            if (exists) {
+              // אם קיים, נעדכן אותו במערך
+              return users.map((u) => (u.id === res.result.id ? res.result : u));
+            } else {
+              return [...users, res.result];
+            }
+          });
+        },
+        error: (err) => {
+          this._error.set(err?.error?.message ?? 'Failed to get user');
+        },
+      });
+  }
 
   deleteUser(userId: number) {
     this._loading.set(true);
