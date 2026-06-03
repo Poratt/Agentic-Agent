@@ -5,6 +5,8 @@ export enum UserRole {
   User,
 }
 
+export const UserRoleDescription = 'Numeric user role values: 1 = Admin, 2 = User.';
+
 export const UserRoleOptions: EnumData[] = [
   {
     enumValue: UserRole.Admin,

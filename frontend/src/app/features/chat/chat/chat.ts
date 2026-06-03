@@ -1,7 +1,7 @@
-import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ChatService } from '../../../core/services/chat.service';
 import { ChatStore } from '../../../core/store/chat.store';
@@ -24,6 +24,7 @@ export class Chat implements OnInit, OnDestroy {
 	protected userStore = inject(UsersStore);
 	protected authStore = inject(AuthStore);
 	private route = inject(ActivatedRoute);
+	private router = inject(Router);
 	private fb = inject(FormBuilder);
 
 	messages = signal<IChatMessage[]>([]);
@@ -34,17 +35,14 @@ export class Chat implements OnInit, OnDestroy {
 
 	currentUserProfile = computed(() => {
 		const sessionUser = this.authStore.user();
-		console.log('Session user from auth store:', sessionUser);
 		if (!sessionUser) {
 			return null;
 		}
 
 		const userId = (sessionUser as any).sub || sessionUser.id;
-		console.log('Current user ID:', userId);
-		const found = this.userStore.users().find((u) => {
+		return this.userStore.users().find((u) => {
 			return u.id === userId;
-		});
-		return found || null;
+		}) || null;
 	});
 
 	chatForm: FormGroup = this.fb.group({
@@ -68,7 +66,9 @@ export class Chat implements OnInit, OnDestroy {
 			this.clearActiveStream();
 
 			if (!sessionId) {
-				this.chatStore.createSession();
+				this.chatStore.clearCurrentSession();
+				this.messages.set([]);
+				this.historyLoading.set(false);
 				return;
 			}
 
@@ -105,14 +105,34 @@ export class Chat implements OnInit, OnDestroy {
 	}
 
 	sendMessage() {
-		const currentId = this.chatStore.currentSessionId();
-		if (this.chatForm.invalid || this.loading() || !currentId) {
+		if (this.chatForm.invalid || this.loading()) {
 			return;
 		}
 
-		const promptValue = this.chatForm.value.prompt.trim();
+		const promptValue = this.chatForm.value.prompt?.trim();
+		if (!promptValue) {
+			return;
+		}
+
 		this.chatForm.reset();
 
+		const currentId = this.chatStore.currentSessionId();
+		if (currentId) {
+			this.sendPromptToSession(promptValue, currentId);
+			return;
+		}
+
+		this.chatStore.createSessionForMessage(false).subscribe({
+			next: (session) => {
+				this.sendPromptToSession(promptValue, session.id);
+			},
+			error: () => {
+				this.loading.set(false);
+			},
+		});
+	}
+
+	private sendPromptToSession(promptValue: string, sessionId: number) {
 		const userMsg: IChatMessage = {
 			role: 'user',
 			content: promptValue,
@@ -133,7 +153,7 @@ export class Chat implements OnInit, OnDestroy {
 
 		const isFirstMessage = this.messages().length <= 2;
 
-		this.chatService.sendMessageStream(promptValue, currentId).subscribe({
+		this.chatService.sendMessageStream(promptValue, sessionId).subscribe({
 			next: (event) => {
 				if (event.type === 'step' && event.message && event.icon) {
 					this.messages.update((prev) => {
@@ -185,12 +205,14 @@ export class Chat implements OnInit, OnDestroy {
 				this.activeStreamState.set('completed');
 
 				const currentSession = this.chatStore.sessions().find((s) => {
-					return s.id === currentId;
+					return s.id === sessionId;
 				});
 
 				if (isFirstMessage || currentSession?.title === 'שיחה חדשה...') {
 					this.chatStore.loadSessions();
 				}
+
+				this.router.navigate(['/chat'], { queryParams: { sessionId }, replaceUrl: true });
 			},
 		});
 	}

@@ -8,8 +8,8 @@ import { Response } from 'express';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ServiceResultContainer } from '../../core/models/service-result-container.model';
-import { UserRole } from '../../core/enums/user-role.enum';
 import { User } from '../users/entities/user.entity';
+import { UserResponseDto } from '../users/dto/user-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -19,73 +19,86 @@ export class AuthService {
     private config: ConfigService,
   ) {}
 
-  async register(dto: RegisterDto) {
+  async register(dto: RegisterDto): Promise<ServiceResultContainer<UserResponseDto>> {
     const exists = await this.usersRepo.findOne({ where: { email: dto.email } });
     if (exists) throw new ConflictException('Email already in use');
+
     const hashed = await bcrypt.hash(dto.password, 10);
     const user = this.usersRepo.create({
       email: dto.email,
       fullName: dto.fullName,
-      password: hashed
+      password: hashed,
     });
     await this.usersRepo.save(user);
 
-    const result: ServiceResultContainer<{ id: number; email: string }> = {
+    return {
       success: true,
       message: 'User registered successfully',
-      result: { id: user.id, email: user.email },
+      result: this.toUserResponse(user),
     };
-    return result;
   }
 
-  async login(dto: LoginDto, res: Response) {
+  async login(dto: LoginDto, res: Response): Promise<ServiceResultContainer<UserResponseDto>> {
     const user = await this.usersRepo.findOne({ where: { email: dto.email } });
     if (!user) throw new UnauthorizedException('Invalid credentials');
+
     const valid = await bcrypt.compare(dto.password, user.password);
     if (!valid) throw new UnauthorizedException('Invalid credentials');
+
     await this.setTokens(user, res);
 
-    const result: ServiceResultContainer<{ id: number; email: string; role: UserRole }> = {
+    return {
       success: true,
       message: 'Logged in successfully',
-      result: { id: user.id, email: user.email, role: user.role },
+      result: this.toUserResponse({ ...user, lastLoginAt: new Date() }),
     };
-    return result;
   }
 
-  async refresh(userId: number, refreshToken: string, res: Response) {
+  async refresh(userId: number, refreshToken: string, res: Response): Promise<ServiceResultContainer<UserResponseDto>> {
     const user = await this.usersRepo.findOne({ where: { id: userId } });
     if (!user || !user.refreshToken) throw new UnauthorizedException();
+
     const valid = await bcrypt.compare(refreshToken, user.refreshToken);
     if (!valid) throw new UnauthorizedException();
+
     await this.setTokens(user, res);
 
-    const result: ServiceResultContainer<{ id: number; email: string; role: UserRole }> = {
+    return {
       success: true,
       message: 'Token refreshed successfully',
-      result: { id: user.id, email: user.email, role: user.role },
+      result: this.toUserResponse({ ...user, lastLoginAt: new Date() }),
     };
-    return result;
   }
 
-  async logout(userId: number, res: Response) {
+  async logout(userId: number, res: Response): Promise<ServiceResultContainer<{ ok: true }>> {
     await this.usersRepo.update(userId, { refreshToken: null });
     res.clearCookie('access_token');
     res.clearCookie('refresh_token');
 
-    const result: ServiceResultContainer<{ ok: true }> = {
+    return {
       success: true,
       message: 'Logged out successfully',
       result: { ok: true },
     };
-    return result;
   }
 
-  async validateUser(userId: number) {
+  async validateUser(userId: number): Promise<User | null> {
     return this.usersRepo.findOne({ where: { id: userId } });
   }
 
-  private async setTokens(user: User, res: Response) {
+  private toUserResponse(user: User): UserResponseDto {
+    return {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      lastLoginAt: user.lastLoginAt,
+    };
+  }
+
+  private async setTokens(user: User, res: Response): Promise<void> {
     const payload = { sub: user.id, email: user.email, role: user.role };
 
     const accessToken = this.jwtService.sign(payload);
@@ -97,7 +110,7 @@ export class AuthService {
     const hashed = await bcrypt.hash(refreshToken, 10);
     await this.usersRepo.update(user.id, {
       refreshToken: hashed,
-      lastLoginAt: new Date()
+      lastLoginAt: new Date(),
     });
 
     res.cookie('access_token', accessToken, {

@@ -1,5 +1,6 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { Observable, catchError, tap, throwError } from 'rxjs';
 import { ChatService } from '../services/chat.service';
 import { IChatSession } from '../models/chat-session.interface';
 
@@ -36,23 +37,27 @@ export class ChatStore {
 	}
 
 	createSession() {
+		this.createSessionForMessage().subscribe();
+	}
+
+	createSessionForMessage(navigate = true): Observable<IChatSession> {
 		this.loading.set(true);
 		this.error.set(null);
 
-		this.chatService.createSession().subscribe({
-			next: (session) => {
-				this.sessions.update((prev) => {
-					return [session, ...prev];
-				});
+		return this.chatService.createSession().pipe(
+			tap((session) => {
 				this.currentSessionId.set(session.id);
 				this.loading.set(false);
-				this.router.navigate(['/chat'], { queryParams: { sessionId: session.id } });
-			},
-			error: (err) => {
+				if (navigate) {
+					this.router.navigate(['/chat'], { queryParams: { sessionId: session.id }, replaceUrl: true });
+				}
+			}),
+			catchError((err) => {
 				this.error.set(err?.message ?? 'נכשל ביצירת שיחה חדשה.');
 				this.loading.set(false);
-			},
-		});
+				return throwError(() => err);
+			}),
+		);
 	}
 
 	deleteSession(sessionId: number) {
@@ -79,6 +84,10 @@ export class ChatStore {
 				this.loading.set(false);
 			},
 		});
+	}
+
+	clearCurrentSession() {
+		this.currentSessionId.set(null);
 	}
 
 	clearError() {

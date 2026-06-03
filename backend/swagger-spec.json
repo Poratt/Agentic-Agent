@@ -3,12 +3,12 @@
   "paths": {
     "/auth/register": {
       "post": {
-        "description": "Creates a new user in the database using the provided credentials. Required fields (from RegisterDto): email (string, valid email format), password (string, min 6 chars), username? (string, optional). Returns the newly created User entity (without password). Returns 400 if email is already taken or DTO validation fails. This endpoint is public — no token required.",
+        "description": "Creates a new user account. Required RegisterDto fields: fullName, email, password. Password must be at least 8 characters. This endpoint is public and does not require a token.",
         "operationId": "AuthController_register",
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "Registration payload. Example: { \"email\": \"user@example.com\", \"password\": \"secret123\", \"username\": \"myName\" }.",
+          "description": "Registration payload. Example: { \"fullName\": \"John Doe\", \"email\": \"user@example.com\", \"password\": \"secret1234\" }.",
           "content": {
             "application/json": {
               "schema": {
@@ -19,23 +19,23 @@
         },
         "responses": {
           "201": {
-            "description": "User created successfully. Returns the User entity: id (number), email (string), username (string), role (\"user\" | \"admin\"), createdAt (ISO date). Password is never returned.",
+            "description": "User created successfully. Returns ServiceResultContainer<UserResponseDto>.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/User"
+                  "$ref": "#/components/schemas/UserResultResponseDto"
                 }
               }
             }
           },
           "400": {
-            "description": "DTO validation failed (missing fields, invalid email format, weak password) or email is already registered."
+            "description": "DTO validation failed."
           },
           "401": {
-            "description": "Not applicable for this endpoint."
+            "description": "Not applicable for this public endpoint."
           },
           "403": {
-            "description": "Not applicable for this endpoint."
+            "description": "Not applicable for this public endpoint."
           },
           "404": {
             "description": "Not applicable for this endpoint."
@@ -52,12 +52,12 @@
     },
     "/auth/login": {
       "post": {
-        "description": "Validates the provided credentials against the database. On success: sets the access token and refresh token as HTTP-only cookies (or Authorization header — depending on AuthService configuration) and returns the User entity. Required fields (from LoginDto): email (string), password (string). Returns 401 if email does not exist or password does not match. This endpoint is public — no token required.",
+        "description": "Validates user credentials. On success, the service writes access and refresh tokens to HTTP-only cookies and returns ServiceResultContainer<UserResponseDto>. Role is numeric: 1 = Admin, 2 = User.",
         "operationId": "AuthController_login",
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "Login credentials. Example: { \"email\": \"user@example.com\", \"password\": \"secret123\" }.",
+          "description": "Login credentials. Example: { \"email\": \"user@example.com\", \"password\": \"secret1234\" }.",
           "content": {
             "application/json": {
               "schema": {
@@ -68,23 +68,23 @@
         },
         "responses": {
           "200": {
-            "description": "Login successful. Returns the User entity (id, email, username, role, createdAt). Auth tokens are set as cookies/headers by the service.",
+            "description": "Login successful. Tokens are set as cookies by the service.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/User"
+                  "$ref": "#/components/schemas/UserResultResponseDto"
                 }
               }
             }
           },
           "400": {
-            "description": "DTO validation failed (missing or malformed fields)."
+            "description": "DTO validation failed."
           },
           "401": {
-            "description": "Invalid credentials — email not found or password does not match."
+            "description": "Invalid credentials."
           },
           "403": {
-            "description": "Not applicable for this endpoint."
+            "description": "Not applicable for this public endpoint."
           },
           "404": {
             "description": "Not applicable for this endpoint."
@@ -101,16 +101,16 @@
     },
     "/auth/refresh": {
       "post": {
-        "description": "JwtRefreshGuard reads the refresh token from the cookie or Authorization header. If valid, AuthService issues a new access token and writes it to cookies/headers. req.user is populated by the guard with: sub (userId), refreshToken (raw string). Returns 401 if the refresh token is absent, expired, or does not match the stored hash. Call this endpoint when the access token has expired (typically 401 on any protected route).",
+        "description": "JwtRefreshGuard reads the refresh token from the cookie or Authorization header. If valid, AuthService issues new tokens and returns ServiceResultContainer<UserResponseDto>.",
         "operationId": "AuthController_refresh",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "New access token issued. Returns the User entity. Updated tokens are set in cookies/headers by the service.",
+            "description": "New access token issued. Updated tokens are set as cookies by the service.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/User"
+                  "$ref": "#/components/schemas/UserResultResponseDto"
                 }
               }
             }
@@ -119,7 +119,7 @@
             "description": "Malformed request."
           },
           "401": {
-            "description": "Refresh token is missing, expired, or does not match the stored token hash."
+            "description": "Refresh token is missing, expired, revoked, or does not match the stored hash."
           },
           "403": {
             "description": "Not applicable for this endpoint."
@@ -139,52 +139,16 @@
     },
     "/auth/logout": {
       "post": {
-        "description": "Reads the authenticated user from req.user (populated by JwtAuthGuard). Calls AuthService.logout(userId, res) which: (1) clears the refresh token hash from the database, (2) clears auth cookies/headers from the response. After this call, the refresh token is revoked and the access token will be rejected on the next request (or expire naturally). Requires Authorization: Bearer <accessToken> header.",
+        "description": "Requires a valid access token. Clears the stored refresh token hash and removes auth cookies from the response.",
         "operationId": "AuthController_logout",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Logout successful. Session cleared. Returns ServiceResultContainer with success=true."
-          },
-          "400": {
-            "description": "Malformed request."
-          },
-          "401": {
-            "description": "Access token is missing, expired, or invalid."
-          },
-          "403": {
-            "description": "Not applicable for this endpoint."
-          },
-          "404": {
-            "description": "Not applicable for this endpoint."
-          },
-          "500": {
-            "description": "Unexpected server error."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Logout and invalidate session [JWT required]",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/auth/me": {
-      "get": {
-        "description": "Reads req.user as populated by JwtAuthGuard (decoded from the access token). No database query is made. Returns a ServiceResultContainer<JwtPayload> where result contains: sub (userId number), email (string), role (\"user\" | \"admin\"), iat (issued-at timestamp), exp (expiry timestamp). Use this to check who is logged in or to verify the token is still valid. Requires Authorization: Bearer <accessToken> header.",
-        "operationId": "AuthController_me",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "ServiceResultContainer with success=true and result = JwtPayload (sub, email, role, iat, exp). No database round-trip.",
+            "description": "Logout successful.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/User"
+                  "$ref": "#/components/schemas/LogoutResultResponseDto"
                 }
               }
             }
@@ -210,7 +174,50 @@
             "bearer": []
           }
         ],
-        "summary": "Get current authenticated user [JWT required]",
+        "summary": "Logout and invalidate session",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "description": "Reads req.user as populated by JwtAuthGuard. No database query is made. Role is numeric: 1 = Admin, 2 = User.",
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "ServiceResultContainer<JwtPayload> with sub, email, numeric role, iat, and exp.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JwtPayloadResultResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request."
+          },
+          "401": {
+            "description": "Access token is missing, expired, or invalid."
+          },
+          "403": {
+            "description": "Not applicable for this endpoint."
+          },
+          "404": {
+            "description": "Not applicable for this endpoint."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get current authenticated user payload",
         "tags": [
           "auth"
         ]
@@ -218,15 +225,22 @@
     },
     "/users": {
       "get": {
-        "description": "Returns every user in the system with safe/public fields only (id, username, email, role, createdAt). Passwords and sensitive tokens are never included. Use this endpoint to discover user IDs before calling GET /users/:id.",
+        "description": "Returns every user in the system with public fields only: id, email, fullName, numeric role, createdAt, updatedAt, lastLoginAt. Passwords and refresh token hashes are never returned.",
         "operationId": "UsersController_list",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Array of users (safe fields). Each item contains: id (number), username (string), email (string), role (string: \"admin\" | \"user\"), createdAt (ISO date string)."
+            "description": "ServiceResultContainer<UserResponseDto[]>.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersListResultResponseDto"
+                }
+              }
+            }
           },
           "401": {
-            "description": "No valid JWT Bearer token was provided. Add the Authorization header: \"Bearer <token>\"."
+            "description": "Missing or expired JWT token."
           },
           "500": {
             "description": "Unexpected server error."
@@ -245,12 +259,19 @@
     },
     "/users/me": {
       "get": {
-        "description": "Reads the JWT payload that was decoded by JwtAuthGuard and returns it as a ServiceResultContainer<JwtPayload>. Fields: sub (userId number), email (string), role (string), iat (number), exp (number). No database query is made — data comes directly from the token.",
+        "description": "Returns the JWT payload decoded by JwtAuthGuard. No database query is made. Role is numeric: 1 = Admin, 2 = User.",
         "operationId": "UsersController_me",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "ServiceResultContainer with success=true and result = JwtPayload object (sub, email, role, iat, exp)."
+            "description": "ServiceResultContainer<JwtPayload> with sub, email, numeric role, iat, and exp.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JwtPayloadResultResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Missing or expired JWT token."
@@ -264,7 +285,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get current authenticated user",
+        "summary": "Get current authenticated user payload",
         "tags": [
           "users"
         ]
@@ -272,14 +293,14 @@
     },
     "/users/{id}": {
       "get": {
-        "description": "Fetches a single user record by numeric id with safe/public fields only. Throws 404 if the user does not exist. Use GET /users first to discover valid IDs.",
+        "description": "Fetches one user by numeric id with public fields only. Use GET /users first to discover valid IDs.",
         "operationId": "UsersController_getById",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "The unique numeric database id of the user (e.g. 1, 42). Must be a positive integer — ParseIntPipe will reject anything else.",
+            "description": "Unique numeric user id. ParseIntPipe rejects non-numeric values.",
             "schema": {
               "type": "number"
             }
@@ -287,7 +308,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Single user object (safe fields): id, username, email, role, createdAt."
+            "description": "ServiceResultContainer<UserResponseDto>.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResultResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Missing or expired JWT token."
@@ -310,7 +338,7 @@
         ]
       },
       "patch": {
-        "description": "Updates one or more fields of the user identified by :id. Send only the fields you want to change (partial update). Available fields in UpdateUserDto: username? (string), email? (string). Role changes must use PATCH /users/:id/role instead. Requires admin privileges.",
+        "description": "Updates fullName and/or email for the user identified by :id. This endpoint intentionally does not accept role changes; use PATCH /users/:id/role for role updates.",
         "operationId": "UsersController_update",
         "parameters": [
           {
@@ -325,7 +353,7 @@
         ],
         "requestBody": {
           "required": true,
-          "description": "Partial user data. All fields are optional. Example: { \"username\": \"newName\" } or { \"email\": \"new@example.com\" }.",
+          "description": "Partial profile update. Example: { \"fullName\": \"New Name\" } or { \"email\": \"new@example.com\" }.",
           "content": {
             "application/json": {
               "schema": {
@@ -336,13 +364,20 @@
         },
         "responses": {
           "200": {
-            "description": "Updated user record (safe fields)."
+            "description": "ServiceResultContainer<UserResponseDto> with the updated user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResultResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Missing or expired JWT token."
           },
           "403": {
-            "description": "Authenticated user does not have the admin role. AdminGuard rejected the request."
+            "description": "Authenticated user is not an admin."
           },
           "404": {
             "description": "No user found with the given id."
@@ -356,13 +391,13 @@
             "bearer": []
           }
         ],
-        "summary": "Update user details [Admin]",
+        "summary": "Update user profile fields",
         "tags": [
           "users"
         ]
       },
       "delete": {
-        "description": "Hard-deletes the user record from the database. IRREVERSIBLE — no soft-delete or recycle bin. Double-check the id before calling this endpoint. Requires admin privileges.",
+        "description": "Hard-deletes the user record. This is irreversible and requires admin privileges.",
         "operationId": "UsersController_delete",
         "parameters": [
           {
@@ -377,7 +412,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Deletion confirmed. Returns ServiceResultContainer with success=true."
+            "description": "Deletion confirmed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteUserResultResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Missing or expired JWT token."
@@ -397,7 +439,7 @@
             "bearer": []
           }
         ],
-        "summary": "Delete user permanently [Admin]",
+        "summary": "Delete user permanently",
         "tags": [
           "users"
         ]
@@ -405,7 +447,7 @@
     },
     "/users/{id}/role": {
       "patch": {
-        "description": "Sets the role field of the user identified by :id. Valid roles (from UpdateUserRoleDto): \"admin\" | \"user\". Use this endpoint exclusively for role changes; other user fields are updated via PATCH /users/:id. Requires admin privileges.",
+        "description": "Sets only the role field of the user identified by :id. Accepted numeric values: 1 = Admin, 2 = User. Other user fields must be updated through PATCH /users/:id.",
         "operationId": "UsersController_updateRole",
         "parameters": [
           {
@@ -420,7 +462,7 @@
         ],
         "requestBody": {
           "required": true,
-          "description": "Role payload. Required field: role (string enum: \"admin\" | \"user\"). Example: { \"role\": \"admin\" }.",
+          "description": "Role payload. Example: { \"role\": 1 } for Admin or { \"role\": 2 } for User.",
           "content": {
             "application/json": {
               "schema": {
@@ -431,7 +473,14 @@
         },
         "responses": {
           "200": {
-            "description": "Role updated successfully. Returns ServiceResultContainer with updated user."
+            "description": "ServiceResultContainer<UserResponseDto> with the updated user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResultResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Missing or expired JWT token."
@@ -451,7 +500,7 @@
             "bearer": []
           }
         ],
-        "summary": "Change user role [Admin]",
+        "summary": "Change user role",
         "tags": [
           "users"
         ]
@@ -459,22 +508,34 @@
     },
     "/admin-agent/sessions": {
       "get": {
-        "description": "Retrieves all past chat sessions belonging to the authenticated user.",
+        "description": "Returns recent chat sessions owned by the authenticated user. Sessions from other users are never returned.",
         "operationId": "AdminAgentController_getSessions",
         "parameters": [
           {
             "name": "limit",
             "required": false,
             "in": "query",
-            "description": "Limit the number of recent sessions.",
+            "description": "Optional maximum number of recent sessions to return.",
             "schema": {
+              "minimum": 1,
+              "example": 20,
               "type": "number"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Sessions retrieved successfully."
+            "description": "Sessions retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SessionResponseDto"
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -482,18 +543,25 @@
             "bearer": []
           }
         ],
-        "summary": "Get all chat sessions",
+        "summary": "Get chat sessions for the authenticated user",
         "tags": [
           "Admin Agent"
         ]
       },
       "post": {
-        "description": "Creates a new empty chat session belonging to the authenticated user.",
+        "description": "Creates a new empty chat session owned by the authenticated user.",
         "operationId": "AdminAgentController_createSession",
         "parameters": [],
         "responses": {
           "201": {
-            "description": "Chat session created successfully."
+            "description": "Chat session created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -509,14 +577,14 @@
     },
     "/admin-agent/sessions/{id}/messages": {
       "get": {
-        "description": "Retrieves all historical chat messages belonging to a specific session ID.",
+        "description": "Returns user and assistant messages for a session owned by the authenticated user. Internal tool messages are filtered out for normal history display.",
         "operationId": "AdminAgentController_getSessionMessages",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "The unique numeric ID of the chat session.",
+            "description": "Numeric chat session id.",
             "schema": {
               "type": "number"
             }
@@ -524,7 +592,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Historical messages loaded successfully."
+            "description": "Historical messages loaded successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChatMessageResponseDto"
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -532,7 +610,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get session messages history",
+        "summary": "Get session message history",
         "tags": [
           "Admin Agent"
         ]
@@ -540,14 +618,14 @@
     },
     "/admin-agent/sessions/{id}": {
       "delete": {
-        "description": "Deletes a specific chat session and all its messages permanently.",
+        "description": "Permanently deletes a session owned by the authenticated user. ChatMessage rows are cascade-deleted through the ChatMessage.session relation.",
         "operationId": "AdminAgentController_deleteSession",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "The chat session ID to delete.",
+            "description": "Numeric chat session id to delete.",
             "schema": {
               "type": "number"
             }
@@ -571,18 +649,18 @@
     },
     "/admin-agent/query-stream": {
       "post": {
-        "description": "Streams the model output back to the client. Supports persisting within a specific session.",
+        "description": "Streams newline-delimited JSON objects over a text/event-stream response. Each line is an AgentStreamEventDto. Token events use { \"type\": \"token\", \"content\": \"...\" }. Step events use { \"type\": \"step\", \"icon\": \"...\", \"message\": \"...\" }. The stream is complete when the HTTP response ends.",
         "operationId": "AdminAgentController_streamChat",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AgentRequestDto"
               }
             },
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/AgentRequestDto"
               }
@@ -591,10 +669,17 @@
         },
         "responses": {
           "200": {
-            "description": "SSE stream opened; response body is streamed incrementally"
+            "description": "Stream opened. Response body contains newline-delimited AgentStreamEventDto JSON objects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentStreamEventDto"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Missing/invalid access token"
+            "description": "Missing or invalid access token."
           }
         },
         "security": [
@@ -602,7 +687,7 @@
             "bearer": []
           }
         ],
-        "summary": "Query Admin agent (stream)",
+        "summary": "Query Admin Agent as a streamed response",
         "tags": [
           "Admin Agent"
         ]
@@ -625,115 +710,23 @@
           "fullName": {
             "type": "string",
             "example": "John Doe",
-            "description": "Full display name for the new account. Required - must be a non-empty string. Validation: returns 400 if missing, empty, or whitespace-only. Uniqueness: not required to be unique."
+            "description": "Full display name for the new account. Required - must be a non-empty string. This field is not required to be unique."
           },
           "email": {
             "type": "string",
             "example": "admin@admin.com",
             "format": "email",
-            "description": "Email address for the new account. Required - must be a valid email format and must be unique. Validation: returns 400 if the email format is invalid. Uniqueness: returns 400 if already registered."
+            "description": "Email address for the new account. Required - must be a valid email format and must be unique."
           },
           "password": {
             "type": "string",
-            "example": "admin",
+            "example": "admin1234",
             "minLength": 8,
-            "description": "Password for the new account. Minimum 8 characters. Required - stored as a bcrypt hash (never stored as plain text). Validation: returns 400 if shorter than 8 characters."
+            "description": "Password for the new account. Minimum 8 characters. Required - stored as a bcrypt hash and never persisted as plain text."
           }
         },
         "required": [
           "fullName",
-          "email",
-          "password"
-        ]
-      },
-      "User": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique identifier of the user",
-            "example": 1
-          },
-          "email": {
-            "type": "string",
-            "description": "User email address",
-            "example": "user@example.com"
-          },
-          "fullName": {
-            "type": "string",
-            "description": "Full name of the user",
-            "example": "John Doe"
-          },
-          "password": {
-            "type": "string",
-            "description": "Hashed user password",
-            "example": "hashed_password_123",
-            "writeOnly": true
-          },
-          "refreshToken": {
-            "type": "string",
-            "description": "JWT refresh token for session management",
-            "example": "ref_token_abc123",
-            "nullable": true
-          },
-          "role": {
-            "type": "number",
-            "description": "User role within the system",
-            "enum": [
-              1,
-              2
-            ],
-            "example": 2
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Timestamp when the user was created",
-            "example": "2026-05-12T10:00:00Z"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Timestamp when the user was last updated",
-            "example": "2026-05-12T11:00:00Z"
-          },
-          "lastLoginAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Timestamp of the user's last successful login",
-            "example": "2026-05-20T10:00:00Z",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "email",
-          "fullName",
-          "password",
-          "refreshToken",
-          "role",
-          "createdAt",
-          "updatedAt",
-          "lastLoginAt"
-        ]
-      },
-      "LoginDto": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "example": "admin@admin.com",
-            "format": "email",
-            "description": "Registered email address of the user. Must be a valid email format (user@domain.com). Case-insensitive — \"Admin@Admin.com\" and \"admin@admin.com\" are treated as the same."
-          },
-          "password": {
-            "type": "string",
-            "example": "admin",
-            "minLength": 4,
-            "description": "Account password. Minimum 4 characters. Sent as plain text over HTTPS — hashing is handled server-side. Returns 401 if this does not match the stored hash."
-          }
-        },
-        "required": [
           "email",
           "password"
         ]
@@ -744,7 +737,250 @@
           1,
           2
         ],
-        "description": "New role for the user. Optional — omit to keep the current role. Validation: must be a valid UserRole value; returns 400 if invalid. Accepted values: \"user\" | \"admin\". Prefer using PATCH /users/:id/role for role-only changes (more explicit and easier to audit)."
+        "description": "Numeric user role. 1 = Admin, 2 = User."
+      },
+      "UserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique numeric user id.",
+            "example": 1
+          },
+          "email": {
+            "type": "string",
+            "description": "User email address.",
+            "example": "user@example.com"
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Full display name of the user.",
+            "example": "John Doe"
+          },
+          "role": {
+            "description": "Numeric user role. 1 = Admin, 2 = User.",
+            "example": 2,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRole"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp when the user was created.",
+            "example": "2026-05-12T10:00:00Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp when the user was last updated.",
+            "example": "2026-05-12T11:00:00Z"
+          },
+          "lastLoginAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp of the user last successful login, or null if the user never logged in.",
+            "example": "2026-05-20T10:00:00Z",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "fullName",
+          "role",
+          "createdAt",
+          "updatedAt",
+          "lastLoginAt"
+        ]
+      },
+      "UserResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request succeeded.",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable result message.",
+            "example": "User retrieved successfully"
+          },
+          "result": {
+            "description": "Public user response payload.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "result"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@admin.com",
+            "format": "email",
+            "description": "Registered email address of the user. Must be a valid email format (user@domain.com). Case-insensitive - \"Admin@Admin.com\" and \"admin@admin.com\" are treated as the same."
+          },
+          "password": {
+            "type": "string",
+            "example": "admin1234",
+            "minLength": 4,
+            "description": "Account password. Minimum 4 characters for login validation. Sent over HTTPS; hashing and comparison are handled server-side. Returns 401 if this does not match the stored hash."
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "LogoutPayloadDto": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "True when logout completed.",
+            "example": true
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "LogoutResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request succeeded.",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable result message.",
+            "example": "Logged out successfully"
+          },
+          "result": {
+            "description": "Logout result payload.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LogoutPayloadDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "result"
+        ]
+      },
+      "JwtPayloadResponseDto": {
+        "type": "object",
+        "properties": {
+          "sub": {
+            "type": "number",
+            "description": "Authenticated user id from the JWT subject.",
+            "example": 1
+          },
+          "email": {
+            "type": "string",
+            "description": "Authenticated user email from the JWT payload.",
+            "example": "user@example.com"
+          },
+          "role": {
+            "description": "Numeric user role from the JWT payload. 1 = Admin, 2 = User.",
+            "example": 2,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRole"
+              }
+            ]
+          },
+          "iat": {
+            "type": "number",
+            "description": "JWT issued-at timestamp in seconds.",
+            "example": 1770000000
+          },
+          "exp": {
+            "type": "number",
+            "description": "JWT expiry timestamp in seconds.",
+            "example": 1770000900
+          }
+        },
+        "required": [
+          "sub",
+          "email",
+          "role",
+          "iat",
+          "exp"
+        ]
+      },
+      "JwtPayloadResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request succeeded.",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable result message.",
+            "example": "Current user retrieved successfully"
+          },
+          "result": {
+            "description": "Decoded JWT payload.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JwtPayloadResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "result"
+        ]
+      },
+      "UsersListResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request succeeded.",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable result message.",
+            "example": "Users retrieved successfully"
+          },
+          "result": {
+            "description": "Public user response list.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserResponseDto"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "result"
+        ]
       },
       "UpdateUserDto": {
         "type": "object",
@@ -752,31 +988,63 @@
           "fullName": {
             "type": "string",
             "example": "John Updated",
-            "description": "Full display name of the user. Optional — omit this field to leave the current value unchanged. Validation: if provided, must be a string and must not be empty (whitespace-only is rejected). Returns 400 if the value is empty while provided."
+            "description": "Full display name of the user. Optional - omit this field to leave the current value unchanged. Validation: if provided, must be a string and must not be empty."
           },
           "email": {
             "type": "string",
             "example": "updated@example.com",
             "format": "email",
-            "description": "New email address for the user. Optional — omit to keep the current email. Validation: must be a valid email format if provided; returns 400 if invalid. Uniqueness: returns 400 if the email is already taken by another account."
+            "description": "New email address for the user. Optional - omit to keep the current email. Validation: must be a valid email format if provided. Uniqueness is enforced by the service/database layer."
+          }
+        }
+      },
+      "DeleteUserPayloadDto": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean",
+            "description": "True when the user was deleted.",
+            "example": true
+          }
+        },
+        "required": [
+          "deleted"
+        ]
+      },
+      "DeleteUserResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request succeeded.",
+            "example": true
           },
-          "role": {
-            "example": 2,
-            "description": "New role for the user. Optional — omit to keep the current role. Validation: must be a valid UserRole value; returns 400 if invalid. Accepted values: \"user\" | \"admin\". Prefer using PATCH /users/:id/role for role-only changes (more explicit and easier to audit).",
+          "message": {
+            "type": "string",
+            "description": "Human-readable result message.",
+            "example": "User deleted successfully"
+          },
+          "result": {
+            "description": "Deletion result payload.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/UserRole"
+                "$ref": "#/components/schemas/DeleteUserPayloadDto"
               }
             ]
           }
-        }
+        },
+        "required": [
+          "success",
+          "message",
+          "result"
+        ]
       },
       "UpdateUserRoleDto": {
         "type": "object",
         "properties": {
           "role": {
             "example": 2,
-            "description": "The new role to assign to the user. Required — this DTO represents a role-only update. Accepted values: \"user\" (standard access) | \"admin\" (full system access). Validation: returns 400 if the value is not a valid UserRole enum member. Security note: use \"admin\" with caution — it grants access to admin-only endpoints.",
+            "description": "The new numeric role to assign to the user. Required - this DTO represents a role-only update. Accepted numeric values: 1 = Admin, 2 = User. Security note: use 1 with caution because it grants access to admin-only endpoints.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/UserRole"
@@ -786,6 +1054,134 @@
         },
         "required": [
           "role"
+        ]
+      },
+      "SessionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique numeric chat session id.",
+            "example": 42
+          },
+          "userId": {
+            "type": "number",
+            "description": "Owner user id. Session endpoints only return sessions owned by the authenticated user.",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable session title. Initially defaults to \"שיחה חדשה...\" and may be updated from the prompt.",
+            "example": "Monthly sales report"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp when the session was created.",
+            "example": "2026-05-12T10:00:00Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp when the session or one of its messages was last updated.",
+            "example": "2026-05-12T11:00:00Z"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "title",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ChatMessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique numeric chat message id.",
+            "example": 1001
+          },
+          "userId": {
+            "type": "number",
+            "description": "Owner user id. Message endpoints only return messages from sessions owned by the authenticated user.",
+            "example": 1
+          },
+          "sessionId": {
+            "type": "number",
+            "description": "Parent chat session id. Messages are deleted when their session is deleted.",
+            "example": 42,
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "description": "Message role. \"user\" is the prompt, \"assistant\" is model output, and \"tool\" is an internal tool result.",
+            "enum": [
+              "user",
+              "assistant",
+              "tool"
+            ],
+            "example": "assistant"
+          },
+          "content": {
+            "type": "string",
+            "description": "Message body stored for the chat history.",
+            "example": "Here is the answer..."
+          },
+          "toolCallId": {
+            "type": "string",
+            "description": "Tool call id for internal tool-result messages, or null for normal user/assistant messages.",
+            "example": "call_abc123",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp when the message was created.",
+            "example": "2026-05-12T10:00:00Z"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "sessionId",
+          "role",
+          "content",
+          "toolCallId",
+          "createdAt"
+        ]
+      },
+      "AgentStreamEventDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Stream event kind. \"token\" carries model text; \"step\" carries tool progress metadata.",
+            "enum": [
+              "token",
+              "step"
+            ],
+            "example": "token"
+          },
+          "content": {
+            "type": "string",
+            "description": "Model text chunk. Present on token events.",
+            "example": "The current user list contains..."
+          },
+          "message": {
+            "type": "string",
+            "description": "Progress message for a tool step. Present on step events.",
+            "example": "Fetching users..."
+          },
+          "icon": {
+            "type": "string",
+            "description": "UI icon key for a step event. Present on step events.",
+            "example": "ph-check-circle"
+          }
+        },
+        "required": [
+          "type"
         ]
       },
       "AgentRequestDto": {

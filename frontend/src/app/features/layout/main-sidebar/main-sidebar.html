@@ -51,7 +51,7 @@
 								class="session-sub-item"
 							>
 								<span class="ph ph-chat-centered-text"></span>
-								<span class="session-title-label">{{ session.title }}</span>
+								<span class="session-title-label">{{ displaySessionTitle(session) }}</span>
 							</a>
 							<button
 								type="button"
@@ -69,9 +69,10 @@
 				@if (chatStore.sessions().length > 5) {
 					<button [routerLink]="['/chat/history']" class="btn-show-all-sessions">
 						<span class="ph ph-hard-drives"></span>
-						<span>כל השיחות...</span>
+						<span>היסטוריה</span>
 					</button>
 				}
+				
 			</div>
 		}
 	</nav>

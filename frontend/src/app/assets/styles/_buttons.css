@@ -203,7 +203,7 @@ a {
   width: fit-content;
 
   &:hover {
-    text-decoration: underline;
+    text-decoration: none;
     color: var(--primary-400);
   }
 

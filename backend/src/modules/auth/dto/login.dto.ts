@@ -8,17 +8,17 @@ export class LoginDto {
     description:
       'Registered email address of the user. ' +
       'Must be a valid email format (user@domain.com). ' +
-      'Case-insensitive — "Admin@Admin.com" and "admin@admin.com" are treated as the same.',
+      'Case-insensitive - "Admin@Admin.com" and "admin@admin.com" are treated as the same.',
   })
   @IsEmail()
   email!: string;
 
   @ApiProperty({
-    example: 'admin',
+    example: 'admin1234',
     minLength: 4,
     description:
-      'Account password. Minimum 4 characters. ' +
-      'Sent as plain text over HTTPS — hashing is handled server-side. ' +
+      'Account password. Minimum 4 characters for login validation. ' +
+      'Sent over HTTPS; hashing and comparison are handled server-side. ' +
       'Returns 401 if this does not match the stored hash.',
   })
   @IsString()

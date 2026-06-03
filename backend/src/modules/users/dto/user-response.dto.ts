@@ -1,28 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '../../../core/enums/user-role.enum';
 
-@Entity('users')
-export class User {
+export class UserResponseDto {
   @ApiProperty({ description: 'Unique numeric user id.', example: 1 })
-  @PrimaryGeneratedColumn()
   id!: number;
 
-  @ApiProperty({ description: 'Unique user email address.', example: 'user@example.com' })
-  @Column({ unique: true })
+  @ApiProperty({ description: 'User email address.', example: 'user@example.com' })
   email!: string;
 
   @ApiProperty({ description: 'Full display name of the user.', example: 'John Doe' })
-  @Column()
   fullName!: string;
-
-  @ApiHideProperty()
-  @Column()
-  password!: string;
-
-  @ApiHideProperty()
-  @Column({ nullable: true })
-  refreshToken!: string | null;
 
   @ApiProperty({
     description: 'Numeric user role. 1 = Admin, 2 = User.',
@@ -30,22 +17,18 @@ export class User {
     enumName: 'UserRole',
     example: UserRole.User,
   })
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.User })
   role!: UserRole;
 
   @ApiProperty({ description: 'Timestamp when the user was created.', example: '2026-05-12T10:00:00Z' })
-  @CreateDateColumn()
   createdAt!: Date;
 
   @ApiProperty({ description: 'Timestamp when the user was last updated.', example: '2026-05-12T11:00:00Z' })
-  @UpdateDateColumn()
   updatedAt!: Date;
 
   @ApiProperty({
-    description: 'Timestamp of the user last successful login.',
+    description: 'Timestamp of the user last successful login, or null if the user never logged in.',
     example: '2026-05-20T10:00:00Z',
     nullable: true,
   })
-  @Column({ nullable: true })
   lastLoginAt!: Date | null;
 }

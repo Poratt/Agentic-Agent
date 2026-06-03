@@ -5,6 +5,9 @@ import { ChatSession } from '../entities/chat-session.entity';
 import { ChatMessage } from '../entities/chat-message.entity';
 import { LlmMessage } from '../llm.service';
 
+const DEFAULT_SESSION_TITLE = 'שיחה חדשה...';
+const LEGACY_DEFAULT_SESSION_TITLES = ['New chat...', 'New chat'];
+
 @Injectable()
 export class AgentSessionService {
   constructor(
@@ -15,10 +18,20 @@ export class AgentSessionService {
   ) {}
 
   async getSessions(userId: number, limit?: number): Promise<ChatSession[]> {
-    return this.chatSessionRepository.find({
-      where: { userId },
-      order: { updatedAt: 'DESC' },
-      take: limit,
+    const query = this.chatSessionRepository
+      .createQueryBuilder('session')
+      .innerJoin('session.messages', 'message')
+      .where('session.userId = :userId', { userId })
+      .orderBy('session.updatedAt', 'DESC')
+      .distinct(true);
+
+    if (limit) {
+      query.take(limit);
+    }
+
+    const sessions = await query.getMany();
+    return sessions.map((session) => {
+      return this.normalizeSessionTitle(session);
     });
   }
 
@@ -31,12 +44,11 @@ export class AgentSessionService {
       throw new ForbiddenException('אינך מורשה לגשת לשיחה זו או שהיא אינה קיימת.');
     }
 
-    // שליפה ממוקדת של הודעות תצוגה אנושית בלבד (ללא קריאות כלים פנימיות וללא תשובות כלים)
     return this.chatMessageRepository.find({
       where: {
         sessionId,
         role: In(['user', 'assistant']),
-        toolCallId: IsNull(), // שולף רק הודעות טקסט רגילות ומסנן את YES_TOOL_CALLS
+        toolCallId: IsNull(),
       },
       order: { createdAt: 'ASC' },
     });
@@ -45,7 +57,7 @@ export class AgentSessionService {
   async createSession(userId: number): Promise<ChatSession> {
     const session = this.chatSessionRepository.create({
       userId,
-      title: 'שיחה חדשה...',
+      title: DEFAULT_SESSION_TITLE,
     });
     return this.chatSessionRepository.save(session);
   }
@@ -77,10 +89,23 @@ export class AgentSessionService {
   }
 
   async updateSessionTitleIfDefault(session: ChatSession, prompt: string): Promise<void> {
-    const genericGreetings = ['היי', 'שלום', 'הלו', 'hi', 'hello', 'אהלן', 'בוקר טוב', 'ערב טוב'];
-    const isGreeting = genericGreetings.includes(prompt.trim().toLowerCase()) || prompt.trim().length <= 3;
+    const genericGreetings = [
+      'hi',
+      'hello',
+      'hey',
+      'good morning',
+      'good evening',
+      'היי',
+      'שלום',
+      'הלו',
+      'אהלן',
+      'בוקר טוב',
+      'ערב טוב',
+    ];
+    const normalizedPrompt = prompt.trim().toLowerCase();
+    const isGreeting = genericGreetings.includes(normalizedPrompt) || normalizedPrompt.length <= 3;
 
-    if (session.title === 'שיחה חדשה...' && prompt && !isGreeting) {
+    if (this.isDefaultSessionTitle(session.title) && prompt && !isGreeting) {
       const cleanTitle = prompt.trim().substring(0, 30);
       session.title = cleanTitle.length > 28 ? `${cleanTitle}...` : cleanTitle;
       await this.chatSessionRepository.save(session);
@@ -139,5 +164,16 @@ export class AgentSessionService {
     });
 
     return formatted;
+  }
+
+  private isDefaultSessionTitle(title: string): boolean {
+    return title === DEFAULT_SESSION_TITLE || LEGACY_DEFAULT_SESSION_TITLES.includes(title);
+  }
+
+  private normalizeSessionTitle(session: ChatSession): ChatSession {
+    if (LEGACY_DEFAULT_SESSION_TITLES.includes(session.title)) {
+      session.title = DEFAULT_SESSION_TITLE;
+    }
+    return session;
   }
 }

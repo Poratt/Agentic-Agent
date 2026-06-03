@@ -17,21 +17,27 @@ import {
 import {
   ApiBearerAuth,
   ApiConsumes,
+  ApiExtraModels,
   ApiOperation,
+  ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
   ApiUnauthorizedResponse,
-  ApiQuery,
-  ApiParam,
 } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AdminAgentService } from './admin-agent.service';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RequestWithUser } from '../../core/interfaces/request-with-user.interface';
 import { AgentRequestDto } from './dto/agent-request.dto';
+import { SessionResponseDto } from './dto/session-response.dto';
+import { ChatMessageResponseDto } from './dto/chat-message-response.dto';
+import { AgentStreamEventDto } from './dto/agent-stream-event.dto';
+import { GetSessionsQueryDto } from './dto/get-sessions-query.dto';
 
 @ApiTags('Admin Agent')
 @ApiBearerAuth()
+@ApiExtraModels(SessionResponseDto, ChatMessageResponseDto, AgentStreamEventDto)
 @Controller('admin-agent')
 export class AdminAgentController {
   private readonly logger = new Logger(AdminAgentController.name);
@@ -41,29 +47,37 @@ export class AdminAgentController {
   @UseGuards(JwtAuthGuard)
   @Get('sessions')
   @ApiOperation({
-    summary: 'Get all chat sessions',
-    description: 'Retrieves all past chat sessions belonging to the authenticated user.',
+    summary: 'Get chat sessions for the authenticated user',
+    description:
+      'Returns recent chat sessions owned by the authenticated user. Sessions from other users are never returned.',
   })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Limit the number of recent sessions.' })
-  @ApiResponse({ status: 200, description: 'Sessions retrieved successfully.' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Optional maximum number of recent sessions to return.',
+  })
+  @ApiResponse({ status: 200, description: 'Sessions retrieved successfully.', type: [SessionResponseDto] })
   async getSessions(
     @Req() req: RequestWithUser,
-    @Query('limit') limit?: number,
+    @Query() query: GetSessionsQueryDto,
   ) {
     if (!req.user) {
       throw new UnauthorizedException();
     }
-    return this.adminAgentService.getSessions(req.user.sub, limit ? Number(limit) : undefined);
+    return this.adminAgentService.getSessions(req.user.sub, query.limit);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('sessions/:id/messages')
   @ApiOperation({
-    summary: 'Get session messages history',
-    description: 'Retrieves all historical chat messages belonging to a specific session ID.',
+    summary: 'Get session message history',
+    description:
+      'Returns user and assistant messages for a session owned by the authenticated user. ' +
+      'Internal tool messages are filtered out for normal history display.',
   })
-  @ApiParam({ name: 'id', type: Number, description: 'The unique numeric ID of the chat session.' })
-  @ApiResponse({ status: 200, description: 'Historical messages loaded successfully.' })
+  @ApiParam({ name: 'id', type: Number, description: 'Numeric chat session id.' })
+  @ApiResponse({ status: 200, description: 'Historical messages loaded successfully.', type: [ChatMessageResponseDto] })
   async getSessionMessages(
     @Param('id', ParseIntPipe) id: number,
     @Req() req: RequestWithUser,
@@ -78,9 +92,9 @@ export class AdminAgentController {
   @Post('sessions')
   @ApiOperation({
     summary: 'Create a new chat session',
-    description: 'Creates a new empty chat session belonging to the authenticated user.',
+    description: 'Creates a new empty chat session owned by the authenticated user.',
   })
-  @ApiResponse({ status: 201, description: 'Chat session created successfully.' })
+  @ApiResponse({ status: 201, description: 'Chat session created successfully.', type: SessionResponseDto })
   async createSession(@Req() req: RequestWithUser) {
     if (!req.user) {
       throw new UnauthorizedException();
@@ -93,9 +107,11 @@ export class AdminAgentController {
   @HttpCode(204)
   @ApiOperation({
     summary: 'Delete chat session',
-    description: 'Deletes a specific chat session and all its messages permanently.',
+    description:
+      'Permanently deletes a session owned by the authenticated user. ' +
+      'ChatMessage rows are cascade-deleted through the ChatMessage.session relation.',
   })
-  @ApiParam({ name: 'id', type: Number, description: 'The chat session ID to delete.' })
+  @ApiParam({ name: 'id', type: Number, description: 'Numeric chat session id to delete.' })
   @ApiResponse({ status: 204, description: 'Chat session deleted successfully.' })
   async deleteSession(
     @Param('id', ParseIntPipe) id: number,
@@ -109,16 +125,21 @@ export class AdminAgentController {
 
   @UseGuards(JwtAuthGuard)
   @Post('query-stream')
-  @ApiConsumes('multipart/form-data', 'application/json')
+  @ApiConsumes('application/json', 'multipart/form-data')
   @ApiOperation({
-    summary: 'Query Admin agent (stream)',
-    description: 'Streams the model output back to the client. Supports persisting within a specific session.',
+    summary: 'Query Admin Agent as a streamed response',
+    description:
+      'Streams newline-delimited JSON objects over a text/event-stream response. ' +
+      'Each line is an AgentStreamEventDto. Token events use { "type": "token", "content": "..." }. ' +
+      'Step events use { "type": "step", "icon": "...", "message": "..." }. ' +
+      'The stream is complete when the HTTP response ends.',
   })
   @ApiResponse({
     status: 200,
-    description: 'SSE stream opened; response body is streamed incrementally',
+    description: 'Stream opened. Response body contains newline-delimited AgentStreamEventDto JSON objects.',
+    type: AgentStreamEventDto,
   })
-  @ApiUnauthorizedResponse({ description: 'Missing/invalid access token' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
   async streamChat(
     @Body() dto: AgentRequestDto,
     @Req() req: RequestWithUser,

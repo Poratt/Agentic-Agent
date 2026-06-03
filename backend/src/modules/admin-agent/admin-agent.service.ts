@@ -154,7 +154,11 @@ export class AdminAgentService implements OnModuleInit {
           const resultData = await this.agentToolExecutorService.executeToolCall(call, userId);
           
           if (resultData.includes('error')) {
-            yield JSON.stringify({ type: 'step', icon: STEP_ICONS.error, message: 'ביצוע השלב נכשל עקב מגבלות אבטחה או שגיאת שרת.' }) + '\n';
+            yield JSON.stringify({
+              type: 'step',
+              icon: STEP_ICONS.error,
+              message: 'ביצוע השלב נכשל עקב מגבלות אבטחה או שגיאת שרת.',
+            }) + '\n';
           } else {
             yield JSON.stringify({ type: 'step', icon: STEP_ICONS.success, message: 'השלב בוצע בהצלחה!' }) + '\n';
           }
@@ -187,6 +191,9 @@ export class AdminAgentService implements OnModuleInit {
       }
     }
 
-    yield JSON.stringify({ type: 'token', content: 'תקשורת הסוכן הופסקה עקב הגעה למספר האיטרציות המרבי.' }) + '\n';
+    yield JSON.stringify({
+      type: 'token',
+      content: 'תקשורת הסוכן הופסקה עקב הגעה למספר האיטרציות המרבי.',
+    }) + '\n';
   }
 }
