@@ -1,8 +1,8 @@
 import { Component, inject, OnInit, computed, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { IChatSession } from '../../../../core/models/chat-session.interface';
-import { ChatStore } from '../../../../core/store/chat.store';
+import { IChatSession } from '../../../core/models/chat-session.interface';
+import { ChatStore } from '../../../core/store/chat.store';
 
 
 @Component({
