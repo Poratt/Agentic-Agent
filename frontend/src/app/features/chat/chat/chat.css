@@ -100,13 +100,21 @@
 				box-shadow var(--transition-fast),
 				opacity var(--transition-fast);
 
-			&:focus-within {
-				border-color: var(--color-primary);
-				box-shadow: 0 0 0 4px var(--color-primary-glow);
-			}
 
 			&:has(.chat-send-btn:disabled) {
 				opacity: 0.78;
+			}
+
+			&:focus-within {
+				background: var(--color-input-bg);
+				border-color: var(--color-primary);
+				box-shadow: 0 0 0 var(--space-1) var(--color-primary-glow);
+			}
+
+			&:hover:not(:focus-within),
+		l 	&:hover:not(:disabled) {
+				background: var(--color-input-bg);
+				border-color: var(--primary-300);
 			}
 
 			textarea {

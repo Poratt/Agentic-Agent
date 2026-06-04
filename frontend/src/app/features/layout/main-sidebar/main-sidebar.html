@@ -12,23 +12,61 @@
 	</div>
 
 	<nav class="nav-list">
-		<a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
+		<button routerLink="/dashboard" routerLinkActive="active" class="nav-item">
 			<span class="ph ph-squares-four nav-icon"></span>
 			<span class="nav-label">לוח בקרה</span>
-		</a>
-		<a routerLink="/users" routerLinkActive="active" class="nav-item">
+		</button>
+		<button routerLink="/users" routerLinkActive="active" class="nav-item">
 			<span class="ph ph-users nav-icon"></span>
 			<span class="nav-label">ניהול משתמשים</span>
-		</a>
+		</button>
 
-		<a routerLink="/chat" routerLinkActive="active" class="nav-item">
+		<button routerLink="/chat" routerLinkActive="active" class="nav-item">
 			<span class="ph ph-chat-circle-text nav-icon"></span>
 			<span class="nav-label">שיחה עם סוכן</span>
-		</a>
+		</button>
 
 		@if (chatStore.recentSessions().length > 0) {
-			<div class="nested-sessions-list">
-				<app-chat-history-preview></app-chat-history-preview>
+			<div class="nav-sub-list">
+				@for (session of chatStore.recentSessions(); track session.id) {
+					<div class="nav-sub-item" [class.active]="chatStore.currentSessionId() === session.id">
+						@if (pendingDeleteSessionId() === session.id) {
+							<div class="delete-confirmation">
+								<span class="warning-text typewriter">האם אתה בטוח?</span>
+								<div class="action-btns">
+									<button class="icon-only transparent-btn sm" type="button" (click)="cancelDelete()">
+										<span class="ph ph-x"></span>
+									</button>
+									<button class="icon-only danger-btn sm" type="button" (click)="confirmDelete()">
+										<span class="ph ph-check"></span>
+									</button>
+								</div>
+							</div>
+						} @else {
+							<button
+								class="nav-item sm"
+								type="button"
+								[routerLink]="['/chat']"
+								[queryParams]="{ sessionId: session.id }"
+							>
+								<span class="ph ph-chat-centered-text"></span>
+								<span class="nav-label session-title-label">{{ displaySessionTitle(session) }}</span>
+							</button>
+							<button class="icon-only transparent-btn hidden-btn" type="button" (click)="setPendingDelete($event, session.id)">
+								<span class="ph ph-trash"></span>
+							</button>
+						}
+					</div>
+				}
+				
+				<button
+								class="nav-item sm"
+								type="button"
+								[routerLink]="['/chat/history']"
+							>
+								<span class="ph ph-feather"></span>
+								<span class="nav-label session-title-label">כל השיחות</span>
+							</button>
 			</div>
 		}
 	</nav>

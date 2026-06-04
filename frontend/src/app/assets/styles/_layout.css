@@ -18,6 +18,17 @@
     display: flex;
     flex-direction: column;
   }
+
+  .main-content {
+    min-height: 0;
+
+    > :not(router-outlet) {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+  }
 }
 
 /* ------------------------------ */

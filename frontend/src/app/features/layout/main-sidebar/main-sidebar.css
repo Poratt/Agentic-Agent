@@ -23,6 +23,68 @@
 		}
 	}
 
+
+	.nav-sub-list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+		padding-right: var(--space-6);
+		margin-top: calc(var(--space-1) * -1);
+		margin-bottom: var(--space-3);
+
+		.nav-sub-item {
+			display: flex;
+			align-items: center;
+			gap: var(--space-1);
+			height: calc(var(--space-8) + var(--space-1));
+			overflow: hidden;
+			border-radius: var(--radius-md);
+
+			.nav-item {
+				flex: 1;
+				height: 100%;
+				background: transparent;
+
+				&:hover,
+				&.active {
+					background: transparent;
+				}
+			}
+
+			.hidden-btn {
+				flex: 0 0 auto;
+			}
+
+			&:is(:hover, :focus-within, .active) {
+				background: var(--color-surface-hover);
+
+				.nav-item {
+					color: var(--color-primary);
+				}
+			}
+
+			.delete-confirmation {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				height: 100%;
+				flex: 1;
+				padding: var(--space-2) var(--space-3);
+
+				.warning-text {
+					min-width: 0;
+					color: var(--color-danger);
+					font-size: var(--font-size-xs);
+				}
+
+				.action-btns {
+					display: flex;
+					flex: 0 0 auto;
+				}
+			}
+		}
+	}
+
 	.nav-list {
 		flex: 1;
 		display: flex;
@@ -43,17 +105,13 @@
 			color: var(--color-text-secondary);
 			transition: var(--transition-standard);
 			cursor: pointer;
+			text-align: start;
+
 
 			&:hover,
 			&.active {
 				background: var(--color-surface-hover);
 				color: var(--color-primary);
-			}
-
-			.nav-icon {
-				font-size: var(--font-size-xl);
-				width: 24px;
-				height: 24px;
 			}
 
 			.nav-label {
@@ -64,6 +122,15 @@
 				overflow: hidden;
 				text-overflow: ellipsis;
 				white-space: nowrap;
+			}
+
+			&.sm {
+				gap: var(--space-2);
+				padding: var(--space-2) var(--space-3);
+
+				.nav-label {
+					font-size: var(--font-size-xs);
+				}
 			}
 		}
 	}
@@ -131,107 +198,4 @@
 			}
 		}
 	}
-}
-
-.nested-sessions-list {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-1);
-	padding-right: var(--space-6);
-	margin-top: calc(var(--space-1) * -1);
-	margin-bottom: var(--space-3);
-
-	.session-sub-row {
-		display: flex;
-		align-items: center;
-		width: 100%;
-		height: calc(var(--space-8) + var(--space-1));
-		min-width: 0;
-		overflow: hidden;
-		border-radius: var(--radius-sm);
-		transition: var(--transition-standard);
-
-		.hidden-btn {
-			opacity: 0;
-		}
-
-		&:hover,
-		&.active {
-			background: var(--color-surface-hover);
-
-			.session-sub-item {
-				color: var(--color-primary);
-			}
-
-			.hidden-btn {
-				opacity: 1;
-			}
-		}
-
-		.session-sub-item {
-			display: flex;
-			align-items: center;
-			gap: var(--space-2);
-			flex: 1;
-			min-width: 0;
-			padding: var(--space-2) var(--space-3);
-			text-decoration: none;
-			color: var(--color-text-secondary);
-			font-size: var(--font-size-sm);
-			cursor: pointer;
-
-
-			i {
-				flex: 0 0 auto;
-			}
-		}
-
-		.session-title-label {
-			flex: 1;
-			min-width: 0;
-			white-space: nowrap;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			padding: 0 var(--space-1);
-		}
-
-		.delete-confirmation {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			gap: var(--space-1);
-			width: 100%;
-			height: 100%;
-			min-width: 0;
-			padding: 0 var(--space-1);
-			box-sizing: border-box;
-
-			.warning-text {
-				display: flex;
-				align-items: center;
-				flex: 1;
-				min-width: 0;
-				color: var(--color-danger);
-				font-size: var(--font-size-xs);
-				font-weight: var(--font-weight-medium);
-				white-space: nowrap;
-				overflow: hidden;
-				text-overflow: ellipsis;
-			}
-
-			.action-btns {
-				display: flex;
-				flex: 0 0 auto;
-				gap: var(--space-1);
-			}
-		}
-
-	}
-
-	.history-preview-container {
-		position: absolute;
-		
-
-	}
-
 }

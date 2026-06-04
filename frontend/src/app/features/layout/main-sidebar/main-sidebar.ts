@@ -7,12 +7,11 @@ import { getUserRoleData } from '../../../core/enums/user-role.enum';
 import { BadgeColor } from '../../../core/directives/badge-color.directive';
 import { ThemeService } from '../../../core/services/theme.service';
 import { IChatSession } from '../../../core/models/chat-session.interface';
-import { ChatHistoryPreview } from '../../chat/chat-history-preview/chat-history-preview';
 
 @Component({
 	selector: 'app-main-sidebar',
 	standalone: true,
-	imports: [CommonModule, RouterLink, RouterLinkActive, BadgeColor, ChatHistoryPreview],
+	imports: [CommonModule, RouterLink, RouterLinkActive, BadgeColor],
 	templateUrl: './main-sidebar.html',
 	styleUrl: './main-sidebar.css',
 })

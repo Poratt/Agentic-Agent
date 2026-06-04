@@ -23,10 +23,6 @@ select {
     color: var(--color-text-secondary);
   }
 
-  &:hover:not(:disabled) {
-    background: var(--color-input-bg);
-    border-color: var(--primary-300);
-  }
 
   &:focus {
     background: var(--color-input-bg);
@@ -34,11 +30,21 @@ select {
     box-shadow: 0 0 0 var(--space-1) var(--color-primary-glow);
   }
 
+  &:hover:not(:focus),l
+  &:hover:not(:disabled) {
+    background: var(--color-input-bg);
+    border-color: var(--primary-300);
+  }
   &:disabled {
     background: var(--color-input-bg);
     border-color: var(--color-border);
     color: var(--color-text-secondary);
     cursor: not-allowed;
+  }
+
+  &.search-input {
+    padding: var(--space-2) var(--field-icon-padding) var(--space-2) var(--space-4);
+
   }
 }
 

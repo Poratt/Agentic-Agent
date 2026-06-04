@@ -11,23 +11,7 @@
 		pointer-events: none;
 	}
 
-	.search-input {
-		width: 100%;
-		padding: var(--space-2) var(--field-icon-padding) var(--space-2) var(--space-4);
-		border-radius: var(--radius-md);
-		background: var(--color-input-bg);
-		border-color: var(--color-border);
-		color: var(--color-text-primary);
 
-		&::placeholder {
-			color: var(--color-text-secondary);
-		}
-
-		&:focus {
-			background: var(--color-input-bg);
-			border-color: var(--color-primary);
-		}
-	}
 }
 
 .history-content {
