@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -33,17 +33,7 @@ export class Chat implements OnInit, OnDestroy {
 	activeAssistantIndex = signal<number | null>(null);
 	activeStreamState = signal<ChatMessageStreamState>('idle');
 
-	currentUserProfile = computed(() => {
-		const sessionUser = this.authStore.user();
-		if (!sessionUser) {
-			return null;
-		}
-
-		const userId = (sessionUser as any).sub || sessionUser.id;
-		return this.userStore.users().find((u) => {
-			return u.id === userId;
-		}) || null;
-	});
+	currentUserProfile = this.userStore.currentUserProfile;
 
 	chatForm: FormGroup = this.fb.group({
 		prompt: ['', [Validators.required, Validators.minLength(1)]],
@@ -52,13 +42,7 @@ export class Chat implements OnInit, OnDestroy {
 	private routeSub?: Subscription;
 
 	ngOnInit() {
-		const currentUser = this.authStore.user();
-		if (currentUser) {
-			const userId = (currentUser as any).sub || currentUser.id;
-			if (userId) {
-				this.userStore.getUserById(userId);
-			}
-		}
+		this.userStore.loadCurrentUser();
 
 		this.routeSub = this.route.queryParams.subscribe((params) => {
 			const sessionId = params['sessionId'] ? Number(params['sessionId']) : null;

@@ -195,7 +195,15 @@ button {
     color: var(--color-text-primary);
   }
 
+  &.warning-btn {
+    &:hover {
+      background: var(--color-danger-bg);
+      color: var(--color-danger);
+    }
+  }
 }
+
+
 
 /* 5. Links */
 a {

@@ -15,7 +15,7 @@ select {
   border-radius: var(--radius-sm);
   color: var(--color-text-primary);
   font-family: var(--font-main);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   transition: var(--transition-colors);
   outline: none;
 
@@ -30,11 +30,12 @@ select {
     box-shadow: 0 0 0 var(--space-1) var(--color-primary-glow);
   }
 
-  &:hover:not(:focus),l
-  &:hover:not(:disabled) {
+  &:hover:not(:focus),
+  l &:hover:not(:disabled) {
     background: var(--color-input-bg);
     border-color: var(--primary-300);
   }
+
   &:disabled {
     background: var(--color-input-bg);
     border-color: var(--color-border);

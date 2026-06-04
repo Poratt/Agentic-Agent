@@ -1,0 +1,6 @@
+<div class="dropdown-wrapper" (mouseenter)="showDropdown()" (mouseleave)="hideDropdown()">
+    <ng-content button></ng-content>
+    @if (dropdownTrigger()) {
+        <ng-content content></ng-content>
+    }
+</div>

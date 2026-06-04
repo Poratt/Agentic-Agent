@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { UserService } from '../services/user.service';
+import { AuthStore } from './auth.store';
 import { User } from '../models/user.interface';
 import { UserRole } from '../enums/user-role.enum';
 import { PageStates } from '../enums/page-states.enum';
@@ -10,6 +11,7 @@ import { finalize } from 'rxjs';
 })
 export class UsersStore {
   private userService = inject(UserService);
+  private authStore = inject(AuthStore);
 
   // State
   private _users = signal<User[]>([]);
@@ -29,6 +31,11 @@ export class UsersStore {
     return this._error();
   });
 
+  currentUserProfile = computed(() => {
+    const userId = this.currentUserId();
+    return userId ? this._users().find((u) => u.id === userId) ?? null : null;
+  });
+
   pageState = computed<PageStates>(() => {
     if (this._loading() && this._users().length === 0) {
       return PageStates.Loading;
@@ -46,6 +53,13 @@ export class UsersStore {
   });
 
   // Actions
+  loadCurrentUser() {
+    const userId = this.currentUserId();
+    if (!userId) return;
+
+    this.getUserById(userId);
+  }
+
   loadUsers() {
     this._loading.set(true);
     this._error.set(null);
@@ -160,5 +174,10 @@ export class UsersStore {
 
   clearError() {
     this._error.set(null);
+  }
+
+  private currentUserId(): number | null {
+    const user = this.authStore.user();
+    return user ? ((user as any).sub ?? user.id) : null;
   }
 }

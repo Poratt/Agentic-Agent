@@ -22,7 +22,7 @@ export class MainSidebar implements OnInit {
 
 	protected readonly getUserRoleData = getUserRoleData;
 	public pendingDeleteSessionId = signal<number | null>(null);
-	public isButtonHovered = signal(false);
+	public dropdownTrigger = signal(false);
 
 
 	public formattedSessions = computed(() => {
@@ -56,22 +56,23 @@ export class MainSidebar implements OnInit {
 		this.pendingDeleteSessionId.set(null);
 	}
 
-	navigateToHistory() {
-		this.router.navigate(['/chat/history']);
-		this.hideDropdown();
-	}
 
-	navigateToSession(sessionId: number) {
-		this.router.navigate(['/chat'], { queryParams: { sessionId } });
+	navigateTo(sessionId?: number) {
+		if (sessionId !== undefined) {
+			this.router.navigate(['/chat'], { queryParams: { sessionId } });
+		}
+		else {
+			this.router.navigate(['/chat/history']);
+		}
 		this.hideDropdown();
 	}
 
 	showDropdown() {
-		this.isButtonHovered.set(true);
+		this.dropdownTrigger.set(true);
 	}
 
 	hideDropdown() {
-		this.isButtonHovered.set(false);
+		this.dropdownTrigger.set(false);
 		this.pendingDeleteSessionId.set(null);
 	}
 }

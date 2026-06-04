@@ -2,69 +2,188 @@
 
 /* --- Core Keyframes --- */
 
-.fade-in { animation: fadeIn 0.3s ease forwards; }
-.fade-out { animation: fadeOut 0.3s ease forwards; }
-.scale-up { animation: scaleUp 0.3s ease forwards; }
-.scale-down { animation: scaleDown 0.3s ease forwards; }
-.slide-up { animation: slideUp 0.3s ease forwards; }
-.slide-down { animation: slideDown 0.3s ease forwards; }
+.fade-in {
+  animation: fadeIn 0.3s ease forwards;
+}
 
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+.fade-out {
+  animation: fadeOut 0.3s ease forwards;
+}
 
-@keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+.scale-up {
+  animation: scaleUp 0.3s ease forwards;
+}
 
-@keyframes scaleUp { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-@keyframes scaleDown { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
+.scale-down {
+  animation: scaleDown 0.3s ease forwards;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease forwards;
+}
+
+.slide-down {
+  animation: slideDown 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scaleDown {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
 
 
 /* FILE: src/app/assets/styles/_animations.css (Updated Set) */
 
-@keyframes slideOutRight { 
-    from { opacity: 1; transform: translateX(0) scale(1); } 
-    to { opacity: 0; transform: translateX(100%) scale(0.1); } 
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(100%) scale(0.1);
+  }
 }
 
-@keyframes slideOutLeft { 
-    from { opacity: 1; transform: translateX(0) scale(1); } 
-    to { opacity: 0; transform: translateX(-100%) scale(0.1); } 
+@keyframes slideOutLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(-100%) scale(0.1);
+  }
 }
 
-@keyframes slideOutBottom { 
-    from { opacity: 1; transform: translateY(0) scale(1); } 
-    to { opacity: 0; transform: translateY(100%) scale(0.1); } 
+@keyframes slideOutBottom {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(100%) scale(0.1);
+  }
 }
 
-@keyframes slideOutTop { 
-    from { opacity: 1; transform: translateY(0) scale(1); } 
-    to { opacity: 0; transform: translateY(-100%) scale(0.1); } 
+@keyframes slideOutTop {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-100%) scale(0.1);
+  }
 }
 
 /* Classes */
-.slide-out-right { animation: slideOutRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-.slide-out-left  { animation: slideOutLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-.slide-out-bottom { animation: slideOutBottom 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-.slide-out-top    { animation: slideOutTop 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.slide-out-right {
+  animation: slideOutRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-out-left {
+  animation: slideOutLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-out-bottom {
+  animation: slideOutBottom 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-out-top {
+  animation: slideOutTop 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
 
 
 
 
 
 @keyframes slowPulse {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-    100% {
-        transform: scale(1);
-    }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes ping {
-  75%, 100% {
+
+  75%,
+  100% {
     transform: scale(2);
     opacity: 0;
   }
@@ -72,20 +191,45 @@
 
 /* Dynamic Moves */
 @keyframes organicMove {
-    0% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(5%, -10%) scale(1.05); }
-    66% { transform: translate(-8%, 5%) scale(0.95); }
-    100% { transform: translate(0, 0) scale(1); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(5%, -10%) scale(1.05);
+  }
+
+  66% {
+    transform: translate(-8%, 5%) scale(0.95);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
 }
 
 @keyframes typingDot {
-    0%, 100% { opacity: 0.2; transform: translateY(0); }
-    50% { opacity: 1; transform: translateY(-4px); }
+
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
 }
 
 @keyframes typewriter {
-    from { width: 0; }
-    to { width: 100%; }
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 100%;
+  }
 }
 
 .typewriter {
@@ -101,47 +245,121 @@
   --delay: 55ms;
   --distance: 300px;
 
-  > * {
+  >* {
     opacity: 0;
     animation: var(--anim-name) 0.5s ease-out forwards;
     animation-delay: calc(var(--delay) * (var(--i, 1) - 1));
 
-    &:nth-child(1)  { --i: 1; }
-    &:nth-child(2)  { --i: 2; }
-    &:nth-child(3)  { --i: 3; }
-    &:nth-child(4)  { --i: 4; }
-    &:nth-child(5)  { --i: 5; }
-    &:nth-child(6)  { --i: 6; }
-    &:nth-child(7)  { --i: 7; }
-    &:nth-child(8)  { --i: 8; }
-    &:nth-child(9)  { --i: 9; }
-    &:nth-child(10) { --i: 10; }
-    &:nth-child(11) { --i: 11; }
-    &:nth-child(12) { --i: 12; }
+    &:nth-child(1) {
+      --i: 1;
+    }
+
+    &:nth-child(2) {
+      --i: 2;
+    }
+
+    &:nth-child(3) {
+      --i: 3;
+    }
+
+    &:nth-child(4) {
+      --i: 4;
+    }
+
+    &:nth-child(5) {
+      --i: 5;
+    }
+
+    &:nth-child(6) {
+      --i: 6;
+    }
+
+    &:nth-child(7) {
+      --i: 7;
+    }
+
+    &:nth-child(8) {
+      --i: 8;
+    }
+
+    &:nth-child(9) {
+      --i: 9;
+    }
+
+    &:nth-child(10) {
+      --i: 10;
+    }
+
+    &:nth-child(11) {
+      --i: 11;
+    }
+
+    &:nth-child(12) {
+      --i: 12;
+    }
   }
 }
 
-.stagger-up    { --anim-name: stagger-up;    }
-.stagger-down  { --anim-name: stagger-down;  }
-.stagger-left  { --anim-name: stagger-left;  }
-.stagger-right { --anim-name: stagger-right; }
+.stagger-up {
+  --anim-name: stagger-up;
+}
+
+.stagger-down {
+  --anim-name: stagger-down;
+}
+
+.stagger-left {
+  --anim-name: stagger-left;
+}
+
+.stagger-right {
+  --anim-name: stagger-right;
+}
 
 @keyframes stagger-up {
-  0% { opacity: 0.1; transform: translateY(var(--distance)); }
-  100%   { opacity: 1; transform: translateY(0);  }
+  0% {
+    opacity: 0.1;
+    transform: translateY(var(--distance));
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes stagger-down {
-  0% { opacity: 0.1; transform: translateY(calc(var(--distance) * -1)); }
-  100%   { opacity: 1; transform: translateY(0);  }
+  0% {
+    opacity: 0.1;
+    transform: translateY(calc(var(--distance) * -1));
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes stagger-left {
-  0% { opacity: 0.1; transform: translateX(var(--distance)); }
-  100%   { opacity: 1; transform: translateX(0);  }
+  0% {
+    opacity: 0.1;
+    transform: translateX(var(--distance));
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes stagger-right {
-  0% { opacity: 0.1; transform: translateX(calc(var(--distance) * -1)); }
-  100%   { opacity: 1; transform: translateX(0);  }
+  0% {
+    opacity: 0.1;
+    transform: translateX(calc(var(--distance) * -1));
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
