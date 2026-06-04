@@ -28,51 +28,7 @@
 
 		@if (chatStore.recentSessions().length > 0) {
 			<div class="nested-sessions-list">
-				@for (session of chatStore.recentSessions(); track session.id) {
-					<div class="session-sub-row" [class.active]="chatStore.currentSessionId() === session.id">
-						@if (pendingDeleteSessionId() === session.id) {
-							<div class="delete-confirmation">
-								<span class="warning-text">
-									<span class="typewriter">האם למחוק שיחה זו?</span>
-								</span>
-								<div class="action-btns">
-									<button class="icon-only transparent-btn xs" (click)="cancelDelete()">
-										<span class="ph ph-x"></span>
-									</button>
-									<button class="icon-only danger-btn xs" (click)="confirmDelete()">
-										<span class="ph ph-check"></span>
-									</button>
-								</div>
-							</div>
-						} @else {
-							<a
-								[routerLink]="['/chat']"
-								[queryParams]="{ sessionId: session.id }"
-								class="session-sub-item"
-							>
-								<span class="ph ph-chat-centered-text"></span>
-								<span class="session-title-label">{{ displaySessionTitle(session) }}</span>
-							</a>
-							<button
-								type="button"
-								class="icon-only transparent-btn sm"
-								(click)="setPendingDelete($event, session.id)"
-								title="מחק שיחה"
-								aria-label="מחק שיחה"
-							>
-								<span class="ph ph-trash transparent-btn hidden-btn"></span>
-							</button>
-						}
-					</div>
-				}
-
-				@if (chatStore.sessions().length > 5) {
-					<button [routerLink]="['/chat/history']" class="btn-show-all-sessions">
-						<span class="ph ph-hard-drives"></span>
-						<span>היסטוריה</span>
-					</button>
-				}
-				
+				 <app-chat-history-preview></app-chat-history-preview>
 			</div>
 		}
 	</nav>

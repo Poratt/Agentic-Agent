@@ -1,0 +1,103 @@
+.custom-dropdown {
+	position: relative;
+
+	.dropdown-list {
+		position: absolute;
+		top: 100%;
+		left: -75%;
+		width: max-content;
+		min-width: 200px;
+		border-radius: var(--radius-sm);
+		overflow: hidden;
+
+	}
+}
+
+
+	.dropdown-item {
+		display: flex;
+		align-items: center;
+		width: calc(100% - 12px);
+		margin: 6px;
+		height: calc(var(--space-8) + var(--space-1));
+		min-width: 0;
+		overflow: hidden;
+		border-radius: var(--radius-sm);
+		transition: var(--transition-standard);
+
+
+		&.rounded {
+			border-radius: var(--radius-md);
+		}
+
+		&:hover,
+		&.active {
+			background: var(--color-surface-hover);
+
+			.dropdown-link {
+				color: var(--color-primary);
+			}
+
+			.hidden-btn {
+				opacity: 1;
+			}
+		}
+
+		.dropdown-link {
+			display: flex;
+			align-items: center;
+			gap: var(--space-2);
+			flex: 1;
+			min-width: 0;
+			padding: var(--space-2) var(--space-3);
+			text-decoration: none;
+			color: var(--color-text-secondary);
+			font-size: var(--font-size-sm);
+			cursor: pointer;
+
+
+			span.dropdown-icon {
+				flex: 0 0 auto;
+			}
+			
+					.dropdown-text {
+						min-width: 0;
+						white-space: nowrap;
+						overflow: hidden;
+						text-overflow: ellipsis;
+						padding: 0 var(--space-1);
+					}
+		}
+
+		.delete-confirmation {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: var(--space-1);
+			width: 100%;
+			height: 100%;
+			min-width: 0;
+			padding: 0 var(--space-1);
+			box-sizing: border-box;
+
+			.warning-text {
+				display: flex;
+				align-items: center;
+				flex: 1;
+				min-width: 0;
+				color: var(--color-danger);
+				font-size: var(--font-size-xs);
+				font-weight: var(--font-weight-medium);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			.action-btns {
+				display: flex;
+				flex: 0 0 auto;
+				gap: var(--space-1);
+			}
+		}
+
+	}
