@@ -1,5 +1,5 @@
 {
-  "printWidth": 100,
+  "printWidth": 120,
   "tabWidth": 4,
   "useTabs": false,
   "semi": true,
@@ -21,7 +21,7 @@
       ],
       "options": {
         "parser": "angular",
-        "printWidth": 100,
+        "printWidth": 120,
         "htmlWhitespaceInsensitivity": "ignore",
         "singleAttributePerLine": false,
         "bracketSameLine": false
@@ -34,7 +34,7 @@
       ],
       "options": {
         "singleQuote": false,
-        "printWidth": 100
+        "printWidth": 120
       }
     },
     {

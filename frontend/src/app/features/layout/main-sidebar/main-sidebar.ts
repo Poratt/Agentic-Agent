@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthStore } from '../../../core/store/auth.store';
 import { ChatStore } from '../../../core/store/chat.store';
 import { getUserRoleData } from '../../../core/enums/user-role.enum';
@@ -17,22 +17,15 @@ import { ThemeService } from '../../../core/services/theme.service';
 export class MainSidebar implements OnInit {
 	protected authStore = inject(AuthStore);
 	protected chatStore = inject(ChatStore);
+	protected router = inject(Router);
 	protected themeService = inject(ThemeService);
 
 	protected readonly getUserRoleData = getUserRoleData;
 	public pendingDeleteSessionId = signal<number | null>(null);
-	isButtonHovered = signal(false);
+	public isButtonHovered = signal(false);
 
-	showDropdown() {
-		this.isButtonHovered.set(true);
-	}
 
-	hideDropdown() {
-		this.isButtonHovered.set(false);
-		this.pendingDeleteSessionId.set(null);
-	}
-
-	formattedSessions = computed(() => {
+	public formattedSessions = computed(() => {
 		return this.chatStore.recentSessions().map(session => ({
 			...session,
 			displayTitle: session.title === 'New chat...' || session.title === 'New chat'
@@ -60,6 +53,25 @@ export class MainSidebar implements OnInit {
 		if (sessionId === null) return;
 
 		this.chatStore.deleteSession(sessionId);
+		this.pendingDeleteSessionId.set(null);
+	}
+
+	navigateToHistory() {
+		this.router.navigate(['/chat/history']);
+		this.hideDropdown();
+	}
+
+	navigateToSession(sessionId: number) {
+		this.router.navigate(['/chat'], { queryParams: { sessionId } });
+		this.hideDropdown();
+	}
+
+	showDropdown() {
+		this.isButtonHovered.set(true);
+	}
+
+	hideDropdown() {
+		this.isButtonHovered.set(false);
 		this.pendingDeleteSessionId.set(null);
 	}
 }

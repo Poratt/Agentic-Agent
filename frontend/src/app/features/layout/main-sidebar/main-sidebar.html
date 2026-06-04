@@ -5,9 +5,7 @@
             class="transparent-btn theme-toggle icon-only"
             type="button"
             (click)="themeService.toggle()"
-            [attr.aria-label]="
-                themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'
-            "
+            [attr.aria-label]="themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
         >
             <span
                 class="ph nav-icon"
@@ -34,13 +32,9 @@
 
         @if (chatStore.recentSessions().length > 0) {
             <div class="nav-sub-list">
-                <div
-                    class="dropdown-wrapper"
-                    (mouseenter)="showDropdown()"
-                    (mouseleave)="hideDropdown()"
-                >
+                <div class="dropdown-wrapper" (mouseenter)="showDropdown()" (mouseleave)="hideDropdown()">
                     <div class="nav-sub-item">
-                        <button class="nav-item sm" type="button" [routerLink]="['/chat/history']">
+                        <button class="nav-item sm" type="button" (click)="navigateToHistory()">
                             <span class="ph ph-feather"></span>
                             <span class="nav-label session-title-label">היסטורית שיחות</span>
                         </button>
@@ -51,15 +45,10 @@
                     @if (isButtonHovered()) {
                         <div class="dropdown-content glass-effect">
                             @for (session of formattedSessions(); track session.id) {
-                                <div
-                                    class="nav-sub-item"
-                                    [class.active]="chatStore.currentSessionId() === session.id"
-                                >
+                                <div class="nav-sub-item" [class.active]="chatStore.currentSessionId() === session.id">
                                     @if (pendingDeleteSessionId() === session.id) {
                                         <div class="delete-confirmation">
-                                            <span class="warning-text typewriter"
-                                                >האם אתה בטוח?</span
-                                            >
+                                            <span class="warning-text typewriter">האם אתה בטוח?</span>
                                             <div class="action-btns">
                                                 <button
                                                     class="icon-only transparent-btn sm"
@@ -82,12 +71,10 @@
                                             class="nav-item sm"
                                             type="button"
                                             [routerLink]="['/chat']"
-                                            [queryParams]="{ sessionId: session.id }"
+                                            (click)="navigateToSession(session.id)"
                                         >
                                             <span class="ph ph-chat-centered-text"></span>
-                                            <span class="nav-label session-title-label">{{
-                                                session.title
-                                            }}</span>
+                                            <span class="nav-label session-title-label">{{ session.title }}</span>
                                         </button>
                                         <button
                                             class="icon-only hidden-btn color-danger"
@@ -114,14 +101,8 @@
             <div class="user-info">
                 <span class="user-name">{{ authStore.user()?.email }}</span>
                 @if (authStore.user()?.role !== null && authStore.user()?.role !== undefined) {
-                    <span
-                        class="badge"
-                        [badgeColor]="getUserRoleData(authStore.user()!.role)?.color"
-                    >
-                        <span
-                            class="ph sm"
-                            [ngClass]="getUserRoleData(authStore.user()!.role)?.icon"
-                        ></span>
+                    <span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)?.color">
+                        <span class="ph sm" [ngClass]="getUserRoleData(authStore.user()!.role)?.icon"></span>
                         {{ getUserRoleData(authStore.user()!.role)?.heLabel }}
                     </span>
                 }

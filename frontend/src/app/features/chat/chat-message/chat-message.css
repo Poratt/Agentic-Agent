@@ -36,7 +36,7 @@
 			&::after {
 				content: '';
 				display: inline-block;
-				width: 0.55em;
+				width: 2px;
 				height: 1.05em;
 				margin-inline-start: var(--space-1);
 				background: var(--color-primary);
@@ -61,9 +61,18 @@
 	}
 
 	.message-body {
-		font-size: var(--font-size-sm);
+		font-size: var(--font-size-xs);
+		font-weight: 300;
 		color: var(--color-text-primary);
+
+
+		::ng-deep .ai-bold {
+			font-weight: 600;
+
+		}
 	}
+
+
 
 	.thinking-process-box {
 		margin: var(--space-2) 0 var(--space-4) 0;
@@ -128,8 +137,8 @@
 			}
 
 			.expand-icon {
-				margin-inline-end: auto;
-				font-size: var(--font-size-lg);
+				margin-inline-start: auto;
+				font-size: var(--font-size-sm);
 				transform-origin: center;
 				transition: transform var(--transition-fast);
 			}
@@ -144,6 +153,31 @@
 			gap: var(--space-2);
 			border-top: 1px dashed var(--color-border);
 
+			.step-item {
+				display: flex;
+				align-items: center;
+				gap: var(--space-2);
+				color: var(--color-text-secondary);
+				min-width: 0;
+				opacity: 1;
+				transform: none;
+
+				.ph {
+					flex: 0 0 auto;
+					color: var(--color-primary);
+					font-size: var(--font-size-md);
+				}
+
+				.step-text {
+					flex: 1;
+					min-width: 0;
+					overflow-wrap: anywhere;
+				}
+
+				.step-status-icon {
+					margin-inline-start: auto;
+				}
+			}
 		}
 	}
 }

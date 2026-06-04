@@ -13,6 +13,11 @@ import { AiFormat } from '../../../core/directives/ai-format.directive';
 
 export type ChatMessageStreamState = 'idle' | 'streaming' | 'completed' | 'errored';
 type ChatMessageRowState = 'idle' | 'thinking' | 'transitioning' | 'typing' | 'complete';
+type ChatDisplayStep = {
+	icon: string;
+	message: string;
+	statusIcon?: string;
+};
 
 const THINKING_TRANSITION_FALLBACK_MS = 280;
 const MIN_VISIBLE_TICK_MS = 16;
@@ -44,10 +49,29 @@ export class ChatMessage implements OnDestroy {
 	isAssistant = computed(() => this.message().role === 'assistant');
 	isUser = computed(() => this.message().role === 'user');
 	isActiveStream = computed(() => this.isAssistant() && this.streamState() !== 'idle');
-	hasSteps = computed(() => (this.message().steps?.length ?? 0) > 0);
+	steps = computed(() => this.message().steps ?? []);
+	displaySteps = computed<ChatDisplayStep[]>(() => {
+		return this.steps().reduce<ChatDisplayStep[]>((displaySteps, step) => {
+			if (this.isStatusStep(step.icon) && displaySteps.length > 0) {
+				const previousStep = displaySteps[displaySteps.length - 1];
+				displaySteps[displaySteps.length - 1] = {
+					...previousStep,
+					statusIcon: step.icon,
+				};
+				return displaySteps;
+			}
+
+			displaySteps.push({
+				icon: step.icon,
+				message: step.message,
+			});
+			return displaySteps;
+		}, []);
+	});
+	hasSteps = computed(() => this.displaySteps().length > 0);
 	isThinkingVisible = computed(() => {
 		const state = this.rowState();
-		return this.isAssistant() && this.hasSteps() && (state === 'thinking' || state === 'transitioning');
+		return this.isAssistant() && this.hasSteps() && state !== 'idle';
 	});
 	showCursor = computed(() => {
 		return this.rowState() === 'typing' && (this.streamState() !== 'completed' || this.hasQueuedText());
@@ -244,5 +268,9 @@ export class ChatMessage implements OnDestroy {
 	private isInsideCodeBlock(): boolean {
 		const fenceCount = (this.displayedContent().match(/```/g) ?? []).length;
 		return fenceCount % 2 === 1;
+	}
+
+	private isStatusStep(icon: string): boolean {
+		return icon === 'ph-check-circle' || icon === 'ph-warning-circle';
 	}
 }

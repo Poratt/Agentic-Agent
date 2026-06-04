@@ -1,4 +1,5 @@
-import { Directive, ElementRef, input, OnChanges, Renderer2, inject } from '@angular/core';
+import { Directive, ElementRef, input, OnChanges, Renderer2, inject, SecurityContext } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Directive({
   selector: '[aiFormat]',
@@ -9,14 +10,56 @@ export class AiFormat implements OnChanges {
 
   private el = inject<ElementRef<HTMLElement>>(ElementRef);
   private renderer = inject(Renderer2);
+  private sanitizer = inject(DomSanitizer);
   private animatedBlockSignatures = new Set<string>();
 
   ngOnChanges() {
     const raw = this.aiFormat() ?? '';
-    this.renderer.setProperty(this.el.nativeElement, 'innerHTML', this.parse(raw));
+    const parsedHtml = this.parse(raw);
+
+    const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, parsedHtml) || '';
+
+    this.updateDomEfficiently(sanitizedHtml);
+
     this.markNewCompletedBlocks(raw);
   }
 
+
+  private updateDomEfficiently(htmlContent: string): void {
+    const target = this.el.nativeElement;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const newNodes = Array.from(doc.body.childNodes);
+    const currentNodes = Array.from(target.childNodes);
+
+    newNodes.forEach((newNode, index) => {
+      const currentNode = currentNodes[index];
+
+      if (!currentNode) {
+        this.renderer.appendChild(target, newNode.cloneNode(true));
+        return;
+      }
+
+      if (currentNode.nodeType !== newNode.nodeType ||
+        (currentNode instanceof HTMLElement && newNode instanceof HTMLElement && currentNode.outerHTML !== newNode.outerHTML) ||
+        (currentNode.nodeType === Node.TEXT_NODE && currentNode.textContent !== newNode.textContent)) {
+
+        const clone = newNode.cloneNode(true);
+
+        if (currentNode instanceof HTMLElement && currentNode.classList.contains('ai-node-fade-in')) {
+          this.renderer.addClass(clone, 'ai-node-fade-in');
+        }
+
+        this.renderer.insertBefore(target, clone, currentNode);
+        this.renderer.removeChild(target, currentNode);
+      }
+    });
+
+    while (target.childNodes.length > newNodes.length) {
+      this.renderer.removeChild(target, target.lastChild);
+    }
+  }
   private roleBadge(text: string): string {
     const t = text.trim();
     if (t === 'מנהל' || t.toLowerCase() === 'admin') {
@@ -25,11 +68,13 @@ export class AiFormat implements OnChanges {
     if (t === 'משתמש' || t.toLowerCase() === 'user') {
       return '<span class="badge badge-info"><span class="ph sm">person</span>משתמש</span>';
     }
-    return `<strong>${t}</strong>`;
+    return `<span>${t}</span>`;
   }
 
   private markNewCompletedBlocks(raw: string): void {
     const blocks = Array.from(this.el.nativeElement.children) as HTMLElement[];
+    if (blocks.length === 0) return;
+
     const lastBlock = blocks[blocks.length - 1];
     const lastBlockIsStable = this.isLastBlockStable(raw);
 
@@ -71,7 +116,7 @@ export class AiFormat implements OnChanges {
       .replace(/^### (.+)$/gm, '<h3>$1</h3>')
       .replace(/^## (.+)$/gm, '<h2>$1</h2>')
       .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*\*(.+?)\*\*/g, '<span class="ai-bold" >$1</span>')
       .replace(/^\* (.+)$/gm, '<li>$1</li>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
       .replace(/(<li>[\s\S]*?<\/li>)/g, (match) => {
@@ -121,7 +166,7 @@ export class AiFormat implements OnChanges {
 
     const inlineMarkdown = (cellText: string): string => {
       return cellText
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*\*(.+?)\*\*/g, '<span class="ai-bold" >$1</span>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>');
     };
 
