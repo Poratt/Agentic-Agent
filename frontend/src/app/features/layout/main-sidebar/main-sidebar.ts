@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthStore } from '../../../core/store/auth.store';
@@ -6,7 +6,6 @@ import { ChatStore } from '../../../core/store/chat.store';
 import { getUserRoleData } from '../../../core/enums/user-role.enum';
 import { BadgeColor } from '../../../core/directives/badge-color.directive';
 import { ThemeService } from '../../../core/services/theme.service';
-import { IChatSession } from '../../../core/models/chat-session.interface';
 
 @Component({
 	selector: 'app-main-sidebar',
@@ -21,7 +20,26 @@ export class MainSidebar implements OnInit {
 	protected themeService = inject(ThemeService);
 
 	protected readonly getUserRoleData = getUserRoleData;
-	pendingDeleteSessionId = signal<number | null>(null);
+	public pendingDeleteSessionId = signal<number | null>(null);
+	isButtonHovered = signal(false);
+
+	showDropdown() {
+		this.isButtonHovered.set(true);
+	}
+
+	hideDropdown() {
+		this.isButtonHovered.set(false);
+		this.pendingDeleteSessionId.set(null);
+	}
+
+	formattedSessions = computed(() => {
+		return this.chatStore.recentSessions().map(session => ({
+			...session,
+			displayTitle: session.title === 'New chat...' || session.title === 'New chat'
+				? 'שיחה חדשה...'
+				: session.title
+		}));
+	});
 
 	ngOnInit() {
 		this.chatStore.loadSessions();
@@ -43,13 +61,5 @@ export class MainSidebar implements OnInit {
 
 		this.chatStore.deleteSession(sessionId);
 		this.pendingDeleteSessionId.set(null);
-	}
-
-	displaySessionTitle(session: IChatSession): string {
-		if (session.title === 'New chat...' || session.title === 'New chat') {
-			return 'שיחה חדשה...';
-		}
-
-		return session.title;
 	}
 }

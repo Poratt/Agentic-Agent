@@ -1,6 +1,6 @@
 {
-  "printWidth": 120,
-  "tabWidth": 2,
+  "printWidth": 100,
+  "tabWidth": 4,
   "useTabs": false,
   "semi": true,
   "singleQuote": true,
@@ -12,33 +12,44 @@
   "arrowParens": "always",
   "endOfLine": "lf",
   "embeddedLanguageFormatting": "auto",
-  "htmlWhitespaceInsensitivity": "css",
+  "htmlWhitespaceInsensitivity": "ignore",
   "singleAttributePerLine": false,
   "overrides": [
     {
-      "files": ["*.html"],
+      "files": [
+        "*.html"
+      ],
       "options": {
-        "printWidth": 120,
+        "parser": "angular",
+        "printWidth": 100,
         "htmlWhitespaceInsensitivity": "ignore",
-        "singleAttributePerLine": true
+        "singleAttributePerLine": false,
+        "bracketSameLine": false
       }
     },
     {
-      "files": ["*.css", "*.scss"],
+      "files": [
+        "*.css",
+        "*.scss"
+      ],
       "options": {
         "singleQuote": false,
         "printWidth": 100
       }
     },
     {
-      "files": ["*.json"],
+      "files": [
+        "*.json"
+      ],
       "options": {
         "printWidth": 80,
         "trailingComma": "none"
       }
     },
     {
-      "files": ["*.md"],
+      "files": [
+        "*.md"
+      ],
       "options": {
         "printWidth": 80,
         "proseWrap": "always"

@@ -9,7 +9,6 @@
 	flex-direction: column;
 	height: 100%;
 	gap: var(--space-4);
-	padding: var(--space-4);
 
 	.chat-header {
 		display: flex;

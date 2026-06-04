@@ -8,6 +8,8 @@ button {
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
+  color: var(--color-text-secondary);
+
   white-space: nowrap;
   user-select: none;
   will-change: transform, background-color, color, border-color, box-shadow, filter;
@@ -101,10 +103,11 @@ button {
     &.rounded {
       border-radius: 50%;
     }
+
     .ph {
       display: flex;
       align-items: center;
-      justify-content: center;    
+      justify-content: center;
     }
   }
 }
@@ -152,7 +155,7 @@ button {
 
 /* 3. Theme: DANGER */
 .danger-btn {
-  color: var(--color-danger);  
+  color: var(--color-danger);
 
   &:hover:not(:disabled) {
     background-color: var(--color-danger-bg);
