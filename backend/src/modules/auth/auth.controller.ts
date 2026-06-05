@@ -34,6 +34,7 @@ import type { RequestWithUser } from '../../core/interfaces/request-with-user.in
 import { UserResultResponseDto } from '../users/dto/user-result-response.dto';
 import { LogoutResultResponseDto } from './dto/logout-result-response.dto';
 import { JwtPayloadResultResponseDto } from '../../core/dto/jwt-payload-result-response.dto';
+import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -44,10 +45,11 @@ export class AuthController {
   @HttpCode(201)
   @ApiOperation({
     summary: 'Register a new user account',
+    summaryHe: 'רושם חשבון משתמש חדש במערכת',
     description:
       'Creates a new user account. Required RegisterDto fields: fullName, email, password. ' +
       'Password must be at least 8 characters. This endpoint is public and does not require a token.',
-  })
+  } as CustomApiOperationOptions)
   @ApiBody({
     type: RegisterDto,
     description:
@@ -70,10 +72,11 @@ export class AuthController {
   @HttpCode(200)
   @ApiOperation({
     summary: 'Login with email and password',
+    summaryHe: 'מבצע התחברות באמצעות אימייל וסיסמה',
     description:
       'Validates user credentials. On success, the service writes access and refresh tokens to HTTP-only cookies ' +
       'and returns ServiceResultContainer<UserResponseDto>. Role is numeric: 1 = Admin, 2 = User.',
-  })
+  } as CustomApiOperationOptions)
   @ApiBody({
     type: LoginDto,
     description: 'Login credentials. Example: { "email": "user@example.com", "password": "secret1234" }.',
@@ -96,10 +99,11 @@ export class AuthController {
   @UseGuards(JwtRefreshGuard)
   @ApiOperation({
     summary: 'Refresh access token using refresh token',
+    summaryHe: 'מרענן את טוקן הגישה באמצעות טוקן רענון',
     description:
       'JwtRefreshGuard reads the refresh token from the cookie or Authorization header. ' +
       'If valid, AuthService issues new tokens and returns ServiceResultContainer<UserResponseDto>.',
-  })
+  } as CustomApiOperationOptions)
   @ApiOkResponse({
     description: 'New access token issued. Updated tokens are set as cookies by the service.',
     type: UserResultResponseDto,
@@ -122,9 +126,10 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Logout and invalidate session',
+    summaryHe: 'מבצע התנתקות ומבטל את סשן המשתמש',
     description:
       'Requires a valid access token. Clears the stored refresh token hash and removes auth cookies from the response.',
-  })
+  } as CustomApiOperationOptions)
   @ApiOkResponse({
     description: 'Logout successful.',
     type: LogoutResultResponseDto,
@@ -146,10 +151,11 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get current authenticated user payload',
+    summaryHe: 'שולף את פרטי המשתמש המחובר מתוך הטוקן',
     description:
       'Reads req.user as populated by JwtAuthGuard. No database query is made. ' +
       'Role is numeric: 1 = Admin, 2 = User.',
-  })
+  } as CustomApiOperationOptions)
   @ApiOkResponse({
     description: 'ServiceResultContainer<JwtPayload> with sub, email, numeric role, iat, and exp.',
     type: JwtPayloadResultResponseDto,

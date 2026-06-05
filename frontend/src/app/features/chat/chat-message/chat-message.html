@@ -20,17 +20,14 @@
             (transitionend)="onThinkingTransitionEnd($event)"
         >
             <summary class="thinking-summary">
-                <span
-                    class="ph summary-icon ph-brain"
-                    [class.thinking]="rowState() === 'thinking'"
-                ></span>
+                <span class="ph summary-icon ph-brain" [class.thinking]="rowState() === 'thinking'"></span>
                 <span class="summary-label">פעולות שבוצעו...</span>
                 <span class="ph ph-caret-down expand-icon"></span>
             </summary>
             <ul class="steps-list">
                 @for (step of displaySteps(); track $index) {
                     <li class="step-item">
-                        <span class="ph {{ step.icon }}"></span>
+                        <span class="xs ph {{ step.icon }}"></span>
                         <span class="step-text">{{ step.message }}</span>
                         @if (step.statusIcon) {
                             <span class="ph {{ step.statusIcon }} step-status-icon"></span>

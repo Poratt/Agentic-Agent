@@ -109,13 +109,4 @@
     }
 }
 
-/* אנימציית גדילה עדינה שלא פוגעת ב-Blur של הזכוכית (ללא שינוי אופסיטי) */
-@keyframes dropdownScaleReveal {
-    0% {
-        transform: scale(0.94);
-    }
-
-    100% {
-        transform: scale(1);
-    }
-}
+/* Dropdown animations are now in _animations.css */

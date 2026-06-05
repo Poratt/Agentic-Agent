@@ -45,6 +45,7 @@
           }
         },
         "summary": "Register a new user account",
+        "summaryHe": "רושם חשבון משתמש חדש במערכת",
         "tags": [
           "auth"
         ]
@@ -94,6 +95,7 @@
           }
         },
         "summary": "Login with email and password",
+        "summaryHe": "מבצע התחברות באמצעות אימייל וסיסמה",
         "tags": [
           "auth"
         ]
@@ -132,6 +134,7 @@
           }
         },
         "summary": "Refresh access token using refresh token",
+        "summaryHe": "מרענן את טוקן הגישה באמצעות טוקן רענון",
         "tags": [
           "auth"
         ]
@@ -175,6 +178,7 @@
           }
         ],
         "summary": "Logout and invalidate session",
+        "summaryHe": "מבצע התנתקות ומבטל את סשן המשתמש",
         "tags": [
           "auth"
         ]
@@ -218,6 +222,7 @@
           }
         ],
         "summary": "Get current authenticated user payload",
+        "summaryHe": "שולף את פרטי המשתמש המחובר מתוך הטוקן",
         "tags": [
           "auth"
         ]
@@ -252,6 +257,7 @@
           }
         ],
         "summary": "List all users",
+        "summaryHe": "שולף את רשימת כל המשתמשים במערכת",
         "tags": [
           "users"
         ]
@@ -286,6 +292,7 @@
           }
         ],
         "summary": "Get current authenticated user payload",
+        "summaryHe": "שולף את פרטי המשתמש המחובר מתוך הטוקן",
         "tags": [
           "users"
         ]
@@ -333,6 +340,7 @@
           }
         ],
         "summary": "Get user by id",
+        "summaryHe": "שולף משתמש לפי מזהה (מזהה: ${id})",
         "tags": [
           "users"
         ]
@@ -392,6 +400,7 @@
           }
         ],
         "summary": "Update user profile fields",
+        "summaryHe": "מעדכן את שדות הפרופיל של המשתמש (מזהה: ${id})",
         "tags": [
           "users"
         ]
@@ -440,6 +449,7 @@
           }
         ],
         "summary": "Delete user permanently",
+        "summaryHe": "מוחק לצמיתות את המשתמש (מזהה: ${id})",
         "tags": [
           "users"
         ]
@@ -501,6 +511,7 @@
           }
         ],
         "summary": "Change user role",
+        "summaryHe": "משנה את תפקיד המשתמש (מזהה: ${id})",
         "tags": [
           "users"
         ]
@@ -544,6 +555,7 @@
           }
         ],
         "summary": "Get chat sessions for the authenticated user",
+        "summaryHe": "שולף את סשני הצ'אט של המשתמש המחובר",
         "tags": [
           "Admin Agent"
         ]
@@ -570,6 +582,7 @@
           }
         ],
         "summary": "Create a new chat session",
+        "summaryHe": "מייצר סשן שיחת צ'אט חדש",
         "tags": [
           "Admin Agent"
         ]
@@ -611,7 +624,7 @@
           }
         ],
         "summary": "Get session message history",
-        "summeryHe": "",
+        "summaryHe": "שולף את היסטוריית ההודעות של סשן הצ'אט (מזהה: ${id})",
         "tags": [
           "Admin Agent"
         ]
@@ -643,6 +656,7 @@
           }
         ],
         "summary": "Delete chat session",
+        "summaryHe": "מוחק לצמיתות את סשן הצ'אט (מזהה: ${id})",
         "tags": [
           "Admin Agent"
         ]
@@ -689,6 +703,7 @@
           }
         ],
         "summary": "Query Admin Agent as a streamed response",
+        "summaryHe": "שולח שאילתה לסוכן הניהול ומחזיר תגובת סטרים",
         "tags": [
           "Admin Agent"
         ]

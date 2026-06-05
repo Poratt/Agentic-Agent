@@ -19,7 +19,6 @@ import {
   ApiConsumes,
   ApiExtraModels,
   ApiOperation,
-  ApiOperationOptions,
   ApiParam,
   ApiQuery,
   ApiResponse,
@@ -35,10 +34,7 @@ import { SessionResponseDto } from './dto/session-response.dto';
 import { ChatMessageResponseDto } from './dto/chat-message-response.dto';
 import { AgentStreamEventDto } from './dto/agent-stream-event.dto';
 import { GetSessionsQueryDto } from './dto/get-sessions-query.dto';
-
-export type CustomApiOperationOptions = ApiOperationOptions & {
-  summaryHe?: string;
-};
+import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 
 @ApiTags('Admin Agent')
 @ApiBearerAuth()
@@ -53,9 +49,10 @@ export class AdminAgentController {
   @Get('sessions')
   @ApiOperation({
     summary: 'Get chat sessions for the authenticated user',
+    summaryHe: 'שולף את סשני הצ\'אט של המשתמש המחובר',
     description:
       'Returns recent chat sessions owned by the authenticated user. Sessions from other users are never returned.',
-  })
+  } as CustomApiOperationOptions)
   @ApiQuery({
     name: 'limit',
     required: false,
@@ -77,7 +74,7 @@ export class AdminAgentController {
   @Get('sessions/:id/messages')
   @ApiOperation({
     summary: 'Get session message history',
-    summeryHe: '',
+    summaryHe: 'שולף את היסטוריית ההודעות של סשן הצ\'אט (מזהה: ${id})',
     description:
       'Returns user and assistant messages for a session owned by the authenticated user. ' +
       'Internal tool messages are filtered out for normal history display.',
@@ -98,8 +95,9 @@ export class AdminAgentController {
   @Post('sessions')
   @ApiOperation({
     summary: 'Create a new chat session',
+    summaryHe: 'מייצר סשן שיחת צ\'אט חדש',
     description: 'Creates a new empty chat session owned by the authenticated user.',
-  })
+  } as CustomApiOperationOptions)
   @ApiResponse({ status: 201, description: 'Chat session created successfully.', type: SessionResponseDto })
   async createSession(@Req() req: RequestWithUser) {
     if (!req.user) {
@@ -113,10 +111,11 @@ export class AdminAgentController {
   @HttpCode(204)
   @ApiOperation({
     summary: 'Delete chat session',
+    summaryHe: 'מוחק לצמיתות את סשן הצ\'אט (מזהה: ${id})',
     description:
       'Permanently deletes a session owned by the authenticated user. ' +
       'ChatMessage rows are cascade-deleted through the ChatMessage.session relation.',
-  })
+  } as CustomApiOperationOptions)
   @ApiParam({ name: 'id', type: Number, description: 'Numeric chat session id to delete.' })
   @ApiResponse({ status: 204, description: 'Chat session deleted successfully.' })
   async deleteSession(
@@ -134,12 +133,13 @@ export class AdminAgentController {
   @ApiConsumes('application/json', 'multipart/form-data')
   @ApiOperation({
     summary: 'Query Admin Agent as a streamed response',
+    summaryHe: 'שולח שאילתה לסוכן הניהול ומחזיר תגובת סטרים',
     description:
       'Streams newline-delimited JSON objects over a text/event-stream response. ' +
       'Each line is an AgentStreamEventDto. Token events use { "type": "token", "content": "..." }. ' +
       'Step events use { "type": "step", "icon": "...", "message": "..." }. ' +
       'The stream is complete when the HTTP response ends.',
-  })
+  } as CustomApiOperationOptions)
   @ApiResponse({
     status: 200,
     description: 'Stream opened. Response body contains newline-delimited AgentStreamEventDto JSON objects.',

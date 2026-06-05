@@ -16,7 +16,8 @@ export interface LlmToolSchema {
 export class SwaggerToolsParser {
   private readonly logger = new Logger(SwaggerToolsParser.name);
   private swaggerTools: LlmToolSchema[] = [];
-  private swaggerEndpointsMap = new Map<string, { path: string; method: string }>();
+  // private swaggerEndpointsMap = new Map<string, { path: string; method: string }>();
+  private swaggerEndpointsMap = new Map<string, { path: string; method: string; summary?: string }>();
 
   constructor() {
     this.loadSwaggerAsTools();
@@ -282,7 +283,12 @@ export class SwaggerToolsParser {
             continue;
           }
 
-          this.swaggerEndpointsMap.set(op.operationId, { path, method });
+          // שומרים גם את ה-summaryHe (או ה-summary הרגיל) בתוך המיפוי של ה-Endpoint
+          this.swaggerEndpointsMap.set(op.operationId, {
+            path,
+            method,
+            summary: op.summaryHe || op.summary
+          });
 
           const properties: Record<string, any> = {};
           const requiredFields: string[] = [];

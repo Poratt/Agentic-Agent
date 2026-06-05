@@ -174,8 +174,4 @@
 	}
 }
 
-@keyframes spin {
-	to {
-		transform: rotate(360deg);
-	}
-}
+/* Spin animation moved to _animations.css */

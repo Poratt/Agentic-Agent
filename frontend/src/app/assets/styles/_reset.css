@@ -107,6 +107,13 @@ a {
 }
 
 /* --- וריאציות גדלים קבועים --- */
+.ph.xs,
+.material-symbols-rounded.xs {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+}
+
 .ph.sm,
 .material-symbols-rounded.sm {
   width: 16px;

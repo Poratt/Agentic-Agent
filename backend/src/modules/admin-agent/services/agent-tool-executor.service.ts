@@ -23,32 +23,20 @@ export class AgentToolExecutorService {
     private readonly swaggerToolsParser: SwaggerToolsParser,
   ) { }
 
-  /**
-   * הופך לגנרי לחלוטין! שולף את התיאור האנושי הישר מהגדרות ה-Swagger 
-   * שכתבת בקונטרולרים ב-Backend, עם פולבק ידני למקרים מיוחדים.
-   */
+
   getSemanticActionDescription(functionName: string, args: any): string {
     const id = args && args.id ? args.id : '';
 
-    // ניסיון לשלוף את התיאור הקיים מהסוואגר באופו דינמי
+    // שליפת המטא-דאטה ששמרנו ב-Map
     const endpointMeta = this.swaggerToolsParser.getEndpoint(functionName);
 
-    // מיפוי ייעודי למקרים קריטיים שרוצים להנגיש בעברית יפה, אם אין בסוואגר
-    const overrides: Record<string, string> = {
-      'UsersController_list': 'סורק את רשימת המשתמשים הרשומים במערכת',
-      'UsersController_getById': `שולף את פרופיל המשתמש המלא (מזהה: ${id})`,
-      'UsersController_update': `מעדכן את פרטי המשתמש (מזהה: ${id})`,
-      'UsersController_delete': `מוחק לצמיתות את משתמש ${id} מהמערכת`,
-      'UsersController_updateRole': `משנה את הרשאות התפקיד של משתמש ${id}`,
-      'AuthController_me': 'שולף את פרטי החיבור של המשתמש הנוכחי',
-    };
-
-    if (overrides[functionName]) {
-      return overrides[functionName];
+    // אם מצאנו summary (שהוא ה-summaryHe בעדיפות ראשונה מהסוואגר), נחזיר אותו
+    if (endpointMeta && endpointMeta.summary) {
+      return endpointMeta.summary;
     }
 
-    // פולבק דינמי: לוקח את התיאור מה-Swagger אם קיים, אחרת מציג שם דינמי
-    return endpointMeta ? `מבצע פעולת מערכת עבור ${functionName}` : `מפעיל את כלי המערכת: ${functionName}`;
+    // פולבק זמני בעברית, למקרה ששכחת להגדיר באחד הקונטרולרים
+    return `מפעיל את כלי המערכת: ${functionName}`;
   }
 
   private checkActionAllowed(

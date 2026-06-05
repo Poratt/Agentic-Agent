@@ -34,6 +34,7 @@ import { ServiceResultContainer } from '../../core/models/service-result-contain
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { JwtPayload } from '../../core/interfaces/jwt-payload.interface';
 import { JwtPayloadResultResponseDto } from '../../core/dto/jwt-payload-result-response.dto';
+import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -45,10 +46,11 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'List all users',
+    summaryHe: 'שולף את רשימת כל המשתמשים במערכת',
     description:
       'Returns every user in the system with public fields only: id, email, fullName, numeric role, createdAt, updatedAt, lastLoginAt. ' +
       'Passwords and refresh token hashes are never returned.',
-  })
+  } as CustomApiOperationOptions)
   @ApiOkResponse({
     description: 'ServiceResultContainer<UserResponseDto[]>.',
     type: UsersListResultResponseDto,
@@ -63,9 +65,10 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Get current authenticated user payload',
+    summaryHe: 'שולף את פרטי המשתמש המחובר מתוך הטוקן',
     description:
       'Returns the JWT payload decoded by JwtAuthGuard. No database query is made. Role is numeric: 1 = Admin, 2 = User.',
-  })
+  } as CustomApiOperationOptions)
   @ApiOkResponse({
     description: 'ServiceResultContainer<JwtPayload> with sub, email, numeric role, iat, and exp.',
     type: JwtPayloadResultResponseDto,
@@ -85,9 +88,10 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Get user by id',
+    summaryHe: 'שולף משתמש לפי מזהה (מזהה: ${id})',
     description:
       'Fetches one user by numeric id with public fields only. Use GET /users first to discover valid IDs.',
-  })
+  } as CustomApiOperationOptions)
   @ApiParam({
     name: 'id',
     type: Number,
@@ -108,10 +112,11 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiOperation({
     summary: 'Update user profile fields',
+    summaryHe: 'מעדכן את שדות הפרופיל של המשתמש (מזהה: ${id})',
     description:
       'Updates fullName and/or email for the user identified by :id. ' +
       'This endpoint intentionally does not accept role changes; use PATCH /users/:id/role for role updates.',
-  })
+  } as CustomApiOperationOptions)
   @ApiParam({ name: 'id', type: Number, description: 'Numeric id of the user to update.' })
   @ApiBody({
     type: UpdateUserDto,
@@ -133,8 +138,9 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiOperation({
     summary: 'Delete user permanently',
+    summaryHe: 'מוחק לצמיתות את המשתמש (מזהה: ${id})',
     description: 'Hard-deletes the user record. This is irreversible and requires admin privileges.',
-  })
+  } as CustomApiOperationOptions)
   @ApiParam({ name: 'id', type: Number, description: 'Numeric id of the user to delete.' })
   @ApiOkResponse({
     description: 'Deletion confirmed.',
@@ -153,10 +159,11 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiOperation({
     summary: 'Change user role',
+    summaryHe: 'משנה את תפקיד המשתמש (מזהה: ${id})',
     description:
       'Sets only the role field of the user identified by :id. Accepted numeric values: 1 = Admin, 2 = User. ' +
       'Other user fields must be updated through PATCH /users/:id.',
-  })
+  } as CustomApiOperationOptions)
   @ApiParam({ name: 'id', type: Number, description: 'Numeric id of the user whose role will change.' })
   @ApiBody({
     type: UpdateUserRoleDto,
