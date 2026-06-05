@@ -193,21 +193,3 @@
 	}
 }
 
-.dropdown-wrapper {
-	position: relative;
-	width: 100%;
-	display: grid;
-	gap: var(--space-1);
-
-
-	.dropdown-content {
-		border: 1px solid var(--color-border);
-		padding: var(--space-2);
-		border-radius: var(--radius-md);
-		min-width: 0;
-		position: absolute;
-		top: 100%;
-		right: 40px;
-		z-index: 10;
-	}
-}

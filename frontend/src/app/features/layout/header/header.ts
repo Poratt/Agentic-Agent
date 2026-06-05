@@ -18,7 +18,6 @@ export class Header {
 
 	currentUserProfile = this.userStore.currentUserProfile;
 
-
 	protected userEmail = computed(() => this.authStore.user()?.email || '');
 
 	protected avatarLetter = computed(() => this.userEmail()[0]?.toUpperCase() || '?');

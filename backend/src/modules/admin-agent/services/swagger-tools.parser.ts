@@ -25,7 +25,7 @@ export class SwaggerToolsParser {
   getTools(): LlmToolSchema[] {
     return this.swaggerTools.map((t) => {
       const params = t.function?.parameters;
-      
+
       const cleaned = this.cleanSchema(params);
       const sanitized = this.sanitizeJson(cleaned);
       const finalParams = this.filterRequired(sanitized);
@@ -84,17 +84,18 @@ export class SwaggerToolsParser {
 
     if (schema.$ref && typeof schema.$ref === 'string') {
       const schemaName = schema.$ref.split('/').pop();
-      
+
       if (!schemaName) {
         return { type: 'string' };
       }
 
       if (visited.has(schemaName)) {
-        return { type: 'object', properties: {} };
+        // מונע לולאה אינסופית ומחזיר אובייקט ריק בטוח ל-LLM
+        return { type: 'object', properties: {}, additionalProperties: false };
       }
 
       const resolved = components?.[schemaName];
-      
+
       if (resolved) {
         const nextVisited = new Set(visited);
         nextVisited.add(schemaName);
@@ -105,9 +106,9 @@ export class SwaggerToolsParser {
     }
 
     const dereferenced: any = {};
-    
     for (const [key, value] of Object.entries(schema)) {
-      dereferenced[key] = this.dereference(value, components, visited);
+      // תיקון: שליחת עותק חדש של ה-Set לכל ענף באובייקט
+      dereferenced[key] = this.dereference(value, components, new Set(visited));
     }
 
     return dereferenced;
@@ -117,20 +118,16 @@ export class SwaggerToolsParser {
     if (!obj || typeof obj !== 'object') {
       return false;
     }
-    
+
     if (Array.isArray(obj)) {
-      return obj.some((item) => {
-        return this.hasRef(item);
-      });
+      return obj.some((item) => this.hasRef(item));
     }
-    
+
     if ('$ref' in obj) {
       return true;
     }
-    
-    return Object.values(obj).some((val) => {
-      return this.hasRef(val);
-    });
+
+    return Object.values(obj).some((val) => this.hasRef(val));
   }
 
   private cleanSchema(schema: any): any {
@@ -139,19 +136,24 @@ export class SwaggerToolsParser {
     }
 
     if (Array.isArray(schema)) {
-      return schema.map((item) => {
-        return this.cleanSchema(item);
-      });
+      return schema.map((item) => this.cleanSchema(item));
     }
 
     const cleaned: any = { ...schema };
 
+    // אכיפת additionalProperties: false באופן רקורסיבי לאובייקטים מקוננים (בשביל מודלים קפדניים)
+    if (cleaned.type === 'object' && !('additionalProperties' in cleaned)) {
+      cleaned.additionalProperties = false;
+    }
+
     if (cleaned.properties && typeof cleaned.properties === 'object') {
       const nextProperties: Record<string, any> = {};
-      
+
       for (const [key, value] of Object.entries(cleaned.properties)) {
         if (this.hasRef(value)) {
-          this.logger.warn(`Property "${key}" has unresolved $ref. Removing to prevent LLM failure.`);
+          this.logger.warn(`Property "${key}" has unresolved $ref. Fallback to generic object.`);
+          // במקום למחוק לחלוטין, שמים פלסבו כדי שה-LLM ידע שיש פה שדה
+          nextProperties[key] = { type: 'object', description: 'Generic object data', additionalProperties: false };
           continue;
         }
 
@@ -160,10 +162,11 @@ export class SwaggerToolsParser {
           nextProperties[key] = cleanedValue;
         }
       }
-      
+
       cleaned.properties = nextProperties;
     }
 
+    // ניקוי מערכים וקומפוזיציות (allOf, anyOf, oneOf) כפי שעשית
     if (cleaned.items && typeof cleaned.items === 'object') {
       if (this.hasRef(cleaned.items)) {
         delete cleaned.items;
@@ -172,45 +175,16 @@ export class SwaggerToolsParser {
       }
     }
 
-    if (Array.isArray(cleaned.allOf)) {
-      cleaned.allOf = cleaned.allOf
-        .filter((s: any) => {
-          return !this.hasRef(s);
-        })
-        .map((s: any) => {
-          return this.cleanSchema(s);
-        });
-        
-      if (cleaned.allOf.length === 0) {
-        delete cleaned.allOf;
-      }
-    }
+    const compositions = ['allOf', 'anyOf', 'oneOf'];
+    for (const comp of compositions) {
+      if (Array.isArray(cleaned[comp])) {
+        cleaned[comp] = cleaned[comp]
+          .filter((s: any) => !this.hasRef(s))
+          .map((s: any) => this.cleanSchema(s));
 
-    if (Array.isArray(cleaned.anyOf)) {
-      cleaned.anyOf = cleaned.anyOf
-        .filter((s: any) => {
-          return !this.hasRef(s);
-        })
-        .map((s: any) => {
-          return this.cleanSchema(s);
-        });
-        
-      if (cleaned.anyOf.length === 0) {
-        delete cleaned.anyOf;
-      }
-    }
-
-    if (Array.isArray(cleaned.oneOf)) {
-      cleaned.oneOf = cleaned.oneOf
-        .filter((s: any) => {
-          return !this.hasRef(s);
-        })
-        .map((s: any) => {
-          return this.cleanSchema(s);
-        });
-        
-      if (cleaned.oneOf.length === 0) {
-        delete cleaned.oneOf;
+        if (cleaned[comp].length === 0) {
+          delete cleaned[comp];
+        }
       }
     }
 
@@ -221,30 +195,19 @@ export class SwaggerToolsParser {
     if (obj === null || obj === undefined) {
       return undefined;
     }
-    
     if (Array.isArray(obj)) {
-      return obj
-        .map((item) => {
-          return this.sanitizeJson(item);
-        })
-        .filter((item) => {
-          return item !== undefined;
-        });
+      return obj.map((item) => this.sanitizeJson(item)).filter((item) => item !== undefined);
     }
-    
     if (typeof obj === 'object') {
       const result: any = {};
-      
       for (const [key, value] of Object.entries(obj)) {
         const sanitized = this.sanitizeJson(value);
         if (sanitized !== undefined && sanitized !== null) {
           result[key] = sanitized;
         }
       }
-      
       return result;
     }
-    
     return obj;
   }
 
@@ -254,20 +217,16 @@ export class SwaggerToolsParser {
     }
 
     if (Array.isArray(schema)) {
-      return schema.map((item) => {
-        return this.filterRequired(item);
-      });
+      return schema.map((item) => this.filterRequired(item));
     }
 
     const result = { ...schema };
 
     if (result.properties && typeof result.properties === 'object') {
       const nextProperties: Record<string, any> = {};
-      
       for (const [key, value] of Object.entries(result.properties)) {
         nextProperties[key] = this.filterRequired(value);
       }
-      
       result.properties = nextProperties;
 
       if (Array.isArray(result.required)) {
@@ -295,22 +254,11 @@ export class SwaggerToolsParser {
       result.items = this.filterRequired(result.items);
     }
 
-    if (Array.isArray(result.allOf)) {
-      result.allOf = result.allOf.map((item: any) => {
-        return this.filterRequired(item);
-      });
-    }
-
-    if (Array.isArray(result.anyOf)) {
-      result.anyOf = result.anyOf.map((item: any) => {
-        return this.filterRequired(item);
-      });
-    }
-
-    if (Array.isArray(result.oneOf)) {
-      result.oneOf = result.oneOf.map((item: any) => {
-        return this.filterRequired(item);
-      });
+    const compositions = ['allOf', 'anyOf', 'oneOf'];
+    for (const comp of compositions) {
+      if (Array.isArray(result[comp])) {
+        result[comp] = result[comp].map((item: any) => this.filterRequired(item));
+      }
     }
 
     return result;
@@ -319,7 +267,6 @@ export class SwaggerToolsParser {
   private loadSwaggerAsTools() {
     try {
       const swaggerPath = './swagger-spec.json';
-      
       if (!fs.existsSync(swaggerPath)) {
         return;
       }
@@ -331,7 +278,6 @@ export class SwaggerToolsParser {
       for (const [path, pathObj] of Object.entries(swagger.paths)) {
         for (const [method, operationObj] of Object.entries(pathObj as any)) {
           const op = operationObj as any;
-          
           if (!op.operationId) {
             continue;
           }
@@ -344,13 +290,14 @@ export class SwaggerToolsParser {
           if (op.parameters) {
             for (const param of op.parameters) {
               const resolvedParamSchema = this.dereference(param.schema, schemas);
-              
+
+              // תיקון סדר ה-Spread: ה-resolvedParamSchema נפרס קודם, והגדרות הספציפיות דורסות אותו
               properties[param.name] = {
-                type: resolvedParamSchema?.type || 'string',
-                description: param.description || `${param.name} parameter`,
+                type: 'string',
                 ...resolvedParamSchema,
+                description: param.description || resolvedParamSchema?.description || `${param.name} parameter`,
               };
-              
+
               if (param.required) {
                 requiredFields.push(param.name);
               }
@@ -358,7 +305,6 @@ export class SwaggerToolsParser {
           }
 
           const requestBodySchema = op.requestBody?.content?.['application/json']?.schema;
-          
           if (requestBodySchema) {
             const resolvedBody = this.dereference(requestBodySchema, schemas);
 
@@ -366,7 +312,6 @@ export class SwaggerToolsParser {
               for (const [propName, propSchema] of Object.entries(resolvedBody.properties)) {
                 properties[propName] = propSchema;
               }
-              
               if (Array.isArray(resolvedBody.required)) {
                 requiredFields.push(...resolvedBody.required);
               }
@@ -381,8 +326,7 @@ export class SwaggerToolsParser {
             type: 'function',
             function: {
               name: op.operationId,
-              description: op.summary || `Execute ${method.toUpperCase()} to ${path}`,
-              parameters: {
+              description: op.summaryHe || op.summary || op.description || `Execute ${method.toUpperCase()} to ${path}`, parameters: {
                 type: 'object',
                 properties,
                 ...(normalizedRequired.length ? { required: normalizedRequired } : {}),

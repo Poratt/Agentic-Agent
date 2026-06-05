@@ -611,6 +611,7 @@
           }
         ],
         "summary": "Get session message history",
+        "summeryHe": "",
         "tags": [
           "Admin Agent"
         ]

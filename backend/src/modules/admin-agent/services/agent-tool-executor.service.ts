@@ -8,6 +8,7 @@ import { firstValueFrom } from 'rxjs';
 import { User } from '../../users/entities/user.entity';
 import { LlmToolCall } from '../llm.service';
 import { SwaggerToolsParser } from './swagger-tools.parser';
+import { AxiosRequestConfig } from 'axios';
 
 @Injectable()
 export class AgentToolExecutorService {
@@ -20,34 +21,34 @@ export class AgentToolExecutorService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly swaggerToolsParser: SwaggerToolsParser,
-  ) {}
+  ) { }
 
+  /**
+   * הופך לגנרי לחלוטין! שולף את התיאור האנושי הישר מהגדרות ה-Swagger 
+   * שכתבת בקונטרולרים ב-Backend, עם פולבק ידני למקרים מיוחדים.
+   */
   getSemanticActionDescription(functionName: string, args: any): string {
     const id = args && args.id ? args.id : '';
 
-    switch (functionName) {
-      case 'UsersController_list': {
-        return 'סורק את רשימת המשתמשים הרשומים במערכת';
-      }
-      case 'UsersController_getById': {
-        return `שולף את פרופיל המשתמש המלא (מזהה: ${id})`;
-      }
-      case 'UsersController_update': {
-        return `מעדכן את פרטי המשתמש (מזהה: ${id})`;
-      }
-      case 'UsersController_delete': {
-        return `מוחק לצמיתות את משתמש ${id} מהמערכת`;
-      }
-      case 'UsersController_updateRole': {
-        return `משנה את הרשאות התפקיד של משתמש ${id}`;
-      }
-      case 'AuthController_me': {
-        return 'שולף את פרטי החיבור של המשתמש הנוכחי';
-      }
-      default: {
-        return `מפעיל את כלי המערכת: ${functionName}`;
-      }
+    // ניסיון לשלוף את התיאור הקיים מהסוואגר באופו דינמי
+    const endpointMeta = this.swaggerToolsParser.getEndpoint(functionName);
+
+    // מיפוי ייעודי למקרים קריטיים שרוצים להנגיש בעברית יפה, אם אין בסוואגר
+    const overrides: Record<string, string> = {
+      'UsersController_list': 'סורק את רשימת המשתמשים הרשומים במערכת',
+      'UsersController_getById': `שולף את פרופיל המשתמש המלא (מזהה: ${id})`,
+      'UsersController_update': `מעדכן את פרטי המשתמש (מזהה: ${id})`,
+      'UsersController_delete': `מוחק לצמיתות את משתמש ${id} מהמערכת`,
+      'UsersController_updateRole': `משנה את הרשאות התפקיד של משתמש ${id}`,
+      'AuthController_me': 'שולף את פרטי החיבור של המשתמש הנוכחי',
+    };
+
+    if (overrides[functionName]) {
+      return overrides[functionName];
     }
+
+    // פולבק דינמי: לוקח את התיאור מה-Swagger אם קיים, אחרת מציג שם דינמי
+    return endpointMeta ? `מבצע פעולת מערכת עבור ${functionName}` : `מפעיל את כלי המערכת: ${functionName}`;
   }
 
   private checkActionAllowed(
@@ -105,7 +106,13 @@ export class AgentToolExecutorService {
       return JSON.stringify({ error: `Unknown tool call: ${call.function.name}` });
     }
 
-    const args = JSON.parse(call.function.arguments || '{}');
+    // תיקון באג 1: הגנה מפני קריסת קריאת JSON פגום מה-LLM
+    let args: Record<string, any> = {};
+    try {
+      args = JSON.parse(call.function.arguments || '{}');
+    } catch (e) {
+      this.logger.warn(`Failed to parse tool arguments for ${call.function.name}, using empty object.`);
+    }
 
     // המרת תפקיד מטקסט למספר (Coercion)
     if (args && typeof args.role === 'string') {
@@ -132,42 +139,33 @@ export class AgentToolExecutorService {
       baseUrl,
     );
 
-    this.logger.log(`Executing tool "${call.function.name}" -> ${resolved.targetUrl}`);
+    this.logger.log(`Executing tool "${call.function.name}" -> [${endpointMeta.method.toUpperCase()}] ${resolved.targetUrl}`);
     const systemHeaders = await this.getSystemHeadersForUser(userId);
 
     try {
-      let response$;
       const method = endpointMeta.method.toLowerCase();
 
-      if (method === 'get') {
-        response$ = this.httpService.get(resolved.targetUrl, {
-          params: resolved.queryParams,
-          headers: systemHeaders,
-        });
-      } else if (method === 'post') {
-        response$ = this.httpService.post(resolved.targetUrl, resolved.body, {
-          headers: systemHeaders,
-        });
-      } else if (method === 'patch') {
-        response$ = this.httpService.patch(resolved.targetUrl, resolved.body, {
-          headers: systemHeaders,
-        });
-      } else if (method === 'delete') {
-        response$ = this.httpService.delete(resolved.targetUrl, {
-          headers: systemHeaders,
-        });
-      } else {
-        response$ = this.httpService.get(resolved.targetUrl, {
-          params: resolved.queryParams,
-          headers: systemHeaders,
-        });
-      }
+      // תיקון באג 2 + כתיבה גנרית: שימוש בקונפיגורציית Axios אחידה שתומכת ב-Body לכל סוגי הבקשות (כולל DELETE/PUT)
+      const config: AxiosRequestConfig = {
+        method: method as any,
+        url: resolved.targetUrl,
+        headers: systemHeaders,
+        params: resolved.queryParams,
+        // קריאות גט לא שולחות Body
+        ...(method !== 'get' ? { data: resolved.body } : {}),
+      };
 
+      const response$ = this.httpService.request(config);
       const res = await firstValueFrom(response$);
+
       return JSON.stringify((res as any).data);
     } catch (err: any) {
-      this.logger.error(`Tool execution error: ${err.message}`);
-      return JSON.stringify({ error: err.message, status: err.response?.status });
+      this.logger.error(`Tool execution error in ${call.function.name}: ${err.message}`);
+      return JSON.stringify({
+        error: err.message,
+        status: err.response?.status || 500,
+        details: err.response?.data
+      });
     }
   }
 }

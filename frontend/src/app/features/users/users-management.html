@@ -1,74 +1,95 @@
 @switch (pageState()) {
-  @case (PageStates.Loading) {
-    <div class="page-state loading-state">
-      <span class="custom-loader"></span>
-    </div>
-  }
-  @case (PageStates.Error) {
-    <div class="page-state error-state">
-      <span class="icon ph ph-warning"></span>
-      <h4 class="title">אירעה שגיאה בטעינת המשתמשים.</h4>
-      <p class="subtitle">אנא נסה שוב מאוחר יותר.</p>
-    </div>
-  }
-  @case (PageStates.Empty) {
-    <div class="page-state empty-state">
-      <span class="icon ph ph-user-circle-minus"></span>
-      <h4 class="title">לא נמצאו משתמשים.</h4>
-      <p class="subtitle">לא רשומים משתמשים במערכת כרגע.</p>
-    </div>
-  }
-  @case (PageStates.Ready) {
-    <div class="page-content">
-      <header class="page-header">
-        <h1>ניהול משתמשי המערכת</h1>
-        <p class="subtitle">ניהול הרשאות, תפקידים ומשתמשים רשומים במערכת</p>
-      </header>
-
-      <div class="glass-effect card table-container">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>שם מלא</th>
-              <th>אימייל</th>
-              <th>תפקיד</th>
-              <th>תאריך הרשמה</th>
-              @if (authStore.user()?.role === 1) {
-                <th>פעולות</th>
-              }
-            </tr>
-          </thead>
-          <tbody>
-            @for (user of usersStore.users(); track user.id) {
-              <tr>
-                <td>{{ user.id }}</td>
-                <td>{{ user.fullName || 'לא הוגדר' }}</td>
-                <td>{{ user.email }}</td>
-                <td>
-                  <span class="badge" [badgeColor]="getUserRoleData(user.role)?.color">
-                    <span [class]="getUserRoleData(user.role)?.icon" class="xs"></span>
-                    {{ getUserRoleData(user.role)?.heLabel }}
-                  </span>
-                </td>
-                <td>{{ user.createdAt | date:'shortDate' }}</td>
-                @if (authStore.user()?.role === 1) {
-                  <td class="table-actions">
-                    <div class="actions">
-                      <button class="icon-only transparent-btn" (click)="toggleRole(user.id, user.role)" title="שנה תפקיד">
-                        <span class="ph ph-swap" ></span>
-                      </button>
-                      <button class="icon-only danger-btn" (click)="deleteUser(user.id)" title="מחק משתמש">
-                        <span class="ph ph-trash"></span>
-                      </button>
+    @case (PageStates.Loading) {
+        <div class="page-state loading-state">
+            <span class="custom-loader"></span>
+        </div>
+    }
+    @case (PageStates.Error) {
+        <div class="page-state error-state">
+            <span class="icon ph ph-warning"></span>
+            <h4 class="title">אירעה שגיאה בטעינת המשתמשים.</h4>
+            <p class="subtitle">אנא נסה שוב מאוחר יותר.</p>
+        </div>
+    }
+    @case (PageStates.Empty) {
+        <div class="page-state empty-state">
+            <span class="icon ph ph-user-circle-minus"></span>
+            <h4 class="title">לא נמצאו משתמשים.</h4>
+            <p class="subtitle">לא רשומים משתמשים במערכת כרגע.</p>
+        </div>
+    }
+    @case (PageStates.Ready) {
+        <div class="page-content">
+            <div class="page-header">
+                <div class="header-row">
+                    <div class="header-content">
+                        <h2>משתמשים</h2>
                     </div>
-                  </td>
-                }
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-  }
+                    <div class="form-field-has-icon">
+                        <span class="ph ph-magnifying-glass field-icon"></span>
+                        <input
+                            type="text"
+                            [ngModel]="searchQuery()"
+                            (ngModelChange)="onSearchChange($event)"
+                            placeholder="חפש שיחה..."
+                            class="form-control"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-effect card table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>שם מלא</th>
+                            <th>אימייל</th>
+                            <th>תפקיד</th>
+                            <th>תאריך הרשמה</th>
+                            @if (authStore.user()?.role === 1) {
+                                <th>פעולות</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (user of filteredUsers(); track user.id) {
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>{{ user.fullName || 'לא הוגדר' }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    <span class="badge" [badgeColor]="getUserRoleData(user.role)?.color">
+                                        <span [class]="getUserRoleData(user.role)?.icon" class="xs"></span>
+                                        {{ getUserRoleData(user.role)?.heLabel }}
+                                    </span>
+                                </td>
+                                <td>{{ user.createdAt | date: 'shortDate' }}</td>
+                                @if (authStore.user()?.role === 1) {
+                                    <td class="table-actions">
+                                        <div class="actions">
+                                            <button
+                                                class="icon-only transparent-btn"
+                                                (click)="toggleRole(user.id, user.role)"
+                                                title="שנה תפקיד"
+                                            >
+                                                <span class="ph ph-swap"></span>
+                                            </button>
+                                            <button
+                                                class="icon-only danger-btn"
+                                                (click)="deleteUser(user.id)"
+                                                title="מחק משתמש"
+                                            >
+                                                <span class="ph ph-trash"></span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
 }

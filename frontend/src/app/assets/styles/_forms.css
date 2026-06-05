@@ -5,6 +5,20 @@
   gap: var(--space-2);
 }
 
+.form-field-has-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: min(var(--search-width), 100%);
+
+  .field-icon {
+    position: absolute;
+    right: var(--space-3);
+    color: var(--color-text-secondary);
+    pointer-events: none;
+  }
+}
+
 input,
 textarea,
 select {
@@ -43,7 +57,7 @@ select {
     cursor: not-allowed;
   }
 
-  &.search-input {
+  &.form-control {
     padding: var(--space-2) var(--field-icon-padding) var(--space-2) var(--space-4);
 
   }

@@ -1,24 +1,28 @@
-import { Component, OnInit, inject, signal, computed, output } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { AuthStore } from '../../../core/store/auth.store';
-import { ChatStore } from '../../../core/store/chat.store';
-import { getUserRoleData } from '../../../core/enums/user-role.enum';
-import { BadgeColor } from '../../../core/directives/badge-color.directive';
-import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
     selector: 'app-dropdown',
     standalone: true,
-    imports: [CommonModule, RouterLink, RouterLinkActive, BadgeColor],
+    imports: [CommonModule],
     templateUrl: './dropdown.html',
     styleUrl: './dropdown.css',
 })
-export class MainSidebar {
+export class Dropdown {
+    public closed = output<void>();
 
     public dropdownTrigger = signal(false);
 
-
+    public position = input<
+        | 'top-left'
+        | 'top-center'
+        | 'top-right'
+        | 'bottom-left'
+        | 'bottom-center'
+        | 'bottom-right'
+        | 'left-center'
+        | 'right-center'
+    >('bottom-right');
 
     showDropdown() {
         this.dropdownTrigger.set(true);
@@ -26,7 +30,6 @@ export class MainSidebar {
 
     hideDropdown() {
         this.dropdownTrigger.set(false);
+        this.closed.emit();
     }
-
-
 }

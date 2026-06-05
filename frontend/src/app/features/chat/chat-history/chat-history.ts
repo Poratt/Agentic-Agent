@@ -1,19 +1,22 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ChatStore } from '../../../core/store/chat.store';
+import { PageStates } from '../../../core/enums/page-states.enum';
+import { AccessToDirective } from "../../../core/directives/access-to.directive";
 
 @Component({
 	selector: 'app-chat-history',
 	standalone: true,
-	imports: [CommonModule, FormsModule, RouterLink],
+	imports: [CommonModule, FormsModule, RouterLink, AccessToDirective],
 	templateUrl: './chat-history.html',
 	styleUrls: ['./chat-history.css'],
 })
 export class ChatHistory implements OnInit {
 	private chatStore = inject(ChatStore);
-	private router = inject(Router);
+
+	protected readonly PageStates = PageStates;
 
 	searchQuery = signal('');
 	pendingDeleteSessionId = signal<number | null>(null);
@@ -26,7 +29,21 @@ export class ChatHistory implements OnInit {
 	});
 
 	currentSessionId = computed(() => this.chatStore.currentSessionId());
-	loading = computed(() => this.chatStore.loading());
+	pageState = computed<PageStates>(() => {
+		if (this.chatStore.loading() && this.chatStore.sessions().length === 0) {
+			return PageStates.Loading;
+		}
+
+		if (this.chatStore.error()) {
+			return PageStates.Error;
+		}
+
+		if (this.chatStore.sessions().length === 0) {
+			return PageStates.Empty;
+		}
+
+		return PageStates.Ready;
+	});
 
 	ngOnInit() {
 		if (this.chatStore.sessions().length === 0) {
@@ -34,11 +51,16 @@ export class ChatHistory implements OnInit {
 		}
 	}
 
+	loadSessions() {
+		this.chatStore.loadSessions();
+	}
+
 	onSearchChange(query: string) {
 		this.searchQuery.set(query);
 	}
 
-	setPendingDelete(id: number) {
+	setPendingDelete(event: Event, id: number) {
+		event.stopPropagation();
 		this.pendingDeleteSessionId.set(id);
 	}
 

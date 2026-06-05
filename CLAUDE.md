@@ -63,6 +63,58 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
 
+## Mandatory Pre-Flight Checklist
+
+Before editing any file, the agent MUST:
+
+1. Read the relevant local project guide:
+   - `AGENTS.md`
+   - Any directly relevant skill/rule file for the file type being changed
+2. Identify the change type:
+   - Angular component
+   - Angular service
+   - Angular store
+   - CSS/global styles
+   - NestJS controller/service/DTO
+   - Other
+3. State the applicable rules before implementation.
+4. Find one existing nearby project example and follow its pattern.
+5. Define success criteria and verification command.
+6. Only then edit files.
+
+For Angular page components, this is mandatory:
+
+- Use `PageStates`
+- Expose `readonly PageStates = PageStates`
+- Use `pageState = computed<PageStates>(...)`
+- Template must use:
+
+```html
+@switch (pageState()) {
+  @case (PageStates.Loading) {}
+  @case (PageStates.Error) {}
+  @case (PageStates.Empty) {}
+  @case (PageStates.Ready) {}
+}
+```
+
+If the agent cannot identify the applicable pattern, it must stop and ask before editing.
+
+## UTF-8 / Hebrew Safety Rule
+
+When editing files that contain Hebrew text:
+
+1. Always read the file with UTF-8 encoding before editing.
+2. Never copy Hebrew text from terminal output that appears corrupted.
+3. After editing, verify the file with UTF-8 reading.
+4. Search for corrupted characters before finishing:
+
+```bash
+rg -n "׳|ג€�|ג†|ג€|�" path/to/file
+```
+
+If corrupted text is found, fix it before running build or returning the answer.
+
 ## 🔴 Golden Rules
 1. Run tests BEFORE any refactoring: `npx ng test frontend --watch=false`
 2. Every API change touches both sides: frontend service AND backend controller

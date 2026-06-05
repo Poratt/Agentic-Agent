@@ -19,6 +19,7 @@ import {
   ApiConsumes,
   ApiExtraModels,
   ApiOperation,
+  ApiOperationOptions,
   ApiParam,
   ApiQuery,
   ApiResponse,
@@ -35,6 +36,10 @@ import { ChatMessageResponseDto } from './dto/chat-message-response.dto';
 import { AgentStreamEventDto } from './dto/agent-stream-event.dto';
 import { GetSessionsQueryDto } from './dto/get-sessions-query.dto';
 
+export type CustomApiOperationOptions = ApiOperationOptions & {
+  summaryHe?: string;
+};
+
 @ApiTags('Admin Agent')
 @ApiBearerAuth()
 @ApiExtraModels(SessionResponseDto, ChatMessageResponseDto, AgentStreamEventDto)
@@ -42,7 +47,7 @@ import { GetSessionsQueryDto } from './dto/get-sessions-query.dto';
 export class AdminAgentController {
   private readonly logger = new Logger(AdminAgentController.name);
 
-  constructor(private readonly adminAgentService: AdminAgentService) {}
+  constructor(private readonly adminAgentService: AdminAgentService) { }
 
   @UseGuards(JwtAuthGuard)
   @Get('sessions')
@@ -72,10 +77,11 @@ export class AdminAgentController {
   @Get('sessions/:id/messages')
   @ApiOperation({
     summary: 'Get session message history',
+    summeryHe: '',
     description:
       'Returns user and assistant messages for a session owned by the authenticated user. ' +
       'Internal tool messages are filtered out for normal history display.',
-  })
+  } as CustomApiOperationOptions)
   @ApiParam({ name: 'id', type: Number, description: 'Numeric chat session id.' })
   @ApiResponse({ status: 200, description: 'Historical messages loaded successfully.', type: [ChatMessageResponseDto] })
   async getSessionMessages(

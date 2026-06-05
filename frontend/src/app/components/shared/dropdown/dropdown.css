@@ -1,0 +1,121 @@
+:host {
+    display: block;
+    width: 100%;
+}
+
+.dropdown-wrapper {
+    position: relative;
+    width: 100%;
+    display: grid;
+    gap: var(--space-1);
+
+    /* ה-Container החיצוני: ממוקם בצמוד לכפתור ומייצר גשר ריחוף באמצעות Padding */
+    .dropdown-container {
+        position: absolute;
+        z-index: 100;
+
+        /* למטה - ימין */
+        &.bottom-right {
+            top: 100%;
+            right: 0;
+            left: auto;
+            bottom: auto;
+            padding-top: var(--space-2);
+            transform-origin: top right;
+        }
+
+        /* למטה - שמאל */
+        &.bottom-left {
+            top: 100%;
+            left: 0;
+            right: auto;
+            bottom: auto;
+            padding-top: var(--space-2);
+            transform-origin: top left;
+        }
+
+        /* למטה - מרכז */
+        &.bottom-center {
+            top: 100%;
+            left: 50%;
+            right: auto;
+            bottom: auto;
+            transform: translateX(-50%);
+            padding-top: var(--space-2);
+            transform-origin: top center;
+        }
+
+        /* למעלה - ימין */
+        &.top-right {
+            bottom: 100%;
+            right: 0;
+            left: auto;
+            top: auto;
+            padding-bottom: var(--space-2);
+            transform-origin: bottom right;
+        }
+
+        /* למעלה - שמאל */
+        &.top-left {
+            bottom: 100%;
+            left: 0;
+            right: auto;
+            top: auto;
+            padding-bottom: var(--space-2);
+            transform-origin: bottom left;
+        }
+
+        /* למעלה - מרכז */
+        &.top-center {
+            bottom: 100%;
+            left: 50%;
+            right: auto;
+            top: auto;
+            transform: translateX(-50%);
+            padding-bottom: var(--space-2);
+            transform-origin: bottom center;
+        }
+
+        /* שמאל - מרכז גובה */
+        &.left-center {
+            right: 100%;
+            top: 50%;
+            left: auto;
+            bottom: auto;
+            transform: translateY(-50%);
+            padding-right: var(--space-2);
+            transform-origin: right center;
+        }
+
+        /* ימין - מרכז גובה */
+        &.right-center {
+            left: 100%;
+            top: 50%;
+            right: auto;
+            bottom: auto;
+            transform: translateY(-50%);
+            padding-left: var(--space-2);
+            transform-origin: left center;
+        }
+    }
+
+    /* התיבה הפנימית: מכילה את אפקט הזכוכית ומריצה אנימציית Scale נקייה שאינה פוגעת ב-Blur */
+    .dropdown-content {
+        padding: var(--space-2);
+        border-radius: var(--radius-md);
+        min-width: calc(var(--space-16) * 3);
+        transform-origin: inherit;
+        animation: dropdownScaleReveal 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+}
+
+/* אנימציית גדילה עדינה שלא פוגעת ב-Blur של הזכוכית (ללא שינוי אופסיטי) */
+@keyframes dropdownScaleReveal {
+    0% {
+        transform: scale(0.94);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}

@@ -6,11 +6,12 @@ import { ChatStore } from '../../../core/store/chat.store';
 import { getUserRoleData } from '../../../core/enums/user-role.enum';
 import { BadgeColor } from '../../../core/directives/badge-color.directive';
 import { ThemeService } from '../../../core/services/theme.service';
+import { Dropdown } from '../../../components/shared/dropdown/dropdown';
 
 @Component({
 	selector: 'app-main-sidebar',
 	standalone: true,
-	imports: [CommonModule, RouterLink, RouterLinkActive, BadgeColor],
+	imports: [CommonModule, RouterLink, RouterLinkActive, BadgeColor, Dropdown],
 	templateUrl: './main-sidebar.html',
 	styleUrl: './main-sidebar.css',
 })
@@ -22,8 +23,6 @@ export class MainSidebar implements OnInit {
 
 	protected readonly getUserRoleData = getUserRoleData;
 	public pendingDeleteSessionId = signal<number | null>(null);
-	public dropdownTrigger = signal(false);
-
 
 	public formattedSessions = computed(() => {
 		return this.chatStore.recentSessions().map(session => ({
@@ -64,15 +63,6 @@ export class MainSidebar implements OnInit {
 		else {
 			this.router.navigate(['/chat/history']);
 		}
-		this.hideDropdown();
-	}
-
-	showDropdown() {
-		this.dropdownTrigger.set(true);
-	}
-
-	hideDropdown() {
-		this.dropdownTrigger.set(false);
 		this.pendingDeleteSessionId.set(null);
 	}
 }

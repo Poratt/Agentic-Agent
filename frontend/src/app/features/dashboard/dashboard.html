@@ -1,68 +1,67 @@
 @switch (pageState()) {
-  @case (PageStates.Loading) {
-    <div class="page-state loading-state">
-      <span class="custom-loader"></span>
-    </div>
-  }
-  @case (PageStates.Error) {
-    <div class="page-state error-state">
-      <span class="icon ph ph-warning"></span>
-      <h4 class="title">אירעה שגיאה בטעינת הנתונים.</h4>
-      <p class="subtitle">אנא נסה שוב מאוחר יותר.</p>
-    </div>
-  }
-  @case (PageStates.Empty) {
-    <div class="page-state empty-state">
-      <span class="icon ph ph-chart-bar"></span>
-      <h4 class="title">אין נתונים זמינים.</h4>
-      <p class="subtitle">לא נמצאו מדדים להצגה כרגע.</p>
-    </div>
-  }
-  @case (PageStates.Ready) {
-    <div class="page-content">
-      <header class="page-header">
-        <h1>שלום, {{ authStore.user()?.fullName || authStore.user()?.email }}!</h1>
-        <p class="subtitle">ברוכים הבאים ללוח הבקרה של המערכת</p>
-      </header>
-
-      <div class="grid-3">
-        <div class="glass-effect card metric-card">
-          <div class="metric-header">
-            <span class="ph ph-users metric-icon"></span>
-            <h3>משתמשים רשומים</h3>
-          </div>
-          <div class="metric-value">{{ usersStore.users().length }}</div>
+    @case (PageStates.Loading) {
+        <div class="page-state loading-state">
+            <span class="custom-loader"></span>
         </div>
-
-        <div class="glass-effect card metric-card">
-          <div class="metric-header">
-            <span class="ph ph-user metric-icon"></span>
-            <h3>חיבור פעיל</h3>
-          </div>
-          <div class="metric-details">
-            <span class="detail-item">{{ authStore.user()?.email }}</span>
-            @if (authStore.user()?.role !== null && authStore.user()?.role !== undefined) {
-              <span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)?.color">
-                <span class="ph sm" [ngClass]="getUserRoleData(authStore.user()!.role)?.icon"></span>
-                {{ getUserRoleData(authStore.user()!.role)?.heLabel }}
-              </span>
-            }
-          </div>
+    }
+    @case (PageStates.Error) {
+        <div class="page-state error-state">
+            <span class="icon ph ph-warning"></span>
+            <h4 class="title">אירעה שגיאה בטעינת הנתונים.</h4>
+            <p class="subtitle">אנא נסה שוב מאוחר יותר.</p>
         </div>
+    }
+    @case (PageStates.Empty) {
+        <div class="page-state empty-state">
+            <span class="icon ph ph-chart-bar"></span>
+            <h4 class="title">אין נתונים זמינים.</h4>
+            <p class="subtitle">לא נמצאו מדדים להצגה כרגע.</p>
+        </div>
+    }
+    @case (PageStates.Ready) {
+        <div class="page-content">
+            <header class="page-header">
+                <h2>שלום, {{ authStore.user()?.fullName || authStore.user()?.email }}!</h2>
+            </header>
 
-        <div class="glass-effect card metric-card">
-          <div class="metric-header">
-            <span class="ph ph-globe metric-icon"></span>
-            <h3>סטטוס מערכת</h3>
-          </div>
-          <div class="metric-details">
-            <div class="status-indicator">
-              <span class="pulse-dot"></span>
-              <span>מערכת פעילה ומחוברת ל-API</span>
+            <div class="grid-3">
+                <div class="glass-effect card metric-card">
+                    <div class="metric-header">
+                        <span class="ph ph-users metric-icon"></span>
+                        <h3>משתמשים רשומים</h3>
+                    </div>
+                    <div class="metric-value">{{ usersStore.users().length }}</div>
+                </div>
+
+                <div class="glass-effect card metric-card">
+                    <div class="metric-header">
+                        <span class="ph ph-user metric-icon"></span>
+                        <h3>חיבור פעיל</h3>
+                    </div>
+                    <div class="metric-details">
+                        <span class="detail-item">{{ authStore.user()?.email }}</span>
+                        @if (authStore.user()?.role !== null && authStore.user()?.role !== undefined) {
+                            <span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)?.color">
+                                <span class="ph sm" [ngClass]="getUserRoleData(authStore.user()!.role)?.icon"></span>
+                                {{ getUserRoleData(authStore.user()!.role)?.heLabel }}
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <div class="glass-effect card metric-card">
+                    <div class="metric-header">
+                        <span class="ph ph-globe metric-icon"></span>
+                        <h3>סטטוס מערכת</h3>
+                    </div>
+                    <div class="metric-details">
+                        <div class="status-indicator">
+                            <span class="pulse-dot"></span>
+                            <span>מערכת פעילה ומחוברת ל-API</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-  }
+    }
 }

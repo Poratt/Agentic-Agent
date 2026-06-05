@@ -30,6 +30,8 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
+  font-size: var(--font-size-sm);
+
 
   &::before {
     content: '';
@@ -98,30 +100,36 @@ a {
 
 .ph {
   transition: var(--transition-fast);
-  @starting-style{
+
+  @starting-style {
     opacity: 0;
   }
 }
+
 /* --- וריאציות גדלים קבועים --- */
-.ph.sm, .material-symbols-rounded.sm {
+.ph.sm,
+.material-symbols-rounded.sm {
   width: 16px;
   height: 16px;
   font-size: 16px;
 }
 
-.ph.md, .material-symbols-rounded.md {
+.ph.md,
+.material-symbols-rounded.md {
   width: 24px;
   height: 24px;
   font-size: 24px;
 }
 
-.ph.lg, .material-symbols-rounded.lg {
+.ph.lg,
+.material-symbols-rounded.lg {
   width: 32px;
   height: 32px;
   font-size: 32px;
 }
 
-.ph.xl, .material-symbols-rounded.xl {
+.ph.xl,
+.material-symbols-rounded.xl {
   width: 40px;
   height: 40px;
   font-size: 40px;

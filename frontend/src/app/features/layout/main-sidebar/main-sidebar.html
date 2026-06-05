@@ -32,9 +32,9 @@
 
         @if (chatStore.recentSessions().length > 0) {
             <div class="nav-sub-list">
-                <div class="dropdown-wrapper" (mouseenter)="showDropdown()" (mouseleave)="hideDropdown()">
-                    <div class="nav-sub-item">
-                        <button class="nav-item sm" type="button" (click)="navigateTo()">
+                <app-dropdown #chatDropdown (closed)="cancelDelete()" [position]="'bottom-right'">
+                    <div button class="nav-sub-item" (click)="navigateTo(); chatDropdown.hideDropdown()">
+                        <button class="nav-item sm" type="button">
                             <span class="ph ph-feather"></span>
                             <span class="nav-label session-title-label">היסטורית שיחות</span>
                         </button>
@@ -42,53 +42,50 @@
                             <span class="ph ph-arrow-fat-line-left"></span>
                         </button>
                     </div>
-                    @if (dropdownTrigger()) {
-                        <div class="dropdown-content glass-effect fade-in-glass">
-                            @for (session of formattedSessions(); track session.id) {
-                                <div class="nav-sub-item" [class.active]="chatStore.currentSessionId() === session.id">
-                                    @if (pendingDeleteSessionId() === session.id) {
-                                        <div class="delete-confirmation">
-                                            <span class="warning-text typewriter">האם אתה בטוח?</span>
-                                            <div class="action-btns">
-                                                <button
-                                                    class="icon-only transparent-btn sm"
-                                                    type="button"
-                                                    (click)="cancelDelete()"
-                                                >
-                                                    <span class="ph ph-x"></span>
-                                                </button>
-                                                <button
-                                                    class="icon-only danger-btn sm"
-                                                    type="button"
-                                                    (click)="confirmDelete()"
-                                                >
-                                                    <span class="ph ph-check"></span>
-                                                </button>
-                                            </div>
+                    <div content class="fade-in">
+                        @for (session of formattedSessions(); track session.id) {
+                            <div class="nav-sub-item" [class.active]="chatStore.currentSessionId() === session.id">
+                                @if (pendingDeleteSessionId() === session.id) {
+                                    <div class="delete-confirmation">
+                                        <span class="warning-text typewriter">האם אתה בטוח?</span>
+                                        <div class="action-btns">
+                                            <button
+                                                class="icon-only transparent-btn sm"
+                                                type="button"
+                                                (click)="cancelDelete()"
+                                            >
+                                                <span class="ph ph-x"></span>
+                                            </button>
+                                            <button
+                                                class="icon-only danger-btn sm"
+                                                type="button"
+                                                (click)="confirmDelete()"
+                                            >
+                                                <span class="ph ph-check"></span>
+                                            </button>
                                         </div>
-                                    } @else {
-                                        <button
-                                            class="nav-item sm"
-                                            type="button"
-                                            [routerLink]="['/chat']"
-                                            (click)="navigateTo(session.id)"
-                                        >
-                                            <span class="ph ph-chat-centered-text"></span>
-                                            <span class="nav-label session-title-label">{{ session.title }}</span>
-                                        </button>
-                                        <button
-                                            class="icon-only hidden-btn color-danger"
-                                            type="button"
-                                            (click)="setPendingDelete($event, session.id)"
-                                        >
-                                            <span class="ph ph-trash"></span>
-                                        </button>
-                                    }
-                                </div>
-                            }
-                        </div>
-                    }
-                </div>
+                                    </div>
+                                } @else {
+                                    <button
+                                        class="nav-item sm"
+                                        type="button"
+                                        (click)="navigateTo(session.id); chatDropdown.hideDropdown()"
+                                    >
+                                        <span class="ph ph-chat-centered-text"></span>
+                                        <span class="nav-label session-title-label">{{ session.title }}</span>
+                                    </button>
+                                    <button
+                                        class="icon-only hidden-btn color-danger"
+                                        type="button"
+                                        (click)="setPendingDelete($event, session.id)"
+                                    >
+                                        <span class="ph ph-trash"></span>
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+                </app-dropdown>
             </div>
         }
     </nav>

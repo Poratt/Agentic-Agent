@@ -1,19 +1,3 @@
-.search-container {
-	position: relative;
-	display: flex;
-	align-items: center;
-	width: min(var(--search-width), 100%);
-
-	.search-icon {
-		position: absolute;
-		right: var(--space-3);
-		color: var(--color-text-secondary);
-		pointer-events: none;
-	}
-
-
-}
-
 .history-content {
 	display: flex;
 	flex-direction: column;
@@ -23,18 +7,18 @@
 .sessions-list {
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-1);
+	gap: 2px;
 
 	.session-row {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		min-height: 76px;
-		padding: var(--space-4);
+		min-height: 52px;
+		padding: 0 var(--space-4);
 		background: var(--color-surface);
-		border-bottom: 1px solid var(--color-border);
+		border: 1px solid var(--color-border);
 		border-radius: 0;
-		transition: 
+		transition:
 			background var(--transition-fast),
 			border-color var(--transition-fast),
 			box-shadow var(--transition-fast);
@@ -49,9 +33,15 @@
 			border-color: var(--color-primary);
 		}
 
+		&.danger {
+			border-color: var(--color-danger);
+			background: var(--color-danger-bg);
+		}
+
 		.session-info {
 			display: flex;
-			align-items: center;
+			align-items: flex-start;
+			justify-content: space-between;
 			gap: var(--space-4);
 			cursor: pointer;
 			flex: 1;
@@ -62,7 +52,14 @@
 
 			.text-group {
 				display: flex;
-				flex-direction: column;
+				flex-direction: row;
+				gap: var(--space-3);
+
+
+				.flex-col {
+					display: flex;
+					flex-direction: column;
+				}
 
 				.title {
 					font-weight: var(--font-weight-medium);
@@ -70,7 +67,7 @@
 				}
 
 				.date {
-					font-size: var(--font-size-sm);
+					font-size: var(--font-size-xs);
 					color: var(--color-text-secondary);
 				}
 			}
