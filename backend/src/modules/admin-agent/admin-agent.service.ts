@@ -7,7 +7,7 @@ import { ChatMessage } from './entities/chat-message.entity';
 import { SYSTEM_CONTEXT } from './constants/system-context.constant';
 import { SwaggerToolsParser } from './services/swagger-tools.parser';
 
-const MAX_ITERATIONS = 5;
+const MAX_ITERATIONS = 10;
 const STEP_ICONS = {
   tool: 'ph-gear',
   error: 'ph-warning-circle',
@@ -23,7 +23,7 @@ export class AdminAgentService implements OnModuleInit {
     private readonly swaggerToolsParser: SwaggerToolsParser,
     private readonly agentSessionService: AgentSessionService,
     private readonly agentToolExecutorService: AgentToolExecutorService,
-  ) {}
+  ) { }
 
   onModuleInit(): void {
     this.logger.log('AdminAgentService initialized. Orchestrator ready.');
@@ -36,7 +36,7 @@ export class AdminAgentService implements OnModuleInit {
     try {
       const tools = this.swaggerToolsParser.getTools();
       this.logger.log(`--- START SWAGGER-TOOLS-PARSER OUTPUT: LOADED ${tools.length} TOOLS ---`);
-      
+
       const fnWidth = Math.max(...tools.map((fn) => {
         return fn.function?.name.length || 0;
       }));
@@ -150,11 +150,11 @@ export class AdminAgentService implements OnModuleInit {
           const description = this.agentToolExecutorService.getSemanticActionDescription(call.function.name, args);
           const endpoint = this.swaggerToolsParser.getEndpoint(call.function.name);
           const toolIcon = endpoint?.toolIcon || STEP_ICONS.tool;
-          
+
           yield JSON.stringify({ type: 'step', icon: toolIcon, message: `${description}...` }) + '\n';
 
           const resultData = await this.agentToolExecutorService.executeToolCall(call, userId);
-          
+
           if (resultData.includes('error')) {
             yield JSON.stringify({
               type: 'step',

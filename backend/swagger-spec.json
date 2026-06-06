@@ -235,7 +235,7 @@
     },
     "/users": {
       "get": {
-        "agentInstruction": "After getting users list, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a styled table with columns: ID, Full Name, Email, Role (badge: Admin=purple, User=blue), Created At.\nUse the project design system. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a styled users table with role badges.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nANIMATIONS: \nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
         "description": "Returns every user in the system with public fields only: id, email, fullName, numeric role, createdAt, updatedAt, lastLoginAt. Passwords and refresh token hashes are never returned.",
         "operationId": "UsersController_list",
         "parameters": [],
@@ -272,7 +272,7 @@
     },
     "/users/me": {
       "get": {
-        "agentInstruction": "After getting current user data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a compact profile card with: avatar circle with initials from name, email, role badge (Admin=purple, User=blue), token expiry.\nUse the project design system. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a profile card with initials avatar.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nANIMATIONS: \nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
         "description": "Returns the JWT payload decoded by JwtAuthGuard. No database query is made. Role is numeric: 1 = Admin, 2 = User.",
         "operationId": "UsersController_me",
         "parameters": [],
@@ -309,7 +309,7 @@
     },
     "/users/{id}": {
       "get": {
-        "agentInstruction": "After getting user data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a profile card with: avatar circle with initials, full name, email, role badge, creation date.\nUse the project design system. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a profile card with initials avatar.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nANIMATIONS: \nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
         "description": "Fetches one user by numeric id with public fields only. Use GET /users first to discover valid IDs.",
         "operationId": "UsersController_getById",
         "parameters": [
@@ -759,7 +759,7 @@
     },
     "/explorer/weather": {
       "get": {
-        "agentInstruction": "Return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nDo not return plain text. Only HTML with full inline styles.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a weather card with emoji and temperature.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nANIMATIONS: \nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
         "description": "Queries an external weather service to retrieve dynamic real-time conditions.",
         "operationId": "ExplorerController_getWeather",
         "parameters": [

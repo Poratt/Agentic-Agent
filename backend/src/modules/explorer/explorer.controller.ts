@@ -13,6 +13,7 @@ import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { ExplorerService } from './explorer.service';
 import { WeatherQueryDto } from './dto/weather-query.dto';
+import { GENUI_HTML } from '../admin-agent/constants/agent-instructions.constant';
 
 @ApiTags('explorer')
 @ApiBearerAuth()
@@ -44,11 +45,7 @@ export class ExplorerController {
     summaryHe: 'בודק את מזג האוויר הנוכחי במיקום או עיר מסוימת בעולם',
     toolIcon: 'ph-cloud-sun',
     description: 'Queries an external weather service to retrieve dynamic real-time conditions.',
-    agentInstruction: `Return ONLY a raw HTML block in this exact format:
-\`\`\`component
-<div style="...">...</div>
-\`\`\`
-Do not return plain text. Only HTML with full inline styles.`,
+    agentInstruction: GENUI_HTML('Render a weather card with emoji and temperature.'),
   } as CustomApiOperationOptions)
   @ApiOkResponse({
     description: 'Weather data retrieved successfully.',

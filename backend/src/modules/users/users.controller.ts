@@ -35,6 +35,7 @@ import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { JwtPayload } from '../../core/interfaces/jwt-payload.interface';
 import { JwtPayloadResultResponseDto } from '../../core/dto/jwt-payload-result-response.dto';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
+import { GENUI_HTML } from '../admin-agent/constants/agent-instructions.constant';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -48,13 +49,7 @@ export class UsersController {
     summary: 'List all users',
     summaryHe: 'שולף את רשימת כל המשתמשים במערכת',
     toolIcon: 'ph-users',
-    // GET /users - רשימת משתמשים
-    agentInstruction: `After getting users list, return ONLY a raw HTML block in this exact format:
-\`\`\`component
-<div style="...">...</div>
-\`\`\`
-Render a styled table with columns: ID, Full Name, Email, Role (badge: Admin=purple, User=blue), Created At.
-Use the project design system. No plain text.`,
+    agentInstruction: GENUI_HTML('Render a styled users table with role badges.'),
     description:
       'Returns every user in the system with public fields only: id, email, fullName, numeric role, createdAt, updatedAt, lastLoginAt. ' +
       'Passwords and refresh token hashes are never returned.',
@@ -75,12 +70,7 @@ Use the project design system. No plain text.`,
     summary: 'Get current authenticated user payload',
     summaryHe: 'שולף את פרטי המשתמש המחובר מתוך הטוקן',
     toolIcon: 'ph-user-circle',
-    agentInstruction: `After getting current user data, return ONLY a raw HTML block in this exact format:
-\`\`\`component
-<div style="...">...</div>
-\`\`\`
-Render a compact profile card with: avatar circle with initials from name, email, role badge (Admin=purple, User=blue), token expiry.
-Use the project design system. No plain text.`,
+    agentInstruction: GENUI_HTML('Render a profile card with initials avatar.'),
     description:
       'Returns the JWT payload decoded by JwtAuthGuard. No database query is made. Role is numeric: 1 = Admin, 2 = User.',
   } as CustomApiOperationOptions)
@@ -105,12 +95,7 @@ Use the project design system. No plain text.`,
     summary: 'Get user by id',
     summaryHe: 'שולף משתמש לפי מזהה (מזהה: ${id})',
     toolIcon: 'ph-user',
-    agentInstruction: `After getting user data, return ONLY a raw HTML block in this exact format:
-\`\`\`component
-<div style="...">...</div>
-\`\`\`
-Render a profile card with: avatar circle with initials, full name, email, role badge, creation date.
-Use the project design system. No plain text.`,
+    agentInstruction: GENUI_HTML('Render a profile card with initials avatar.'),
     description:
       'Fetches one user by numeric id with public fields only. Use GET /users first to discover valid IDs.',
   } as CustomApiOperationOptions)

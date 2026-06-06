@@ -5,7 +5,7 @@
 .chat-message-row {
 	display: flex;
 	flex-direction: column;
-	max-width: 80%;
+	max-width: 95%;
 	padding: var(--space-4);
 	border-radius: var(--radius-md);
 	line-height: 1.6;
@@ -26,8 +26,8 @@
 		align-self: flex-end;
 		width: 100%;
 		min-width: 0;
-		background: var(--color-surface);
-		border: 1px solid var(--color-primary-glow);
+		/* background: var(--color-surface); */
+		/* border: 1px solid var(--color-primary-glow); */
 		text-align: right;
 	}
 
