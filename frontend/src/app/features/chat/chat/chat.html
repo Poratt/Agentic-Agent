@@ -1,49 +1,48 @@
-<div class="chat-root-container">
+<div class="page-content chat-root-container">
+    @if (historyLoading()) {
+        <div class="chat-history-loader">
+            <span class="custom-loader"></span>
+            <p>טוען את היסטוריית השיחה...</p>
+        </div>
+    } @else {
+        <div class="chat-history" [autoScrollBottom]="true" [autoScrollBottomTrigger]="messages().length">
+            @for (msg of messages(); track $index) {
+                @if (msg.role !== 'tool') {
+                    <app-chat-message [message]="msg" [streamState]="getStreamState($index, msg)" />
+                }
+            }
 
-	@if (historyLoading()) {
-	<div class="chat-history-loader">
-		<span class="custom-loader"></span>
-		<p>טוען את היסטוריית השיחה...</p>
-	</div>
-	} @else {
-	<div class="glass-effect chat-history" [autoScrollBottom]="true" [autoScrollBottomTrigger]="messages().length">
-		@for (msg of messages(); track $index) {
-			@if (msg.role !== 'tool') {
-				<app-chat-message [message]="msg" [streamState]="getStreamState($index, msg)" />
-			}
-		}
+            @if (messages().length === 0) {
+                <div class="empty-chat-state">
+                    <span class="ph ph-chat-circle-text xl"></span>
+                    <h3 class="">שלום {{ currentUserProfile()?.fullName || authStore.user()?.email }}!</h3>
+                    <p>כתוב הודעה למטה כדי להתחיל להתייעץ עם סוכן ה-AI שלך.</p>
+                </div>
+            }
+        </div>
+    }
 
-		@if (messages().length === 0) {
-			<div class="empty-chat-state">
-				<span class="ph ph-chat-circle-text xl"></span>
-				<h3 class="">שלום {{ currentUserProfile()?.fullName || authStore.user()?.email }}!</h3>
-				<p>כתוב הודעה למטה כדי להתחיל להתייעץ עם סוכן ה-AI שלך.</p>
-			</div>
-		}
-	</div>
-	}
-
-	<div class="chat-input-area">
-		<form [formGroup]="chatForm" (ngSubmit)="sendMessage()">
-			<div class="chat-prompt-field">
-				<textarea
-					formControlName="prompt"
-					placeholder="הקלד את הודעתך כאן..."
-					rows="3"
-					autocomplete="off"
-					(keydown)="onPromptKeydown($event)"
-				></textarea>
-				<div class="chat-prompt-actions">
-					<button 
-						type="submit" 
-						class="chat-send-btn" 
-						[disabled]="chatForm.invalid || loading() || historyLoading()" 
-						aria-label="שלח הודעה"
-					>
-						<span class="ph ph-arrow-up md"></span>
-					</button>
-				</div>
-			</div>
-		</form>
-	</div>
+    <div class="chat-input-area">
+        <form [formGroup]="chatForm" (ngSubmit)="sendMessage()">
+            <div class="chat-prompt-field">
+                <textarea
+                    formControlName="prompt"
+                    placeholder="הקלד את הודעתך כאן..."
+                    rows="3"
+                    autocomplete="off"
+                    (keydown)="onPromptKeydown($event)"
+                ></textarea>
+                <div class="chat-prompt-actions">
+                    <button
+                        type="submit"
+                        class="chat-send-btn"
+                        [disabled]="chatForm.invalid || loading() || historyLoading()"
+                        aria-label="שלח הודעה"
+                    >
+                        <span class="ph ph-arrow-up md"></span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>

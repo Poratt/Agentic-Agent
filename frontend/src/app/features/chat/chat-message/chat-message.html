@@ -24,7 +24,7 @@
                 <span class="summary-label">פעולות שבוצעו...</span>
                 <span class="ph ph-caret-down expand-icon"></span>
             </summary>
-            <ul class="steps-list">
+            <ul class="steps-list" [autoScrollBottom]="true">
                 @for (step of displaySteps(); track $index) {
                     <li class="step-item">
                         <span class="xs ph {{ step.icon }}"></span>

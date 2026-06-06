@@ -46,6 +46,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Register a new user account',
     summaryHe: 'רושם חשבון משתמש חדש במערכת',
+    toolIcon: 'ph-user-plus',
     description:
       'Creates a new user account. Required RegisterDto fields: fullName, email, password. ' +
       'Password must be at least 8 characters. This endpoint is public and does not require a token.',
@@ -73,6 +74,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Login with email and password',
     summaryHe: 'מבצע התחברות באמצעות אימייל וסיסמה',
+    toolIcon: 'ph-sign-in',
     description:
       'Validates user credentials. On success, the service writes access and refresh tokens to HTTP-only cookies ' +
       'and returns ServiceResultContainer<UserResponseDto>. Role is numeric: 1 = Admin, 2 = User.',
@@ -100,6 +102,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Refresh access token using refresh token',
     summaryHe: 'מרענן את טוקן הגישה באמצעות טוקן רענון',
+    toolIcon: 'ph-arrows-clockwise',
     description:
       'JwtRefreshGuard reads the refresh token from the cookie or Authorization header. ' +
       'If valid, AuthService issues new tokens and returns ServiceResultContainer<UserResponseDto>.',
@@ -127,6 +130,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Logout and invalidate session',
     summaryHe: 'מבצע התנתקות ומבטל את סשן המשתמש',
+    toolIcon: 'ph-sign-out',
     description:
       'Requires a valid access token. Clears the stored refresh token hash and removes auth cookies from the response.',
   } as CustomApiOperationOptions)
@@ -152,6 +156,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Get current authenticated user payload',
     summaryHe: 'שולף את פרטי המשתמש המחובר מתוך הטוקן',
+    toolIcon: 'ph-user-circle',
     description:
       'Reads req.user as populated by JwtAuthGuard. No database query is made. ' +
       'Role is numeric: 1 = Admin, 2 = User.',

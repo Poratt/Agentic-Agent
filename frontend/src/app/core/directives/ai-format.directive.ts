@@ -13,8 +13,23 @@ export class AiFormat implements OnChanges {
   private sanitizer = inject(DomSanitizer);
   private animatedBlockSignatures = new Set<string>();
 
+
   ngOnChanges() {
     const raw = this.aiFormat() ?? '';
+    console.log('aiFormat raw:', raw.substring(0, 100));
+
+    const componentMatch = raw.match(/```component\s*([\s\S]*?)```/);
+    console.log('componentMatch:', !!componentMatch);
+    if (componentMatch) {
+      const html = componentMatch[1].trim();
+      // bypass sanitizer לבלוק component בלבד
+      const trusted = this.sanitizer.bypassSecurityTrustHtml(html);
+      this.el.nativeElement.innerHTML = '';
+      const div = this.renderer.createElement('div');
+      this.el.nativeElement.appendChild(div);
+      div.innerHTML = html;
+      return;
+    }
     const parsedHtml = this.parse(raw);
 
     const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, parsedHtml) || '';
@@ -22,8 +37,10 @@ export class AiFormat implements OnChanges {
     this.updateDomEfficiently(sanitizedHtml);
 
     this.markNewCompletedBlocks(raw);
-  }
 
+
+
+  }
 
   private updateDomEfficiently(htmlContent: string): void {
     const target = this.el.nativeElement;
@@ -99,6 +116,11 @@ export class AiFormat implements OnChanges {
   }
 
   private parse(text: string): string {
+    // GenUI: component block - לפני כל דבר אחר
+    const componentMatch = text.match(/```component\s*([\s\S]*?)```/);
+    if (componentMatch) {
+      return componentMatch[1].trim(); // HTML גולמי - מגיע ישר ל-sanitizer
+    }
     const TABLE_PLACEHOLDER = 'TABLE_PLACEHOLDER_';
     const tables: string[] = [];
 

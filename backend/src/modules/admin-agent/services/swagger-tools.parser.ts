@@ -17,13 +17,16 @@ export class SwaggerToolsParser {
   private readonly logger = new Logger(SwaggerToolsParser.name);
   private swaggerTools: LlmToolSchema[] = [];
   // private swaggerEndpointsMap = new Map<string, { path: string; method: string }>();
-  private swaggerEndpointsMap = new Map<string, { path: string; method: string; summary?: string }>();
+  private swaggerEndpointsMap = new Map<string, { path: string; method: string; summary?: string; toolIcon?: string, agentInstruction?: string }>();
+  private swaggerSpecMtimeMs = 0;
 
   constructor() {
     this.loadSwaggerAsTools();
   }
 
   getTools(): LlmToolSchema[] {
+    this.refreshSwaggerToolsIfChanged();
+
     return this.swaggerTools.map((t) => {
       const params = t.function?.parameters;
 
@@ -46,6 +49,8 @@ export class SwaggerToolsParser {
   }
 
   getEndpoint(operationId: string) {
+    this.refreshSwaggerToolsIfChanged();
+
     return this.swaggerEndpointsMap.get(operationId);
   }
 
@@ -272,6 +277,7 @@ export class SwaggerToolsParser {
         return;
       }
 
+      this.swaggerSpecMtimeMs = fs.statSync(swaggerPath).mtimeMs;
       const swagger = JSON.parse(fs.readFileSync(swaggerPath, 'utf8'));
       const tools: LlmToolSchema[] = [];
       const schemas = swagger.components?.schemas || {};
@@ -287,7 +293,9 @@ export class SwaggerToolsParser {
           this.swaggerEndpointsMap.set(op.operationId, {
             path,
             method,
-            summary: op.summaryHe || op.summary
+            summary: op.summaryHe || op.summary,
+            toolIcon: op.toolIcon,
+            agentInstruction: op.agentInstruction,
           });
 
           const properties: Record<string, any> = {};
@@ -332,7 +340,12 @@ export class SwaggerToolsParser {
             type: 'function',
             function: {
               name: op.operationId,
-              description: op.summaryHe || op.summary || op.description || `Execute ${method.toUpperCase()} to ${path}`, parameters: {
+              description: [
+                op.summaryHe || op.summary,
+                op.description,
+                op.agentInstruction ? `AGENT_INSTRUCTION: ${op.agentInstruction}` : null,
+              ].filter(Boolean).join('\n'),
+              parameters: {
                 type: 'object',
                 properties,
                 ...(normalizedRequired.length ? { required: normalizedRequired } : {}),
@@ -347,6 +360,18 @@ export class SwaggerToolsParser {
       this.logger.log(`Successfully auto-loaded ${this.swaggerTools.length} tools from Swagger Spec! 🚀`);
     } catch (error) {
       this.logger.error('Failed to parse swagger-spec.json as AI tools', error);
+    }
+  }
+
+  private refreshSwaggerToolsIfChanged(): void {
+    const swaggerPath = './swagger-spec.json';
+    if (!fs.existsSync(swaggerPath)) {
+      return;
+    }
+
+    const mtimeMs = fs.statSync(swaggerPath).mtimeMs;
+    if (mtimeMs !== this.swaggerSpecMtimeMs) {
+      this.loadSwaggerAsTools();
     }
   }
 }

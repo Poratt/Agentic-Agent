@@ -48,7 +48,8 @@
         "summaryHe": "רושם חשבון משתמש חדש במערכת",
         "tags": [
           "auth"
-        ]
+        ],
+        "toolIcon": "ph-user-plus"
       }
     },
     "/auth/login": {
@@ -98,7 +99,8 @@
         "summaryHe": "מבצע התחברות באמצעות אימייל וסיסמה",
         "tags": [
           "auth"
-        ]
+        ],
+        "toolIcon": "ph-sign-in"
       }
     },
     "/auth/refresh": {
@@ -137,7 +139,8 @@
         "summaryHe": "מרענן את טוקן הגישה באמצעות טוקן רענון",
         "tags": [
           "auth"
-        ]
+        ],
+        "toolIcon": "ph-arrows-clockwise"
       }
     },
     "/auth/logout": {
@@ -181,7 +184,8 @@
         "summaryHe": "מבצע התנתקות ומבטל את סשן המשתמש",
         "tags": [
           "auth"
-        ]
+        ],
+        "toolIcon": "ph-sign-out"
       }
     },
     "/auth/me": {
@@ -225,11 +229,13 @@
         "summaryHe": "שולף את פרטי המשתמש המחובר מתוך הטוקן",
         "tags": [
           "auth"
-        ]
+        ],
+        "toolIcon": "ph-user-circle"
       }
     },
     "/users": {
       "get": {
+        "agentInstruction": "After getting users list, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a styled table with columns: ID, Full Name, Email, Role (badge: Admin=purple, User=blue), Created At.\nUse the project design system. No plain text.",
         "description": "Returns every user in the system with public fields only: id, email, fullName, numeric role, createdAt, updatedAt, lastLoginAt. Passwords and refresh token hashes are never returned.",
         "operationId": "UsersController_list",
         "parameters": [],
@@ -260,11 +266,13 @@
         "summaryHe": "שולף את רשימת כל המשתמשים במערכת",
         "tags": [
           "users"
-        ]
+        ],
+        "toolIcon": "ph-users"
       }
     },
     "/users/me": {
       "get": {
+        "agentInstruction": "After getting current user data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a compact profile card with: avatar circle with initials from name, email, role badge (Admin=purple, User=blue), token expiry.\nUse the project design system. No plain text.",
         "description": "Returns the JWT payload decoded by JwtAuthGuard. No database query is made. Role is numeric: 1 = Admin, 2 = User.",
         "operationId": "UsersController_me",
         "parameters": [],
@@ -295,11 +303,13 @@
         "summaryHe": "שולף את פרטי המשתמש המחובר מתוך הטוקן",
         "tags": [
           "users"
-        ]
+        ],
+        "toolIcon": "ph-user-circle"
       }
     },
     "/users/{id}": {
       "get": {
+        "agentInstruction": "After getting user data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a profile card with: avatar circle with initials, full name, email, role badge, creation date.\nUse the project design system. No plain text.",
         "description": "Fetches one user by numeric id with public fields only. Use GET /users first to discover valid IDs.",
         "operationId": "UsersController_getById",
         "parameters": [
@@ -343,7 +353,8 @@
         "summaryHe": "שולף משתמש לפי מזהה (מזהה: ${id})",
         "tags": [
           "users"
-        ]
+        ],
+        "toolIcon": "ph-user"
       },
       "patch": {
         "description": "Updates fullName and/or email for the user identified by :id. This endpoint intentionally does not accept role changes; use PATCH /users/:id/role for role updates.",
@@ -403,7 +414,8 @@
         "summaryHe": "מעדכן את שדות הפרופיל של המשתמש (מזהה: ${id})",
         "tags": [
           "users"
-        ]
+        ],
+        "toolIcon": "ph-pencil-simple"
       },
       "delete": {
         "description": "Hard-deletes the user record. This is irreversible and requires admin privileges.",
@@ -452,7 +464,8 @@
         "summaryHe": "מוחק לצמיתות את המשתמש (מזהה: ${id})",
         "tags": [
           "users"
-        ]
+        ],
+        "toolIcon": "ph-trash"
       }
     },
     "/users/{id}/role": {
@@ -514,7 +527,8 @@
         "summaryHe": "משנה את תפקיד המשתמש (מזהה: ${id})",
         "tags": [
           "users"
-        ]
+        ],
+        "toolIcon": "ph-shield"
       }
     },
     "/admin-agent/sessions": {
@@ -558,7 +572,8 @@
         "summaryHe": "שולף את סשני הצ'אט של המשתמש המחובר",
         "tags": [
           "Admin Agent"
-        ]
+        ],
+        "toolIcon": "ph-chat-centered-text"
       },
       "post": {
         "description": "Creates a new empty chat session owned by the authenticated user.",
@@ -585,7 +600,8 @@
         "summaryHe": "מייצר סשן שיחת צ'אט חדש",
         "tags": [
           "Admin Agent"
-        ]
+        ],
+        "toolIcon": "ph-plus-circle"
       }
     },
     "/admin-agent/sessions/{id}/messages": {
@@ -627,7 +643,8 @@
         "summaryHe": "שולף את היסטוריית ההודעות של סשן הצ'אט (מזהה: ${id})",
         "tags": [
           "Admin Agent"
-        ]
+        ],
+        "toolIcon": "ph-chats"
       }
     },
     "/admin-agent/sessions/{id}": {
@@ -659,7 +676,8 @@
         "summaryHe": "מוחק לצמיתות את סשן הצ'אט (מזהה: ${id})",
         "tags": [
           "Admin Agent"
-        ]
+        ],
+        "toolIcon": "ph-trash"
       }
     },
     "/admin-agent/query-stream": {
@@ -706,7 +724,8 @@
         "summaryHe": "שולח שאילתה לסוכן הניהול ומחזיר תגובת סטרים",
         "tags": [
           "Admin Agent"
-        ]
+        ],
+        "toolIcon": "ph-robot"
       }
     },
     "/explorer/status": {
@@ -734,11 +753,13 @@
         "summaryHe": "שולף את מצב המערכת הכללי ומדדי הפעילות",
         "tags": [
           "explorer"
-        ]
+        ],
+        "toolIcon": "ph-gauge"
       }
     },
     "/explorer/weather": {
       "get": {
+        "agentInstruction": "Return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nDo not return plain text. Only HTML with full inline styles.",
         "description": "Queries an external weather service to retrieve dynamic real-time conditions.",
         "operationId": "ExplorerController_getWeather",
         "parameters": [
@@ -773,7 +794,8 @@
         "summaryHe": "בודק את מזג האוויר הנוכחי במיקום או עיר מסוימת בעולם",
         "tags": [
           "explorer"
-        ]
+        ],
+        "toolIcon": "ph-cloud-sun"
       }
     }
   },

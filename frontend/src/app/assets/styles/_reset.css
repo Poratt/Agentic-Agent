@@ -192,9 +192,14 @@ input {
 }
 
 ::-webkit-scrollbar {
-  width: 3px;
-  height: 6px;
+  width: 5px;
+  height: 10px;
   background: transparent !important;
+}
+
+
+::-webkit-details-marker {
+  display: none;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -203,7 +208,7 @@ input {
   cursor: pointer;
 
   &:hover {
-    background: var(--color-text-secondary);
+    background: var(--color-surface);
   }
 }
 

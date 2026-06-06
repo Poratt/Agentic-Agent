@@ -25,6 +25,7 @@ export class ExplorerController {
   @ApiOperation({
     summary: 'Get Explorer module status and system metrics',
     summaryHe: 'שולף את מצב המערכת הכללי ומדדי הפעילות',
+    toolIcon: 'ph-gauge',
     description: 'Returns activity metrics and current runtime status parameters.',
   } as CustomApiOperationOptions)
   @ApiOkResponse({
@@ -41,7 +42,13 @@ export class ExplorerController {
   @ApiOperation({
     summary: 'Get current weather for a location',
     summaryHe: 'בודק את מזג האוויר הנוכחי במיקום או עיר מסוימת בעולם',
+    toolIcon: 'ph-cloud-sun',
     description: 'Queries an external weather service to retrieve dynamic real-time conditions.',
+    agentInstruction: `Return ONLY a raw HTML block in this exact format:
+\`\`\`component
+<div style="...">...</div>
+\`\`\`
+Do not return plain text. Only HTML with full inline styles.`,
   } as CustomApiOperationOptions)
   @ApiOkResponse({
     description: 'Weather data retrieved successfully.',

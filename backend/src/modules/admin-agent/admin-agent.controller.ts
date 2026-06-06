@@ -50,6 +50,7 @@ export class AdminAgentController {
   @ApiOperation({
     summary: 'Get chat sessions for the authenticated user',
     summaryHe: 'שולף את סשני הצ\'אט של המשתמש המחובר',
+    toolIcon: 'ph-chat-centered-text',
     description:
       'Returns recent chat sessions owned by the authenticated user. Sessions from other users are never returned.',
   } as CustomApiOperationOptions)
@@ -75,6 +76,7 @@ export class AdminAgentController {
   @ApiOperation({
     summary: 'Get session message history',
     summaryHe: 'שולף את היסטוריית ההודעות של סשן הצ\'אט (מזהה: ${id})',
+    toolIcon: 'ph-chats',
     description:
       'Returns user and assistant messages for a session owned by the authenticated user. ' +
       'Internal tool messages are filtered out for normal history display.',
@@ -96,6 +98,7 @@ export class AdminAgentController {
   @ApiOperation({
     summary: 'Create a new chat session',
     summaryHe: 'מייצר סשן שיחת צ\'אט חדש',
+    toolIcon: 'ph-plus-circle',
     description: 'Creates a new empty chat session owned by the authenticated user.',
   } as CustomApiOperationOptions)
   @ApiResponse({ status: 201, description: 'Chat session created successfully.', type: SessionResponseDto })
@@ -112,6 +115,7 @@ export class AdminAgentController {
   @ApiOperation({
     summary: 'Delete chat session',
     summaryHe: 'מוחק לצמיתות את סשן הצ\'אט (מזהה: ${id})',
+    toolIcon: 'ph-trash',
     description:
       'Permanently deletes a session owned by the authenticated user. ' +
       'ChatMessage rows are cascade-deleted through the ChatMessage.session relation.',
@@ -134,6 +138,7 @@ export class AdminAgentController {
   @ApiOperation({
     summary: 'Query Admin Agent as a streamed response',
     summaryHe: 'שולח שאילתה לסוכן הניהול ומחזיר תגובת סטרים',
+    toolIcon: 'ph-robot',
     description:
       'Streams newline-delimited JSON objects over a text/event-stream response. ' +
       'Each line is an AgentStreamEventDto. Token events use { "type": "token", "content": "..." }. ' +

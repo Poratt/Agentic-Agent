@@ -12,6 +12,7 @@ export class AppController {
   @ApiOperation({
     summary: 'Health check / hello world',
     summaryHe: 'בודק שה-API זמין ומחזיר תגובת תקינות בסיסית',
+    toolIcon: 'ph-heartbeat',
     description:
       'Simple endpoint to verify the API is reachable. Useful for uptime checks and local smoke tests.',
   } as CustomApiOperationOptions)

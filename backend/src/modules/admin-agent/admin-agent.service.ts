@@ -148,8 +148,10 @@ export class AdminAgentService implements OnModuleInit {
         for (const call of llmResponse.toolCalls) {
           const args = JSON.parse(call.function.arguments || '{}');
           const description = this.agentToolExecutorService.getSemanticActionDescription(call.function.name, args);
+          const endpoint = this.swaggerToolsParser.getEndpoint(call.function.name);
+          const toolIcon = endpoint?.toolIcon || STEP_ICONS.tool;
           
-          yield JSON.stringify({ type: 'step', icon: STEP_ICONS.tool, message: `${description}...` }) + '\n';
+          yield JSON.stringify({ type: 'step', icon: toolIcon, message: `${description}...` }) + '\n';
 
           const resultData = await this.agentToolExecutorService.executeToolCall(call, userId);
           

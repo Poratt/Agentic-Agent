@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { IChatMessage } from '../../../core/models/chat-message.interface';
 import { AiFormat } from '../../../core/directives/ai-format.directive';
+import { AutoScrollBottomDirective } from '../../../core/directives/auto-scroll-bottom.directive';
 
 export type ChatMessageStreamState = 'idle' | 'streaming' | 'completed' | 'errored';
 type ChatMessageRowState = 'idle' | 'thinking' | 'transitioning' | 'typing' | 'complete';
@@ -28,7 +29,7 @@ const CHARACTER_DELAY_JITTER_MS = 17;
 @Component({
 	selector: 'app-chat-message',
 	standalone: true,
-	imports: [CommonModule, AiFormat],
+	imports: [CommonModule, AiFormat, AutoScrollBottomDirective],
 	templateUrl: './chat-message.html',
 	styleUrl: './chat-message.css',
 })
