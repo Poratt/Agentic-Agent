@@ -30,6 +30,8 @@ button {
     fill: currentColor;
     flex-shrink: 0;
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   &:active:not(:disabled) {

@@ -6,26 +6,18 @@
     }
     @case (PageStates.Error) {
         <div class="page-state error-state">
-            <span class="icon ph ph-warning"></span>
             <h4 class="title">אירעה שגיאה בטעינת הסייר.</h4>
             <p class="subtitle">אנא נסה שוב מאוחר יותר.</p>
         </div>
     }
     @case (PageStates.Empty) {
         <div class="page-state empty-state">
-            <span class="icon ph ph-folder-open"></span>
             <h4 class="title">אין נתונים להצגה.</h4>
         </div>
     }
     @case (PageStates.Ready) {
         <div class="page-content">
-            <div class="page-header">
-                <div class="header-row">
-                    <div class="header-content">
-                        <h2>סייר</h2>
-                    </div>
-                </div>
-            </div>
+            <div class="page-header"></div>
         </div>
     }
 }

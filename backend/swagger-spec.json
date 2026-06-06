@@ -708,6 +708,73 @@
           "Admin Agent"
         ]
       }
+    },
+    "/explorer/status": {
+      "get": {
+        "description": "Returns activity metrics and current runtime status parameters.",
+        "operationId": "ExplorerController_getStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "System status metrics payload retrieved successfully."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get Explorer module status and system metrics",
+        "summaryHe": "שולף את מצב המערכת הכללי ומדדי הפעילות",
+        "tags": [
+          "explorer"
+        ]
+      }
+    },
+    "/explorer/weather": {
+      "get": {
+        "description": "Queries an external weather service to retrieve dynamic real-time conditions.",
+        "operationId": "ExplorerController_getWeather",
+        "parameters": [
+          {
+            "name": "city",
+            "required": true,
+            "in": "query",
+            "description": "The city or location to check the weather for (e.g. Tel Aviv, London).",
+            "schema": {
+              "example": "Tel Aviv",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Weather data retrieved successfully."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get current weather for a location",
+        "summaryHe": "בודק את מזג האוויר הנוכחי במיקום או עיר מסוימת בעולם",
+        "tags": [
+          "explorer"
+        ]
+      }
     }
   },
   "info": {

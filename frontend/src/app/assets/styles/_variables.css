@@ -99,7 +99,7 @@
   --color-text-secondary: #5B6B80;
   --shadow-soft: 0 8px 24px rgba(31, 41, 55, 0.10);
 
-  --color-input-bg: rgba(255, 255, 255, 0.94);
+  --color-input-bg: rgba(255, 255, 255, 0.4);
   --color-surface-hover: rgba(228, 228, 228, 0.7);
 
   --primary-30: rgba(8, 145, 178, 0.07);
