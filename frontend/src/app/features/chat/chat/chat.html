@@ -26,6 +26,7 @@
         <form [formGroup]="chatForm" (ngSubmit)="sendMessage()">
             <div class="chat-prompt-field">
                 <textarea
+                    #promptTextarea
                     formControlName="prompt"
                     placeholder="הקלד את הודעתך כאן..."
                     rows="3"

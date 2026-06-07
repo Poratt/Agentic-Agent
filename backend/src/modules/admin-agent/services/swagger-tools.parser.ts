@@ -26,7 +26,7 @@ export class SwaggerToolsParser {
       method: string;
       summary?: string;
       toolIcon?: string;
-      agentInstruction?: string;
+      genUiSpec?: string;
     }
   >();
 
@@ -102,7 +102,6 @@ export class SwaggerToolsParser {
 
     if (schema.$ref && typeof schema.$ref === 'string') {
       const schemaName = schema.$ref.split('/').pop();
-
       if (!schemaName) {
         return { type: 'string' };
       }
@@ -315,7 +314,7 @@ export class SwaggerToolsParser {
             method,
             summary: op.summaryHe || op.summary,
             toolIcon: op.toolIcon,
-            agentInstruction: op.agentInstruction,
+            genUiSpec: op.genUiSpec,
           });
 
           const properties: Record<string, any> = {};
@@ -362,7 +361,7 @@ export class SwaggerToolsParser {
               description: [
                 op.summaryHe || op.summary,
                 op.description,
-                op.agentInstruction ? `AGENT_INSTRUCTION: ${op.agentInstruction}` : null,
+                op.genUiSpec ? `AGENT_INSTRUCTION: ${op.genUiSpec}` : null,
               ].filter(Boolean).join('\n'),
               parameters: {
                 type: 'object',

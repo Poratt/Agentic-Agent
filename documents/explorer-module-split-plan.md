@@ -131,7 +131,7 @@ Then update imports in every controller that uses it.
 Verification:
 
 - Backend build passes.
-- Swagger still includes the same `agentInstruction` values.
+- Swagger still includes the same `genUiSpec` values.
 - No duplicate `GENUI_HTML` definition remains.
 
 ### Step 2 - Create `SystemModule`
@@ -147,7 +147,7 @@ backend/src/modules/system/system.service.ts
 Move this logic from `ExplorerService`:
 
 ```ts
-getSystemStatus()
+getSystemStatus();
 ```
 
 Expose it through:
@@ -159,7 +159,7 @@ GET /system/status
 Keep the current response contract:
 
 ```ts
-ServiceResultContainer<SystemStatus>
+ServiceResultContainer<SystemStatus>;
 ```
 
 Register `SystemModule` in `AppModule`.
@@ -167,7 +167,7 @@ Register `SystemModule` in `AppModule`.
 Verification:
 
 - `GET /system/status` returns the same payload as `GET /explorer/status`.
-- Swagger exposes `summaryHe`, `toolIcon`, and `agentInstruction`.
+- Swagger exposes `summaryHe`, `toolIcon`, and `genUiSpec`.
 - The new controller does not depend on `ExplorerService`.
 
 ### Step 3 - Create `WeatherModule`
@@ -184,8 +184,8 @@ backend/src/modules/weather/dto/weather-query.dto.ts
 Move this logic from `ExplorerService`:
 
 ```ts
-getWeather(city)
-getFiveDayForecast(city)
+getWeather(city);
+getFiveDayForecast(city);
 ```
 
 Expose it through:
@@ -213,7 +213,7 @@ Verification:
 
 - `GET /weather/current?city=...` returns the same payload as `GET /explorer/weather?city=...`.
 - `GET /weather/forecast?city=...` returns the same payload as `GET /explorer/forecast?city=...`.
-- Swagger exposes the same agent instructions on the new weather endpoints.
+- Swagger exposes the same gen-ui-spec on the new weather endpoints.
 
 ### Step 4 - Delete Explorer
 
@@ -302,7 +302,7 @@ WeatherTools
 
 ## Checklist
 
-### Agent 1 - Shared Agent Instructions
+### Agent 1 - Shared gen-ui-spec
 
 Owner: `backend/src/modules/admin-agent/constants/agent-instructions.constant.ts`
 
@@ -321,7 +321,7 @@ Owner: `backend/src/modules/system/`
 - [ ] Move `getSystemStatus()` logic into `SystemService`.
 - [ ] Add `GET /system/status`.
 - [ ] Preserve existing response shape.
-- [ ] Preserve `agentInstruction`.
+- [ ] Preserve `genUiSpec`.
 - [ ] Register `SystemModule` in `AppModule`.
 
 ### Agent 3 - Weather Module
@@ -336,7 +336,7 @@ Owner: `backend/src/modules/weather/`
 - [ ] Move `getFiveDayForecast(city)` logic.
 - [ ] Add `GET /weather/current`.
 - [ ] Add `GET /weather/forecast`.
-- [ ] Preserve existing response shapes and agent instructions.
+- [ ] Preserve existing response shapes and gen-ui-spec.
 
 ### Agent 4 - Explorer Removal
 
@@ -357,7 +357,7 @@ Owner: cross-module
 - [ ] Regenerate `backend/swagger-spec.json` if required by project workflow.
 - [ ] Verify new endpoints exist in Swagger.
 - [ ] Verify old `/explorer/*` endpoints do not exist in Swagger.
-- [ ] Verify `agentInstruction` exists on new tool endpoints.
+- [ ] Verify `genUiSpec` exists on new tool endpoints.
 - [ ] Verify no duplicate `GENUI_HTML` definitions remain.
 
 ### Agent 6 - Frontend Decision

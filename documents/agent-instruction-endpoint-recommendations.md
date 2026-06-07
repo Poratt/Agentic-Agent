@@ -1,4 +1,4 @@
-# AgentInstruction Endpoint Recommendations
+# genUiSpec Endpoint Recommendations
 
 ## Scope
 
@@ -10,24 +10,24 @@
 - `backend/src/modules/explorer/explorer.controller.ts`
 - `backend/src/modules/admin-agent/admin-agent.controller.ts`
 
-המטרה: לזהות איפה כדאי להוסיף `agentInstruction`, ומה הייתי שם בתוכן שלו.
+המטרה: לזהות איפה כדאי להוסיף `genUiSpec`, ומה הייתי שם בתוכן שלו.
 
 ## Recommendation Summary
 
-כדאי להוסיף `agentInstruction` רק לנקודות שבהן הסוכן אמור להפוך תוצאת API לתגובה שימושית למשתמש.
+כדאי להוסיף `genUiSpec` רק לנקודות שבהן הסוכן אמור להפוך תוצאת API לתגובה שימושית למשתמש.
 
 לא כדאי להוסיף `GENUI_HTML(...)` לכל endpoint באופן אוטומטי. ב-Auth, Health ו-Stream יש סיכון שהסוכן ינסה לייצר UI במקום לבצע פעולה פשוטה או יבלבל חוזה סטרים.
 
 ## Already Covered
 
-| Endpoint | Current Status | Recommendation |
-|---|---|---|
-| `GET /users` | already has `agentInstruction` | להשאיר |
-| `GET /users/me` | already has `agentInstruction` | להשאיר, אבל לשקול טקסט מדויק יותר כי זה JWT payload ולא פרופיל DB מלא |
-| `GET /users/:id` | already has `agentInstruction` | להשאיר |
-| `GET /explorer/weather` | already has `agentInstruction` | להשאיר |
+| Endpoint                | Current Status          | Recommendation                                                        |
+| ----------------------- | ----------------------- | --------------------------------------------------------------------- |
+| `GET /users`            | already has `genUiSpec` | להשאיר                                                                |
+| `GET /users/me`         | already has `genUiSpec` | להשאיר, אבל לשקול טקסט מדויק יותר כי זה JWT payload ולא פרופיל DB מלא |
+| `GET /users/:id`        | already has `genUiSpec` | להשאיר                                                                |
+| `GET /explorer/weather` | already has `genUiSpec` | להשאיר                                                                |
 
-## Add AgentInstruction
+## Add genUiSpec
 
 ### `GET /explorer/status`
 
@@ -36,7 +36,7 @@ Why: זה endpoint תצוגתי מובהק. הוא מחזיר מדדי מערכ�
 Suggested content:
 
 ```ts
-agentInstruction: GENUI_HTML(
+genUiSpec: GENUI_HTML(
   'Render a compact system status dashboard with metric cards for total users, active sessions, and Swagger status. Use clear success/warning visual states.'
 ),
 ```
@@ -48,7 +48,7 @@ Why: אחרי עדכון משתמש, הסוכן צריך להציג למשתמש
 Suggested content:
 
 ```ts
-agentInstruction: GENUI_HTML(
+genUiSpec: GENUI_HTML(
   'Render an updated user profile card. Highlight the user id, full name, email, numeric role label, and updatedAt timestamp. Make it clear the profile fields were updated successfully.'
 ),
 ```
@@ -60,7 +60,7 @@ Why: פעולה בלתי הפיכה. אחרי ביצוע המחיקה חשוב �
 Suggested content:
 
 ```ts
-agentInstruction: GENUI_HTML(
+genUiSpec: GENUI_HTML(
   'Render a destructive-action confirmation card. Show that the user was permanently deleted, include the deleted flag if present, and do not imply the user can be restored.'
 ),
 ```
@@ -72,7 +72,7 @@ Why: שינוי role הוא פעולה רגישה. התוצאה צריכה לה�
 Suggested content:
 
 ```ts
-agentInstruction: GENUI_HTML(
+genUiSpec: GENUI_HTML(
   'Render a role-change confirmation card. Show the user id, email, full name, and new role. Translate numeric roles as 1 = Admin and 2 = User, while preserving the numeric value.'
 ),
 ```
@@ -84,7 +84,7 @@ Why: endpoint תצוגתי לרשימת סשנים. הסוכן יכול להצי
 Suggested content:
 
 ```ts
-agentInstruction: GENUI_HTML(
+genUiSpec: GENUI_HTML(
   'Render a compact chat sessions list. Show each session title, id, createdAt, and updatedAt. Sort visually by updatedAt when possible and make the session id easy to copy or reference.'
 ),
 ```
@@ -96,7 +96,7 @@ Why: endpoint תצוגתי להיסטוריית שיחה. הסוכן צריך ל
 Suggested content:
 
 ```ts
-agentInstruction: GENUI_HTML(
+genUiSpec: GENUI_HTML(
   'Render a chat transcript timeline. Group messages by role, show user prompts and assistant replies clearly, include createdAt timestamps, and keep long message content readable with wrapping.'
 ),
 ```
@@ -108,7 +108,7 @@ Why: יצירת סשן היא פעולה קצרה, אבל התוצאה כן שי
 Suggested content:
 
 ```ts
-agentInstruction: GENUI_HTML(
+genUiSpec: GENUI_HTML(
   'Render a small new-session confirmation card. Show the new session id, title, createdAt, and updatedAt. Keep the output concise.'
 ),
 ```
@@ -120,7 +120,7 @@ Why: פעולה מוחקת. גם אם התגובה היא `204`, ההוראה י
 Suggested content:
 
 ```ts
-agentInstruction:
+genUiSpec:
   'After this tool succeeds, do not invent response data. Tell the user that the chat session was permanently deleted and mention the requested session id.',
 ```
 
@@ -133,7 +133,7 @@ Recommendation: בדרך כלל לא הייתי מוסיף. זה public auth flo
 If you still want one:
 
 ```ts
-agentInstruction:
+genUiSpec:
   'After successful registration, summarize that the account was created. Do not mention or display the password. If user data is returned, show only public fields.',
 ```
 
@@ -144,7 +144,7 @@ Recommendation: לא להוסיף בדרך כלל. הטוקנים נכתבים �
 If you still want one:
 
 ```ts
-agentInstruction:
+genUiSpec:
   'After successful login, confirm the user is authenticated. Do not display, infer, or discuss access tokens, refresh tokens, cookies, or password values.',
 ```
 
@@ -155,7 +155,7 @@ Recommendation: לא להוסיף. זה endpoint תשתיתי לחידוש sessi
 If you still want one:
 
 ```ts
-agentInstruction:
+genUiSpec:
   'After successful refresh, only state that the authenticated session was refreshed. Do not display or discuss token values.',
 ```
 
@@ -166,7 +166,7 @@ Recommendation: אפשרי, אבל לא קריטי.
 Suggested content if added:
 
 ```ts
-agentInstruction:
+genUiSpec:
   'After successful logout, confirm that the user was logged out and the active session was invalidated. Keep the response short.',
 ```
 
@@ -177,7 +177,7 @@ Recommendation: אפשר להוסיף אם הסוכן משתמש ב-auth endpoin
 Suggested content if added:
 
 ```ts
-agentInstruction: GENUI_HTML(
+genUiSpec: GENUI_HTML(
   'Render a compact authenticated-user card from the JWT payload. Show sub, email, role, issued-at, and expiration. Make clear this is token payload data, not a full database profile.'
 ),
 ```
@@ -189,7 +189,7 @@ Recommendation: לא להוסיף. זה health check בסיסי ולא כלי ע
 If added anyway:
 
 ```ts
-agentInstruction:
+genUiSpec:
   'Use this only as a connectivity check. Return a short sentence confirming the API is reachable.',
 ```
 
@@ -197,12 +197,12 @@ agentInstruction:
 
 ### `POST /admin-agent/query-stream`
 
-Reason: זה endpoint הסטרים של הסוכן עצמו. הוספת `agentInstruction` כאן יכולה לבלבל את חוזה הסטרים, כי התגובה היא newline-delimited stream events ולא payload רגיל להצגה.
+Reason: זה endpoint הסטרים של הסוכן עצמו. הוספת `genUiSpec` כאן יכולה לבלבל את חוזה הסטרים, כי התגובה היא newline-delimited stream events ולא payload רגיל להצגה.
 
 Recommendation:
 
 ```ts
-// Do not add agentInstruction here.
+// Do not add genUiSpec here.
 ```
 
 ## Priority Order
@@ -230,18 +230,18 @@ Recommendation:
 
 Owner: `backend/src/modules/explorer/explorer.controller.ts`
 
-- [x] Add `agentInstruction` to `GET /explorer/status`.
+- [x] Add `genUiSpec` to `GET /explorer/status`.
 - [x] Use `GENUI_HTML(...)` with the status-dashboard instruction from this document.
 - [x] Keep existing `GET /explorer/weather` instruction unchanged.
-- [x] Verify Swagger still exposes `toolIcon`, `summaryHe`, and `agentInstruction` for both Explorer tools.
+- [x] Verify Swagger still exposes `toolIcon`, `summaryHe`, and `genUiSpec` for both Explorer tools.
 
 ### Agent 2 - Users Module
 
 Owner: `backend/src/modules/users/users.controller.ts`
 
-- [x] Add `agentInstruction` to `PATCH /users/:id`.
-- [x] Add `agentInstruction` to `DELETE /users/:id`.
-- [x] Add `agentInstruction` to `PATCH /users/:id/role`.
+- [x] Add `genUiSpec` to `PATCH /users/:id`.
+- [x] Add `genUiSpec` to `DELETE /users/:id`.
+- [x] Add `genUiSpec` to `PATCH /users/:id/role`.
 - [x] Keep existing instructions on `GET /users`, `GET /users/me`, and `GET /users/:id`.
 - [x] Consider tightening `GET /users/me` wording so it says JWT payload, not full DB profile.
 - [x] Verify destructive and role-change instructions do not imply rollback or hidden fields.
@@ -250,20 +250,20 @@ Owner: `backend/src/modules/users/users.controller.ts`
 
 Owner: `backend/src/modules/admin-agent/admin-agent.controller.ts`
 
-- [x] Add `agentInstruction` to `GET /admin-agent/sessions`.
-- [x] Add `agentInstruction` to `GET /admin-agent/sessions/:id/messages`.
-- [x] Add `agentInstruction` to `POST /admin-agent/sessions`.
-- [x] Add a plain string `agentInstruction` to `DELETE /admin-agent/sessions/:id`.
-- [x] Do not add `agentInstruction` to `POST /admin-agent/query-stream`.
+- [x] Add `genUiSpec` to `GET /admin-agent/sessions`.
+- [x] Add `genUiSpec` to `GET /admin-agent/sessions/:id/messages`.
+- [x] Add `genUiSpec` to `POST /admin-agent/sessions`.
+- [x] Add a plain string `genUiSpec` to `DELETE /admin-agent/sessions/:id`.
+- [x] Do not add `genUiSpec` to `POST /admin-agent/query-stream`.
 - [x] Verify the delete-session instruction does not invent a response body for `204`.
 
 ### Agent 4 - Auth Module
 
 Owner: `backend/src/modules/auth/auth.controller.ts`
 
-- [x] Leave `POST /auth/register` without `agentInstruction` unless product explicitly wants auth-result narration.
-- [x] Leave `POST /auth/login` without `agentInstruction` unless product explicitly wants auth-result narration.
-- [x] Leave `POST /auth/refresh` without `agentInstruction`.
+- [x] Leave `POST /auth/register` without `genUiSpec` unless product explicitly wants auth-result narration.
+- [x] Leave `POST /auth/login` without `genUiSpec` unless product explicitly wants auth-result narration.
+- [x] Leave `POST /auth/refresh` without `genUiSpec`.
 - [x] Optionally add short plain string instruction to `POST /auth/logout`.
 - [x] Optionally add `GENUI_HTML(...)` to `GET /auth/me` only if the agent actively uses this endpoint.
 - [x] Verify no auth instruction mentions access tokens, refresh tokens, cookies, or password values.
@@ -272,7 +272,7 @@ Owner: `backend/src/modules/auth/auth.controller.ts`
 
 Owner: `backend/src/app.controller.ts`
 
-- [x] Leave `GET /` without `agentInstruction`.
+- [x] Leave `GET /` without `genUiSpec`.
 - [x] If a product decision requires one, use only the short connectivity-check instruction from this document.
 - [x] Verify the health endpoint remains clearly separate from business tools.
 
@@ -282,7 +282,7 @@ Owner: cross-module review
 
 - [x] Run backend build/test after controller changes.
 - [x] Regenerate `backend/swagger-spec.json` if the project workflow requires it for Swagger metadata changes.
-- [x] Search Swagger output for every newly added `agentInstruction`.
-- [x] Confirm no endpoint has duplicated or conflicting `agentInstruction`.
-- [x] Confirm `POST /admin-agent/query-stream` still has no `agentInstruction`.
+- [x] Search Swagger output for every newly added `genUiSpec`.
+- [x] Confirm no endpoint has duplicated or conflicting `genUiSpec`.
+- [x] Confirm `POST /admin-agent/query-stream` still has no `genUiSpec`.
 - [x] Confirm instructions use `GENUI_HTML(...)` only where the endpoint returns normal data suitable for display.

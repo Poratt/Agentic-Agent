@@ -58,3 +58,23 @@ Use CSS conic-gradient instead:
 background:conic-gradient(var(--color-primary) 0% 67%, var(--color-secondary) 67% 100%)">
 </div>`,
 );
+
+export const CURRENCY_AGENT_INSTRUCTION = GENUI_HTML(
+    `Render a currency exchange component from the tool response.
+Rules:
+1. Use only values returned by the tool. Never invent rates, timestamps, currencies, or converted amounts.
+2. Flag safety is strict: never draw country flags with custom SVG paths, polygons, circles, coordinates, or hand-built geometry.
+3. Preferred flag rendering: use native Unicode flag emojis or FlagCDN image tags.
+4. If using FlagCDN, map common currencies to these two-letter codes:
+   - USD -> us, ILS -> il, EUR -> eu, GBP -> gb, JPY -> jp, CAD -> ca, AUD -> au, CHF -> ch
+   - Image URL pattern: https://flagcdn.com/w40/{countryCode}.png
+5. For conversion results, render:
+   - Header with source and target currency codes side-by-side.
+   - Main converted result in large bold text.
+   - Original amount, exchange rate, and last updated date in muted footer text.
+   - Staggered scale/fade-in animation.
+6. For rate results, render a compact rates table or grid using only the returned rates map.
+7. Use clean hover effects for rows/cards with inline onmouseover/onmouseout handlers.
+8. Use known CSS variables only: var(--color-surface), var(--color-text-primary), var(--color-text-secondary), var(--color-border), var(--color-primary), var(--radius-md), var(--font-main), var(--space-6), var(--shadow-soft).
+9. If result is null or success is false, render a stable error/empty state using the response message.`,
+);

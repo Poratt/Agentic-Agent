@@ -35,7 +35,7 @@ import { ChatMessageResponseDto } from './dto/chat-message-response.dto';
 import { AgentStreamEventDto } from './dto/agent-stream-event.dto';
 import { GetSessionsQueryDto } from './dto/get-sessions-query.dto';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
-import { GENUI_HTML } from './constants/agent-instructions.constant';
+import { GENUI_HTML } from './constants/gen-ui-spec.constant';
 
 @ApiTags('Admin Agent')
 @ApiBearerAuth()
@@ -52,7 +52,7 @@ export class AdminAgentController {
     summary: 'Get chat sessions for the authenticated user',
     summaryHe: 'שולף את סשני הצ\'אט של המשתמש המחובר',
     toolIcon: 'ph-chat-centered-text',
-    agentInstruction: GENUI_HTML(
+    genUiSpec: GENUI_HTML(
       'Render a compact chat sessions list. Show each session title, id, createdAt, and updatedAt. Sort visually by updatedAt when possible and make the session id easy to copy or reference.',
     ),
     description:
@@ -81,7 +81,7 @@ export class AdminAgentController {
     summary: 'Get session message history',
     summaryHe: 'שולף את היסטוריית ההודעות של סשן הצ\'אט (מזהה: ${id})',
     toolIcon: 'ph-chats',
-    agentInstruction: GENUI_HTML(
+    genUiSpec: GENUI_HTML(
       'Render a chat transcript timeline. Group messages by role, show user prompts and assistant replies clearly, include createdAt timestamps, and keep long message content readable with wrapping.',
     ),
     description:
@@ -106,7 +106,7 @@ export class AdminAgentController {
     summary: 'Create a new chat session',
     summaryHe: 'מייצר סשן שיחת צ\'אט חדש',
     toolIcon: 'ph-plus-circle',
-    agentInstruction: GENUI_HTML(
+    genUiSpec: GENUI_HTML(
       'Render a small new-session confirmation card. Show the new session id, title, createdAt, and updatedAt. Keep the output concise.',
     ),
     description: 'Creates a new empty chat session owned by the authenticated user.',
@@ -126,7 +126,7 @@ export class AdminAgentController {
     summary: 'Delete chat session',
     summaryHe: 'מוחק לצמיתות את סשן הצ\'אט (מזהה: ${id})',
     toolIcon: 'ph-trash',
-    agentInstruction:
+    genUiSpec:
       'After this tool succeeds, do not invent response data. Tell the user that the chat session was permanently deleted and mention the requested session id.',
     description:
       'Permanently deletes a session owned by the authenticated user. ' +

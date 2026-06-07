@@ -38,7 +38,7 @@ This implementation should follow the project style:
 - Use DTOs for request and response shapes.
 - Use explicit supported metrics instead of dynamic SQL.
 - Use Swagger metadata for every agent-facing endpoint.
-- Keep `agentInstruction` in the agent instructions constants area when it is shared or large.
+- Keep `genUiSpec` in the gen-ui-spec constants area when it is shared or large.
 - Add tests around validation and metric selection before expanding the metric catalog.
 - Avoid frontend work unless a real frontend analytics page is explicitly requested.
 
@@ -117,7 +117,7 @@ Rules:
 ```ts
 type AnalyticsQueryResponse = {
   title: string;
-  chartType: 'bar' | 'line' | 'pie';
+  chartType: "bar" | "line" | "pie";
   xAxisLabel?: string;
   yAxisLabel?: string;
   series: Array<{
@@ -150,10 +150,10 @@ Each catalog item should define:
 
 Suggested initial catalog:
 
-| Metric Enum | Meaning                     | Chart Type | Allowed Grouping              | Notes                            |
-| ----------- | --------------------------- | ---------- | ----------------------------- | -------------------------------- |
-| `1`         | `users_by_role`             | `pie`      | `role`                        | No date range required initially |
-| `2`         | `user_signups_over_time`    | `line`     | `day`, `week`, `month`        | Uses user creation date          |
+| Metric Enum | Meaning                     | Chart Type | Allowed Grouping               | Notes                            |
+| ----------- | --------------------------- | ---------- | ------------------------------ | -------------------------------- |
+| `1`         | `users_by_role`             | `pie`      | `role`                         | No date range required initially |
+| `2`         | `user_signups_over_time`    | `line`     | `day`, `week`, `month`         | Uses user creation date          |
 | `3`         | `active_sessions_over_time` | `bar`      | `hour`, `day`, `week`, `month` | Uses chat/session timestamps     |
 
 ## GenUI Instruction
@@ -295,7 +295,7 @@ Controller requirements:
 - Use `@ApiOperation({...} as CustomApiOperationOptions)`.
 - Include `summaryHe`.
 - Include `toolIcon`.
-- Include `agentInstruction`.
+- Include `genUiSpec`.
 - Add request and response decorators.
 - Keep the controller thin.
 
@@ -491,9 +491,9 @@ Owner: `backend/src/modules/analytics/analytics.controller.ts` and `backend/src/
 - [x] Add `POST /analytics/query`.
 - [x] Keep the controller thin.
 - [x] Add complete Swagger metadata.
-- [x] Add `summaryHe`, `toolIcon`, and `agentInstruction`.
+- [x] Add `summaryHe`, `toolIcon`, and `genUiSpec`.
 
-### Agent 4 - Agent Instructions / GenUI
+### Agent 4 - gen-ui-spec / GenUI
 
 Owner: `backend/src/modules/admin-agent/constants/agent-instructions.constant.ts`
 

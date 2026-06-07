@@ -8,7 +8,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { GENUI_HTML } from '../admin-agent/constants/agent-instructions.constant';
+import { GENUI_HTML } from '../admin-agent/constants/gen-ui-spec.constant';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { WeatherQueryDto } from './dto/weather-query.dto';
@@ -18,7 +18,7 @@ import { WeatherService } from './weather.service';
 @ApiBearerAuth()
 @Controller('weather')
 export class WeatherController {
-  constructor(private readonly weatherService: WeatherService) {}
+  constructor(private readonly weatherService: WeatherService) { }
 
   @Get('current')
   @UseGuards(JwtAuthGuard)
@@ -27,9 +27,9 @@ export class WeatherController {
     summaryHe: 'בודק את מזג האוויר הנוכחי במיקום או בעיר מסוימת בעולם',
     toolIcon: 'ph-cloud-sun',
     description: 'Queries an external weather service to retrieve dynamic real-time conditions.',
-    agentInstruction: GENUI_HTML(
+    genUiSpec: GENUI_HTML(
       'ALWAYS render a weather card. Render a weather card with emoji and temperature. ' +
-        'Regardless of how the user asked - always return the HTML component, never plain text.',
+      'Regardless of how the user asked - always return the HTML component, never plain text.',
     ),
   } as CustomApiOperationOptions)
   @ApiQuery({
@@ -54,7 +54,7 @@ export class WeatherController {
     summaryHe: 'בודק את תחזית מזג האוויר ל-5 הימים הקרובים',
     toolIcon: 'ph-calendar-days',
     description: 'Retrieves a five-day forecast metrics grid for a specific city.',
-    agentInstruction: GENUI_HTML(
+    genUiSpec: GENUI_HTML(
       `Render a gorgeous 5-day forecast container.
 Requirements:
 1. Header: Render the city name prominently with a small calendar icon.

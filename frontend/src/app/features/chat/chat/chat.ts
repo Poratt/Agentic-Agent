@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,6 +19,9 @@ import { UsersStore } from '../../../core/store/users.store';
 	styleUrl: './chat.css',
 })
 export class Chat implements OnInit, OnDestroy {
+	@ViewChild('promptTextarea', { static: true })
+	private promptTextarea?: ElementRef<HTMLTextAreaElement>;
+
 	private chatService = inject(ChatService);
 	protected chatStore = inject(ChatStore);
 	protected userStore = inject(UsersStore);
@@ -42,6 +45,11 @@ export class Chat implements OnInit, OnDestroy {
 	private routeSub?: Subscription;
 
 	ngOnInit() {
+		this.promptTextarea?.nativeElement.focus();
+		(window as any).agentPrompt = (prompt: string) => {
+			this.chatForm.patchValue({ prompt });
+			this.sendMessage();
+		};
 		this.userStore.loadCurrentUser();
 
 		this.routeSub = this.route.queryParams.subscribe((params) => {

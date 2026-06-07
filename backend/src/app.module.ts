@@ -5,6 +5,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { AdminAgentModule } from './modules/admin-agent/admin-agent.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { CurrencyModule } from './modules/currency/currency.module';
 import { SystemModule } from './modules/system/system.module';
 import { WeatherModule } from './modules/weather/weather.module';
 
@@ -29,6 +30,7 @@ import { WeatherModule } from './modules/weather/weather.module';
     UsersModule,
     AdminAgentModule,
     AnalyticsModule,
+    CurrencyModule,
     SystemModule,
     WeatherModule,
   ],
