@@ -13,33 +13,52 @@ export class AiFormat implements OnChanges {
   private sanitizer = inject(DomSanitizer);
   private animatedBlockSignatures = new Set<string>();
 
+  private skeletonVisible = false;
 
   ngOnChanges() {
     const raw = this.aiFormat() ?? '';
-    console.log('aiFormat raw:', raw.substring(0, 100));
 
-    const componentMatch = raw.match(/```component\s*([\s\S]*?)```/);
-    console.log('componentMatch:', !!componentMatch);
-    if (componentMatch) {
-      const html = componentMatch[1].trim();
-      // bypass sanitizer לבלוק component בלבד
-      const trusted = this.sanitizer.bypassSecurityTrustHtml(html);
+    const closedMatch = raw.match(/```component\s*([\s\S]*?)```/);
+    if (closedMatch) {
+      this.skeletonVisible = false;
+      const html = closedMatch[1].trim();
       this.el.nativeElement.innerHTML = '';
       const div = this.renderer.createElement('div');
       this.el.nativeElement.appendChild(div);
       div.innerHTML = html;
       return;
     }
+
+    const openMatch = raw.match(/```component/) || raw.match(/```c/) || raw.match(/```\s*$/); if (openMatch) {
+      if (!this.skeletonVisible) {  // <-- רק פעם אחת!
+        this.skeletonVisible = true;
+
+        if (!document.getElementById('skeleton-pulse-style')) {
+          const style = document.createElement('style');
+          style.id = 'skeleton-pulse-style';
+          style.textContent = `
+          @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.15; }
+          }
+        `;
+          document.head.appendChild(style);
+        }
+
+        this.el.nativeElement.innerHTML = `
+        <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-6);">
+          <div style="height:20px;background:var(--color-border);border-radius:4px;margin-bottom:12px;animation:pulse 1.5s ease-in-out infinite;"></div>
+          <div style="height:40px;background:var(--color-border);border-radius:4px;animation:pulse 1.5s ease-in-out infinite 0.3s;"></div>
+        </div>`;
+      }
+      return;
+    }
+
+    this.skeletonVisible = false;
     const parsedHtml = this.parse(raw);
-
     const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, parsedHtml) || '';
-
     this.updateDomEfficiently(sanitizedHtml);
-
     this.markNewCompletedBlocks(raw);
-
-
-
   }
 
   private updateDomEfficiently(htmlContent: string): void {

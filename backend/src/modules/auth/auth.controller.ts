@@ -35,6 +35,7 @@ import { UserResultResponseDto } from '../users/dto/user-result-response.dto';
 import { LogoutResultResponseDto } from './dto/logout-result-response.dto';
 import { JwtPayloadResultResponseDto } from '../../core/dto/jwt-payload-result-response.dto';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
+import { GENUI_HTML } from '../admin-agent/constants/agent-instructions.constant';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -131,6 +132,8 @@ export class AuthController {
     summary: 'Logout and invalidate session',
     summaryHe: 'מבצע התנתקות ומבטל את סשן המשתמש',
     toolIcon: 'ph-sign-out',
+    agentInstruction:
+      'After successful logout, confirm that the user was logged out and the active session was invalidated. Keep the response short.',
     description:
       'Requires a valid access token. Clears the stored refresh token hash and removes auth cookies from the response.',
   } as CustomApiOperationOptions)
@@ -157,6 +160,9 @@ export class AuthController {
     summary: 'Get current authenticated user payload',
     summaryHe: 'שולף את פרטי המשתמש המחובר מתוך הטוקן',
     toolIcon: 'ph-user-circle',
+    agentInstruction: GENUI_HTML(
+      'Render a compact authenticated-user card from the JWT payload. Show sub, email, role, issued-at, and expiration. Make clear this is token payload data, not a full database profile.',
+    ),
     description:
       'Reads req.user as populated by JwtAuthGuard. No database query is made. ' +
       'Role is numeric: 1 = Admin, 2 = User.',

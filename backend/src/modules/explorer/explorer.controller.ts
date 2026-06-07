@@ -28,6 +28,12 @@ export class ExplorerController {
     summaryHe: 'שולף את מצב המערכת הכללי ומדדי הפעילות',
     toolIcon: 'ph-gauge',
     description: 'Returns activity metrics and current runtime status parameters.',
+    agentInstruction: GENUI_HTML(
+      `Render a system status dashboard with:
+1. Metric cards row: total users, active sessions, Swagger status (success=green, warning=orange).
+2. Below the cards, render an SVG bar chart (width:100%, height:120px) showing sessions vs users as colored bars with labels.
+Use only inline SVG — no external libraries. Keep bars proportional to the values.`
+    ),
   } as CustomApiOperationOptions)
   @ApiOkResponse({
     description: 'System status metrics payload retrieved successfully.',
@@ -45,7 +51,7 @@ export class ExplorerController {
     summaryHe: 'בודק את מזג האוויר הנוכחי במיקום או עיר מסוימת בעולם',
     toolIcon: 'ph-cloud-sun',
     description: 'Queries an external weather service to retrieve dynamic real-time conditions.',
-    agentInstruction: GENUI_HTML('Render a weather card with emoji and temperature.'),
+    agentInstruction: GENUI_HTML('ALWAYS render a weather card. Render a weather card with emoji and temperature. Regardless of how the user asked — always return the HTML component, never plain text.'),
   } as CustomApiOperationOptions)
   @ApiOkResponse({
     description: 'Weather data retrieved successfully.',

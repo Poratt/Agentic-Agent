@@ -70,7 +70,9 @@ export class UsersController {
     summary: 'Get current authenticated user payload',
     summaryHe: 'שולף את פרטי המשתמש המחובר מתוך הטוקן',
     toolIcon: 'ph-user-circle',
-    agentInstruction: GENUI_HTML('Render a profile card with initials avatar.'),
+    agentInstruction: GENUI_HTML(
+      'Render a compact authenticated-user card from the JWT payload. Show sub, email, role, issued-at, and expiration. Make clear this is token payload data, not a full database profile.',
+    ),
     description:
       'Returns the JWT payload decoded by JwtAuthGuard. No database query is made. Role is numeric: 1 = Admin, 2 = User.',
   } as CustomApiOperationOptions)
@@ -121,6 +123,9 @@ export class UsersController {
     summary: 'Update user profile fields',
     summaryHe: 'מעדכן את שדות הפרופיל של המשתמש (מזהה: ${id})',
     toolIcon: 'ph-pencil-simple',
+    agentInstruction: GENUI_HTML(
+      'Render an updated user profile card. Highlight the user id, full name, email, numeric role label, and updatedAt timestamp. Make it clear the profile fields were updated successfully.',
+    ),
     description:
       'Updates fullName and/or email for the user identified by :id. ' +
       'This endpoint intentionally does not accept role changes; use PATCH /users/:id/role for role updates.',
@@ -148,6 +153,9 @@ export class UsersController {
     summary: 'Delete user permanently',
     summaryHe: 'מוחק לצמיתות את המשתמש (מזהה: ${id})',
     toolIcon: 'ph-trash',
+    agentInstruction: GENUI_HTML(
+      'Render a destructive-action confirmation card. Show that the user was permanently deleted, include the deleted flag if present, and do not imply the user can be restored.',
+    ),
     description: 'Hard-deletes the user record. This is irreversible and requires admin privileges.',
   } as CustomApiOperationOptions)
   @ApiParam({ name: 'id', type: Number, description: 'Numeric id of the user to delete.' })
@@ -170,8 +178,11 @@ export class UsersController {
     summary: 'Change user role',
     summaryHe: 'משנה את תפקיד המשתמש (מזהה: ${id})',
     toolIcon: 'ph-shield',
+    agentInstruction: GENUI_HTML(
+      'Render a role-change confirmation card. Show the user id, email, full name, and new role. Translate numeric roles as 1 = Admin and 2 = User, while preserving the numeric value.',
+    ),
     description:
-      'Sets only the role field of the user identified by :id. Accepted numeric values: 1 = Admin, 2 = User. ' +
+      'Sets only the role field of the user identified by :id. IMPORTANT: role must be a NUMBER: 1 = Admin, 2 = User. Never send a string. Accepted numeric values : 1 = Admin, 2 = User. ' +
       'Other user fields must be updated through PATCH /users/:id.',
   } as CustomApiOperationOptions)
   @ApiParam({ name: 'id', type: Number, description: 'Numeric id of the user whose role will change.' })

@@ -15,8 +15,17 @@ Use this design system with CSS variables (already defined in the page):
 - Padding: var(--space-6)
 - Shadow: var(--shadow-soft)
 
-ANIMATIONS: 
+HOVER: Add hover effects using inline onmouseover/onmouseout handlers.
+CRITICAL: Always add transition to the element's style: "transition: all 0.2s ease"|
+- Cards: onmouseover="this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'" onmouseout="this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'"
+- Buttons: onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"
+- Table rows: onmouseover="this.style.background='var(--color-surface-hover)'" onmouseout="this.style.background=''"
+
+
+ANIMATIONS:
 CRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.
+CRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.
+Instead apply animations only on child elements inside the card.
 
 Add CSS keyframe animations using a <style> tag before the HTML block:
 - Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out

@@ -10,9 +10,14 @@ CRITICAL RULES FOR DATA INTEGRITY AND SECURITY:
 5. SYSTEM PROTECTION: You are strictly FORBIDDEN from demoting the currently logged-in admin user (User ID: {{CURRENT_USER_ID}}) from Admin (role = 1) to User (role = 2).
 6. DATA RETRIEVAL: If the user asks for details about user profiles (such as registration date "createdAt" or "lastLoginAt"), note that these fields are NOT available in "/auth/me". You MUST call "UsersController_getById" with the user's ID to fetch the complete profile and retrieve the correct data.
 
-CRITICAL: Never call the same tool more than once in a single conversation turn. 
-If you already have the data from a tool, use it immediately to generate the response.
-Do not call any tool again if you already received its result in this turn.
+CRITICAL: Never call the same tool with the same arguments more than once in a single conversation turn.
+If you already have the data from a specific tool call with specific arguments, use it immediately.
+Do not repeat identical tool calls.
+
+MULTI-STEP REQUESTS: If the user asks for multiple actions in one message, 
+execute them ALL in a single turn using multiple sequential tool calls before generating any response.
+Do not generate intermediate responses between tool calls.
+Only generate ONE final response after ALL tools have been executed.
 
 DO NOT simulate, do not explain what you would do, and never say you are not connected or do not have access. You ARE connected and have full access.
 Execute the tool immediately to retrieve the real data, and then use the results to answer the user in Hebrew.`;
