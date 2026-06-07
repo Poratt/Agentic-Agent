@@ -191,7 +191,7 @@
     },
     "/auth/me": {
       "get": {
-        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a compact authenticated-user card from the JWT payload. Show sub, email, role, issued-at, and expiration. Make clear this is token payload data, not a full database profile.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"|\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\" onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a compact authenticated-user card from the JWT payload. Show sub, email, role, issued-at, and expiration. Make clear this is token payload data, not a full database profile.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0->1, translateY 12px->0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8->1\n\nNo explanations. No plain text.",
         "description": "Reads req.user as populated by JwtAuthGuard. No database query is made. Role is numeric: 1 = Admin, 2 = User.",
         "operationId": "AuthController_me",
         "parameters": [],
@@ -237,7 +237,7 @@
     },
     "/users": {
       "get": {
-        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a styled users table with role badges.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"|\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\" onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a styled users table with role badges.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0->1, translateY 12px->0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8->1\n\nNo explanations. No plain text.",
         "description": "Returns every user in the system with public fields only: id, email, fullName, numeric role, createdAt, updatedAt, lastLoginAt. Passwords and refresh token hashes are never returned.",
         "operationId": "UsersController_list",
         "parameters": [],
@@ -274,7 +274,7 @@
     },
     "/users/me": {
       "get": {
-        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a compact authenticated-user card from the JWT payload. Show sub, email, role, issued-at, and expiration. Make clear this is token payload data, not a full database profile.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"|\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\" onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a compact authenticated-user card from the JWT payload. Show sub, email, role, issued-at, and expiration. Make clear this is token payload data, not a full database profile.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0->1, translateY 12px->0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8->1\n\nNo explanations. No plain text.",
         "description": "Returns the JWT payload decoded by JwtAuthGuard. No database query is made. Role is numeric: 1 = Admin, 2 = User.",
         "operationId": "UsersController_me",
         "parameters": [],
@@ -311,7 +311,7 @@
     },
     "/users/{id}": {
       "get": {
-        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a profile card with initials avatar.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"|\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\" onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a profile card with initials avatar.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0->1, translateY 12px->0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8->1\n\nNo explanations. No plain text.",
         "description": "Fetches one user by numeric id with public fields only. Use GET /users first to discover valid IDs.",
         "operationId": "UsersController_getById",
         "parameters": [
@@ -359,7 +359,7 @@
         "toolIcon": "ph-user"
       },
       "patch": {
-        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender an updated user profile card. Highlight the user id, full name, email, numeric role label, and updatedAt timestamp. Make it clear the profile fields were updated successfully.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"|\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\" onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender an updated user profile card. Highlight the user id, full name, email, numeric role label, and updatedAt timestamp. Make it clear the profile fields were updated successfully.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0->1, translateY 12px->0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8->1\n\nNo explanations. No plain text.",
         "description": "Updates fullName and/or email for the user identified by :id. This endpoint intentionally does not accept role changes; use PATCH /users/:id/role for role updates.",
         "operationId": "UsersController_update",
         "parameters": [
@@ -421,7 +421,7 @@
         "toolIcon": "ph-pencil-simple"
       },
       "delete": {
-        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a destructive-action confirmation card. Show that the user was permanently deleted, include the deleted flag if present, and do not imply the user can be restored.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"|\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\" onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a destructive-action confirmation card. Show that the user was permanently deleted, include the deleted flag if present, and do not imply the user can be restored.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0->1, translateY 12px->0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8->1\n\nNo explanations. No plain text.",
         "description": "Hard-deletes the user record. This is irreversible and requires admin privileges.",
         "operationId": "UsersController_delete",
         "parameters": [
@@ -474,7 +474,7 @@
     },
     "/users/{id}/role": {
       "patch": {
-        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a role-change confirmation card. Show the user id, email, full name, and new role. Translate numeric roles as 1 = Admin and 2 = User, while preserving the numeric value.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"|\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\" onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a role-change confirmation card. Show the user id, email, full name, and new role. Translate numeric roles as 1 = Admin and 2 = User, while preserving the numeric value.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0->1, translateY 12px->0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8->1\n\nNo explanations. No plain text.",
         "description": "Sets only the role field of the user identified by :id. IMPORTANT: role must be a NUMBER: 1 = Admin, 2 = User. Never send a string. Accepted numeric values : 1 = Admin, 2 = User. Other user fields must be updated through PATCH /users/:id.",
         "operationId": "UsersController_updateRole",
         "parameters": [
@@ -538,7 +538,7 @@
     },
     "/admin-agent/sessions": {
       "get": {
-        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a compact chat sessions list. Show each session title, id, createdAt, and updatedAt. Sort visually by updatedAt when possible and make the session id easy to copy or reference.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"|\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\" onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a compact chat sessions list. Show each session title, id, createdAt, and updatedAt. Sort visually by updatedAt when possible and make the session id easy to copy or reference.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0->1, translateY 12px->0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8->1\n\nNo explanations. No plain text.",
         "description": "Returns recent chat sessions owned by the authenticated user. Sessions from other users are never returned.",
         "operationId": "AdminAgentController_getSessions",
         "parameters": [
@@ -582,7 +582,7 @@
         "toolIcon": "ph-chat-centered-text"
       },
       "post": {
-        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a small new-session confirmation card. Show the new session id, title, createdAt, and updatedAt. Keep the output concise.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"|\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\" onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a small new-session confirmation card. Show the new session id, title, createdAt, and updatedAt. Keep the output concise.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0->1, translateY 12px->0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8->1\n\nNo explanations. No plain text.",
         "description": "Creates a new empty chat session owned by the authenticated user.",
         "operationId": "AdminAgentController_createSession",
         "parameters": [],
@@ -613,7 +613,7 @@
     },
     "/admin-agent/sessions/{id}/messages": {
       "get": {
-        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a chat transcript timeline. Group messages by role, show user prompts and assistant replies clearly, include createdAt timestamps, and keep long message content readable with wrapping.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"|\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\" onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a chat transcript timeline. Group messages by role, show user prompts and assistant replies clearly, include createdAt timestamps, and keep long message content readable with wrapping.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0->1, translateY 12px->0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8->1\n\nNo explanations. No plain text.",
         "description": "Returns user and assistant messages for a session owned by the authenticated user. Internal tool messages are filtered out for normal history display.",
         "operationId": "AdminAgentController_getSessionMessages",
         "parameters": [
@@ -737,11 +737,62 @@
         "toolIcon": "ph-robot"
       }
     },
-    "/explorer/status": {
+    "/analytics/query": {
+      "post": {
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender an analytics chart from the tool response.\nRules:\n1. Use only result.series values returned by the tool. Never invent values.\n2. Use result.chartType to choose the chart: 1=bar, 2=line, 3=pie.\n3. Render inline SVG only. Do not use external chart libraries.\n4. Use a fixed SVG viewBox such as \"0 0 500 260\" and normalize numeric values against maxValue.\n5. If result.series is empty or all values are 0, render a stable empty state that says \"No data available for the selected range\".\n6. Include a title, summary, and accessible aria-label.\n7. Use known CSS variables from the design system only: var(--color-surface), var(--color-text-primary), var(--color-text-secondary), var(--color-border), var(--color-primary), var(--radius-md), var(--font-main), var(--space-6), var(--shadow-soft).\nCHARTS: For pie/donut charts, avoid SVG arcs. \nUse CSS conic-gradient instead:\n<div style=\"width:160px;height:160px;border-radius:50%;\nbackground:conic-gradient(var(--color-primary) 0% 67%, var(--color-secondary) 67% 100%)\">\n</div>\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0->1, translateY 12px->0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8->1\n\nNo explanations. No plain text.",
+        "description": "Runs a supported analytics metric from the server-side catalog and returns chart-ready data.",
+        "operationId": "AnalyticsController_query",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Analytics query request. The metric must be one of the supported numeric enum values.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyticsQueryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Analytics query completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsQueryResultResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DTO validation failed or the selected metric/grouping is unsupported."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Run a safe analytics query",
+        "summaryHe": "מריץ שאילתת אנליטיקה בטוחה ומחזיר נתונים לגרף",
+        "tags": [
+          "analytics"
+        ],
+        "toolIcon": "ph-chart-line"
+      }
+    },
+    "/system/status": {
       "get": {
-        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a system status dashboard with:\n1. Metric cards row: total users, active sessions, Swagger status (success=green, warning=orange).\n2. Below the cards, render an SVG bar chart (width:100%, height:120px) showing sessions vs users as colored bars with labels.\nUse only inline SVG — no external libraries. Keep bars proportional to the values.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"|\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\" onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a system status dashboard with:\n1. Metric cards row: total users, active sessions, Swagger status (success=green, warning=orange).\n2. Below the cards, render an SVG bar chart (width:100%, height:120px) showing sessions vs users as colored bars.\nUse only inline SVG - no external libraries. Keep bars proportional to the values.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0->1, translateY 12px->0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8->1\n\nNo explanations. No plain text.",
         "description": "Returns activity metrics and current runtime status parameters.",
-        "operationId": "ExplorerController_getStatus",
+        "operationId": "SystemController_getStatus",
         "parameters": [],
         "responses": {
           "200": {
@@ -759,19 +810,19 @@
             "bearer": []
           }
         ],
-        "summary": "Get Explorer module status and system metrics",
+        "summary": "Get system status and metrics",
         "summaryHe": "שולף את מצב המערכת הכללי ומדדי הפעילות",
         "tags": [
-          "explorer"
+          "system"
         ],
         "toolIcon": "ph-gauge"
       }
     },
-    "/explorer/weather": {
+    "/weather/current": {
       "get": {
-        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nALWAYS render a weather card. Render a weather card with emoji and temperature. Regardless of how the user asked — always return the HTML component, never plain text.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"|\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\" onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8→1\n\nNo explanations. No plain text.",
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nALWAYS render a weather card. Render a weather card with emoji and temperature. Regardless of how the user asked - always return the HTML component, never plain text.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0->1, translateY 12px->0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8->1\n\nNo explanations. No plain text.",
         "description": "Queries an external weather service to retrieve dynamic real-time conditions.",
-        "operationId": "ExplorerController_getWeather",
+        "operationId": "WeatherController_getWeather",
         "parameters": [
           {
             "name": "city",
@@ -801,11 +852,52 @@
           }
         ],
         "summary": "Get current weather for a location",
-        "summaryHe": "בודק את מזג האוויר הנוכחי במיקום או עיר מסוימת בעולם",
+        "summaryHe": "בודק את מזג האוויר הנוכחי במיקום או בעיר מסוימת בעולם",
         "tags": [
-          "explorer"
+          "weather"
         ],
         "toolIcon": "ph-cloud-sun"
+      }
+    },
+    "/weather/forecast": {
+      "get": {
+        "agentInstruction": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<div style=\"...\">...</div>\n```\nRender a gorgeous 5-day forecast container.\nRequirements:\n1. Header: Render the city name prominently with a small calendar icon.\n2. Grid Layout: Display 5 cards horizontally on desktop (flexbox or grid with 5 columns) and stacked on mobile.\n3. Card Details: Each of the 5 cards represents a day and MUST display:\n   - The Day name (e.g. \"יום ראשון\", \"יום שני\") in bold.\n   - A large weather emoji centered (☀️, 🌧️, etc.) with transition scale hover effect.\n   - Temperature range: Max temp in red/orange, Min temp in light blue/secondary text.\n   - A small humidity line: \"לחות: X%\".\n4. Colors & Fonts: Use var(--color-primary), var(--color-surface), and var(--color-text-primary).\n5. Hover Effects: All 5 cards must raise up slightly and change border colors on mouseover.\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-6)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects.\nInstead apply animations only on child elements inside the card.\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0->1, translateY 12px->0, duration 400ms ease-out\n- Stagger each child element with animation-delay (0ms, 80ms, 160ms, 240ms...)\n- Numbers/temperatures: count-up effect using CSS or just animate scale 0.8->1\n\nNo explanations. No plain text.",
+        "description": "Retrieves a five-day forecast metrics grid for a specific city.",
+        "operationId": "WeatherController_getForecast",
+        "parameters": [
+          {
+            "name": "city",
+            "required": true,
+            "in": "query",
+            "description": "The city or location to check the weather for (e.g. Tel Aviv, London).",
+            "schema": {
+              "example": "Tel Aviv",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "5-day weather forecast retrieved successfully."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get 5-day weather forecast",
+        "summaryHe": "בודק את תחזית מזג האוויר ל-5 הימים הקרובים",
+        "tags": [
+          "weather"
+        ],
+        "toolIcon": "ph-calendar-days"
       }
     }
   },
@@ -1315,6 +1407,187 @@
         },
         "required": [
           "prompt"
+        ]
+      },
+      "AnalyticsMetric": {
+        "type": "number",
+        "enum": [
+          1,
+          2,
+          3
+        ],
+        "description": "Supported analytics metric to run. 1 = users by role, 2 = user signups over time, 3 = active sessions over time."
+      },
+      "AnalyticsDateRangeDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "Inclusive start date for the analytics query.",
+            "example": "2026-06-01"
+          },
+          "to": {
+            "type": "string",
+            "description": "Inclusive end date for the analytics query.",
+            "example": "2026-06-30"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ]
+      },
+      "AnalyticsGroupBy": {
+        "type": "number",
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "description": "Optional grouping. Must be supported by the selected metric."
+      },
+      "AnalyticsQueryDto": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "description": "Supported analytics metric to run. 1 = users by role, 2 = user signups over time, 3 = active sessions over time.",
+            "example": 2,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnalyticsMetric"
+              }
+            ]
+          },
+          "range": {
+            "description": "Optional date range. If omitted, the service applies the metric default.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnalyticsDateRangeDto"
+              }
+            ]
+          },
+          "groupBy": {
+            "description": "Optional grouping. Must be supported by the selected metric.",
+            "example": 2,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnalyticsGroupBy"
+              }
+            ]
+          }
+        },
+        "required": [
+          "metric"
+        ]
+      },
+      "AnalyticsChartType": {
+        "type": "number",
+        "enum": [
+          1,
+          2,
+          3
+        ],
+        "description": "Recommended chart type. 1 = bar, 2 = line, 3 = pie."
+      },
+      "AnalyticsSeriesPointDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Display label for this data point.",
+            "example": "2026-06-01"
+          },
+          "value": {
+            "type": "number",
+            "description": "Numeric value for this data point.",
+            "example": 12
+          },
+          "date": {
+            "type": "string",
+            "description": "ISO date bucket represented by this point, when the metric is time based.",
+            "example": "2026-06-01"
+          }
+        },
+        "required": [
+          "label",
+          "value"
+        ]
+      },
+      "AnalyticsQueryResponseDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Human-readable chart title.",
+            "example": "User signups over time"
+          },
+          "chartType": {
+            "description": "Recommended chart type. 1 = bar, 2 = line, 3 = pie.",
+            "example": 2,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnalyticsChartType"
+              }
+            ]
+          },
+          "xAxisLabel": {
+            "type": "string",
+            "description": "Optional x-axis label.",
+            "example": "Date"
+          },
+          "yAxisLabel": {
+            "type": "string",
+            "description": "Optional y-axis label.",
+            "example": "Users"
+          },
+          "series": {
+            "description": "Chart-ready data series.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsSeriesPointDto"
+            }
+          },
+          "summary": {
+            "type": "string",
+            "description": "Short text summary of the analytics result.",
+            "example": "12 users signed up in the selected range."
+          }
+        },
+        "required": [
+          "title",
+          "chartType",
+          "series",
+          "summary"
+        ]
+      },
+      "AnalyticsQueryResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request succeeded.",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable result message.",
+            "example": "Analytics query completed successfully"
+          },
+          "result": {
+            "description": "Analytics query result payload.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnalyticsQueryResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "result"
         ]
       }
     }

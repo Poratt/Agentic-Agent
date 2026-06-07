@@ -4,7 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { AdminAgentModule } from './modules/admin-agent/admin-agent.module';
-import { ExplorerModule } from './modules/explorer/explorer.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { SystemModule } from './modules/system/system.module';
+import { WeatherModule } from './modules/weather/weather.module';
 
 @Module({
   imports: [
@@ -26,7 +28,9 @@ import { ExplorerModule } from './modules/explorer/explorer.module';
     AuthModule,
     UsersModule,
     AdminAgentModule,
-    ExplorerModule,
+    AnalyticsModule,
+    SystemModule,
+    WeatherModule,
   ],
 })
 export class AppModule {}

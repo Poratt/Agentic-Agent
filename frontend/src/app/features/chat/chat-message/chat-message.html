@@ -13,14 +13,9 @@
     </div> -->
 
     @if (isThinkingVisible()) {
-        <details
-            class="thinking-process-box"
-            [class.collapsing-out]="rowState() === 'transitioning'"
-            [open]="true"
-            (transitionend)="onThinkingTransitionEnd($event)"
-        >
+        <details class="thinking-process-box">
             <summary class="thinking-summary">
-                <span class="ph summary-icon ph-brain" [class.thinking]="rowState() === 'thinking'"></span>
+                <span class="ph ph-toolbox summary-icon" [class.thinking]="rowState() === 'thinking'"></span>
                 <span class="summary-label">פעולות שבוצעו...</span>
                 <span class="ph ph-caret-down expand-icon"></span>
             </summary>
@@ -36,6 +31,14 @@
                 }
             </ul>
         </details>
+    }
+
+    @if (showPreparingLoader()) {
+        <div class="response-loader" aria-label="טוען תגובה">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
     }
 
     <div class="message-body" [aiFormat]="contentForDisplay()"></div>

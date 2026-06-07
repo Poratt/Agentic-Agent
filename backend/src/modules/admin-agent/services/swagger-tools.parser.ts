@@ -1,3 +1,5 @@
+// FILE: src/modules/admin-agent/services/swagger-tools.parser.ts
+
 import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs';
 
@@ -16,8 +18,18 @@ export interface LlmToolSchema {
 export class SwaggerToolsParser {
   private readonly logger = new Logger(SwaggerToolsParser.name);
   private swaggerTools: LlmToolSchema[] = [];
-  // private swaggerEndpointsMap = new Map<string, { path: string; method: string }>();
-  private swaggerEndpointsMap = new Map<string, { path: string; method: string; summary?: string; toolIcon?: string, agentInstruction?: string }>();
+
+  private swaggerEndpointsMap = new Map<
+    string,
+    {
+      path: string;
+      method: string;
+      summary?: string;
+      toolIcon?: string;
+      agentInstruction?: string;
+    }
+  >();
+
   private swaggerSpecMtimeMs = 0;
 
   constructor() {
@@ -96,7 +108,6 @@ export class SwaggerToolsParser {
       }
 
       if (visited.has(schemaName)) {
-        // מונע לולאה אינסופית ומחזיר אובייקט ריק בטוח ל-LLM
         return { type: 'object', properties: {}, additionalProperties: false };
       }
 
@@ -113,7 +124,6 @@ export class SwaggerToolsParser {
 
     const dereferenced: any = {};
     for (const [key, value] of Object.entries(schema)) {
-      // תיקון: שליחת עותק חדש של ה-Set לכל ענף באובייקט
       dereferenced[key] = this.dereference(value, components, new Set(visited));
     }
 
@@ -147,7 +157,6 @@ export class SwaggerToolsParser {
 
     const cleaned: any = { ...schema };
 
-    // אכיפת additionalProperties: false באופן רקורסיבי לאובייקטים מקוננים (בשביל מודלים קפדניים)
     if (cleaned.type === 'object' && !('additionalProperties' in cleaned)) {
       cleaned.additionalProperties = false;
     }
@@ -158,7 +167,6 @@ export class SwaggerToolsParser {
       for (const [key, value] of Object.entries(cleaned.properties)) {
         if (this.hasRef(value)) {
           this.logger.warn(`Property "${key}" has unresolved $ref. Fallback to generic object.`);
-          // במקום למחוק לחלוטין, שמים פלסבו כדי שה-LLM ידע שיש פה שדה
           nextProperties[key] = { type: 'object', description: 'Generic object data', additionalProperties: false };
           continue;
         }
@@ -172,7 +180,6 @@ export class SwaggerToolsParser {
       cleaned.properties = nextProperties;
     }
 
-    // ניקוי מערכים וקומפוזיציות (allOf, anyOf, oneOf) כפי שעשית
     if (cleaned.items && typeof cleaned.items === 'object') {
       if (this.hasRef(cleaned.items)) {
         delete cleaned.items;
@@ -277,8 +284,22 @@ export class SwaggerToolsParser {
         return;
       }
 
+      const fileContent = fs.readFileSync(swaggerPath, 'utf8');
+      if (!fileContent.trim()) {
+        return;
+      }
+
+      let swagger;
+      try {
+        swagger = JSON.parse(fileContent);
+      } catch (e) {
+        this.logger.warn(
+          'Failed to parse swagger-spec.json (might be in the middle of being written). Keeping previous tools.'
+        );
+        return;
+      }
+
       this.swaggerSpecMtimeMs = fs.statSync(swaggerPath).mtimeMs;
-      const swagger = JSON.parse(fs.readFileSync(swaggerPath, 'utf8'));
       const tools: LlmToolSchema[] = [];
       const schemas = swagger.components?.schemas || {};
 
@@ -289,7 +310,6 @@ export class SwaggerToolsParser {
             continue;
           }
 
-          // שומרים גם את ה-summaryHe (או ה-summary הרגיל) בתוך המיפוי של ה-Endpoint
           this.swaggerEndpointsMap.set(op.operationId, {
             path,
             method,
@@ -305,7 +325,6 @@ export class SwaggerToolsParser {
             for (const param of op.parameters) {
               const resolvedParamSchema = this.dereference(param.schema, schemas);
 
-              // תיקון סדר ה-Spread: ה-resolvedParamSchema נפרס קודם, והגדרות הספציפיות דורסות אותו
               properties[param.name] = {
                 type: 'string',
                 ...resolvedParamSchema,

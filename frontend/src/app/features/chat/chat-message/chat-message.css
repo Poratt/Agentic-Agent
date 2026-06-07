@@ -75,6 +75,30 @@
 
 
 
+	.response-loader {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		width: fit-content;
+		padding: var(--space-2) 0;
+
+		span {
+			width: var(--space-2);
+			height: var(--space-2);
+			border-radius: var(--radius-sm);
+			background: var(--color-primary);
+			animation: responseLoaderPulse 900ms ease-in-out infinite;
+
+			&:nth-child(2) {
+				animation-delay: 150ms;
+			}
+
+			&:nth-child(3) {
+				animation-delay: 300ms;
+			}
+		}
+	}
+
 	.thinking-process-box {
 		margin: var(--space-2) 0 var(--space-4) 0;
 		background: rgba(255, 255, 255, 0.03);
@@ -91,14 +115,6 @@
 			opacity var(--transition-slow),
 			margin var(--transition-slow);
 		text-align: right;
-
-		&.collapsing-out {
-			max-height: 0;
-			opacity: 0;
-			margin-block: 0;
-			border-color: transparent;
-			pointer-events: none;
-		}
 
 		&[open] {
 			background: rgba(0, 212, 255, 0.02);
@@ -213,6 +229,25 @@
 	}
 }
 
+@keyframes cursorBlink {
+	50% {
+		opacity: 0;
+	}
+}
+
+@keyframes responseLoaderPulse {
+	0%,
+	100% {
+		opacity: 0.35;
+		transform: translateY(0);
+	}
+
+	50% {
+		opacity: 1;
+		transform: translateY(calc(var(--space-1) * -1));
+	}
+}
+
 
 @media (prefers-reduced-motion: reduce) {
 	.chat-message-row {
@@ -234,6 +269,12 @@
 					animation: none;
 					opacity: 1;
 				}
+			}
+		}
+
+		.response-loader {
+			span {
+				animation: none;
 			}
 		}
 	}

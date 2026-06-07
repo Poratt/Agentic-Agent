@@ -13,14 +13,13 @@ import { AiFormat } from '../../../core/directives/ai-format.directive';
 import { AutoScrollBottomDirective } from '../../../core/directives/auto-scroll-bottom.directive';
 
 export type ChatMessageStreamState = 'idle' | 'streaming' | 'completed' | 'errored';
-type ChatMessageRowState = 'idle' | 'thinking' | 'transitioning' | 'typing' | 'complete';
+type ChatMessageRowState = 'idle' | 'thinking' | 'typing' | 'complete';
 type ChatDisplayStep = {
 	icon: string;
 	message: string;
 	statusIcon?: string;
 };
 
-const THINKING_TRANSITION_FALLBACK_MS = 280;
 const MIN_VISIBLE_TICK_MS = 16;
 const TINY_FLUSH_QUEUE_LENGTH = 12;
 const BASE_CHARACTER_DELAY_MS = 18;
@@ -39,7 +38,6 @@ export class ChatMessage implements OnDestroy {
 
 	private queuedText = '';
 	private typeTimer?: ReturnType<typeof setTimeout>;
-	private transitionFallbackTimer?: ReturnType<typeof setTimeout>;
 	private lastCanonicalLength = 0;
 	private currentWordDelay = this.nextCharacterDelay();
 
@@ -71,11 +69,28 @@ export class ChatMessage implements OnDestroy {
 	});
 	hasSteps = computed(() => this.displaySteps().length > 0);
 	isThinkingVisible = computed(() => {
-		const state = this.rowState();
-		return this.isAssistant() && this.hasSteps() && state !== 'idle';
+		return this.isAssistant() && this.hasSteps();
+	});
+	hasActiveToolStep = computed(() => {
+		const steps = this.displaySteps();
+		const lastStep = steps[steps.length - 1];
+		return !!lastStep && !lastStep.statusIcon;
+	});
+	showPreparingLoader = computed(() => {
+		return (
+			this.isAssistant() &&
+			this.streamState() === 'streaming' &&
+			!this.hasQueuedText() &&
+			!this.displayedContent().trim() &&
+			!this.hasActiveToolStep()
+		);
+	});
+	isRenderingTemplate = computed(() => {
+		const content = this.displayedContent();
+		return /```component/.test(content) || /```c/.test(content) || /```\s*$/.test(content);
 	});
 	showCursor = computed(() => {
-		return this.rowState() === 'typing' && (this.streamState() !== 'completed' || this.hasQueuedText());
+		return this.isAssistant() && this.rowState() === 'typing' && this.hasQueuedText() && !this.isRenderingTemplate();
 	});
 	contentForDisplay = computed(() => {
 		return this.isActiveStream() ? this.displayedContent() : this.message().content;
@@ -97,7 +112,6 @@ export class ChatMessage implements OnDestroy {
 
 			if (state === 'errored' || content.length < this.lastCanonicalLength) {
 				this.stopTyping();
-				this.clearTransitionFallback();
 				this.queuedText = '';
 				this.hasQueuedText.set(false);
 				this.lastCanonicalLength = content.length;
@@ -119,15 +133,6 @@ export class ChatMessage implements OnDestroy {
 				this.hasQueuedText.set(true);
 			}
 
-			if (this.rowState() === 'thinking' && hasSteps && nextText.length > 0) {
-				this.startThinkingTransition();
-				return;
-			}
-
-			if (this.rowState() === 'transitioning') {
-				return;
-			}
-
 			if (this.queuedText) {
 				this.rowState.set('typing');
 				this.scheduleTyping();
@@ -136,25 +141,18 @@ export class ChatMessage implements OnDestroy {
 
 			if (state === 'completed') {
 				this.rowState.set('complete');
-			} else if (!hasSteps) {
-				this.rowState.set('typing');
+			} else {
+				this.rowState.set('thinking');
 			}
 		});
 	});
 
 	ngOnDestroy(): void {
 		this.stopTyping();
-		this.clearTransitionFallback();
-	}
-
-	onThinkingTransitionEnd(event: TransitionEvent): void {
-		if (event.propertyName !== 'opacity' && event.propertyName !== 'max-height') return;
-		this.finishThinkingTransition();
 	}
 
 	private resetLocalState(content: string): void {
 		this.stopTyping();
-		this.clearTransitionFallback();
 		this.queuedText = '';
 		this.hasQueuedText.set(false);
 		this.lastCanonicalLength = content.length;
@@ -163,39 +161,10 @@ export class ChatMessage implements OnDestroy {
 		this.rowState.set('idle');
 	}
 
-	private startThinkingTransition(): void {
-		if (this.rowState() === 'transitioning') return;
-
-		this.rowState.set('transitioning');
-		this.clearTransitionFallback();
-		this.transitionFallbackTimer = setTimeout(() => {
-			this.finishThinkingTransition();
-		}, THINKING_TRANSITION_FALLBACK_MS);
-	}
-
-	private finishThinkingTransition(): void {
-		if (this.rowState() !== 'transitioning') return;
-
-		this.clearTransitionFallback();
-		this.rowState.set(this.queuedText ? 'typing' : 'complete');
-		this.scheduleTyping();
-	}
-
-	private clearTransitionFallback(): void {
-		if (!this.transitionFallbackTimer) return;
-		clearTimeout(this.transitionFallbackTimer);
-		this.transitionFallbackTimer = undefined;
-	}
-
 	private scheduleTyping(): void {
 		if (this.typeTimer || !this.queuedText) return;
 
 		const tick = () => {
-			if (this.rowState() === 'transitioning') {
-				this.typeTimer = undefined;
-				return;
-			}
-
 			if (!this.queuedText) {
 				this.typeTimer = undefined;
 				this.hasQueuedText.set(false);
