@@ -1,6 +1,6 @@
 import { LlmModelGroupDto } from '../dto/llm-model-group.dto';
 
-export const LLM_STATIC_MODEL_GROUPS: LlmModelGroupDto[] = [
+const OPENROUTER_MODELS: LlmModelGroupDto[] = [
   {
     label: 'openrouter',
     items: [
@@ -21,28 +21,8 @@ export const LLM_STATIC_MODEL_GROUPS: LlmModelGroupDto[] = [
         label: 'kimi-k2.6',
       },
       {
-        value: 'qwen/qwen3-coder:free',
-        label: 'qwen3-coder',
-      },
-      {
-        value: 'qwen/qwen3-next-80b-a3b-instruct:free',
-        label: 'qwen3-next-80b-a3b-instruct',
-      },
-      {
-        value: 'meta-llama/llama-3.3-70b-instruct:free',
-        label: 'llama-3.3-70b-instruct',
-      },
-      {
-        value: 'deepseek/deepseek-v4-flash:free',
-        label: 'deepseek-v4-flash',
-      },
-      {
         value: 'z-ai/glm-4.5-air:free',
         label: 'glm-4.5-air',
-      },
-      {
-        value: 'minimax/minimax-m2.5:free',
-        label: 'minimax-m2.5',
       },
       {
         value: 'poolside/laguna-xs.2:free',
@@ -50,6 +30,9 @@ export const LLM_STATIC_MODEL_GROUPS: LlmModelGroupDto[] = [
       },
     ],
   },
+]
+
+const NVIDIA_MODELS: LlmModelGroupDto[] = [
   {
     label: 'nvidia',
     items: [
@@ -87,4 +70,13 @@ export const LLM_STATIC_MODEL_GROUPS: LlmModelGroupDto[] = [
       },
     ],
   },
+]
+
+
+
+
+export const LLM_STATIC_MODEL_GROUPS: LlmModelGroupDto[] = [
+  ...OPENROUTER_MODELS,
+  ...NVIDIA_MODELS,
+
 ];

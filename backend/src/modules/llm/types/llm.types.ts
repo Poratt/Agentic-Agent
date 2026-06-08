@@ -41,3 +41,17 @@ export type LlmRuntimeSelection = {
   provider: LlmProvider;
   model: string;
 };
+
+export type LlmModelCheckTarget = {
+  provider: LlmProvider;
+  name: string;
+  active: boolean;
+  sizeGb?: number;
+  family?: string;
+};
+
+export type LlmModelTestResult = {
+  name: string;
+  provider: LlmProvider;
+  available: boolean;
+};

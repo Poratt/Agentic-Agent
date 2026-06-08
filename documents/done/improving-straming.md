@@ -210,6 +210,6 @@ Start with the smallest slice that proves the architecture:
 - [x] Add local typewriter rendering only for the latest loading assistant message.
 - [x] Add flush mode and cursor.
 - [x] Coalesce auto-scroll frames.
-- [ ] Verify simple and long streams.
+- [x] Verify simple and long streams.
 
 After that works, add thinking-box transition coordination and block-level fade-in as separate follow-up slices.

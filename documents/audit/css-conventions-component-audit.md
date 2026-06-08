@@ -275,4 +275,3 @@ Start with the repeated session row pattern, because it appears in three visible
 - Update `all-sessions-dialog` rows.
 - Update `main-sidebar` nested session rows.
 - Build and visually verify hover, active, delete-confirmation, and ellipsis states.
-

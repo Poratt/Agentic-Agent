@@ -218,4 +218,12 @@ z-index: -1;
 
 - Use context7 when writing code that involves third-party library APIs
 
+### Architecture Diagram Maintenance
+
+Before finishing any backend/frontend architectural change, check whether `documents/architecture-diagram.md` needs an update.
+
+Update `documents/architecture-diagram.md` whenever a change affects system architecture, module boundaries, request flow, tool execution flow, GenUI rendering, LLM/model selection, database entities, or external provider integrations.
+
+If the change does not affect the architecture diagram, mention that explicitly in the final response.
+
 - **Sub-Agents for Scale:** For multi-step or complex tasks, spawn specialized sub-agents to parallelize work (e.g., one for backend DTO/Controller, one for frontend UI). The primary agent must review and integrate their diffs.

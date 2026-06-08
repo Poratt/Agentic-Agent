@@ -7,6 +7,8 @@ import { LlmModelGroupDto } from './dto/llm-model-group.dto';
 import { LlmProviderDto } from './dto/llm-provider.dto';
 import { LlmStatusDto } from './dto/llm-status.dto';
 import {
+  LlmModelCheckTarget,
+  LlmModelTestResult,
   LlmProvider,
   LlmRequest,
   LlmResponse,
@@ -114,14 +116,27 @@ export class LlmService implements OnModuleInit {
       ...LLM_STATIC_MODEL_GROUPS,
       {
         label: 'ollama',
-        items: ollamaModels.map((model) => {
-          return {
-            value: model.name,
-            label: model.name,
-          };
-        }),
+        items: ollamaModels
+          .filter((model) => {
+            const name = model.name.toLowerCase();
+            return !(
+              name.includes('embed') ||
+              name.includes('embedding') ||
+              name === 'all-minilm' ||
+              name.startsWith('nomic-embed') ||
+              name.startsWith('mxbai-embed')
+            );
+          })
+          .map((model) => {
+            return {
+              value: model.name,
+              label: model.name,
+            };
+          })
+          .sort((a, b) => a.label.localeCompare(b.label)),
       },
     ];
+
 
     return {
       success: true,
@@ -374,7 +389,7 @@ export class LlmService implements OnModuleInit {
     return 'Unknown error';
   }
 
-  async checkLlm(
+  async testLlm(
     provider: LlmProvider,
     model: string,
     prompt: string,
@@ -398,4 +413,85 @@ export class LlmService implements OnModuleInit {
       },
     };
   }
+
+  async testAllModels(): Promise<ServiceResultContainer<LlmModelTestResult[]>> {
+    const models = await this.getModelCheckTargets();
+
+    const promises = models.map(async (model) => {
+      try {
+        const check = await this.testLlm(
+          model.provider,
+          model.name,
+          'Hello! This is a connectivity test. Please respond with "OK"',
+          'You are a helpful assistant.'
+        );
+        return {
+          name: model.name,
+          provider: model.provider,
+          available: check.result.available,
+        };
+      } catch (e) {
+        return {
+          name: model.name,
+          provider: model.provider,
+          available: false,
+        };
+      }
+    });
+
+    const results = await Promise.all(promises);
+
+    return {
+      success: true,
+      message: 'All LLM models tested successfully.',
+      result: results,
+    };
+  }
+
+  private async getModelCheckTargets(): Promise<LlmModelCheckTarget[]> {
+    const models: LlmModelCheckTarget[] = [];
+
+    for (const provider of LLM_PROVIDERS) {
+      const config = this.getProviderConfig(provider);
+      if (!this.isProviderConfigured(config)) {
+        continue;
+      }
+
+      if (provider !== 'ollama') {
+        const staticGroup = LLM_STATIC_MODEL_GROUPS.find((group) => {
+          return group.label === provider;
+        });
+
+        staticGroup?.items.forEach((model) => {
+          models.push({
+            provider,
+            name: model.value,
+            active: provider === this.provider && model.value === this.model,
+          });
+        });
+
+        continue;
+      }
+      if (provider === 'ollama') {
+        const ollamaModels = await this.getSafeLocalOllamaModels();
+
+        ollamaModels.forEach((model) => {
+          models.push({
+            provider,
+            name: model.name,
+            active: provider === this.provider && model.name === this.model,
+            sizeGb: typeof model.size === 'number'
+              ? Number((model.size / (1024 * 1024 * 1024)).toFixed(2))
+              : undefined,
+            family: model.details?.family,
+          });
+        });
+
+        continue;
+      }
+    }
+
+    return models;
+  }
+
 }

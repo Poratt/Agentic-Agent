@@ -850,7 +850,8 @@
     "/llm/llm-test": {
       "get": {
         "description": "Sends a minimal health prompt to Selected LLM provider and returns whether the model responded.",
-        "operationId": "LlmController_checkLlm",
+        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nRender a gorgeous summary dashboard of tested LLM models.\n        - Include a header card with a summary statistic (e.g. \"X out of Y models active\") with ph-activity and pulsing dot.\n        - Render a clean grid of models. For each model show its full name, its provider badge, and its dynamic online status.\n        - Verified models: show a green active badge with the text 'תקין ופעיל' and a checkmark.\n        - Failed models: show a red badge with the text 'לא עונה (500)' and a warning circle.\n        \nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-2)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nLANGUAGE AND DIRECTION:\n- The application UI is Hebrew and RTL by default.\n- Use dir=\"rtl\" on Hebrew/root content containers.\n- Any English-only technical value, model id, provider name, email, URL, code, API path, currency code, date token, or mixed identifier MUST be wrapped in an element with dir=\"ltr\".\n- For long English identifiers, add style=\"direction:ltr;text-align:left;unicode-bidi:plaintext;overflow-wrap:anywhere;\" so text does not break visually inside RTL cards.\n- Never split English model ids, emails, URLs, or API paths across visual RTL order. Keep them readable left-to-right.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects, Instead apply animations only on child elements inside the card.\n- Duration: 150-300ms for micro, max 400ms for complex\n- Use transform/opacity only — never animate width/height/top/left  \n- Easing: ease-out for enter, ease-in for exit\n- Stagger list items: 30-50ms per item (not 80-160ms like now)\n- Exit animations: 60-70% of enter duration\n- Scale feedback on buttons: 0.95 on press, restore on release\n- Never block user input during animation\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 300ms ease-out\n- Stagger each child element: 40ms per item (0ms, 40ms, 80ms, 120ms...)\n- Numbers/temperatures: animate scale 0.8→1, duration 200ms ease-out\n\nNo explanations. No plain text.",
+        "operationId": "LlmController_testLlm",
         "parameters": [
           {
             "name": "provider",
@@ -901,12 +902,42 @@
             "bearer": []
           }
         ],
-        "summary": "Test if model available and working",
-        "summaryHe": "בודק שמודל ה-LLM הפעיל זמין ומחזיר תשובה",
+        "summary": "Test if single model available and working",
+        "summaryHe": "בודק שמודל LLM בודד פעיל וזמין",
         "tags": [
           "llm"
         ],
         "toolIcon": "ph-brain"
+      }
+    },
+    "/llm/test-all": {
+      "get": {
+        "description": "Runs parallel connectivity tests across all configured LLM models and aggregates their statuses.",
+        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nRender a gorgeous summary dashboard of tested LLM models.\n        - Include a header card with a summary statistic (e.g. \"X out of Y models active\") with ph-activity and pulsing dot.\n        - Render a clean grid of models. For each model show its full name, its provider badge, and its dynamic online status.\n        - Verified models: show a green active badge with the text 'תקין ופעיל' and a checkmark.\n        - Failed models: show a red badge with the text 'לא עונה (500)' and a warning circle.\n        \nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-2)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nLANGUAGE AND DIRECTION:\n- The application UI is Hebrew and RTL by default.\n- Use dir=\"rtl\" on Hebrew/root content containers.\n- Any English-only technical value, model id, provider name, email, URL, code, API path, currency code, date token, or mixed identifier MUST be wrapped in an element with dir=\"ltr\".\n- For long English identifiers, add style=\"direction:ltr;text-align:left;unicode-bidi:plaintext;overflow-wrap:anywhere;\" so text does not break visually inside RTL cards.\n- Never split English model ids, emails, URLs, or API paths across visual RTL order. Keep them readable left-to-right.\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects, Instead apply animations only on child elements inside the card.\n- Duration: 150-300ms for micro, max 400ms for complex\n- Use transform/opacity only — never animate width/height/top/left  \n- Easing: ease-out for enter, ease-in for exit\n- Stagger list items: 30-50ms per item (not 80-160ms like now)\n- Exit animations: 60-70% of enter duration\n- Scale feedback on buttons: 0.95 on press, restore on release\n- Never block user input during animation\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 300ms ease-out\n- Stagger each child element: 40ms per item (0ms, 40ms, 80ms, 120ms...)\n- Numbers/temperatures: animate scale 0.8→1, duration 200ms ease-out\n\nNo explanations. No plain text.",
+        "operationId": "LlmController_testAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "All LLM models tested successfully."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Test all configured LLM models in parallel",
+        "summaryHe": "בודק את כל מודלי ה-LLM המוגדרים במקביל ומחזיר סטטוס ריצה",
+        "tags": [
+          "llm"
+        ],
+        "toolIcon": "ph-cpu"
       }
     },
     "/analytics/query": {

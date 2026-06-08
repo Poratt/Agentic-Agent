@@ -253,7 +253,7 @@ npm.cmd test
 
 ## Current Notes
 
-- `documents/README.md` is a current system description based on the existing code.
+- `documents/done/README.md` is a current system description based on the existing code.
 - Some existing code files contain corrupted Hebrew encoding; this document does not copy those strings.
 - `ChatService` is not fully consistent with `ServiceResultContainer` across all requests.
 - `SwaggerToolsParser` depends on `swagger-spec.json` existing and on the correct working directory when the server starts.

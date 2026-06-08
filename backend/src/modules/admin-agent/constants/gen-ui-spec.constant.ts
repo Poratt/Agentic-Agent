@@ -187,4 +187,12 @@ export const GenUiSpec = {
         'Render a destructive confirmation card. Show deleted flag. Do not imply restore is possible.'
     ),
 
+    LLM_TEST_RESULTS: GENUI_HTML(
+        `Render a gorgeous summary dashboard of tested LLM models.
+        - Include a header card with a summary statistic (e.g. "X out of Y models active") with ph-activity and pulsing dot.
+        - Render a clean grid of models. For each model show its full name, its provider badge, and its dynamic online status.
+        - Verified models: show a green active badge with the text 'תקין ופעיל' and a checkmark.
+        - Failed models: show a red badge with the text 'לא עונה (500)' and a warning circle.
+        `
+    ),
 }

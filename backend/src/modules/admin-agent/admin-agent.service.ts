@@ -1,19 +1,28 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { LlmService } from '../llm/llm.service';
-import type { LlmProvider } from '../llm/types/llm.types';
 import { AgentSessionService } from './services/agent-session.service';
 import { AgentToolExecutorService } from './services/agent-tool-executor.service';
 import { ChatSession } from './entities/chat-session.entity';
 import { ChatMessage } from './entities/chat-message.entity';
 import { SYSTEM_CONTEXT } from './constants/system-context.constant';
 import { SwaggerToolsParser } from './services/swagger-tools.parser';
+import type { LlmProvider, LlmToolCall } from '../llm/types/llm.types';
 
 const MAX_ITERATIONS = 10;
+const PARALLEL_UNSAFE_TOOL_NAMES = new Set([
+  'LlmController_testLlm',
+  'LlmController_testAll',
+]);
 const STEP_ICONS = {
   tool: 'ph-gear',
   error: 'ph-warning-circle',
   success: 'ph-check-circle',
 } as const;
+
+type ToolCallResult = {
+  call: LlmToolCall;
+  resultData: string;
+};
 
 @Injectable()
 export class AdminAgentService implements OnModuleInit {
@@ -46,8 +55,11 @@ export class AdminAgentService implements OnModuleInit {
         const functionName = tool.function?.name;
         if (functionName) {
           const endpoint = this.swaggerToolsParser.getEndpoint(functionName);
-          // eslint-disable-next-line no-console
-          this.logger.log(`Tool Name: "${functionName.padEnd(fnWidth)}" |${endpoint?.genUiSpec ? 'HTML|' : '|'.padStart(5)} ${endpoint?.path}, ${endpoint?.method.toUpperCase()}`);
+          const uiSpecTag = endpoint?.genUiSpec ? 'HTML|' : '|'.padStart(5);
+          const methodStr = endpoint?.method.toUpperCase();
+          this.logger.log(
+            `Tool Name: "${functionName.padEnd(fnWidth)}" |${uiSpecTag} ${endpoint?.path}, ${methodStr}`,
+          );
         }
       });
 
@@ -108,9 +120,14 @@ export class AdminAgentService implements OnModuleInit {
           'YES_TOOL_CALLS',
         );
 
-        for (const call of llmResponse.toolCalls) {
-          const resultData = await this.agentToolExecutorService.executeToolCall(call, userId);
-          await this.agentSessionService.saveMessage(userId, session.id, 'tool', resultData, call.id);
+        const groups = this.groupToolCallsForExecution(llmResponse.toolCalls);
+
+        for (const group of groups) {
+          const results = await this.executeToolCallGroup(group, userId);
+
+          for (const { call, resultData } of results) {
+            await this.agentSessionService.saveMessage(userId, session.id, 'tool', resultData, call.id);
+          }
         }
       } else {
         const assistantContent = llmResponse.content || '';
@@ -158,16 +175,21 @@ export class AdminAgentService implements OnModuleInit {
           'YES_TOOL_CALLS',
         );
 
-        for (const call of llmResponse.toolCalls) {
-          const args = JSON.parse(call.function.arguments || '{}');
+        const groups = this.groupToolCallsForExecution(llmResponse.toolCalls);
+
+        for (const group of groups) {
+          for (const call of group) {
+          const args = this.parseToolArguments(call);
           const description = this.agentToolExecutorService.getSemanticActionDescription(call.function.name, args);
           const endpoint = this.swaggerToolsParser.getEndpoint(call.function.name);
           const toolIcon = endpoint?.toolIcon || STEP_ICONS.tool;
 
           yield JSON.stringify({ type: 'step', icon: toolIcon, message: `${description}...` }) + '\n';
+        }
 
-          const resultData = await this.agentToolExecutorService.executeToolCall(call, userId);
+          const results = await this.executeToolCallGroup(group, userId);
 
+        for (const { call, resultData } of results) {
           if (resultData.includes('error')) {
             yield JSON.stringify({
               type: 'step',
@@ -179,6 +201,7 @@ export class AdminAgentService implements OnModuleInit {
           }
 
           await this.agentSessionService.saveMessage(userId, session.id, 'tool', resultData, call.id);
+        }
         }
       } else {
         let accumulatedResponse = '';
@@ -222,5 +245,82 @@ export class AdminAgentService implements OnModuleInit {
       .replace(/{{CURRENT_TIME}}/g, new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }))
       .replace(/{{CURRENT_LLM_PROVIDER}}/g, runtimeSelection.provider)
       .replace(/{{CURRENT_LLM_MODEL}}/g, runtimeSelection.model);
+  }
+
+  private isParallelSafeTool(functionName: string): boolean {
+    if (PARALLEL_UNSAFE_TOOL_NAMES.has(functionName)) {
+      return false;
+    }
+
+    const endpoint = this.swaggerToolsParser.getEndpoint(functionName);
+
+    return endpoint?.method.toUpperCase() === 'GET';
+  }
+
+  private groupToolCallsForExecution(toolCalls: LlmToolCall[]): LlmToolCall[][] {
+    const groups: LlmToolCall[][] = [];
+    let currentSafeGroup: LlmToolCall[] = [];
+
+    for (const call of toolCalls) {
+      if (this.isParallelSafeTool(call.function.name)) {
+        currentSafeGroup.push(call);
+        continue;
+      }
+
+      if (currentSafeGroup.length > 0) {
+        groups.push(currentSafeGroup);
+        currentSafeGroup = [];
+      }
+
+      groups.push([call]);
+    }
+
+    if (currentSafeGroup.length > 0) {
+      groups.push(currentSafeGroup);
+    }
+
+    return groups;
+  }
+
+  private async executeToolCallGroup(calls: LlmToolCall[], userId: number): Promise<ToolCallResult[]> {
+    if (calls.length === 1) {
+      return [await this.executeToolCallSafely(calls[0], userId)];
+    }
+
+    this.logger.log(`Executing ${calls.length} read-only tools in parallel.`);
+
+    return Promise.all(calls.map((call) => {
+      return this.executeToolCallSafely(call, userId);
+    }));
+  }
+
+  private async executeToolCallSafely(call: LlmToolCall, userId: number): Promise<ToolCallResult> {
+    try {
+      const resultData = await this.agentToolExecutorService.executeToolCall(call, userId);
+
+      return { call, resultData };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown tool execution error';
+
+      this.logger.error(`Tool execution failed in ${call.function.name}: ${message}`);
+
+      return {
+        call,
+        resultData: JSON.stringify({
+          error: true,
+          message: 'Tool execution failed',
+          toolName: call.function.name,
+          details: message,
+        }),
+      };
+    }
+  }
+
+  private parseToolArguments(call: LlmToolCall): Record<string, unknown> {
+    try {
+      return JSON.parse(call.function.arguments || '{}') as Record<string, unknown>;
+    } catch {
+      return {};
+    }
   }
 }
