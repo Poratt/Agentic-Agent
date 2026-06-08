@@ -9,6 +9,11 @@ export type ChatStreamEvent =
 	| ({ type: 'step' } & IChatStep)
 	| { type: 'token'; content?: string };
 
+export interface ChatModelSelection {
+	provider: 'openrouter' | 'nvidia' | 'ollama';
+	model: string;
+}
+
 @Injectable({
 	providedIn: 'root',
 })
@@ -36,6 +41,7 @@ export class ChatService {
 	sendMessageStream(
 		prompt: string,
 		sessionId?: number,
+		modelSelection?: ChatModelSelection,
 	): Observable<ChatStreamEvent> {
 		return new Observable((observer) => {
 			const controller = new AbortController();
@@ -46,7 +52,7 @@ export class ChatService {
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({ prompt, sessionId }),
+				body: JSON.stringify({ prompt, sessionId, ...modelSelection }),
 				credentials: 'include',
 				signal: controller.signal,
 			})

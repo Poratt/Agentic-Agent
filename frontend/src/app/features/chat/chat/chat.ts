@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { ChatService } from '../../../core/services/chat.service';
+import { ChatModelSelection, ChatService } from '../../../core/services/chat.service';
+import { LlmModelGroup, LlmModelOption, LlmService, LlmStatus } from '../../../core/services/llm.service';
 import { ChatStore } from '../../../core/store/chat.store';
 import { AuthStore } from '../../../core/store/auth.store';
 import { IChatMessage } from '../../../core/models/chat-message.interface';
@@ -24,6 +25,7 @@ export class Chat implements OnInit, OnDestroy {
 	private promptTextarea?: ElementRef<HTMLTextAreaElement>;
 
 	private chatService = inject(ChatService);
+	private llmService = inject(LlmService);
 	protected chatStore = inject(ChatStore);
 	protected userStore = inject(UsersStore);
 	protected authStore = inject(AuthStore);
@@ -38,8 +40,7 @@ export class Chat implements OnInit, OnDestroy {
 	activeStreamState = signal<ChatMessageStreamState>('idle');
 
 	currentUserProfile = this.userStore.currentUserProfile;
-	models = signal<any>(models)
-	selectedModel = ''
+	models = signal<LlmModelGroup[]>([]);
 
 	chatForm: FormGroup = this.fb.group({
 		prompt: ['', [Validators.required, Validators.minLength(1)]],
@@ -55,6 +56,7 @@ export class Chat implements OnInit, OnDestroy {
 			this.sendMessage();
 		};
 		this.userStore.loadCurrentUser();
+		this.loadModelOptions();
 
 		this.routeSub = this.route.queryParams.subscribe((params) => {
 			const sessionId = params['sessionId'] ? Number(params['sessionId']) : null;
@@ -77,6 +79,19 @@ export class Chat implements OnInit, OnDestroy {
 		if (this.routeSub) {
 			this.routeSub.unsubscribe();
 		}
+	}
+
+	private loadModelOptions(): void {
+		this.llmService.getModelOptions().subscribe({
+			next: (response) => {
+				const modelGroups = this.toSelectableModelGroups(response.result ?? []);
+				this.models.set(modelGroups);
+				this.applyActiveModelSelection(modelGroups);
+			},
+			error: () => {
+				this.models.set([]);
+			},
+		});
 	}
 
 	private loadConversationHistory(sessionId: number) {
@@ -110,17 +125,19 @@ export class Chat implements OnInit, OnDestroy {
 			return;
 		}
 
-		this.chatForm.reset();
+		const selectedModelId = this.chatForm.value.model;
+		const modelSelection = this.getModelSelection(selectedModelId);
+		this.chatForm.patchValue({ prompt: '' });
 
 		const currentId = this.chatStore.currentSessionId();
 		if (currentId) {
-			this.sendPromptToSession(promptValue, currentId);
+			this.sendPromptToSession(promptValue, currentId, modelSelection);
 			return;
 		}
 
 		this.chatStore.createSessionForMessage(false).subscribe({
 			next: (session) => {
-				this.sendPromptToSession(promptValue, session.id);
+				this.sendPromptToSession(promptValue, session.id, modelSelection);
 			},
 			error: () => {
 				this.loading.set(false);
@@ -128,7 +145,11 @@ export class Chat implements OnInit, OnDestroy {
 		});
 	}
 
-	private sendPromptToSession(promptValue: string, sessionId: number) {
+	private sendPromptToSession(
+		promptValue: string,
+		sessionId: number,
+		modelSelection?: ChatModelSelection,
+	) {
 		const userMsg: IChatMessage = {
 			role: 'user',
 			content: promptValue,
@@ -149,7 +170,7 @@ export class Chat implements OnInit, OnDestroy {
 
 		const isFirstMessage = this.messages().length <= 2;
 
-		this.chatService.sendMessageStream(promptValue, sessionId).subscribe({
+		this.chatService.sendMessageStream(promptValue, sessionId, modelSelection).subscribe({
 			next: (event) => {
 				if (event.type === 'step' && event.message && event.icon) {
 					this.messages.update((prev) => {
@@ -235,65 +256,76 @@ export class Chat implements OnInit, OnDestroy {
 		this.activeAssistantIndex.set(null);
 		this.activeStreamState.set('idle');
 	}
+
+	private toSelectableModelGroups(groups: LlmModelGroup[]): LlmModelGroup[] {
+		return groups.map((group) => {
+			return {
+				...group,
+				items: group.items.map((item) => {
+					return {
+						...item,
+						id: item.id ?? this.getModelOptionId(group.label, item.value),
+						provider: item.provider ?? group.label,
+					};
+				}),
+			};
+		});
+	}
+
+	private applyActiveModelSelection(groups: LlmModelGroup[]): void {
+		this.llmService.getStatus().subscribe({
+			next: (response) => {
+				this.setSelectedModel(groups, response.result);
+			},
+			error: () => {
+				this.setSelectedModel(groups);
+			},
+		});
+	}
+
+	private setSelectedModel(groups: LlmModelGroup[], status?: LlmStatus): void {
+		const allOptions = groups.flatMap((group) => {
+			return group.items;
+		});
+		const activeOption = status
+			? allOptions.find((option) => {
+				return option.provider === status.activeProvider && option.value === status.activeModel;
+			})
+			: null;
+		const fallbackOption = allOptions[0];
+		const selectedOption = activeOption ?? fallbackOption;
+
+		if (!selectedOption?.id) {
+			return;
+		}
+
+		this.chatForm.patchValue({ model: selectedOption.id });
+	}
+
+	private getModelSelection(selectedModelId?: string): ChatModelSelection | undefined {
+		if (!selectedModelId) {
+			return undefined;
+		}
+
+		const selectedOption = this.models()
+			.flatMap((group) => {
+				return group.items;
+			})
+			.find((option) => {
+				return option.id === selectedModelId;
+			});
+
+		if (!selectedOption?.provider) {
+			return undefined;
+		}
+
+		return {
+			provider: selectedOption.provider,
+			model: selectedOption.value,
+		};
+	}
+
+	private getModelOptionId(provider: LlmModelGroup['label'], model: LlmModelOption['value']): string {
+		return `${provider}::${model}`;
+	}
 }
-
-
-type model = {
-	label: string;
-	items: {
-		value: string;
-		label: string;
-	}[];
-}
-
-
-const models = [
-	{
-		label: 'openrouter',
-		items: [
-			{
-				value: 'google/gemma-4-31b-it:free',
-				label: 'gemma-4-31b-it',
-			},
-			{
-				value: 'google/gemma-4-26b-a4b-it:free',
-				label: 'gemma-4-26b-a4b-it',
-			},
-			{
-				value: 'nvidia/nemotron-3-super-120b-a12b:free',
-				label: 'nemotron-3-super-120b-a12b',
-			},
-			{
-				value: 'moonshotai/kimi-k2.6:free',
-				label: 'kimi-k2.6',
-			},
-			{
-				value: 'qwen/qwen3-coder:free',
-				label: 'qwen3-coder',
-			},
-			{
-				value: 'qwen/qwen3-next-80b-a3b-instruct:free',
-				label: 'qwen3-next-80b-a3b-instruct',
-			},
-			{
-				value: 'meta-llama/llama-3.3-70b-instruct:free',
-				label: 'llama-3.3-70b-instruct',
-			},
-			{
-				value: 'deepseek/deepseek-v4-flash:free',
-				label: 'deepseek-v4-flash',
-			},
-			{
-				value: 'z-ai/glm-4.5-air:free',
-				label: 'glm-4.5-air',
-			},
-			{
-				value: 'minimax/minimax-m2.5:free',
-				label: 'minimax-m2.5',
-			},
-			{
-				value: 'poolside/laguna-xs.2:free',
-				label: 'laguna-xs.2',
-			}
-		]
-	}]

@@ -6,7 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { User } from '../../users/entities/user.entity';
-import { LlmToolCall } from '../llm.service';
+import { LlmToolCall } from '../../llm/types/llm.types';
 import { SwaggerToolsParser } from './swagger-tools.parser';
 import { AxiosRequestConfig } from 'axios';
 

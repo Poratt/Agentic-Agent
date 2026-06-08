@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiConsumes,
   ApiExtraModels,
   ApiOperation,
@@ -151,6 +152,10 @@ export class AdminAgentController {
       'Step events use { "type": "step", "icon": "...", "message": "..." }. ' +
       'The stream is complete when the HTTP response ends.',
   } as CustomApiOperationOptions)
+  @ApiBody({
+    type: AgentRequestDto,
+    description: 'Agent prompt payload with optional chat session and per-request LLM model override.',
+  })
   @ApiResponse({
     status: 200,
     description: 'Stream opened. Response body contains newline-delimited AgentStreamEventDto JSON objects.',
@@ -177,7 +182,13 @@ export class AdminAgentController {
     res.flushHeaders();
 
     try {
-      const stream = this.adminAgentService.queryDatabaseStream(dto.prompt, userId, dto.sessionId);
+      const stream = this.adminAgentService.queryDatabaseStream(
+        dto.prompt,
+        userId,
+        dto.sessionId,
+        dto.provider,
+        dto.model,
+      );
 
       for await (const token of stream) {
         res.write(token);

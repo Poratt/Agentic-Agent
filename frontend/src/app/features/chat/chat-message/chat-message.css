@@ -2,6 +2,7 @@
 	display: contents;
 }
 
+
 .chat-message-row {
 	display: flex;
 	flex-direction: column;

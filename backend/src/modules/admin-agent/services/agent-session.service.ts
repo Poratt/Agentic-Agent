@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull, In } from 'typeorm';
 import { ChatSession } from '../entities/chat-session.entity';
 import { ChatMessage } from '../entities/chat-message.entity';
-import { LlmMessage } from '../llm.service';
+import { LlmMessage } from '../../llm/types/llm.types';
 
 const DEFAULT_SESSION_TITLE = 'שיחה חדשה...';
 const LEGACY_DEFAULT_SESSION_TITLES = ['New chat...', 'New chat'];

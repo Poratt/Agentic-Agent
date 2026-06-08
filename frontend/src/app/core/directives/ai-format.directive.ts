@@ -18,18 +18,20 @@ export class AiFormat implements OnChanges {
   ngOnChanges() {
     const raw = this.aiFormat() ?? '';
 
-    const closedMatch = raw.match(/```component\s*([\s\S]*?)```/);
-    if (closedMatch) {
+    const componentHtml = this.extractComponentHtml(raw);
+    if (componentHtml) {
       this.skeletonVisible = false;
-      const html = closedMatch[1].trim();
-      this.el.nativeElement.innerHTML = '';
-      const div = this.renderer.createElement('div');
-      this.el.nativeElement.appendChild(div);
-      div.innerHTML = html;
+      this.renderComponentHtml(componentHtml);
       return;
     }
 
-    const openMatch = raw.match(/```component/) || raw.match(/```c/) || raw.match(/```\s*$/); if (openMatch) {
+    const openMatch =
+      raw.match(/```component/i) ||
+      raw.match(/```c/i) ||
+      raw.match(/```\s*$/) ||
+      this.looksLikeOpenRawComponentHtml(raw);
+
+    if (openMatch) {
       if (!this.skeletonVisible) {  // <-- רק פעם אחת!
         this.skeletonVisible = true;
 
@@ -59,6 +61,41 @@ export class AiFormat implements OnChanges {
     const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, parsedHtml) || '';
     this.updateDomEfficiently(sanitizedHtml);
     this.markNewCompletedBlocks(raw);
+  }
+
+  private extractComponentHtml(raw: string): string | null {
+    const closedMatch = raw.match(/```component\s*([\s\S]*?)```/i);
+    if (closedMatch) {
+      return closedMatch[1].trim();
+    }
+
+    const trimmed = raw.trim();
+    if (!this.looksLikeRawComponentHtml(trimmed)) {
+      return null;
+    }
+
+    return trimmed;
+  }
+
+  private looksLikeRawComponentHtml(value: string): boolean {
+    const startsWithHtml = /^<style[\s>]/i.test(value) || /^<(div|section|article)\b/i.test(value);
+    const hasRenderableRoot = /<\/(div|section|article)>/i.test(value);
+
+    return startsWithHtml && hasRenderableRoot;
+  }
+
+  private looksLikeOpenRawComponentHtml(value: string): boolean {
+    const trimmed = value.trim();
+    const startsWithHtml = /^<style[\s>]/i.test(trimmed) || /^<(div|section|article)\b/i.test(trimmed);
+
+    return startsWithHtml && !this.looksLikeRawComponentHtml(trimmed);
+  }
+
+  private renderComponentHtml(html: string): void {
+    this.el.nativeElement.innerHTML = '';
+    const div = this.renderer.createElement('div');
+    this.el.nativeElement.appendChild(div);
+    div.innerHTML = html;
   }
 
   private updateDomEfficiently(htmlContent: string): void {

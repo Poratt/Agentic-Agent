@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { LlmService } from './llm.service';
+import { LlmService } from '../llm/llm.service';
+import type { LlmProvider } from '../llm/types/llm.types';
 import { AgentSessionService } from './services/agent-session.service';
 import { AgentToolExecutorService } from './services/agent-tool-executor.service';
 import { ChatSession } from './entities/chat-session.entity';
@@ -72,15 +73,19 @@ export class AdminAgentService implements OnModuleInit {
     return this.agentSessionService.deleteSession(sessionId, userId);
   }
 
-  async queryDatabase(prompt: string, userId: number, requestedSessionId?: number): Promise<string> {
+  async queryDatabase(
+    prompt: string,
+    userId: number,
+    requestedSessionId?: number,
+    provider?: LlmProvider,
+    model?: string,
+  ): Promise<string> {
     const session = await this.agentSessionService.getOrCreateSession(userId, requestedSessionId);
     await this.agentSessionService.updateSessionTitleIfDefault(session, prompt);
     await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt);
 
     const tools = this.swaggerToolsParser.getTools();
-    const dynamicSystemContext = SYSTEM_CONTEXT
-      .replace(/{{CURRENT_USER_ID}}/g, String(userId))
-      .replace(/{{CURRENT_TIME}}/g, new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }));
+    const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model);
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration = iteration + 1) {
       const history = await this.agentSessionService.loadHistory(session.id, userId);
@@ -90,6 +95,8 @@ export class AdminAgentService implements OnModuleInit {
         systemContext: dynamicSystemContext,
         messageHistory: history,
         tools,
+        providerOverride: provider,
+        modelOverride: model,
       });
 
       if (llmResponse.toolCalls && llmResponse.toolCalls.length > 0) {
@@ -119,6 +126,8 @@ export class AdminAgentService implements OnModuleInit {
     prompt: string,
     userId: number,
     requestedSessionId?: number,
+    provider?: LlmProvider,
+    model?: string,
   ): AsyncIterable<string> {
     const session = await this.agentSessionService.getOrCreateSession(userId, requestedSessionId);
 
@@ -126,9 +135,7 @@ export class AdminAgentService implements OnModuleInit {
     await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt);
 
     const tools = this.swaggerToolsParser.getTools();
-    const dynamicSystemContext = SYSTEM_CONTEXT
-      .replace(/{{CURRENT_USER_ID}}/g, String(userId))
-      .replace(/{{CURRENT_TIME}}/g, new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }));
+    const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model);
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration = iteration + 1) {
       const history = await this.agentSessionService.loadHistory(session.id, userId);
@@ -138,6 +145,8 @@ export class AdminAgentService implements OnModuleInit {
         systemContext: dynamicSystemContext,
         messageHistory: history,
         tools,
+        providerOverride: provider,
+        modelOverride: model,
       });
 
       if (llmResponse.toolCalls && llmResponse.toolCalls.length > 0) {
@@ -179,6 +188,8 @@ export class AdminAgentService implements OnModuleInit {
             systemContext: dynamicSystemContext,
             messageHistory: history,
             tools,
+            providerOverride: provider,
+            modelOverride: model,
           });
 
           for await (const chunk of stream) {
@@ -201,5 +212,15 @@ export class AdminAgentService implements OnModuleInit {
       type: 'token',
       content: 'תקשורת הסוכן הופסקה עקב הגעה למספר האיטרציות המרבי.',
     }) + '\n';
+  }
+
+  private getDynamicSystemContext(userId: number, provider?: LlmProvider, model?: string): string {
+    const runtimeSelection = this.llmService.getRuntimeSelection(provider, model);
+
+    return SYSTEM_CONTEXT
+      .replace(/{{CURRENT_USER_ID}}/g, String(userId))
+      .replace(/{{CURRENT_TIME}}/g, new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }))
+      .replace(/{{CURRENT_LLM_PROVIDER}}/g, runtimeSelection.provider)
+      .replace(/{{CURRENT_LLM_MODEL}}/g, runtimeSelection.model);
   }
 }

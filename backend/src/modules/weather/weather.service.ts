@@ -58,6 +58,23 @@ export class WeatherService {
         };
       }
 
+      const requestDate = new Date();
+      const requestLocalTime = requestDate.toLocaleTimeString('he-IL', {
+        timeZone: 'Asia/Jerusalem',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      const requestLocalDateTime = requestDate.toLocaleString('he-IL', {
+        timeZone: 'Asia/Jerusalem',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+
       const result: WeatherCurrentDto = {
         tempC: currentCondition.temp_C ?? '',
         tempF: currentCondition.temp_F ?? '',
@@ -79,6 +96,8 @@ export class WeatherService {
         precipitationMm: currentCondition.precipMM ?? '',
         precipitationInches: currentCondition.precipInches ?? '',
         observationTime: currentCondition.observation_time ?? '',
+        requestLocalTime,
+        requestLocalDateTime,
         weatherCode: currentCondition.weatherCode ?? '',
       };
 

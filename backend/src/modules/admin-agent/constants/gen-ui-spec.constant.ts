@@ -1,6 +1,7 @@
 export const GENUI_HTML = (hint: string) => {
     return `After getting data, return ONLY a raw HTML block in this exact format:
 \`\`\`component
+<style>...</style>
 <div style="...">...</div>
 \`\`\`
 ${hint}
@@ -12,7 +13,7 @@ Use this design system with CSS variables (already defined in the page):
 - Primary color: var(--color-primary)
 - Border radius: var(--radius-md)
 - Font: var(--font-main)
-- Padding: var(--space-6)
+- Padding: var(--space-2)
 - Shadow: var(--shadow-soft)
 - ICONS: Use Phosphor Icons with this syntax: <span class="ph ph-ICON_NAME"></span>
   Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, 
@@ -20,6 +21,13 @@ Use this design system with CSS variables (already defined in the page):
   ph-check-circle, ph-warning-circle, ph-info, ph-gear,
   ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key
   Use icons next to labels and titles for visual clarity.
+
+LANGUAGE AND DIRECTION:
+- The application UI is Hebrew and RTL by default.
+- Use dir="rtl" on Hebrew/root content containers.
+- Any English-only technical value, model id, provider name, email, URL, code, API path, currency code, date token, or mixed identifier MUST be wrapped in an element with dir="ltr".
+- For long English identifiers, add style="direction:ltr;text-align:left;unicode-bidi:plaintext;overflow-wrap:anywhere;" so text does not break visually inside RTL cards.
+- Never split English model ids, emails, URLs, or API paths across visual RTL order. Keep them readable left-to-right.
 
 HOVER: Add hover effects using inline onmouseover/onmouseout handlers.
 CRITICAL: Always add transition to the element's style: "transition: all 0.2s ease"
@@ -137,13 +145,12 @@ export const GenUiSpec = {
     // Weather
     WEATHER_CURRENT: GENUI_HTML(
         `Render a premium animated current-weather card from the tool response.
-        CRITICAL: Use current time: new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute: '2-digit'})
         Rules:
         1. Use only values returned in result. Never invent weather values, location, timestamps, icons, or measurements.
         2. Build a single polished weather card with an animated hero area, not a table.
-        3. Header: show the weather description, observationTime when available, and a large condition emoji derived from description/weatherCode only when the condition is clear from the data.
+        3. Header: show the weather description and result.requestLocalTime as the current local Israel time. Do not use observationTime as the main current time.
         4. Main metric: show tempC as the dominant animated number, with feelsLikeC and optional tempF/feelsLikeF as secondary text.
-        5. Detail grid: show humidity, windSpeedKmph + windDirection, uvIndex, cloudCover, precipitationMm, pressure, and visibility. Hide any row whose value is missing or empty.
+        5. Detail grid: show humidity, windSpeedKmph + windDirection, uvIndex, cloudCover, precipitationMm, pressure, visibility, and observationTime only as "provider observation time" when available. Hide any row whose value is missing or empty.
         6. Create an exciting but professional animation:
            - Root card enters with fade + lift.
            - Temperature scales in once.

@@ -61,6 +61,15 @@ export class WeatherCurrentDto {
   @ApiProperty({ description: 'Observation time reported by the weather provider.', example: '09:45 AM' })
   observationTime!: string;
 
+  @ApiProperty({ description: 'Local Israel time when the backend fetched the weather data.', example: '15:50' })
+  requestLocalTime!: string;
+
+  @ApiProperty({
+    description: 'Local Israel date and time when the backend fetched the weather data.',
+    example: '08.06.2026, 15:50',
+  })
+  requestLocalDateTime!: string;
+
   @ApiProperty({ description: 'Weather condition code from the provider.', example: '116' })
   weatherCode!: string;
 }
