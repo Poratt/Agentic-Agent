@@ -46,7 +46,7 @@ export class AdminAgentService implements OnModuleInit {
         if (functionName) {
           const endpoint = this.swaggerToolsParser.getEndpoint(functionName);
           // eslint-disable-next-line no-console
-          this.logger.log(`Tool Name: "${functionName.padEnd(fnWidth)}" | ${endpoint?.path}, ${endpoint?.method.toUpperCase()} `);
+          this.logger.log(`Tool Name: "${functionName.padEnd(fnWidth)}" |${endpoint?.genUiSpec ? 'HTML|' : '|'.padStart(5)} ${endpoint?.path}, ${endpoint?.method.toUpperCase()}`);
         }
       });
 
@@ -78,7 +78,9 @@ export class AdminAgentService implements OnModuleInit {
     await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt);
 
     const tools = this.swaggerToolsParser.getTools();
-    const dynamicSystemContext = SYSTEM_CONTEXT.replace(/{{CURRENT_USER_ID}}/g, String(userId));
+    const dynamicSystemContext = SYSTEM_CONTEXT
+      .replace(/{{CURRENT_USER_ID}}/g, String(userId))
+      .replace(/{{CURRENT_TIME}}/g, new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }));
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration = iteration + 1) {
       const history = await this.agentSessionService.loadHistory(session.id, userId);
@@ -124,7 +126,9 @@ export class AdminAgentService implements OnModuleInit {
     await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt);
 
     const tools = this.swaggerToolsParser.getTools();
-    const dynamicSystemContext = SYSTEM_CONTEXT.replace(/{{CURRENT_USER_ID}}/g, String(userId));
+    const dynamicSystemContext = SYSTEM_CONTEXT
+      .replace(/{{CURRENT_USER_ID}}/g, String(userId))
+      .replace(/{{CURRENT_TIME}}/g, new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }));
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration = iteration + 1) {
       const history = await this.agentSessionService.loadHistory(session.id, userId);

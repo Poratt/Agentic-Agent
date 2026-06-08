@@ -34,6 +34,27 @@
                     (keydown)="onPromptKeydown($event)"
                 ></textarea>
                 <div class="chat-prompt-actions">
+                    <p-select
+                        [options]="models()"
+                        formControlName="model"
+                        [group]="true"
+                        optionGroupLabel="label"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="בחר מודל"
+                        class="custom-select"
+                    >
+                        <!-- Template לקבוצה (Group) -->
+                        <ng-template let-group #group>
+                            <span>{{ group.label }}</span>
+                        </ng-template>
+
+                        <!-- Template לפריט בודד -->
+                        <ng-template let-model #item>
+                            <div class="select-option">{{ model.label }}</div>
+                        </ng-template>
+                    </p-select>
+
                     <button
                         type="submit"
                         class="chat-send-btn"

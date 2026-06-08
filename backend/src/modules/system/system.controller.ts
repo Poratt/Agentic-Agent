@@ -7,7 +7,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { GENUI_HTML } from '../admin-agent/constants/gen-ui-spec.constant';
+import { GenUiSpec } from '../admin-agent/constants/gen-ui-spec.constant';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { SystemService } from './system.service';
@@ -25,12 +25,7 @@ export class SystemController {
     summaryHe: 'שולף את מצב המערכת הכללי ומדדי הפעילות',
     toolIcon: 'ph-gauge',
     description: 'Returns activity metrics and current runtime status parameters.',
-    genUiSpec: GENUI_HTML(
-      `Render a system status dashboard with:
-1. Metric cards row: total users, active sessions, Swagger status (success=green, warning=orange).
-2. Below the cards, render an SVG bar chart (width:100%, height:120px) showing sessions vs users as colored bars.
-Use only inline SVG - no external libraries. Keep bars proportional to the values.`,
-    ),
+    genUiSpec: GenUiSpec.SYSTEM_STATUS,
   } as CustomApiOperationOptions)
   @ApiOkResponse({
     description: 'System status metrics payload retrieved successfully.',

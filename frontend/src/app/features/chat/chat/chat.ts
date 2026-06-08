@@ -10,11 +10,12 @@ import { IChatMessage } from '../../../core/models/chat-message.interface';
 import { AutoScrollBottomDirective } from '../../../core/directives/auto-scroll-bottom.directive';
 import { ChatMessage, ChatMessageStreamState } from '../chat-message/chat-message';
 import { UsersStore } from '../../../core/store/users.store';
+import { Select } from 'primeng/select';
 
 @Component({
 	selector: 'app-chat',
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule, AutoScrollBottomDirective, ChatMessage],
+	imports: [CommonModule, ReactiveFormsModule, AutoScrollBottomDirective, ChatMessage, Select],
 	templateUrl: './chat.html',
 	styleUrl: './chat.css',
 })
@@ -37,9 +38,12 @@ export class Chat implements OnInit, OnDestroy {
 	activeStreamState = signal<ChatMessageStreamState>('idle');
 
 	currentUserProfile = this.userStore.currentUserProfile;
+	models = signal<any>(models)
+	selectedModel = ''
 
 	chatForm: FormGroup = this.fb.group({
 		prompt: ['', [Validators.required, Validators.minLength(1)]],
+		model: ['', []]
 	});
 
 	private routeSub?: Subscription;
@@ -232,3 +236,64 @@ export class Chat implements OnInit, OnDestroy {
 		this.activeStreamState.set('idle');
 	}
 }
+
+
+type model = {
+	label: string;
+	items: {
+		value: string;
+		label: string;
+	}[];
+}
+
+
+const models = [
+	{
+		label: 'openrouter',
+		items: [
+			{
+				value: 'google/gemma-4-31b-it:free',
+				label: 'gemma-4-31b-it',
+			},
+			{
+				value: 'google/gemma-4-26b-a4b-it:free',
+				label: 'gemma-4-26b-a4b-it',
+			},
+			{
+				value: 'nvidia/nemotron-3-super-120b-a12b:free',
+				label: 'nemotron-3-super-120b-a12b',
+			},
+			{
+				value: 'moonshotai/kimi-k2.6:free',
+				label: 'kimi-k2.6',
+			},
+			{
+				value: 'qwen/qwen3-coder:free',
+				label: 'qwen3-coder',
+			},
+			{
+				value: 'qwen/qwen3-next-80b-a3b-instruct:free',
+				label: 'qwen3-next-80b-a3b-instruct',
+			},
+			{
+				value: 'meta-llama/llama-3.3-70b-instruct:free',
+				label: 'llama-3.3-70b-instruct',
+			},
+			{
+				value: 'deepseek/deepseek-v4-flash:free',
+				label: 'deepseek-v4-flash',
+			},
+			{
+				value: 'z-ai/glm-4.5-air:free',
+				label: 'glm-4.5-air',
+			},
+			{
+				value: 'minimax/minimax-m2.5:free',
+				label: 'minimax-m2.5',
+			},
+			{
+				value: 'poolside/laguna-xs.2:free',
+				label: 'laguna-xs.2',
+			}
+		]
+	}]

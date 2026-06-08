@@ -128,7 +128,7 @@ type DatabaseStorageSummary = {
 Return it inside the standard project wrapper:
 
 ```ts
-ServiceResultContainer<DatabaseStorageSummary>
+ServiceResultContainer<DatabaseStorageSummary>;
 ```
 
 ## Data Source
@@ -470,8 +470,8 @@ Decision:
 
 ## Open Decisions
 
-- Should this endpoint require admin-only access, or is authenticated access enough for now?
-- Should hidden/system tables be filtered if more internal tables are added later?
+- Should this endpoint require admin-only access, or is authenticated access enough for now? - Admin Only
+- Should hidden/system tables be filtered if more internal tables are added later? - No filter
 - Should version 1 include only current storage, or should snapshot-based growth tracking be implemented immediately?
 - Should the response include an explicit `otherTables` bucket for charts when there are many tables?
 

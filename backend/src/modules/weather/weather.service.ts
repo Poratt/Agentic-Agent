@@ -2,17 +2,51 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { ServiceResultContainer } from '../../core/models/service-result-container.model';
+import { WeatherCurrentDto } from './dto/weather-current.dto';
+import { WeatherForecastDayDto } from './dto/weather-forecast-day.dto';
+import { WeatherForecastDto } from './dto/weather-forecast.dto';
+
+type WttrWeatherDescription = {
+  value?: string;
+};
+
+type WttrCurrentCondition = {
+  temp_C?: string;
+  temp_F?: string;
+  FeelsLikeC?: string;
+  FeelsLikeF?: string;
+  humidity?: string;
+  weatherDesc?: WttrWeatherDescription[];
+  windspeedKmph?: string;
+  windspeedMiles?: string;
+  winddir16Point?: string;
+  winddirDegree?: string;
+  pressure?: string;
+  pressureInches?: string;
+  visibility?: string;
+  visibilityMiles?: string;
+  cloudcover?: string;
+  uvIndex?: string;
+  precipMM?: string;
+  precipInches?: string;
+  observation_time?: string;
+  weatherCode?: string;
+};
+
+type WttrWeatherResponse = {
+  current_condition?: WttrCurrentCondition[];
+};
 
 @Injectable()
 export class WeatherService {
   private readonly logger = new Logger(WeatherService.name);
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService) { }
 
-  async getWeather(city: string): Promise<ServiceResultContainer<any>> {
+  async getWeather(city: string): Promise<ServiceResultContainer<WeatherCurrentDto | null>> {
     try {
       const url = `https://wttr.in/${encodeURIComponent(city)}?format=j1`;
-      const response$ = this.httpService.get(url);
+      const response$ = this.httpService.get<WttrWeatherResponse>(url);
       const response = await firstValueFrom(response$);
       const currentCondition = response.data?.current_condition?.[0];
 
@@ -24,12 +58,28 @@ export class WeatherService {
         };
       }
 
-      const result = {
-        tempC: currentCondition.temp_C,
-        feelsLikeC: currentCondition.FeelsLikeC,
-        humidity: currentCondition.humidity,
+      const result: WeatherCurrentDto = {
+        tempC: currentCondition.temp_C ?? '',
+        tempF: currentCondition.temp_F ?? '',
+        feelsLikeC: currentCondition.FeelsLikeC ?? '',
+        feelsLikeF: currentCondition.FeelsLikeF ?? '',
+        humidity: currentCondition.humidity ?? '',
         description: currentCondition.weatherDesc?.[0]?.value || 'No description',
-        windSpeed: currentCondition.windspeedKmph,
+        windSpeed: currentCondition.windspeedKmph ?? '',
+        windSpeedKmph: currentCondition.windspeedKmph ?? '',
+        windSpeedMiles: currentCondition.windspeedMiles ?? '',
+        windDirection: currentCondition.winddir16Point ?? '',
+        windDegree: currentCondition.winddirDegree ?? '',
+        pressure: currentCondition.pressure ?? '',
+        pressureInches: currentCondition.pressureInches ?? '',
+        visibility: currentCondition.visibility ?? '',
+        visibilityMiles: currentCondition.visibilityMiles ?? '',
+        cloudCover: currentCondition.cloudcover ?? '',
+        uvIndex: currentCondition.uvIndex ?? '',
+        precipitationMm: currentCondition.precipMM ?? '',
+        precipitationInches: currentCondition.precipInches ?? '',
+        observationTime: currentCondition.observation_time ?? '',
+        weatherCode: currentCondition.weatherCode ?? '',
       };
 
       return {
@@ -37,8 +87,8 @@ export class WeatherService {
         message: `נתוני מזג האוויר עבור ${city} נשלפו בהצלחה`,
         result,
       };
-    } catch (error: any) {
-      this.logger.error(`Failed to fetch weather: ${error.message}`);
+    } catch (error: unknown) {
+      this.logger.error(`Failed to fetch weather: ${this.getErrorMessage(error)}`);
       return {
         success: false,
         message: 'שגיאה בפנייה לשירות מזג האוויר החיצוני',
@@ -47,7 +97,7 @@ export class WeatherService {
     }
   }
 
-  async getFiveDayForecast(city: string): Promise<ServiceResultContainer<any>> {
+  async getFiveDayForecast(city: string): Promise<ServiceResultContainer<WeatherForecastDto | null>> {
     try {
       const currentRes = await this.getWeather(city);
       if (!currentRes.success || !currentRes.result) {
@@ -58,7 +108,7 @@ export class WeatherService {
         };
       }
 
-      const baseTemp = parseInt(currentRes.result.tempC) || 20;
+      const baseTemp = Number.parseInt(currentRes.result.tempC, 10) || 20;
       const currentDesc = currentRes.result.description;
 
       const daysOfWeekHe = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
@@ -70,7 +120,7 @@ export class WeatherService {
         { desc: 'Heavy rain', emoji: '⛈️', descHe: 'גשום וסוער' },
       ];
 
-      const forecastList = [];
+      const forecastList: WeatherForecastDayDto[] = [];
       const today = new Date();
 
       for (let i = 0; i < 5; i = i + 1) {
@@ -110,13 +160,21 @@ export class WeatherService {
           forecast: forecastList,
         },
       };
-    } catch (error: any) {
-      this.logger.error(`Failed to generate 5-day forecast: ${error.message}`);
+    } catch (error: unknown) {
+      this.logger.error(`Failed to generate 5-day forecast: ${this.getErrorMessage(error)}`);
       return {
         success: false,
         message: 'שגיאה בייצור תחזית מזג האוויר ל-5 ימים',
         result: null,
       };
     }
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return 'Unknown error';
   }
 }

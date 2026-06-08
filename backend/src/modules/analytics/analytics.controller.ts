@@ -9,12 +9,12 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { ANALYTICS_CHART_AGENT_INSTRUCTION } from '../admin-agent/constants/gen-ui-spec.constant';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsQueryDto } from './dto/analytics-query.dto';
 import { AnalyticsQueryResultResponseDto } from './dto/analytics-query-result-response.dto';
+import { GenUiSpec } from '../admin-agent/constants/gen-ui-spec.constant';
 
 @ApiTags('analytics')
 @ApiBearerAuth()
@@ -31,7 +31,7 @@ export class AnalyticsController {
     toolIcon: 'ph-chart-line',
     description:
       'Runs a supported analytics metric from the server-side catalog and returns chart-ready data.',
-    genUiSpec: ANALYTICS_CHART_AGENT_INSTRUCTION,
+    genUiSpec: GenUiSpec.ANALYTICS_CHART,
   } as CustomApiOperationOptions)
   @ApiBody({
     type: AnalyticsQueryDto,

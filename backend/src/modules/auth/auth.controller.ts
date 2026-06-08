@@ -35,7 +35,7 @@ import { UserResultResponseDto } from '../users/dto/user-result-response.dto';
 import { LogoutResultResponseDto } from './dto/logout-result-response.dto';
 import { JwtPayloadResultResponseDto } from '../../core/dto/jwt-payload-result-response.dto';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
-import { GENUI_HTML } from '../admin-agent/constants/gen-ui-spec.constant';
+import { GenUiSpec } from '../admin-agent/constants/gen-ui-spec.constant';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -48,6 +48,7 @@ export class AuthController {
     summary: 'Register a new user account',
     summaryHe: 'רושם חשבון משתמש חדש במערכת',
     toolIcon: 'ph-user-plus',
+    genUiSpec: GenUiSpec.REGISTER_FORM,
     description:
       'Creates a new user account. Required RegisterDto fields: fullName, email, password. ' +
       'Password must be at least 8 characters. This endpoint is public and does not require a token.',
@@ -160,9 +161,7 @@ export class AuthController {
     summary: 'Get current authenticated user payload',
     summaryHe: 'שולף את פרטי המשתמש המחובר מתוך הטוקן',
     toolIcon: 'ph-user-circle',
-    genUiSpec: GENUI_HTML(
-      'Render a compact authenticated-user card from the JWT payload. Show sub, email, role, issued-at, and expiration. Make clear this is token payload data, not a full database profile.',
-    ),
+    genUiSpec: GenUiSpec.USER_PROFILE,
     description:
       'Reads req.user as populated by JwtAuthGuard. No database query is made. ' +
       'Role is numeric: 1 = Admin, 2 = User.',

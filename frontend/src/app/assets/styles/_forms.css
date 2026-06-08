@@ -78,3 +78,37 @@ input[type='range'] {
     border-radius: var(--radius-sm);
   } */
 }
+
+
+p-select.custom-select.p-select {
+  width: 240px;
+
+  .p-select-label {
+    font-size: var(--font-size-sm);
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+  }
+
+}
+
+.p-select-option-group {
+  direction: ltr;
+  background-color: var(--color-surface) !important;
+  padding: 2px 4px !important;
+  border-radius: 2px;
+  font-variant: small-caps;
+
+
+}
+
+li.p-select-option {
+  direction: ltr;
+
+
+
+  .select-option {
+    font-size: var(--font-size-sm);
+    direction: ltr;
+  }
+}

@@ -6,18 +6,7 @@ import { CustomApiOperationOptions } from './core/types/custom-api-operation-opt
 @ApiTags('app')
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService) { }
 
-  @Get()
-  @ApiOperation({
-    summary: 'Health check / hello world',
-    summaryHe: 'בודק שה-API זמין ומחזיר תגובת תקינות בסיסית',
-    toolIcon: 'ph-heartbeat',
-    description:
-      'Simple endpoint to verify the API is reachable. Useful for uptime checks and local smoke tests.',
-  } as CustomApiOperationOptions)
-  @ApiResponse({ status: 200, description: 'OK (plain text string)' })
-  getHello(): string {
-    return this.appService.getHello();
-  }
+
 }

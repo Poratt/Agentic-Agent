@@ -35,7 +35,7 @@ import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { JwtPayload } from '../../core/interfaces/jwt-payload.interface';
 import { JwtPayloadResultResponseDto } from '../../core/dto/jwt-payload-result-response.dto';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
-import { GENUI_HTML } from '../admin-agent/constants/gen-ui-spec.constant';
+import { GenUiSpec } from '../admin-agent/constants/gen-ui-spec.constant';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -49,14 +49,7 @@ export class UsersController {
     summary: 'List all users',
     summaryHe: 'שולף את רשימת כל המשתמשים במערכת',
     toolIcon: 'ph-users',
-    genUiSpec: GENUI_HTML(
-      `Render a styled users table with columns: ID, Full Name, Email, Role badge, Created At.
-Add action buttons (including icon and label) per row:
-- "פרטים" button: onclick="window.agentPrompt('תראה לי את פרטי המשתמש עם מזהה ' + id)"
-- "מחק" button (red, only for non-admin): onclick="window.agentPrompt('מחק את המשתמש עם מזהה ' + id)"
-- "שנה תפקיד" button: onclick="window.agentPrompt('שנה את תפקיד המשתמש עם מזהה ' + id)"
-Replace 'id' with the actual user id from the data.`
-    ),
+    genUiSpec: GenUiSpec.USERS_TABLE,
     description:
       'Returns every user in the system with public fields only: id, email, fullName, numeric role, createdAt, updatedAt, lastLoginAt. ' +
       'Passwords and refresh token hashes are never returned.',
@@ -77,9 +70,7 @@ Replace 'id' with the actual user id from the data.`
     summary: 'Get current authenticated user payload',
     summaryHe: 'שולף את פרטי המשתמש המחובר מתוך הטוקן',
     toolIcon: 'ph-user-circle',
-    genUiSpec: GENUI_HTML(
-      'Render a compact authenticated-user card from the JWT payload. Show sub, email, role, issued-at, and expiration. Make clear this is token payload data, not a full database profile.',
-    ),
+    genUiSpec: GenUiSpec.USER_PROFILE,
     description:
       'Returns the JWT payload decoded by JwtAuthGuard. No database query is made. Role is numeric: 1 = Admin, 2 = User.',
   } as CustomApiOperationOptions)
@@ -104,7 +95,7 @@ Replace 'id' with the actual user id from the data.`
     summary: 'Get user by id',
     summaryHe: 'שולף משתמש לפי מזהה (מזהה: ${id})',
     toolIcon: 'ph-user',
-    genUiSpec: GENUI_HTML('Render a profile card with initials avatar.'),
+    genUiSpec: GenUiSpec.USER_PROFILE,
     description:
       'Fetches one user by numeric id with public fields only. Use GET /users first to discover valid IDs.',
   } as CustomApiOperationOptions)
@@ -130,9 +121,7 @@ Replace 'id' with the actual user id from the data.`
     summary: 'Update user profile fields',
     summaryHe: 'מעדכן את שדות הפרופיל של המשתמש (מזהה: ${id})',
     toolIcon: 'ph-pencil-simple',
-    genUiSpec: GENUI_HTML(
-      'Render an updated user profile card. Highlight the user id, full name, email, numeric role label, and updatedAt timestamp. Make it clear the profile fields were updated successfully.',
-    ),
+    genUiSpec: GenUiSpec.USER_UPDATE_CONFIRMATION,
     description:
       'Updates fullName and/or email for the user identified by :id. ' +
       'This endpoint intentionally does not accept role changes; use PATCH /users/:id/role for role updates.',
@@ -160,9 +149,7 @@ Replace 'id' with the actual user id from the data.`
     summary: 'Delete user permanently',
     summaryHe: 'מוחק לצמיתות את המשתמש (מזהה: ${id})',
     toolIcon: 'ph-trash',
-    genUiSpec: GENUI_HTML(
-      'Render a destructive-action confirmation card. Show that the user was permanently deleted, include the deleted flag if present, and do not imply the user can be restored.',
-    ),
+    genUiSpec: GenUiSpec.DELETE_CONFIRM,
     description: 'Hard-deletes the user record. This is irreversible and requires admin privileges.',
   } as CustomApiOperationOptions)
   @ApiParam({ name: 'id', type: Number, description: 'Numeric id of the user to delete.' })
@@ -185,9 +172,7 @@ Replace 'id' with the actual user id from the data.`
     summary: 'Change user role',
     summaryHe: 'משנה את תפקיד המשתמש (מזהה: ${id})',
     toolIcon: 'ph-shield',
-    genUiSpec: GENUI_HTML(
-      'Render a role-change confirmation card. Show the user id, email, full name, and new role. Translate numeric roles as 1 = Admin and 2 = User, while preserving the numeric value.',
-    ),
+    genUiSpec: GenUiSpec.USER_ROLE_CHANGE_CONFIRMATION,
     description:
       'Sets only the role field of the user identified by :id. IMPORTANT: role must be a NUMBER: 1 = Admin, 2 = User. Never send a string. Accepted numeric values : 1 = Admin, 2 = User. ' +
       'Other user fields must be updated through PATCH /users/:id.',

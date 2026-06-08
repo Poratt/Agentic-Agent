@@ -9,7 +9,6 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { CURRENCY_AGENT_INSTRUCTION } from '../admin-agent/constants/gen-ui-spec.constant';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { ConvertQueryDto } from './dto/convert-query.dto';
@@ -17,6 +16,7 @@ import { CurrencyConversionResultResponseDto } from './dto/currency-conversion-r
 import { CurrencyRatesResultResponseDto } from './dto/currency-rates-result-response.dto';
 import { RateQueryDto } from './dto/rate-query.dto';
 import { CurrencyService } from './currency.service';
+import { GenUiSpec } from '../admin-agent/constants/gen-ui-spec.constant';
 
 @ApiTags('currency')
 @ApiBearerAuth()
@@ -31,7 +31,7 @@ export class CurrencyController {
     summaryHe: 'בודק שערי מטבע עדכניים לפי מטבע בסיס',
     toolIcon: 'ph-currency-circle-dollar',
     description: 'Retrieves current exchange rates from the external exchange-rate provider.',
-    genUiSpec: CURRENCY_AGENT_INSTRUCTION,
+    genUiSpec: GenUiSpec.CURRENCY,
   } as CustomApiOperationOptions)
   @ApiQuery({
     name: 'base',
@@ -57,7 +57,7 @@ export class CurrencyController {
     summaryHe: 'ממיר סכום בין שני מטבעות לפי שער עדכני',
     toolIcon: 'ph-currency-circle-dollar',
     description: 'Converts a positive amount between two supported currencies using current exchange rates.',
-    genUiSpec: CURRENCY_AGENT_INSTRUCTION,
+    genUiSpec: GenUiSpec.CURRENCY,
   } as CustomApiOperationOptions)
   @ApiQuery({
     name: 'from',
