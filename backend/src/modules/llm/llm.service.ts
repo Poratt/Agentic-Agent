@@ -112,31 +112,20 @@ export class LlmService implements OnModuleInit {
 
   async getModelOptions(): Promise<ServiceResultContainer<LlmModelGroupDto[]>> {
     const ollamaModels = await this.getSafeLocalOllamaModels();
+
+    const { regularModels, cloudModels } = separateOllamaModels(ollamaModels);
+
     const modelGroups: LlmModelGroupDto[] = [
       ...LLM_STATIC_MODEL_GROUPS,
       {
         label: 'ollama',
-        items: ollamaModels
-          .filter((model) => {
-            const name = model.name.toLowerCase();
-            return !(
-              name.includes('embed') ||
-              name.includes('embedding') ||
-              name === 'all-minilm' ||
-              name.startsWith('nomic-embed') ||
-              name.startsWith('mxbai-embed')
-            );
-          })
-          .map((model) => {
-            return {
-              value: model.name,
-              label: model.name,
-            };
-          })
-          .sort((a, b) => a.label.localeCompare(b.label)),
+        items: toModelItems(regularModels),
+      },
+      {
+        label: 'ollama-cloud',
+        items: toModelItems(cloudModels),
       },
     ];
-
 
     return {
       success: true,
@@ -494,4 +483,40 @@ export class LlmService implements OnModuleInit {
     return models;
   }
 
+}
+
+function separateOllamaModels(models: any[]) {
+  const regular: any[] = [];
+  const cloud: any[] = [];
+
+  for (const model of models) {
+    const name = model.name.toLowerCase();
+
+    if (name.includes('cloud')) {
+      cloud.push(model);
+    } else if (!isEmbeddingModel(name)) {
+      regular.push(model);
+    }
+  }
+
+  return { regularModels: regular, cloudModels: cloud };
+}
+
+function isEmbeddingModel(name: string): boolean {
+  return (
+    name.includes('embed') ||
+    name.includes('embedding') ||
+    name === 'all-minilm' ||
+    name.startsWith('nomic-embed') ||
+    name.startsWith('mxbai-embed')
+  );
+}
+
+function toModelItems(models: any[]): { value: string; label: string }[] {
+  return models
+    .map((model) => ({
+      value: model.name,
+      label: model.name,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 }

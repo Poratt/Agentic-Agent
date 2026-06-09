@@ -1,4 +1,4 @@
-export type LlmProvider = 'openrouter' | 'nvidia' | 'ollama';
+export type LlmProvider = 'openrouter' | 'nvidia' | 'ollama' | 'ollama-cloud';
 
 export type LlmToolSchema = {
   type: 'function';
