@@ -55,3 +55,10 @@ export type LlmModelTestResult = {
   provider: LlmProvider;
   available: boolean;
 };
+
+export type LlmProviderConfig = {
+  id: LlmProvider;
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+};

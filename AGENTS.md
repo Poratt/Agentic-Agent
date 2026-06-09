@@ -73,7 +73,6 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 Before editing any file, the agent MUST:
 
 1. Read the relevant local project guide:
-   - `AGENTS.md`
    - Any directly relevant skill/rule file for the file type being changed
 2. Identify the change type:
    - Angular component
@@ -95,12 +94,8 @@ For Angular page components, this is mandatory:
 - Template must use:
 
 ```html
-@switch (pageState()) {
-  @case (PageStates.Loading) {}
-  @case (PageStates.Error) {}
-  @case (PageStates.Empty) {}
-  @case (PageStates.Ready) {}
-}
+@switch (pageState()) { @case (PageStates.Loading) {} @case (PageStates.Error) {} @case
+(PageStates.Empty) {} @case (PageStates.Ready) {} }
 ```
 
 If the agent cannot identify the applicable pattern, it must stop and ask before editing.
@@ -120,6 +115,18 @@ rg -n "׳|ג€�|ג†|ג€|�" path/to/file
 
 If corrupted text is found, fix it before running build or returning the answer.
 
+## File Editing Safety Rule
+
+Before using `str_replace` on any file:
+
+1. **Always `Read` the file first** — get the exact current content, never rely on memory.
+2. If `str_replace` fails once — re-read the file and try again with corrected `old_str`.
+3. If `str_replace` fails **twice on the same file** — stop. Report what failed and ask the user.
+4. **Never rewrite an entire file** to work around a failed `str_replace`. Rewriting is always wrong unless the user explicitly asked for it.
+5. After a successful edit, re-read the changed section to verify correctness.
+
+**The rule:** Read → Edit → Verify. Never guess at file content.
+
 ## 🔴 Golden Rules
 
 1. Run tests BEFORE any refactoring: `npx ng test frontend --watch=false`
@@ -133,56 +140,13 @@ If corrupted text is found, fix it before running build or returning the answer.
 ## Project Overview
 
 Full-stack monorepo: Angular frontend + NestJS backend.
-Angular rules @`~/.CLAUDE/rules/angular-rules.md`
-NestJS rules @`~/.CLAUDE/rules/nestjs-rules.md`
 
-## CSS Architecture Rules (MANDATORY)
+## Rules
 
-### File Structure
-
-All styles live in `frontend/src/app/assets/styles/`:
-
-- `_variables.css` — tokens only (colors, spacing, typography, shadows, radius)
-- `_typography.css` — h1, h2, h3, p, label, .subtitle
-- `_forms.css` — input, textarea, select, .form-group, input:focus
-- `_buttons.css` — .btn-primary, .btn-ghost, .btn-danger
-- `_layout.css` — .page, .card, .page-header, .page-footer, .glass-effect
-- `_utilities.css` — .link, .divider, helper classes
-- `styles.css` — @import statements ONLY, nothing else
-
-### Component CSS Rules
-
-- Component `.scss` files contain ONLY layout/structure unique to that component
-- NO colors, shadows, font sizes, spacing values — use var(--token) only
-- NO hardcoded hex/rgb/px — Golden Rule #3
-- If a style could be reused in another component → it belongs in global files
-- Prefer empty component CSS over duplicating global styles
-- **MANDATORY Nesting**: Use CSS nesting for all component styles to match project patterns (e.g., `.parent { .child { ... } }`).
-- **Zero Duplication**: NEVER redefine classes that already exist in global partials (`.page`, `.page-header`, `.card`, etc.). If a global class is used, it must be applied in HTML without being redefined in the component CSS.
-- **Strict Token Audit**: Before writing CSS, read `_variables.css`. Never guess token names (e.g., use `--space-4`, NOT `--spacing-md`). If a token isn't in `_variables.css`, it doesn't exist.
-
-### Class Naming Convention
-
-- Generic names only: `.page`, `.card`, `.form`, `.form-group`, `.page-header`, `.page-footer`
-- NEVER component-specific names like `.login-page`, `.login-card`
-- **Strict Global Naming**: NEVER create or generalize global utility classes (e.g., `.sm`, `.lg`) without first running a project-wide search (`Grep`) to ensure the name isn't already used. Avoid introducing generic names that could collide with other libraries or elements.
-- Glassmorphism via `::before` pseudo-element ONLY — never `backdrop-filter` directly on element
-
-### Glassmorphism Pattern (MANDATORY)
-
-.glass-effect {
-position: relative;
-isolation: isolate;
-}
-.glass-effect::before {
-content: '';
-position: absolute;
-inset: 0;
-border-radius: inherit;
-backdrop-filter: blur(20px);
--webkit-backdrop-filter: blur(20px);
-z-index: -1;
-}
+- Angular rules @`~/.CLAUDE/rules/angular-rules.md`
+- NestJS rules @`~/.CLAUDE/rules/nestjs-rules.md`
+- File editing: @`~/.CLAUDE/rules/str-replace.md`
+- CSS: @`~/.CLAUDE/rules/css-rules.md`
 
 ## Directory Structure
 
@@ -227,3 +191,46 @@ Update `documents/architecture-diagram.md` whenever a change affects system arch
 If the change does not affect the architecture diagram, mention that explicitly in the final response.
 
 - **Sub-Agents for Scale:** For multi-step or complex tasks, spawn specialized sub-agents to parallelize work (e.g., one for backend DTO/Controller, one for frontend UI). The primary agent must review and integrate their diffs.
+
+## Session Management (MANDATORY)
+
+### At Session Start
+
+Before doing anything else, read:
+
+1. `documents/HANDOFF.md` — where we left off
+2. `documents/STATUS.md` — current task status
+
+If working on a specific feature, also read:
+
+- `documents/todo/<feature-name>.md` — feature plan
+- `documents/incomplete/<feature-name>.md` — if paused mid-work
+
+Then confirm to the user: "Loaded context: [what you understood]"
+
+### At Session End
+
+Before responding with final answer, update:
+
+1. **`documents/HANDOFF.md`** — fill ALL sections:
+   - What was done this session
+   - The exact next step (specific file + action)
+   - Files that were touched
+   - Decisions made
+   - Open questions for the user
+
+2. **`documents/STATUS.md`** — move tasks between sections if status changed
+
+3. **`documents/LOG.md`** — add any architectural decisions made this session
+
+4. When a feature from `todo/` is complete:
+   - Move its `.md` file to `documents/done/`
+   - Update `STATUS.md` accordingly
+
+### Feature Work Flow
+
+```
+todo/<feature>.md        ← active work
+incomplete/<feature>.md  ← paused (add reason + resume point)
+done/<feature>.md        ← completed
+```

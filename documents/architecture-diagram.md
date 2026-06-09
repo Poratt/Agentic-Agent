@@ -49,8 +49,11 @@ flowchart TD
 
   subgraph LlmCore["LLM Core"]
     LlmController[LlmController]
-    LlmService[LlmService]
-    ModelCatalog[LLM Model Catalog]
+    LlmService[LlmService Facade]
+    ProviderConfig[LlmProviderConfigService]
+    ClientService[LlmClientService]
+    ModelCatalog[LlmModelCatalogService]
+    HealthService[LlmHealthService]
   end
 
   subgraph Data["Database"]
@@ -85,7 +88,11 @@ flowchart TD
 
   LlmModule --> LlmController
   LlmController --> LlmService
-  LlmService --> ModelCatalog & OpenRouter & Nvidia & Ollama
+  LlmService --> ProviderConfig & ClientService & ModelCatalog & HealthService
+  ClientService --> ProviderConfig
+  ClientService --> OpenRouter & Nvidia & Ollama
+  ModelCatalog --> ProviderConfig & Ollama
+  HealthService --> ClientService & ProviderConfig & ModelCatalog
 
   AuthModule & UsersModule --> UsersTable
   AgentSessionService --> ChatSessionsTable & ChatMessagesTable
@@ -106,7 +113,8 @@ sequenceDiagram
   participant Agent as AdminAgentService
   participant Sessions as AgentSessionService
   participant Parser as SwaggerToolsParser
-  participant LLM as LlmService
+  participant LLM as LlmService Facade
+  participant Client as LlmClientService
   participant Tools as AgentToolExecutorService
   participant BackendTool as Backend Tool
   participant DB as Database
@@ -118,8 +126,10 @@ sequenceDiagram
   Agent->>Parser: Load Swagger tools
   Agent->>Sessions: Load session history
   Agent->>LLM: generateResponse(...)
+  LLM->>Client: generateResponse(...)
 
   alt Tool Calls
+    Client-->>LLM: toolCalls[]
     LLM-->>Agent: toolCalls[]
     Agent->>Sessions: Save tool-call message
     Agent->>Agent: Group safe GET tools
@@ -134,7 +144,9 @@ sequenceDiagram
 
     Agent->>Sessions: Save tool results
     Agent->>LLM: generateResponse(with results)
+    LLM->>Client: generateResponse(with results)
   else Final Response
+    Client-->>LLM: Assistant content
     LLM-->>Agent: Assistant content
     Agent-->>API: Stream tokens
     API-->>Chat: SSE
@@ -166,7 +178,7 @@ flowchart TB
     Auth["AuthModule"]
     Users["UsersModule"]
     AdminAgent["AdminAgentModule"]
-    LLM["LlmModule"]
+    LLM["LlmModule\nfacade, config, client, model catalog, health checks"]
     System["SystemModule"]
     Weather["WeatherModule"]
     Analytics["AnalyticsModule"]
@@ -180,7 +192,6 @@ flowchart TB
   Weather --> WeatherApi[Weather API]
   Currency --> CurrencyApi[Currency API]
   LLM --> Providers[LLM Providers]
-
 ```
 
 ## GenUI Rendering Path
@@ -190,8 +201,9 @@ flowchart TD
   ToolEndpoint[Backend Endpoint\nwith genUiSpec] --> SwaggerSpec[swagger-spec.json]
   SwaggerSpec --> Parser[SwaggerToolsParser]
   Parser --> ToolDesc[Tool Description\n+ GenUI Instruction]
-  ToolDesc --> LLM[LlmService]
-  LLM --> Component[```component]
+  ToolDesc --> LLM[LlmService Facade]
+  LLM --> Client[LlmClientService]
+  Client --> Component[```component]
   Component --> Stream[SSE Stream]
   Stream --> AiFormat[AiFormat Directive]
   AiFormat --> Skeleton[Skeleton Loader]
@@ -205,25 +217,32 @@ sequenceDiagram
   autonumber
   participant Chat as Angular Chat UI
   participant LlmApi as LlmController
-  participant Llm as LlmService
-  participant Catalog as Model Catalog
+  participant Llm as LlmService Facade
+  participant Catalog as LlmModelCatalogService
+  participant Config as LlmProviderConfigService
+  participant Client as LlmClientService
   participant Ollama as Local Ollama
   participant Agent as AdminAgentService
 
   Chat->>LlmApi: GET /llm/model-options
   LlmApi->>Llm: getModelOptions()
-  Llm->>Catalog: Static models
-  Llm->>Ollama: Local models
-  Llm-->>Chat: Grouped options
+  Llm->>Catalog: getModelOptions()
+  Catalog->>Ollama: Read local models
+  Catalog-->>Chat: Grouped options
   Chat->>Agent: Query with provider/model
   Agent->>Llm: generateResponse(override)
+  Llm->>Client: generateResponse(override)
+  Client->>Config: Resolve provider config
 ```
 
 ## Current Architecture Notes
 
-- The backend is the **source of truth** for available LLM models.
+- The backend is the source of truth for available LLM models.
 - Swagger metadata is the tool catalog for the admin agent.
 - `genUiSpec` is defined in shared constants and attached via Swagger decorators.
-- The agent currently runs in a **single active flow** (no independent sub-agents yet).
+- The agent currently runs in a single active flow.
 - Read-only tools run in parallel, mutations run sequentially.
-- Full conversation history (user + assistant + tool messages) is persisted in the backend.
+- Full conversation history is persisted in the backend.
+- `LlmService` is the public facade used by controllers and `AdminAgentService`.
+- Internal LLM responsibilities are split into provider config, provider client, model catalog, and health-check services.
+

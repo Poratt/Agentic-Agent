@@ -271,12 +271,12 @@ Expected:
 
 Checklist:
 
-- [ ] `ollama.types.ts` created.
-- [ ] `LlmProviderConfig` exported from `llm.types.ts`.
-- [ ] `llm.service.ts` imports these types.
-- [ ] `separateOllamaModels(models: OllamaModel[])` uses a typed array.
-- [ ] `toModelItems(models: OllamaModel[])` uses a typed array.
-- [ ] Backend build passes.
+- [x] `ollama.types.ts` created.
+- [x] `LlmProviderConfig` exported from `llm.types.ts`.
+- [x] `llm.service.ts` imports these types.
+- [x] `separateOllamaModels(models: OllamaModel[])` uses a typed array.
+- [x] `toModelItems(models: OllamaModel[])` uses a typed array.
+- [x] Backend build passes.
 
 ## Phase 2 - Extract Provider Config Service
 
@@ -309,12 +309,12 @@ Expected:
 
 Checklist:
 
-- [ ] `LlmProviderConfigService` created.
-- [ ] Env reading moved out of `LlmService`.
-- [ ] Missing provider/model/api key errors still happen.
-- [ ] `getRuntimeSelection(...)` still available through `LlmService`.
-- [ ] `llm.module.ts` registers `LlmProviderConfigService`.
-- [ ] Backend build passes.
+- [x] `LlmProviderConfigService` created.
+- [x] Env reading moved out of `LlmService`.
+- [x] Missing provider/model/api key errors still happen.
+- [x] `getRuntimeSelection(...)` still available through `LlmService`.
+- [x] `llm.module.ts` registers `LlmProviderConfigService`.
+- [x] Backend build passes.
 
 ## Phase 3 - Extract Client Service
 
@@ -344,12 +344,12 @@ Expected:
 
 Checklist:
 
-- [ ] `LlmClientService` created.
-- [ ] OpenAI import moved out of `LlmService`.
-- [ ] Retry logic moved out of `LlmService`.
-- [ ] `generateResponse(...)` delegates through facade.
-- [ ] `generateStream(...)` delegates through facade.
-- [ ] Backend build passes.
+- [x] `LlmClientService` created.
+- [x] OpenAI import moved out of `LlmService`.
+- [x] Retry logic moved out of `LlmService`.
+- [x] `generateResponse(...)` delegates through facade.
+- [x] `generateStream(...)` delegates through facade.
+- [x] Backend build passes.
 
 ## Phase 4 - Extract Model Catalog Service
 
@@ -390,13 +390,13 @@ Expected:
 
 Checklist:
 
-- [ ] `LlmModelCatalogService` created.
-- [ ] Provider metadata moved out of `LlmService`.
-- [ ] Ollama discovery moved out of `LlmService`.
-- [ ] `getProviders()` delegates through facade.
-- [ ] `getModelOptions()` delegates through facade.
-- [ ] `llm.module.ts` registers `LlmModelCatalogService`.
-- [ ] Backend build passes.
+- [x] `LlmModelCatalogService` created.
+- [x] Provider metadata moved out of `LlmService`.
+- [x] Ollama discovery moved out of `LlmService`.
+- [x] `getProviders()` delegates through facade.
+- [x] `getModelOptions()` delegates through facade.
+- [x] `llm.module.ts` registers `LlmModelCatalogService`.
+- [x] Backend build passes.
 
 ## Phase 5 - Extract Health Service
 
@@ -428,12 +428,12 @@ Expected:
 
 Checklist:
 
-- [ ] `LlmHealthService` created.
-- [ ] Single-model test moved out of `LlmService`.
-- [ ] All-model test moved out of `LlmService`.
-- [ ] Test target collection moved out of `LlmService`.
-- [ ] `llm.module.ts` registers `LlmHealthService`.
-- [ ] Backend build passes.
+- [x] `LlmHealthService` created.
+- [x] Single-model test moved out of `LlmService`.
+- [x] All-model test moved out of `LlmService`.
+- [x] Test target collection moved out of `LlmService`.
+- [x] `llm.module.ts` registers `LlmHealthService`.
+- [x] Backend build passes.
 
 ## Phase 6 - Reduce `LlmService` To Facade
 
@@ -496,12 +496,12 @@ npm.cmd run build -w backend
 
 Checklist:
 
-- [ ] `LlmService` is mostly delegation.
-- [ ] No OpenAI client creation remains in `LlmService`.
-- [ ] No Ollama fetch logic remains in `LlmService`.
-- [ ] No retry logic remains in `LlmService`.
-- [ ] No env parsing remains in `LlmService`.
-- [ ] Backend build passes.
+- [x] `LlmService` is mostly delegation.
+- [x] No OpenAI client creation remains in `LlmService`.
+- [x] No Ollama fetch logic remains in `LlmService`.
+- [x] No retry logic remains in `LlmService`.
+- [x] No env parsing remains in `LlmService`.
+- [x] Backend build passes.
 
 ## Phase 7 - Manual Runtime Verification
 
@@ -526,15 +526,15 @@ Manual checks:
 
 Checklist:
 
-- [ ] Model options load in frontend.
-- [ ] Selected model reaches backend.
-- [ ] Chat response still streams.
-- [ ] Tool calls still work.
-- [ ] `GET /llm/providers` works.
-- [ ] `GET /llm/model-options` works.
-- [ ] `GET /llm/status` works.
-- [ ] `GET /llm/llm-test` works.
-- [ ] `GET /llm/test-all` works when intentionally tested.
+- [x] Model options load in frontend.
+- [x] Selected model reaches backend.
+- [x] Chat response still streams.
+- [x] Tool calls still work.
+- [x] `GET /llm/providers` works.
+- [x] `GET /llm/model-options` works.
+- [x] `GET /llm/status` works.
+- [x] `GET /llm/llm-test` works.
+- [x] `GET /llm/test-all` works when intentionally tested.
 
 ## Phase 8 - Architecture Diagram Update
 
@@ -563,9 +563,9 @@ Required diagram updates:
 
 Checklist:
 
-- [ ] `documents/architecture-diagram.md` updated.
-- [ ] Mermaid renders conceptually.
-- [ ] Current architecture notes mention facade split if needed.
+- [x] `documents/architecture-diagram.md` updated.
+- [x] Mermaid renders conceptually.
+- [x] Current architecture notes mention facade split if needed.
 
 ## Phase 9 - Final Cleanup
 
@@ -589,113 +589,12 @@ rg -n "configService.get" backend/src/modules/llm
 
 Checklist:
 
-- [ ] No local provider/Ollama types remain in `llm.service.ts`.
-- [ ] No `any[]` remains in LLM model helpers.
-- [ ] Only `LlmClientService` imports OpenAI.
-- [ ] Only `LlmProviderConfigService` reads env values.
-- [ ] No unused imports remain.
-- [ ] Backend build passes.
-
-## Suggested Agent Split
-
-### Agent 1 - Types And Provider Config
-
-Owner:
-
-```txt
-backend/src/modules/llm/types/
-backend/src/modules/llm/services/llm-provider-config.service.ts
-```
-
-Checklist:
-
-- [ ] Create `ollama.types.ts`.
-- [ ] Move `LlmProviderConfig` to shared LLM types.
-- [ ] Create `LlmProviderConfigService`.
-- [ ] Move env/config/default-header logic.
-- [ ] Build passes.
-
-### Agent 2 - Client Runtime
-
-Owner:
-
-```txt
-backend/src/modules/llm/services/llm-client.service.ts
-```
-
-Checklist:
-
-- [ ] Create `LlmClientService`.
-- [ ] Move OpenAI client creation.
-- [ ] Move retry logic.
-- [ ] Move `generateResponse`.
-- [ ] Move `generateStream`.
-- [ ] Build passes.
-
-### Agent 3 - Model Catalog
-
-Owner:
-
-```txt
-backend/src/modules/llm/services/llm-model-catalog.service.ts
-```
-
-Checklist:
-
-- [ ] Create `LlmModelCatalogService`.
-- [ ] Move provider metadata.
-- [ ] Move model options.
-- [ ] Move Ollama discovery.
-- [ ] Remove `any[]` from model helpers.
-- [ ] Build passes.
-
-### Agent 4 - Health Checks
-
-Owner:
-
-```txt
-backend/src/modules/llm/services/llm-health.service.ts
-```
-
-Checklist:
-
-- [ ] Create `LlmHealthService`.
-- [ ] Move `testLlm`.
-- [ ] Move `testAllModels`.
-- [ ] Move model check target creation.
-- [ ] Build passes.
-
-### Agent 5 - Facade And Module Integration
-
-Owner:
-
-```txt
-backend/src/modules/llm/llm.service.ts
-backend/src/modules/llm/llm.module.ts
-```
-
-Checklist:
-
-- [ ] Register all new services.
-- [ ] Reduce `LlmService` to facade.
-- [ ] Keep controller and admin-agent imports unchanged.
-- [ ] Build passes.
-
-### Agent 6 - Verification And Documentation
-
-Owner:
-
-```txt
-documents/architecture-diagram.md
-```
-
-Checklist:
-
-- [ ] Run backend build.
-- [ ] Manually verify LLM endpoints.
-- [ ] Manually verify chat model selection.
-- [ ] Update architecture diagram.
-- [ ] Confirm no unrelated files changed.
+- [x] No local provider/Ollama types remain in `llm.service.ts`.
+- [x] No `any[]` remains in LLM model helpers.
+- [x] Only `LlmClientService` imports OpenAI.
+- [x] Only `LlmProviderConfigService` reads env values.
+- [x] No unused imports remain.
+- [x] Backend build passes.
 
 ## Risks
 
@@ -753,4 +652,3 @@ The refactor is complete only when:
 - Backend build passes.
 - Architecture diagram is updated.
 - No unrelated code was refactored.
-

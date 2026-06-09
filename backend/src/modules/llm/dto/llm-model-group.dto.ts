@@ -11,21 +11,3 @@ export class LlmModelGroupDto {
   items!: LlmModelOptionDto[];
 }
 
-
-// export class LlmModel {
-//   @ApiProperty({ description: 'The unique identifier of the model.', example: 'llama3' })
-//   id!: string;
-
-//   @ApiProperty({ description: 'The display name of the model.', example: 'Llama 3' })
-//   label!: string;
-
-//   // value
-//   @ApiProperty({ description: ''})
-//   value!: string;
-
-
-//   @ApiProperty({ description: 'The provider of the model.', example: 'ollama' })
-//   provider!: string;
-
-
-// }

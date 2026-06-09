@@ -5,6 +5,19 @@ export const GENUI_HTML = (hint: string) => {
 <div style="...">...</div>
 \`\`\`
 ${hint}
+
+CRITICAL VISUAL STANDARD (ULTRA-PREMIUM):
+Do NOT render basic tables or flat cards. Every component MUST feel like a high-end modern dashboard.
+1. VISUAL DEPTH: Use Glassmorphism (backdrop-filter: blur), semi-transparent borders, and multi-layered box-shadows to create a 3D floating effect.
+2. DYNAMIC BACKGROUNDS: Use sophisticated linear or radial gradients. For specific contexts (like weather), implement ambient background scenes using CSS/SVG (e.g., moving waves, glowing suns, drifting clouds).
+3. MOTION DESIGN: 
+   - Mandatory entry animations: combine fade-in with a slight scale or slide-up.
+   - Ambient loops: add subtle, non-distracting animations (float, pulse, shimmer) to hero elements.
+   - Staggered reveals: child elements must enter with a sequential delay (0ms, 40ms, 80ms...).
+4. TYPOGRAPHY: Use strong visual hierarchy. Main metrics must be bold, oversized, and potentially use gradient text.
+5. INTERACTIVE FEEL: Hover effects must be tactile (slight lift, glow increase, or color shift) with a smooth 'transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'.
+DESIGN SYSTEM:
+
 Use this design system with CSS variables (already defined in the page):
 - Background: var(--color-surface)
 - Text primary: var(--color-text-primary)
@@ -28,6 +41,7 @@ LANGUAGE AND DIRECTION:
 - Any English-only technical value, model id, provider name, email, URL, code, API path, currency code, date token, or mixed identifier MUST be wrapped in an element with dir="ltr".
 - For long English identifiers, add style="direction:ltr;text-align:left;unicode-bidi:plaintext;overflow-wrap:anywhere;" so text does not break visually inside RTL cards.
 - Never split English model ids, emails, URLs, or API paths across visual RTL order. Keep them readable left-to-right.
+
 
 HOVER: Add hover effects using inline onmouseover/onmouseout handlers.
 CRITICAL: Always add transition to the element's style: "transition: all 0.2s ease"
