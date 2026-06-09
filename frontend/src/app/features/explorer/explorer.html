@@ -1,0 +1,144 @@
+<div class="page-content">
+    <div class="page-header">
+        <div class="header-row">
+            <div class="header-content">
+                <h2>נתוני זנים</h2>
+            </div>
+
+            <div class="header-actions">
+                <div class="form-field-has-icon">
+                    <span class="field-icon ph ph-magnifying-glass"></span>
+                    <input
+                        pInputText
+                        class="form-control"
+                        type="search"
+                        placeholder="חיפוש בטבלה"
+                        [disabled]="loading()"
+                        (input)="applyGlobalFilter($event)"
+                    />
+                </div>
+
+                <button class="primary-btn outlined" type="button" (click)="load()">
+                    <span class="ph ph-arrows-clockwise"></span>
+                    <span>רענון</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @switch (pageState()) {
+        @case (PageStates.Loading) {
+            <div class="page-state loading-state">
+                <span class="custom-loader"></span>
+                <span class="subtitle">טוען נתוני זנים...</span>
+            </div>
+        }
+
+        @case (PageStates.Error) {
+            <div class="page-state error-state">
+                <span class="icon ph ph-warning"></span>
+                <h4 class="title">{{ error() }}</h4>
+                <button class="primary-btn sm" type="button" (click)="load()">נסה שוב</button>
+            </div>
+        }
+
+        @case (PageStates.Empty) {
+            <div class="page-state empty-state">
+                <span class="icon ph ph-table"></span>
+                <h4 class="title">לא נמצאו נתוני זנים.</h4>
+            </div>
+        }
+
+        @case (PageStates.Ready) {
+            <div class="glass-effect card table-container">
+                <p-table
+                    #table
+                    styleClass="explorer-table"
+                    [value]="items()"
+                    [globalFilterFields]="searchColumns()"
+                    [scrollable]="true"
+                    scrollHeight="flex"
+                >
+                    <ng-template pTemplate="header">
+                        <tr>
+                            @for (column of columns(); track column) {
+                                <th [pSortableColumn]="column">
+                                    <span>{{ columnLabel(column) }}</span>
+                                    <p-sortIcon [field]="column" />
+                                </th>
+                            }
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="body" let-item>
+                        <tr>
+                            @for (column of columns(); track column) {
+                                <td>
+                                    @if (column === 'name') {
+                                        <div class="strain-name-cell">
+                                            <div class="strain-name-header">
+                                                <span class="strain-heb-name">{{ formatValue(item.name) }}</span>
+
+                                                @if (item.isNew === true) {
+                                                    <span class="strain-new-tag">NEW</span>
+                                                }
+                                            </div>
+
+                                            @if (hasDisplayValue(item.enName)) {
+                                                <span class="strain-en-name" dir="ltr">{{
+                                                    formatValue(item.enName)
+                                                }}</span>
+                                            }
+
+                                            @if (hasDisplayValue(item.rating)) {
+                                                <span class="strain-rating">
+                                                    <span class="ph ph-star ph-fill"></span>
+                                                    <span>{{ formatValue(item.rating) }}</span>
+                                                </span>
+                                            }
+
+                                            @if (hasDisplayValue(item.deal)) {
+                                                <span class="strain-deal">
+                                                    <span class="ph ph-gift"></span>
+                                                    <span>{{ formatValue(item.deal) }}</span>
+                                                </span>
+                                            }
+                                        </div>
+                                    } @else if (column === 'price') {
+                                        <div class="strain-price-cell">
+                                            <span class="strain-current-price">{{ formatValue(item.price) }}</span>
+
+                                            @if (hasDisplayValue(item.catalogPrice)) {
+                                                <span class="strain-catalog-price">{{
+                                                    formatValue(item.catalogPrice)
+                                                }}</span>
+                                            }
+                                        </div>
+                                    } @else if (column === 'packageType') {
+                                        <div
+                                            class="package-type-cell"
+                                            [attr.aria-label]="formatValue(item.packageType)"
+                                            [attr.title]="formatValue(item.packageType)"
+                                        >
+                                            <span
+                                                class="ph package-type-icon"
+                                                [ngClass]="packageTypeIconClass(item.packageType)"
+                                            ></span>
+                                        </div>
+                                    } @else {
+                                        {{ formatValue(item[column]) }}
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td [attr.colspan]="columns().length">לא נמצאו תוצאות.</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        }
+    }
+</div>

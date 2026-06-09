@@ -19,6 +19,7 @@ flowchart TD
     Shell[Main Layout / Sidebar]
     AuthUI[Auth Feature]
     ChatUI[Chat Feature]
+    ExplorerUI[Explorer Feature]
     ChatMessage[Chat Message Renderer]
     AiFormat[AiFormat Directive]
     FrontendServices[Core HTTP Services]
@@ -35,6 +36,7 @@ flowchart TD
     WeatherModule[WeatherModule]
     AnalyticsModule[AnalyticsModule]
     CurrencyModule[CurrencyModule]
+    ExplorerModule[ExplorerModule]
   end
 
   subgraph AgentCore["Admin Agent Core"]
@@ -68,21 +70,23 @@ flowchart TD
     Ollama[Local Ollama]
     WeatherApi[Weather API]
     CurrencyApi[Currency API]
+    JaneApi[Jane API / Store Page]
   end
 
   User --> Shell
-  Shell --> AuthUI & ChatUI
+  Shell --> AuthUI & ChatUI & ExplorerUI
   ChatUI --> ChatMessage & FrontendServices
+  ExplorerUI --> ExplorerModule
   ChatMessage --> AiFormat
   AuthUI --> FrontendServices
   FrontendServices --> AuthModule & UsersModule & AdminAgentController & LlmController
 
-  AppModule --> AuthModule & UsersModule & AdminAgentModule & LlmModule & SystemModule & WeatherModule & AnalyticsModule & CurrencyModule
+  AppModule --> AuthModule & UsersModule & AdminAgentModule & LlmModule & SystemModule & WeatherModule & AnalyticsModule & CurrencyModule & ExplorerModule
 
   AdminAgentModule --> AdminAgentController
   AdminAgentController --> AdminAgentService
   AdminAgentService --> AgentSessionService & AgentToolExecutor & SwaggerParser & SystemContext & LlmService
-  AgentToolExecutor --> SwaggerParser & AuthModule & UsersModule & SystemModule & WeatherModule & AnalyticsModule & CurrencyModule
+  AgentToolExecutor --> SwaggerParser & AuthModule & UsersModule & SystemModule & WeatherModule & AnalyticsModule & CurrencyModule & ExplorerModule
   SwaggerParser --> SwaggerSpec[swagger-spec.json]
   SwaggerSpec --> GenUiSpec
 
@@ -100,6 +104,7 @@ flowchart TD
 
   WeatherModule --> WeatherApi
   CurrencyModule --> CurrencyApi
+  ExplorerModule --> JaneApi
 ```
 
 ## Chat And Tool Execution Flow
@@ -183,6 +188,7 @@ flowchart TB
     Weather["WeatherModule"]
     Analytics["AnalyticsModule"]
     Currency["CurrencyModule"]
+    Explorer["ExplorerModule\nJane API fetch and normalized items"]
   end
 
   Auth & Users --> UsersDb[(users)]
@@ -191,6 +197,7 @@ flowchart TB
   System --> UsersDb & ChatDb
   Weather --> WeatherApi[Weather API]
   Currency --> CurrencyApi[Currency API]
+  Explorer --> JaneApi[Jane API / Store Page]
   LLM --> Providers[LLM Providers]
 ```
 
@@ -245,4 +252,5 @@ sequenceDiagram
 - Full conversation history is persisted in the backend.
 - `LlmService` is the public facade used by controllers and `AdminAgentService`.
 - Internal LLM responsibilities are split into provider config, provider client, model catalog, and health-check services.
-
+- `ExplorerModule` fetches Jane store data from the configured Jane API source and exposes normalized items through a protected backend endpoint.
+- `ExplorerUI` calls the explorer endpoint directly from the component for the first version; no dedicated Angular service exists yet.

@@ -1114,6 +1114,45 @@
         "toolIcon": "ph-currency-circle-dollar"
       }
     },
+    "/explorer/fetch": {
+      "get": {
+        "description": "Uses the configured Jane API source to load and return normalized strain item data.",
+        "operationId": "ExplorerController_fetchData",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Explorer items fetched and normalized successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExplorerFetchResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The configured Jane source could not be fetched."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Fetch configured explorer strain data",
+        "summaryHe": "שולף את נתוני הזנים ממקור האקספלורר הקבוע בשרת",
+        "tags": [
+          "explorer"
+        ],
+        "toolIcon": "ph-compass"
+      }
+    },
     "/system/status": {
       "get": {
         "description": "Returns activity metrics and current runtime status parameters.",
@@ -2264,6 +2303,124 @@
           "success",
           "message",
           "result"
+        ]
+      },
+      "ExplorerStrainItemDto": {
+        "type": "object",
+        "properties": {
+          "hebName": {
+            "type": "string",
+            "description": "Hebrew product or strain name.",
+            "example": "גורילה גלו"
+          },
+          "enName": {
+            "type": "string",
+            "description": "English product or strain name.",
+            "example": "Gorilla Glue"
+          },
+          "isNew": {
+            "type": "boolean",
+            "description": "Whether the visible row marks the product as new.",
+            "example": true
+          },
+          "rating": {
+            "type": "string",
+            "description": "Visible review count and score text.",
+            "example": "(9) 4.4"
+          },
+          "deal": {
+            "type": "string",
+            "description": "Visible or expanded promotion deal text.",
+            "example": "3 ב-₪279"
+          },
+          "manufacturer": {
+            "type": "string",
+            "description": "Manufacturer name.",
+            "example": "קנאפארמה"
+          },
+          "brand": {
+            "type": "string",
+            "description": "Brand name.",
+            "example": "לומה"
+          },
+          "expiry": {
+            "type": "string",
+            "description": "Product expiry value.",
+            "example": "12/26"
+          },
+          "price": {
+            "type": "string",
+            "description": "Current displayed product price.",
+            "example": "₪99"
+          },
+          "catalogPrice": {
+            "type": "string",
+            "description": "Catalog or crossed-out product price.",
+            "example": "₪199"
+          },
+          "parent1": {
+            "type": "string",
+            "description": "First genetic parent extracted from the expanded row.",
+            "example": "Chem's Sister"
+          },
+          "parent2": {
+            "type": "string",
+            "description": "Second genetic parent extracted from the expanded row.",
+            "example": "Sour Dubb"
+          },
+          "originStrain": {
+            "type": "string",
+            "description": "Origin strain or genetics extracted from the expanded row.",
+            "example": "GG4"
+          },
+          "countryOfOrigin": {
+            "type": "string",
+            "description": "Country of origin extracted from the expanded row.",
+            "example": "קנדה"
+          },
+          "terpenes": {
+            "type": "string",
+            "description": "Terpene details extracted from the expanded row.",
+            "example": "לא ידוע"
+          },
+          "packageType": {
+            "type": "string",
+            "description": "Package type extracted from the expanded row.",
+            "example": "שקית"
+          }
+        },
+        "required": [
+          "hebName",
+          "enName",
+          "isNew",
+          "rating",
+          "deal",
+          "manufacturer",
+          "brand",
+          "expiry",
+          "price",
+          "catalogPrice",
+          "parent1",
+          "parent2",
+          "originStrain",
+          "countryOfOrigin",
+          "terpenes",
+          "packageType"
+        ]
+      },
+      "ExplorerFetchResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Fetched and normalized strain items extracted from the configured Jane API source.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExplorerStrainItemDto"
+            }
+          }
+        },
+        "required": [
+          "items"
         ]
       }
     }

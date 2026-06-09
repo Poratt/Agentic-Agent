@@ -1,6 +1,6 @@
 # Project Documentation Status
 
-Last updated: 2026-06-09
+Last updated: 2026-06-10
 
 ## Document Areas
 
@@ -19,4 +19,42 @@ New planning documents should go under `documents/features/todo/` unless they ar
 ## Recent Status
 
 - Completed: `documents/done/llm-service-refactor-plan.md`.
-- Candidate cleanup: `backend/src/modules/admin-agent/constants/gen-ui-spec.constant.ts`.
+- Rolled back: GenUI builder split and dedicated weather template experiment.
+- Current GenUI source of truth: `backend/src/modules/admin-agent/constants/gen-ui-spec.constant.ts`.
+- Verified: backend build passes after the rollback state.
+- Active todo: `documents/features/todo/ai-format-directive-improvement-plan.md`.
+- Candidate cleanup: `backend/src/modules/admin-agent/constants/gen-ui-spec.constant.ts` remains WET and inconsistent.
+- Candidate cleanup: `frontend/src/app/core/directives/ai-format.directive.ts` should protect the app from unsafe generated CSS before larger GenUI prompt changes.
+- Completed: added protected `ExplorerModule`/`ExplorerController` for `ExplorerService`.
+- Verified: backend build passes after the Explorer module addition.
+- Completed: added Angular `Explorer` page with direct in-component API call and table rendering.
+- Verified: frontend build passes after the Explorer page addition.
+- Completed: updated `ExplorerService` to click dynamic product rows and extract structured strain genetics fields.
+- Verified: backend build passes after the Explorer scraper update.
+- Completed: moved Explorer source URL ownership to the backend and removed URL input from the client.
+- Completed: Explorer page now loads data automatically on page entry.
+- Verified: backend and frontend builds pass after the Explorer URL ownership change.
+- Completed: fixed Explorer scraper selectors using the documented Jane table and expanded-row structure.
+- Verified: backend build passes after the Explorer selector fix.
+- Completed: added the selected product/commercial Explorer fields to the scraper payload and response DTO.
+- Completed: removed redundant Explorer fields `fromPrice`, `thc`, and `cbd`.
+- Verified: backend build passes after extending the Explorer payload.
+- Completed: updated the Explorer page to use PrimeNG table sorting, global search, Hebrew page title, and Hebrew column headers.
+- Verified: frontend build passes after the Explorer table update.
+- Completed: replaced Explorer DOM row parsing with Jane `tiltan/` JSON API consumption and normalized response mapping.
+- Verified: backend build passes after the Explorer Jane API integration update.
+- Completed: fixed Explorer loader/error visibility for long or failed Jane API loads.
+- Verified: backend and frontend builds pass after the Explorer UX fix.
+- Completed: fixed frozen Explorer loader animation and added frontend/backend request timeouts.
+- Verified: backend and frontend builds pass after the non-blocking loader fix.
+- Completed: Explorer refresh no longer locks during loading; retry cancels the previous request and starts a fresh one.
+- Completed: fixed missing Explorer rows where the Jane row had a `חדש!` ribbon before the real Hebrew name.
+- Verified: backend build passes after the Explorer scraper name extraction fix.
+- Completed: Explorer name column now stacks Hebrew name, English name, rating, and deal text in one cell.
+- Completed: Explorer scraper now extracts visible row rating text.
+- Verified: backend and frontend builds pass after the Explorer name-cell update.
+- Completed: Explorer `NEW` indicator is now rendered inside the name cell and only when `isNew === true`.
+- Completed: Explorer `catalogPrice` is now embedded inside the price cell with strikethrough instead of appearing as a separate column.
+- Verified: frontend build passes after the Explorer table-cell updates.
+- Completed: Explorer package type now renders as an icon for `צנצנת` or `שקית`, with a package fallback for unknown values.
+- Verified: frontend build passes after the package-type icon update.

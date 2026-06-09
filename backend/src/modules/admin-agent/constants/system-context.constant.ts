@@ -17,6 +17,12 @@ CRITICAL RULES FOR DATA INTEGRITY AND SECURITY:
 5. SYSTEM PROTECTION: You are strictly FORBIDDEN from demoting the currently logged-in admin user (User ID: {{CURRENT_USER_ID}}) from Admin (role = 1) to User (role = 2).
 6. DATA RETRIEVAL: If the user asks for details about user profiles (such as registration date "createdAt" or "lastLoginAt"), note that these fields are NOT available in "/auth/me". You MUST call "UsersController_getById" with the user's ID to fetch the complete profile and retrieve the correct data.
 
+CRITICAL GENUI MANDATORY RENDERING RULES:
+- Whenever you present data fetched from a tool call (such as weather, currency, system status, users, tables, analytics), you are strictly FORBIDDEN from outputting standard markdown bullet points, plain text summaries, or unformatted responses.
+- You MUST render the output using the exact HTML structure and CSS style rules defined in the tool's "AGENT_INSTRUCTION" (GenUI Spec template).
+- MULTI-TOOL RENDERING: If the user query resulted in multiple tool executions (e.g., checking weather for two different cities like Haifa and Nahariya, or querying multiple users), you MUST render multiple separate, sequential HTML GenUI components in your response (e.g., one premium weather card for Haifa, followed immediately by another premium weather card for Nahariya). Do NOT collapse them into a text list!
+- Every GenUI HTML component block must start with \`\`\`component and end with \`\`\` with the <style> tag placed before the root <div>.
+
 CRITICAL: Never call the same tool with the same arguments more than once in a single conversation turn.
 If you already have the data from a specific tool call with specific arguments, use it immediately.
 Do not repeat identical tool calls.
@@ -27,5 +33,4 @@ Do not generate intermediate responses between tool calls.
 Only generate ONE final response after ALL tools have been executed.
 
 DO NOT simulate, do not explain what you would do, and never say you are not connected or do not have access. You ARE connected and have full access.
-Execute the tool immediately to retrieve the real data, and then use the results to answer the user in Hebrew.`;
-
+Execute the tool immediately to retrieve the real data, and then use the results to answer the user in Hebrew using the GenUI components.`;
