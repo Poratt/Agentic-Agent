@@ -101,10 +101,6 @@
     min-height: 0;
     overflow: hidden;
 
-    p-sortIcon {
-      margin-right: var(--space-2);
-    }
-
     th:not(:first-child),
     td:not(:first-child) {
       text-align: center;
@@ -229,7 +225,6 @@
       align-items: center;
       gap: var(--space-1);
 
-
       .root-nodes {
         display: flex;
         flex-direction: column;
@@ -253,6 +248,8 @@
         color: var(--color-primary);
         overflow-wrap: anywhere;
         white-space: normal;
+        font-size: 10px;
+
 
         .ph {
           font-size: var(--font-size-md);
@@ -290,6 +287,7 @@
       align-items: center;
       gap: var(--space-1);
 
+
     }
 
     .package-type-cell {
@@ -308,6 +306,22 @@
       }
     }
   }
+}
+
+::ng-deep p-sortIcon {
+  margin-right: var(--space-2);
+}
+
+::ng-deep .p-datatable-sort-icon {
+  width: 10px;
+  height: 10px;
+}
+
+::ng-deep .p-datatable-thead>tr>th.p-datatable-column-sorted {
+  color: var(--color-primary);
+  background-color: transparent;
+
+
 }
 
 @media (max-width: var(--sm)) {

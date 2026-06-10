@@ -414,6 +414,7 @@ export class ExplorerService {
         if (!value) return DEFAULT_VALUE;
         if (value.includes('%')) return value;
         if (!/^\d+(?:[.,]\d+)?$/.test(value)) return value;
+        if (Number(value.replace(',', '.')) === 0) return DEFAULT_VALUE;
 
         return `${value}%`;
     }

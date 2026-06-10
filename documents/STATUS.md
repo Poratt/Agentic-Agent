@@ -92,3 +92,9 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Verified: frontend build passes after the Explorer CSS nesting cleanup.
 - Completed: Explorer CSS child selectors are now nested more deeply under their direct UI parents where practical.
 - Verified: frontend build passes after the deeper Explorer CSS nesting update.
+- Completed: Explorer CSS was checked against `css-conventions` and market-cell child button styling was nested under its parent.
+- Verified: frontend build passes after the Explorer CSS conventions pass.
+- Completed: Explorer backend no longer renders Jane zero/default terpene metrics as visible `0%` labels.
+- Verified: backend build passes after the Explorer terpene zero-percent fix.
+- Completed: Explorer header search now shows the filtered strain count under the search input and no longer shows the header refresh button.
+- Verified: frontend build passes after the Explorer header count update.

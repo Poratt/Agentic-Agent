@@ -262,7 +262,7 @@ export const mockData = [
         "parent2": "טריפל אוג'י",
         "originStrain": "דונקי באטר",
         "countryOfOrigin": "קנדה",
-        "terpenes": "לינאלול, יומולן, קריופילן, לימונן, פיינן",
+        "terpenes": "לינאלול 11%, יומולן 8%, קריופילן 24%, לימונן 26%, פיינן 15%",
         "packageType": "שקית"
     },
     {
@@ -281,7 +281,7 @@ export const mockData = [
         "parent2": "אל.איי קוש קייק",
         "originStrain": "קרים קייק",
         "countryOfOrigin": "קנדה",
-        "terpenes": "פרנסן, לינאלול, יומולן, קריופילן, מירצן, לימונן, ביסבולול",
+        "terpenes": "פרנסן 18%, לינאלול 7%, יומולן 8%, קריופילן 35%, מירצן 13%, לימונן 9%, ביסבולול 4%",
         "packageType": "שקית"
     },
     {
@@ -326,7 +326,7 @@ export const mockData = [
         "name": "ג'י.פי.טי סמול",
         "enName": "G.P.T Small",
         "isNew": false,
-        "rating": "(4) 3.2",
+        "rating": "(5) 3",
         "deal": "",
         "marketer": "טוגדר",
         "manufacturer": "סי3",
@@ -338,7 +338,7 @@ export const mockData = [
         "parent2": "פרויו",
         "originStrain": "סטרוברי פרויו",
         "countryOfOrigin": "קנדה",
-        "terpenes": "מירצן, פיינן, אוסימן",
+        "terpenes": "מירצן 33%, פיינן 28%, אוסימן 16%",
         "packageType": "שקית"
     },
     {
@@ -414,7 +414,7 @@ export const mockData = [
         "parent2": "אורנג' סקיטלז",
         "originStrain": "מנגו מינט",
         "countryOfOrigin": "קנדה",
-        "terpenes": "טרפינאול, פנצ'ול, פרנסן, לינאלול, יומולן, קריופילן, לימונן, מירצן",
+        "terpenes": "טרפינאול 5.5%, פנצ'ול 7%, פרנסן 6%, לינאלול 11%, יומולן 5.5%, קריופילן 17%, לימונן 24%, מירצן 5%",
         "packageType": "שקית"
     },
     {
@@ -452,7 +452,7 @@ export const mockData = [
         "parent2": "בננה דדי",
         "originStrain": "",
         "countryOfOrigin": "קנדה",
-        "terpenes": "אוסימן, יומולן, קריופילן, מירצן, פיינן, ביסבולול",
+        "terpenes": "אוסימן 13.5%, יומולן 5%, קריופילן 17%, מירצן 40%, פיינן 12%, ביסבולול 2%",
         "packageType": "שקית"
     },
     {
@@ -490,7 +490,7 @@ export const mockData = [
         "parent2": "אליאן קוקיז  ",
         "originStrain": "קאפ ג'אנקי",
         "countryOfOrigin": "קנדה",
-        "terpenes": "לינאלול, קריופילן, לימונן",
+        "terpenes": "לינאלול 9%, קריופילן 31%, לימונן 43%",
         "packageType": "שקית"
     },
     {
@@ -661,7 +661,7 @@ export const mockData = [
         "parent2": "פיץ' אוז",
         "originStrain": "",
         "countryOfOrigin": "ישראל",
-        "terpenes": "לינאלול, קריופילן, פיינן, לימונן, מירצן",
+        "terpenes": "לינאלול 10%, קריופילן 9%, פיינן 4%, לימונן 55%, מירצן 5%",
         "packageType": "שקית"
     },
     {
@@ -680,7 +680,7 @@ export const mockData = [
         "parent2": "ג'לאטי",
         "originStrain": "סטיקי באנז",
         "countryOfOrigin": "ישראל",
-        "terpenes": "לינאלול, לימונן, קריופילן",
+        "terpenes": "לינאלול 16%, לימונן 29%, קריופילן 25%",
         "packageType": "שקית"
     },
     {
@@ -718,7 +718,7 @@ export const mockData = [
         "parent2": "פרמננט מרקר",
         "originStrain": "הוואיין מרקר",
         "countryOfOrigin": "קנדה",
-        "terpenes": "סלינה, לינאלול, קריופילן, מירצן, פיינן, לימונן, גרמצרן",
+        "terpenes": "סלינה 11%, לינאלול 8%, קריופילן 9.5%, מירצן 6.5%, פיינן 7.5%, לימונן 12.5%, גרמצרן 9.5%",
         "packageType": "שקית"
     },
     {
@@ -908,7 +908,7 @@ export const mockData = [
         "parent2": "דוויל דרייבר",
         "originStrain": "דאנט'ז אינפרנו",
         "countryOfOrigin": "קנדה",
-        "terpenes": "פנצ'ול, יומולן, קריופילן, מירצן, פיינן, לימונן, ביסבולול",
+        "terpenes": "פנצ'ול 6%, יומולן 8%, קריופילן 22%, מירצן 18%, פיינן 5%, לימונן 25%, ביסבולול 4%",
         "packageType": "שקית"
     },
     {
@@ -965,7 +965,7 @@ export const mockData = [
         "parent2": "אורנג' סקיטלז",
         "originStrain": "מנגו מינט",
         "countryOfOrigin": "קנדה",
-        "terpenes": "טרפינאול, פנצ'ול, פרנסן, לינאלול, יומולן, קריופילן, לימונן, מירצן",
+        "terpenes": "טרפינאול 5.5%, פנצ'ול 7%, פרנסן 6%, לינאלול 11%, יומולן 5.5%, קריופילן 17%, לימונן 24%, מירצן 5%",
         "packageType": "שקית"
     },
     {
@@ -984,7 +984,7 @@ export const mockData = [
         "parent2": "פנקייקס",
         "originStrain": "בננה פנקייקס",
         "countryOfOrigin": "ישראל",
-        "terpenes": "מירצן, קריופילן, לימונן, לינאלול, פיינן, יומולן",
+        "terpenes": "מירצן 22%, קריופילן 24%, לימונן 12%, לינאלול 11%, פיינן 6%, יומולן 16%",
         "packageType": "שקית"
     },
     {
@@ -1003,7 +1003,7 @@ export const mockData = [
         "parent2": "פרמננט מרקר",
         "originStrain": "הוואיין מרקר",
         "countryOfOrigin": "קנדה",
-        "terpenes": "גרמצרן, סלינה, קריופילן, לימונן, לינאלול",
+        "terpenes": "גרמצרן 10%, סלינה 11%, קריופילן 10%, לימונן 13%, לינאלול 8%",
         "packageType": "שקית"
     },
     {
@@ -1060,7 +1060,7 @@ export const mockData = [
         "parent2": "ג'וקרז",
         "originStrain": "אינסייד ג'וק",
         "countryOfOrigin": "קנדה",
-        "terpenes": "לינאלול, יומולן, קריופילן, מירצן, לימונן, פיינן",
+        "terpenes": "לינאלול 18%, יומולן 11.5%, קריופילן 34%, מירצן 8.5%, לימונן 19%, פיינן 5%",
         "packageType": "שקית"
     },
     {
@@ -1174,7 +1174,7 @@ export const mockData = [
         "parent2": "פרוסטד צ'רי קוקיז",
         "originStrain": "פרוסטד מלון ג'לאטו",
         "countryOfOrigin": "קנדה",
-        "terpenes": "קריופילן, מירצן, לימונן, אוסימן",
+        "terpenes": "קריופילן 17%, מירצן 23%, לימונן 31%, אוסימן 15%",
         "packageType": "שקית"
     },
     {
@@ -1288,7 +1288,7 @@ export const mockData = [
         "parent2": "סלוריקיין",
         "originStrain": "פינק סלוריקיין",
         "countryOfOrigin": "קנדה",
-        "terpenes": "קריופילן, לימונן, לינאלול",
+        "terpenes": "קריופילן 30%, לימונן 40%, לינאלול 10%",
         "packageType": "שקית"
     },
     {
@@ -1307,7 +1307,7 @@ export const mockData = [
         "parent2": "אוג'י קוש ברת'",
         "originStrain": "",
         "countryOfOrigin": "קנדה",
-        "terpenes": "קריופילן, לימונן, לינאלול, פיינן, יומולן",
+        "terpenes": "קריופילן 24%, לימונן 30%, לינאלול 10%, פיינן 9%, יומולן 10%",
         "packageType": "שקית"
     },
     {
@@ -1383,7 +1383,7 @@ export const mockData = [
         "parent2": "בננה דדי",
         "originStrain": "",
         "countryOfOrigin": "קנדה",
-        "terpenes": "אוסימן, יומולן, קריופילן, מירצן, פיינן, ביסבולול",
+        "terpenes": "אוסימן 13.5%, יומולן 5%, קריופילן 17%, מירצן 40%, פיינן 12%, ביסבולול 2%",
         "packageType": "שקית"
     },
     {
@@ -1573,7 +1573,7 @@ export const mockData = [
         "parent2": "צ'רי קוקיז",
         "originStrain": "אטומיק צ'רי",
         "countryOfOrigin": "ישראל",
-        "terpenes": "מירצן, קריופילן, לימונן, לינאלול, פיינן, יומולן",
+        "terpenes": "מירצן 20%, קריופילן 22%, לימונן 25%, לינאלול 6%, פיינן 6%, יומולן 11%",
         "packageType": "שקית"
     },
     {
@@ -1592,7 +1592,7 @@ export const mockData = [
         "parent2": "פנקייקס",
         "originStrain": "בננה פנקייקס",
         "countryOfOrigin": "ישראל",
-        "terpenes": "מירצן, קריופילן, לימונן, לינאלול, פיינן, יומולן",
+        "terpenes": "מירצן 22%, קריופילן 24%, לימונן 12%, לינאלול 11%, פיינן 6%, יומולן 16%",
         "packageType": "שקית"
     },
     {
@@ -1801,7 +1801,7 @@ export const mockData = [
         "parent2": "פינק גויאבה",
         "originStrain": "ריינבו שרבט",
         "countryOfOrigin": "ישראל",
-        "terpenes": "קריופילן, לימונן, לינאלול, פיינן, יומולן",
+        "terpenes": "קריופילן 7%, לימונן 31%, לינאלול 11%, פיינן 7%, יומולן 7%",
         "packageType": "צנצנת"
     },
     {
@@ -1839,7 +1839,7 @@ export const mockData = [
         "parent2": "ג'לוסי",
         "originStrain": "פרפל אוקטן",
         "countryOfOrigin": "ישראל",
-        "terpenes": "יומולן, קריופילן, לימונן",
+        "terpenes": "יומולן 17%, קריופילן 16%, לימונן 23%",
         "packageType": "צנצנת"
     },
     {
@@ -1858,7 +1858,7 @@ export const mockData = [
         "parent2": "צ'רי פאי",
         "originStrain": "צ'רי צ'יזקייק",
         "countryOfOrigin": "ישראל",
-        "terpenes": "קריופילן, לימונן, לינאלול",
+        "terpenes": "קריופילן 25%, לימונן 20%, לינאלול 9%",
         "packageType": "צנצנת"
     },
     {
@@ -2316,6 +2316,25 @@ export const mockData = [
         "countryOfOrigin": "קנדה",
         "terpenes": "פרנסן, קריופילן, מירצן, לימונן, יומולן",
         "packageType": "צנצנת"
+    },
+    {
+        "name": "יאמאנה",
+        "enName": "Yamana",
+        "isNew": true,
+        "rating": "(2) 4.5",
+        "deal": "",
+        "marketer": "קנדוק",
+        "manufacturer": "קוטניי קוואנטום",
+        "brand": "טוטם",
+        "expiry": "02/27",
+        "price": "₪449",
+        "catalogPrice": "₪449",
+        "parent1": "צ'רי ת'אנדר פאק",
+        "parent2": "ראסטי הייז",
+        "originStrain": "דארק מאטר",
+        "countryOfOrigin": "קנדה",
+        "terpenes": "",
+        "packageType": "שקית"
     },
     {
         "name": "פוגו",

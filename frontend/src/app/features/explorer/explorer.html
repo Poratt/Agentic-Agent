@@ -6,22 +6,20 @@
             </div>
 
             <div class="header-actions">
-                <div class="form-field-has-icon">
-                    <span class="field-icon ph ph-magnifying-glass"></span>
-                    <input
-                        pInputText
-                        class="form-control"
-                        type="search"
-                        placeholder="חיפוש בטבלה"
-                        [disabled]="loading()"
-                        (input)="applyGlobalFilter($event)"
-                    />
+                <div class="form-group">
+                    <div class="form-field-has-icon">
+                        <span class="field-icon ph ph-magnifying-glass"></span>
+                        <input
+                            pInputText
+                            class="form-control"
+                            type="search"
+                            placeholder="חיפוש בטבלה"
+                            [disabled]="loading()"
+                            (input)="applyGlobalFilter($event)"
+                        />
+                    </div>
+                    <span>סה"כ זנים: {{ items().length }}</span>
                 </div>
-
-                <button class="primary-btn outlined" type="button" (click)="load()">
-                    <span class="ph ph-arrows-clockwise"></span>
-                    <span>רענון</span>
-                </button>
             </div>
         </div>
 
@@ -69,6 +67,8 @@
         @case (PageStates.Ready) {
             <div class="glass-effect card table-container">
                 <p-table
+                    sortField="price"
+                    [sortOrder]="-1"
                     #table
                     styleClass="explorer-table"
                     [value]="items()"
@@ -172,6 +172,7 @@
                                                     }
                                                 </div>
                                             </div>
+                                            <!-- Terpenes -->
                                             @if (splitTerpenes(item.terpenes).length > 0) {
                                                 <div class="terpenes">
                                                     <span class="ph ph-chef-hat"></span>

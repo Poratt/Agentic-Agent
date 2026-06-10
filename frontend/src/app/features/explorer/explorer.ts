@@ -63,18 +63,18 @@ export class Explorer implements OnInit {
     catalogPrice: 'מחיר קטלוג',
     parent1: 'הורה 1',
     parent2: 'הורה 2',
-    originStrain: 'זן מקור',
-    countryOfOrigin: 'ארץ ייצור',
+    originStrain: 'גנטיקה',
+    countryOfOrigin: 'מקור',
     terpenes: 'טרפנים',
-    packageType: 'סוג אריזה',
+    packageType: 'אריזה',
   };
   private readonly preferredColumns = [
     'name',
     'price',
-    'marketer',
-    'expiry',
     'originStrain',
+    'marketer',
     'countryOfOrigin',
+    'expiry',
     'packageType',
   ];
   private readonly embeddedColumns = ['enName', 'deal', 'rating', 'isNew', 'catalogPrice', 'terpenes', 'parent1', 'parent2', 'manufacturer', 'brand'];

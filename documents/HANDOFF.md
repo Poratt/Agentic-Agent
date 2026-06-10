@@ -157,3 +157,23 @@ documents/
 - Files touched this session: `frontend/src/app/features/explorer/explorer.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: do not wrap the full table block under `p-table` because it pushes the component CSS over the hard 8KB budget; keep the deeper nesting where it maps to direct UI parents without failing the build.
 - Open questions for the user: none.
+- Applied the `css-conventions` skill to `frontend/src/app/features/explorer/explorer.css`.
+- Cleaned the Explorer CSS nesting pass by keeping only `.page-content` as a root selector, removing stale `meta-row`/loader references, and moving market-cell button layout under `.market-cell .filter-node`.
+- Frontend build was verified after the Explorer CSS conventions pass.
+- Next exact step: visually check `/explorer` to confirm the marketer button layout still matches the intended table cell spacing.
+- Files touched this session: `frontend/src/app/features/explorer/explorer.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep the styling local to the Explorer component because these table-cell controls are specific to this page; no new global pattern was introduced.
+- Open questions for the user: none.
+- Explorer terpene percentage formatting now treats numeric `0` as an absent percentage so Jane default/empty terpene metrics no longer render as `0%` badges.
+- Backend build was verified after the Explorer terpene zero-percent fix.
+- Next exact step: refresh `/explorer` and confirm products with missing terpene percentages show terpene names without `0%`, while products with real percentages still show those percentages.
+- Files touched this session: `backend/src/modules/explorer/explorer.service.ts`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep the API shape unchanged and only suppress meaningless zero percentages during backend normalization.
+- Open questions for the user: none.
+- Explorer header search now shows `סה"כ זנים: {{ items().length }}` under the search input using the existing global `.form-group` layout.
+- Removed the Explorer header refresh button; the error-state retry button still calls `load()` for failed loads.
+- Frontend build was verified after the Explorer header count update.
+- Next exact step: visually check `/explorer` to confirm the search count spacing is acceptable in the header.
+- Files touched this session: `frontend/src/app/features/explorer/explorer.html`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: reuse the global `.form-group` instead of adding local Explorer CSS because the component stylesheet is close to the hard 8KB budget.
+- Open questions for the user: none.
