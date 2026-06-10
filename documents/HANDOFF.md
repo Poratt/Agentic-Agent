@@ -143,3 +143,17 @@ documents/
 - Files touched this session: `frontend/src/app/features/explorer/explorer.ts`, `frontend/src/app/features/explorer/explorer.html`, `frontend/src/app/features/explorer/explorer.css`, `backend/src/modules/explorer/explorer.service.ts`, and `frontend/public/flags/*.svg`.
 - Decisions made: keep the active filter value as the clean terpene name, but show the percentage-bearing terpene label in the button/chip; store flags locally instead of relying on emoji or a remote flag CDN.
 - Open questions for the user: none.
+- Explorer CSS was reorganized so all component selectors are nested under the root `.page-content` wrapper; only `@keyframes` remains top-level, and the mobile rules nest `.page-content` inside `@media`.
+- Replaced the remaining hardcoded numeric flag border radius with `var(--radius-sm)`.
+- Frontend build was verified after the Explorer CSS nesting cleanup.
+- Next exact step: visually check `/explorer` to confirm the nested CSS preserved the existing layout.
+- Files touched this session: `frontend/src/app/features/explorer/explorer.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep `@keyframes explorer-loader-spin` top-level because keyframes are not component selectors; scope responsive Explorer selectors through `.page-content`.
+- Open questions for the user: none.
+- Explorer CSS nesting was deepened further by moving header actions under `.header-row`, active filter controls under `.filters-row > .filters-container`, remove buttons under `.filter-chip`, mobile filter rules under the same filter hierarchy, and table sub-elements under their closest cell-level parents.
+- Removed a few nonessential Explorer CSS rules to keep the component stylesheet under the existing 8KB build budget after deeper nesting.
+- Frontend build was verified after the deeper Explorer CSS nesting update.
+- Next exact step: visually check `/explorer` to confirm the deeper selector scoping preserved the table and active-filter layout.
+- Files touched this session: `frontend/src/app/features/explorer/explorer.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: do not wrap the full table block under `p-table` because it pushes the component CSS over the hard 8KB budget; keep the deeper nesting where it maps to direct UI parents without failing the build.
+- Open questions for the user: none.

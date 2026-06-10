@@ -9,7 +9,9 @@ button {
   background: transparent;
   cursor: pointer;
   color: var(--color-text-secondary);
-
+  display: flex;
+  align-items: center;
+  gap: 2px;
   white-space: nowrap;
   user-select: none;
   will-change: transform, background-color, color, border-color, box-shadow, filter;

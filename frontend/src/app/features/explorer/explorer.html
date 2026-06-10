@@ -97,7 +97,11 @@
                                                 <span class="strain-heb-name">{{ formatValue(item.name) }}</span>
 
                                                 @if (item.isNew === true) {
-                                                    <button class="strain-new-tag" type="button" (click)="applyDataFilter('isNew', item.isNew, 'חדש')">
+                                                    <button
+                                                        class="strain-new-tag"
+                                                        type="button"
+                                                        (click)="applyDataFilter('isNew', item.isNew, 'חדש')"
+                                                    >
                                                         NEW
                                                     </button>
                                                 }
@@ -141,6 +145,7 @@
                                                         type="button"
                                                         (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.originStrain)"
                                                     >
+                                                        <span class="ph ph-network"></span>
                                                         {{ formatValue(item.originStrain) }}
                                                     </button>
                                                 }
@@ -151,6 +156,7 @@
                                                             type="button"
                                                             (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.parent1)"
                                                         >
+                                                            <span class="ph ph-leaf"></span>
                                                             {{ formatValue(item.parent1) }}
                                                         </button>
                                                     }
@@ -160,6 +166,7 @@
                                                             type="button"
                                                             (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.parent2)"
                                                         >
+                                                            <span class="ph ph-leaf"></span>
                                                             {{ formatValue(item.parent2) }}
                                                         </button>
                                                     }
@@ -219,14 +226,18 @@
                                     @else if (column === 'marketer') {
                                         <div class="market-cell">
                                             @if (hasDisplayValue(item.marketer)) {
-                                                <button class="meta-row filter-node" type="button" (click)="applyDataFilter('marketer', item.marketer)">
+                                                <button
+                                                    class="filter-node"
+                                                    type="button"
+                                                    (click)="applyDataFilter('marketer', item.marketer)"
+                                                >
                                                     <span class="ph ph-storefront"></span>
                                                     <span>{{ formatValue(item.marketer) }}</span>
                                                 </button>
                                             }
                                             @if (hasDisplayValue(item.manufacturer)) {
                                                 <button
-                                                    class="meta-row filter-node"
+                                                    class="filter-node"
                                                     type="button"
                                                     (click)="applyDataFilter('manufacturer', item.manufacturer)"
                                                 >
@@ -235,7 +246,7 @@
                                                 </button>
                                             }
                                             @if (hasDisplayValue(item.brand)) {
-                                                <button class="meta-row filter-node" type="button" (click)="applyDataFilter('brand', item.brand)">
+                                                <button class="filter-node" type="button" (click)="applyDataFilter('brand', item.brand)">
                                                     <span class="ph ph-cube-focus"></span>
                                                     <span>{{ formatValue(item.brand) }}</span>
                                                 </button>

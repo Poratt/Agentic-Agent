@@ -88,3 +88,7 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: Explorer terpene buttons now keep percentage text visible when supplied by Jane while still filtering by terpene name.
 - Completed: Explorer country flags now use local tiny SVG assets from `frontend/public/flags`.
 - Verified: frontend and backend builds pass after the Explorer terpene percentage and SVG flag update.
+- Completed: Explorer component CSS selectors are now fully nested under `.page-content`, including responsive rules.
+- Verified: frontend build passes after the Explorer CSS nesting cleanup.
+- Completed: Explorer CSS child selectors are now nested more deeply under their direct UI parents where practical.
+- Verified: frontend build passes after the deeper Explorer CSS nesting update.
