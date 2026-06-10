@@ -87,7 +87,7 @@ export class ChatMessage implements OnDestroy {
 	});
 	isRenderingTemplate = computed(() => {
 		const content = this.displayedContent();
-		return /```component/.test(content) || /```c/.test(content) || /```\s*$/.test(content);
+		return /```component\b/i.test(content);
 	});
 	showCursor = computed(() => {
 		return this.isAssistant() && this.rowState() === 'typing' && this.hasQueuedText() && !this.isRenderingTemplate();

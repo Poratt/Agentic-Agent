@@ -23,7 +23,6 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Current GenUI source of truth: `backend/src/modules/admin-agent/constants/gen-ui-spec.constant.ts`.
 - Verified: backend build passes after the rollback state.
 - Active todo: `documents/features/todo/ai-format-directive-improvement-plan.md`.
-- Candidate cleanup: `backend/src/modules/admin-agent/constants/gen-ui-spec.constant.ts` remains WET and inconsistent.
 - Candidate cleanup: `frontend/src/app/core/directives/ai-format.directive.ts` should protect the app from unsafe generated CSS before larger GenUI prompt changes.
 - Completed: added protected `ExplorerModule`/`ExplorerController` for `ExplorerService`.
 - Verified: backend build passes after the Explorer module addition.
@@ -98,3 +97,9 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Verified: backend build passes after the Explorer terpene zero-percent fix.
 - Completed: Explorer header search now shows the filtered strain count under the search input and no longer shows the header refresh button.
 - Verified: frontend build passes after the Explorer header count update.
+- Documented: Explorer genetics connector line from origin strain to parents was removed from the current UI.
+- Documented: the active GenUI cleanup focus is the AiFormat directive; `gen-ui-spec.constant.ts` is no longer listed as a cleanup candidate.
+- Completed: AiFormat now preserves markdown text that appears before or after a streamed `component` block instead of replacing the whole assistant message with the GenUI template.
+- Completed: Chat template detection no longer treats generic ` ```c ` code fences as GenUI rendering.
+- Verified: `npx tsc -p tsconfig.app.json --noEmit` passes for the frontend after the AiFormat/chat-message fix.
+- Blocked verification: `npx ng build` is currently blocked by the unrelated `frontend/src/app/features/explorer/explorer.css` 8KB budget overage.

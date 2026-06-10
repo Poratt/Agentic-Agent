@@ -88,6 +88,20 @@
   animation: slideUp var(--transition-slow) ease-out both;
 }
 
+p-sortIcon {
+  margin: 2px var(--space-2) 0 0 !important;
+}
+
+.p-datatable-sort-icon {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+.p-datatable-thead > tr > th.p-datatable-column-sorted {
+  color: var(--color-primary);
+  background-color: transparent;
+}
+
 
 
 /* API Status Pulse Animations */

@@ -12,6 +12,13 @@ The directive currently does three jobs:
 
 The implementation works, but the responsibilities are mixed together and there are safety gaps around raw component HTML.
 
+## Current Progress
+
+- Done: mixed markdown + GenUI responses are preserved. Text before or after a completed ` ```component ` block renders around the component instead of being discarded.
+- Done: while a ` ```component ` block is still streaming, text before the block remains visible and the skeleton renders after that text.
+- Done: chat cursor/template detection no longer treats broad ` ```c ` fences as GenUI.
+- Still open: CSS sanitizer, selector scoping, full skeleton helper cleanup, and Hebrew role parsing cleanup.
+
 ## Current Problems
 
 ### 1. Raw GenUI Can Override Global CSS
@@ -377,4 +384,3 @@ Mitigation:
 - Skeleton behavior remains stable for actual component streaming.
 - Corrupted Hebrew text is removed from the directive.
 - Frontend build passes.
-

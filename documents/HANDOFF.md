@@ -38,7 +38,7 @@ documents/
 - `backend/src/modules/admin-agent/constants/system-context.constant.ts` currently contains mandatory GenUI rendering rules added outside this cleanup.
 - New active frontend plan: `documents/features/todo/ai-format-directive-improvement-plan.md`.
 - Backend build was verified after the rollback state: `npm.cmd run build` from `backend` passed.
-- Next likely cleanup: improve GenUI output carefully in small scoped changes, starting with the AiFormat directive plan or a narrow `WEATHER_CURRENT` hint change.
+- Next likely cleanup: start with the AiFormat directive plan before making larger GenUI rendering changes.
 - Added `ExplorerModule` and `ExplorerController` around the existing `ExplorerService`.
 - New protected endpoint: `GET /explorer/fetch?url=...`, backed by `ExplorerService.fetchDataFromUrl(url)`.
 - Added explorer query/response DTOs for Swagger documentation.
@@ -176,4 +176,20 @@ documents/
 - Next exact step: visually check `/explorer` to confirm the search count spacing is acceptable in the header.
 - Files touched this session: `frontend/src/app/features/explorer/explorer.html`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: reuse the global `.form-group` instead of adding local Explorer CSS because the component stylesheet is close to the hard 8KB budget.
+- Open questions for the user: none.
+- Documentation now reflects that Explorer no longer renders the genetics connector line from origin strain to parent strains; the genetics values remain visible as independent filter buttons.
+- Removed the stale current-work note that listed `backend/src/modules/admin-agent/constants/gen-ui-spec.constant.ts` as a cleanup candidate.
+- Next exact step: visually check `/explorer` and confirm the genetics filter buttons look correct without connector lines in both themes.
+- Files touched this session: `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`, and `documents/features/todo/explorer-plan.md`.
+- Decisions made: keep the genetics UI documented as independent filter buttons without connector lines; keep the active GenUI cleanup focused on the AiFormat directive.
+- Open questions for the user: none.
+- Fixed the chat/AiFormat mixed GenUI response bug: markdown text before a streamed `component` fence now stays visible next to the skeleton and remains visible after the completed component renders.
+- `frontend/src/app/core/directives/ai-format.directive.ts` now splits a completed component response into `before`, `componentHtml`, and `after` parts, rendering markdown segments around the raw component HTML.
+- `frontend/src/app/core/directives/ai-format.directive.ts` now renders the streaming component skeleton after any text before the `component` fence instead of replacing the entire message body.
+- `frontend/src/app/features/chat/chat-message/chat-message.ts` no longer treats generic ` ```c ` fences as GenUI templates.
+- Verification: `npx tsc -p tsconfig.app.json --noEmit` from `frontend` passed.
+- Verification note: `npx ng build` from `frontend` is currently blocked by unrelated `frontend/src/app/features/explorer/explorer.css` budget overage: total 8.34 kB, 344 bytes over the 8.00 kB maximum.
+- Next exact step: manually test `/chat` with an assistant answer that streams markdown text followed by a `component` block and confirm both the sentence and rendered template remain visible.
+- Files touched this session: `frontend/src/app/core/directives/ai-format.directive.ts`, `frontend/src/app/features/chat/chat-message/chat-message.ts`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep the public `[aiFormat]` API unchanged and fix the mixed-response rendering inside the directive.
 - Open questions for the user: none.

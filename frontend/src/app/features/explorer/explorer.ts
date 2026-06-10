@@ -85,7 +85,7 @@ export class Explorer implements OnInit {
 
   activeFilters = signal<ExplorerFilter[]>([]);
 
-  items = computed(() => {
+  items = computed<ExplorerFilterField[]>(() => {
     const raw = this.rawItems();
     const filters = this.activeFilters();
 

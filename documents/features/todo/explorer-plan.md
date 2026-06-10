@@ -1,5 +1,10 @@
 object example :
 
+Current UI note:
+
+- The genetics column shows origin strain and parent strains as independent filter buttons.
+- The connector line between origin strain and parent strains was intentionally removed from the current Explorer UI.
+
 ````json
 {
 "id": "garlix",

@@ -67,8 +67,6 @@
         @case (PageStates.Ready) {
             <div class="glass-effect card table-container">
                 <p-table
-                    sortField="price"
-                    [sortOrder]="-1"
                     #table
                     styleClass="explorer-table"
                     [value]="items()"
@@ -92,10 +90,28 @@
                                 <!-- Name -->
                                 <td>
                                     @if (column === 'name') {
-                                        <div class="strain-name-cell">
-                                            <div class="strain-name-header">
+                                        <div class="strain-main-details">
+                                            <div class="right-side">
                                                 <span class="strain-heb-name">{{ formatValue(item.name) }}</span>
+                                                @if (hasDisplayValue(item.enName)) {
+                                                    <span class="strain-en-name" dir="ltr">{{ formatValue(item.enName) }}</span>
+                                                }
 
+                                                @if (hasDisplayValue(item.rating)) {
+                                                    <span class="strain-rating">
+                                                        <span class="ph ph-star ph-fill"></span>
+                                                        <span>{{ formatValue(item.rating) }}</span>
+                                                    </span>
+                                                }
+
+                                                @if (hasDisplayValue(item.deal)) {
+                                                    <span class="strain-deal">
+                                                        <span class="ph ph-gift"></span>
+                                                        <span>{{ formatValue(item.deal) }}</span>
+                                                    </span>
+                                                }
+                                            </div>
+                                            <div class="left-side">
                                                 @if (item.isNew === true) {
                                                     <button
                                                         class="strain-new-tag"
@@ -106,24 +122,6 @@
                                                     </button>
                                                 }
                                             </div>
-
-                                            @if (hasDisplayValue(item.enName)) {
-                                                <span class="strain-en-name" dir="ltr">{{ formatValue(item.enName) }}</span>
-                                            }
-
-                                            @if (hasDisplayValue(item.rating)) {
-                                                <span class="strain-rating">
-                                                    <span class="ph ph-star ph-fill"></span>
-                                                    <span>{{ formatValue(item.rating) }}</span>
-                                                </span>
-                                            }
-
-                                            @if (hasDisplayValue(item.deal)) {
-                                                <span class="strain-deal">
-                                                    <span class="ph ph-gift"></span>
-                                                    <span>{{ formatValue(item.deal) }}</span>
-                                                </span>
-                                            }
                                         </div>
                                     }
                                     <!--  Price-->
@@ -141,7 +139,7 @@
                                             <div class="root-nodes">
                                                 @if (hasDisplayValue(item.originStrain)) {
                                                     <button
-                                                        class="filter-node"
+                                                        class="filter-node origin-strain-node"
                                                         type="button"
                                                         (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.originStrain)"
                                                     >
@@ -160,6 +158,7 @@
                                                             {{ formatValue(item.parent1) }}
                                                         </button>
                                                     }
+                                                    <span></span>
                                                     @if (hasDisplayValue(item.parent2)) {
                                                         <button
                                                             class="filter-node"

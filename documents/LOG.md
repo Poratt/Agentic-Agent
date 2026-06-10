@@ -9,6 +9,10 @@
 - Applied the Explorer CSS conventions pass locally in the component stylesheet and kept market-cell-specific button layout nested under `.market-cell`.
 - Suppressed numeric zero terpene percentages during Explorer backend normalization, because Jane can send `0` for missing/default terpene percentage fields.
 - Reused the global `.form-group` layout for the Explorer header search count and removed the header refresh button without adding local CSS.
+- Removed the Explorer genetics connector line from origin strain to parents and kept the genetics values as independent filter buttons.
+- Moved PrimeNG sort-icon overrides to global utilities to keep Explorer component CSS within budget.
+- Fixed AiFormat mixed-response rendering so markdown text before or after a GenUI `component` block remains visible during skeleton streaming and after the completed component renders.
+- Narrowed chat template detection to `component` fences instead of broad ` ```c ` matching, so normal code fences are not treated as GenUI.
 
 ## 2026-06-09
 
@@ -24,7 +28,6 @@
 - Refactored `LlmService` into a facade over provider config, client runtime, model catalog, and health-check services.
 - Restored and updated `documents/architecture-diagram.md` with the new LLM internal service split.
 - Moved completed LLM service refactor plan to `documents/done/llm-service-refactor-plan.md`.
-- Identified `gen-ui-spec.constant.ts` as a candidate for cleanup because the base GenUI prompt and endpoint-specific hints are becoming inconsistent and repetitive.
 - Split the GenUI base prompt into focused constants under `backend/src/modules/admin-agent/constants/gen-ui/`, while keeping `GenUiSpec` and `GENUI_HTML` exported from the original path for controller compatibility.
 - Replaced the split GenUI constants with the new `gen-ui.builder.ts` template builder, added global data-safety rules, removed hardcoded fallback colors, and kept `GENUI_HTML` exported from `gen-ui-spec.constant.ts`.
 - Added GenUI token-safety rules that forbid `:root`, CSS variable redeclarations, global selector styling, and hardcoded design values; added approved element examples to guide generated templates.

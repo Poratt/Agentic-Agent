@@ -1,6 +1,12 @@
 import { Directive, ElementRef, input, OnChanges, Renderer2, inject, SecurityContext } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 
+type ComponentRenderParts = {
+  before: string;
+  componentHtml: string;
+  after: string;
+};
+
 @Directive({
   selector: '[aiFormat]',
   standalone: true,
@@ -18,41 +24,15 @@ export class AiFormat implements OnChanges {
   ngOnChanges() {
     const raw = this.aiFormat() ?? '';
 
-    const componentHtml = this.extractComponentHtml(raw);
-    if (componentHtml) {
+    const componentParts = this.extractComponentParts(raw);
+    if (componentParts) {
       this.skeletonVisible = false;
-      this.renderComponentHtml(componentHtml);
+      this.renderComponentResponse(componentParts);
       return;
     }
 
-    const openMatch =
-      raw.match(/```component/i) ||
-      raw.match(/```c/i) ||
-      raw.match(/```\s*$/) ||
-      this.looksLikeOpenRawComponentHtml(raw);
-
-    if (openMatch) {
-      if (!this.skeletonVisible) {  // <-- רק פעם אחת!
-        this.skeletonVisible = true;
-
-        if (!document.getElementById('skeleton-pulse-style')) {
-          const style = document.createElement('style');
-          style.id = 'skeleton-pulse-style';
-          style.textContent = `
-          @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 0.15; }
-          }
-        `;
-          document.head.appendChild(style);
-        }
-
-        this.el.nativeElement.innerHTML = `
-        <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-6);">
-          <div style="height:20px;background:var(--color-border);border-radius:4px;margin-bottom:12px;animation:pulse 1.5s ease-in-out infinite;"></div>
-          <div style="height:40px;background:var(--color-border);border-radius:4px;animation:pulse 1.5s ease-in-out infinite 0.3s;"></div>
-        </div>`;
-      }
+    if (this.isStreamingComponent(raw)) {
+      this.renderStreamingComponent(raw);
       return;
     }
 
@@ -63,10 +43,17 @@ export class AiFormat implements OnChanges {
     this.markNewCompletedBlocks(raw);
   }
 
-  private extractComponentHtml(raw: string): string | null {
-    const closedMatch = raw.match(/```component\s*([\s\S]*?)```/i);
+  private extractComponentParts(raw: string): ComponentRenderParts | null {
+    const closedMatch = /```component\s*([\s\S]*?)```/i.exec(raw);
     if (closedMatch) {
-      return closedMatch[1].trim();
+      const matchStart = closedMatch.index;
+      const matchEnd = matchStart + closedMatch[0].length;
+
+      return {
+        before: raw.slice(0, matchStart),
+        componentHtml: closedMatch[1].trim(),
+        after: raw.slice(matchEnd),
+      };
     }
 
     const trimmed = raw.trim();
@@ -74,7 +61,11 @@ export class AiFormat implements OnChanges {
       return null;
     }
 
-    return trimmed;
+    return {
+      before: '',
+      componentHtml: trimmed,
+      after: '',
+    };
   }
 
   private looksLikeRawComponentHtml(value: string): boolean {
@@ -91,11 +82,74 @@ export class AiFormat implements OnChanges {
     return startsWithHtml && !this.looksLikeRawComponentHtml(trimmed);
   }
 
-  private renderComponentHtml(html: string): void {
+  private isStreamingComponent(raw: string): boolean {
+    if (/```component\s*[\s\S]*?```/i.test(raw)) {
+      return false;
+    }
+
+    return /```component\b/i.test(raw) || this.looksLikeOpenRawComponentHtml(raw);
+  }
+
+  private renderStreamingComponent(raw: string): void {
+    const componentStart = raw.search(/```component\b/i);
+    const textBeforeComponent = componentStart >= 0 ? raw.slice(0, componentStart) : '';
+
     this.el.nativeElement.innerHTML = '';
+    this.appendMarkdown(textBeforeComponent);
+    this.ensureSkeletonStyle();
+    this.appendHtml(this.skeletonHtml());
+    this.skeletonVisible = true;
+  }
+
+  private renderComponentResponse(parts: ComponentRenderParts): void {
+    this.el.nativeElement.innerHTML = '';
+    this.appendMarkdown(parts.before);
+    this.appendComponentHtml(parts.componentHtml);
+    this.appendMarkdown(parts.after);
+  }
+
+  private appendComponentHtml(html: string): void {
     const div = this.renderer.createElement('div');
     this.el.nativeElement.appendChild(div);
     div.innerHTML = html;
+  }
+
+  private appendMarkdown(markdown: string): void {
+    const parsedHtml = this.parse(markdown);
+    const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, parsedHtml) || '';
+    this.appendHtml(sanitizedHtml);
+  }
+
+  private appendHtml(html: string): void {
+    if (!html.trim()) return;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    Array.from(doc.body.childNodes).forEach((node) => {
+      this.renderer.appendChild(this.el.nativeElement, node.cloneNode(true));
+    });
+  }
+
+  private ensureSkeletonStyle(): void {
+    if (document.getElementById('skeleton-pulse-style')) return;
+
+    const style = document.createElement('style');
+    style.id = 'skeleton-pulse-style';
+    style.textContent = `
+          @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.15; }
+          }
+        `;
+    document.head.appendChild(style);
+  }
+
+  private skeletonHtml(): string {
+    return `
+        <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-6);">
+          <div style="height:20px;background:var(--color-border);border-radius:4px;margin-bottom:12px;animation:pulse 1.5s ease-in-out infinite;"></div>
+          <div style="height:40px;background:var(--color-border);border-radius:4px;animation:pulse 1.5s ease-in-out infinite 0.3s;"></div>
+        </div>`;
   }
 
   private updateDomEfficiently(htmlContent: string): void {
