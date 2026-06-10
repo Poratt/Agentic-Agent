@@ -83,7 +83,7 @@ documents/
 - Explorer refresh now stays enabled during loading. Clicking it cancels the previous request subscription and starts a new request.
 - Angular timeout is now 45 seconds so it can wait for the backend's direct Jane request plus bounded browser fallback.
 - Explorer scraper Hebrew-name extraction now ignores the `חדש!` ribbon and chooses the real `.text-gray-900` / `.text-base` product name candidate.
-- This fixes missing rows such as Rhine, W.M.Z Small, Slac Mini, and other new products that were previously filtered out as `לא צוין`.
+- This fixes missing rows such as Rhine, W.M.Z Small, Slac Mini, and other new products that were previously filtered out as ``.
 - Explorer name-cell rendering now stacks the Hebrew name, English name, rating, and deal text in the first table column.
 - `ExplorerService` now extracts visible review rating text from the product row and `ExplorerFetchResponseDto` documents the `rating` field.
 - Backend and frontend builds were verified after the Explorer name-cell update.
@@ -93,3 +93,13 @@ documents/
 - Frontend build was verified after the Explorer table-cell updates.
 - The `packageType` field now renders as an icon: `ph-jar-label` for `צנצנת`, `ph-bag-simple` for `שקית`, and `ph-package` fallback.
 - Frontend build was verified after the Explorer package-type icon update.
+- The `terpenes` field is no longer a standalone Explorer table column. It is still searchable and renders as a conditional full-width detail row under each product.
+- Frontend build was verified after the Explorer terpenes row update.
+- Explorer frontend files no longer contain Hebrew comments.
+- Explorer CSS was cleaned to use project tokens and to remove the invalid `white-space: wrap` value.
+- Explorer Swagger description now matches the current Jane store page scraper implementation.
+- Frontend and backend builds were verified after the Explorer cleanup.
+- Compared the Explorer table with the Jane source table and found that `manufacturer` looked missing because the Angular template hid any regular cell value equal to `לא ידוע`.
+- `frontend/src/app/features/explorer/explorer.html` now renders regular fallback cells with `formatValue(item[column])`, so `לא ידוע` appears in columns such as `manufacturer`.
+- The terpenes cell still hides `לא ידוע` through its explicit condition.
+- Frontend build was verified after this Explorer display fix.

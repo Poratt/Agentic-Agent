@@ -24,6 +24,23 @@
                 </button>
             </div>
         </div>
+
+        <div class="filters-row" [class.on-filter]="activeFilters().length > 0">
+            <div class="filters-container">
+                <span class="filters-label">מסננים פעילים:</span>
+                <div class="filters-list">
+                    @for (f of activeFilters(); track f) {
+                        <span class="filter-chip">
+                            <span class="chip-text">{{ f }}</span>
+                            <button class="chip-remove-btn" type="button" (click)="removeFilter(f)" title="הסר מסנן">
+                                <span class="ph ph-x"></span>
+                            </button>
+                        </span>
+                    }
+                </div>
+                <button class="clear-all-btn" type="button" (click)="clearAllFilters()">ניקוי הכל</button>
+            </div>
+        </div>
     </div>
 
     @switch (pageState()) {
@@ -69,10 +86,10 @@
                             }
                         </tr>
                     </ng-template>
-
                     <ng-template pTemplate="body" let-item>
                         <tr>
                             @for (column of columns(); track column) {
+                                <!-- Name -->
                                 <td>
                                     @if (column === 'name') {
                                         <div class="strain-name-cell">
@@ -85,9 +102,7 @@
                                             </div>
 
                                             @if (hasDisplayValue(item.enName)) {
-                                                <span class="strain-en-name" dir="ltr">{{
-                                                    formatValue(item.enName)
-                                                }}</span>
+                                                <span class="strain-en-name" dir="ltr">{{ formatValue(item.enName) }}</span>
                                             }
 
                                             @if (hasDisplayValue(item.rating)) {
@@ -104,34 +119,96 @@
                                                 </span>
                                             }
                                         </div>
-                                    } @else if (column === 'price') {
+                                    }
+                                    <!--  Price-->
+                                    @else if (column === 'price') {
                                         <div class="strain-price-cell">
                                             <span class="strain-current-price">{{ formatValue(item.price) }}</span>
-
                                             @if (hasDisplayValue(item.catalogPrice)) {
-                                                <span class="strain-catalog-price">{{
-                                                    formatValue(item.catalogPrice)
-                                                }}</span>
+                                                <span class="strain-catalog-price">{{ formatValue(item.catalogPrice) }}</span>
                                             }
                                         </div>
-                                    } @else if (column === 'packageType') {
+                                    }
+                                    <!-- strain -->
+                                    @else if (column == 'originStrain') {
+                                        <div class="strain-origin-cell">
+                                            <div class="root-nodes" [class.filter-by-parent]="strainFilter() === 'parent'">
+                                                @if (hasDisplayValue(item.originStrain)) {
+                                                    <button
+                                                        class="node"
+                                                        type="button"
+                                                        (click)="applyStrainFilter('originStrain', item.originStrain)"
+                                                    >
+                                                        {{ formatValue(item.originStrain) }}
+                                                    </button>
+                                                }
+                                                <div class="parents-cell">
+                                                    @if (hasDisplayValue(item.parent1)) {
+                                                        <button
+                                                            class="node"
+                                                            type="button"
+                                                            (click)="applyStrainFilter('parent', item.parent1)"
+                                                        >
+                                                            {{ formatValue(item.parent1) }}
+                                                        </button>
+                                                    }
+                                                    @if (hasDisplayValue(item.parent2)) {
+                                                        <button
+                                                            class="node"
+                                                            type="button"
+                                                            (click)="applyStrainFilter('parent', item.parent2)"
+                                                        >
+                                                            {{ formatValue(item.parent2) }}
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </div>
+                                            @if (hasDisplayValue(item.terpenes) && formatValue(item.terpenes) !== 'לא ידוע') {
+                                                <div class="terpenes">
+                                                    <span class="ph ph-chef-hat"></span>
+                                                    <span>{{ formatValue(item.terpenes) }}</span>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    <!-- Package -->
+                                    @else if (column === 'packageType') {
                                         <div
                                             class="package-type-cell"
                                             [attr.aria-label]="formatValue(item.packageType)"
                                             [attr.title]="formatValue(item.packageType)"
                                         >
-                                            <span
-                                                class="ph package-type-icon"
-                                                [ngClass]="packageTypeIconClass(item.packageType)"
-                                            ></span>
+                                            <span class="ph package-type-icon" [ngClass]="packageTypeIconClass(item.packageType)"></span>
                                         </div>
-                                    } @else {
+                                    }
+                                    <!--  Marketer -->
+                                    @else if (column === 'marketer') {
+                                        <div class="market-cell">
+                                            @if (hasDisplayValue(item.marketer)) {
+                                                <div class="meta-row">
+                                                    <span class="ph ph-storefront"></span>
+                                                    {{ formatValue(item.marketer) }}
+                                                </div>
+                                                <div class="meta-row">
+                                                    <span class="ph ph-tree-palm"></span>
+                                                    {{ formatValue(item.manufacturer) }}
+                                                </div>
+                                                <div class="meta-row">
+                                                    <span class="ph ph-cube-focus"></span>
+                                                    {{ formatValue(item.brand) }}
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    <!-- Rest -->
+                                    @else {
                                         {{ formatValue(item[column]) }}
                                     }
                                 </td>
                             }
                         </tr>
                     </ng-template>
+
                     <ng-template pTemplate="emptymessage">
                         <tr>
                             <td [attr.colspan]="columns().length">לא נמצאו תוצאות.</td>

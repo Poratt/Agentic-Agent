@@ -22,7 +22,7 @@ export type ExplorerStrainItem = {
 
 type BrowserExtractedItem = ExplorerStrainItem | null;
 
-const DEFAULT_VALUE = 'לא צוין';
+const DEFAULT_VALUE = '';
 const PRODUCT_ROW_SELECTOR =
     'table[role="table"] tbody[role="rowgroup"] > tr[role="row"], table[role="table"] tbody tr';
 const EXPLORER_SOURCE_URL =
@@ -251,7 +251,7 @@ export class ExplorerService {
                         ?.replace(/חדש!?/g, '')
                         .replace(enName === defaultValue ? '' : enName, ''),
                 );
-
+                const marketer = readGridValue(expandedRoot, ['משווק', 'Marketer']);
                 const parent1 = readGridValue(expandedRoot, ['הורה #1', 'הורה 1', 'Parent 1']);
                 const parent2 = readGridValue(expandedRoot, ['הורה #2', 'הורה 2', 'Parent 2']);
                 const originStrain = readGridValue(expandedRoot, ['זן מקור', 'גנטיקה', 'Genetics']);
@@ -259,7 +259,7 @@ export class ExplorerService {
                 const brandFromExpanded = readGridValue(expandedRoot, ['מותג']);
                 const expiryFromExpanded = readGridValue(expandedRoot, ['תוקף']);
                 const terpenes = readGridValue(expandedRoot, ['טרפנים']);
-                const packageType = readGridValue(expandedRoot, ['סוג אריזה']);
+                const packageType = readGridValue(expandedRoot, ['סוג אריזה', 'סוגי אריזה נפוצים']);
                 const countryFromExpanded = readGridValue(expandedRoot, ['ארץ ייצור', 'ארץ מקור', 'ארץ']);
                 const countryOfOrigin =
                     countryFromExpanded !== defaultValue
@@ -274,6 +274,7 @@ export class ExplorerService {
                     isNew: (firstCell?.textContent ?? '').includes('חדש'),
                     rating: extractRating(firstCell),
                     deal: extractDeal(expandedRoot) !== defaultValue ? extractDeal(expandedRoot) : extractDeal(firstCell),
+                    marketer,
                     manufacturer: manufacturerFromExpanded !== defaultValue ? manufacturerFromExpanded : getCellText(row, 3),
                     brand: brandFromExpanded !== defaultValue ? brandFromExpanded : getCellText(row, 5),
                     expiry: expiryFromExpanded !== defaultValue ? expiryFromExpanded : getCellText(row, 7),

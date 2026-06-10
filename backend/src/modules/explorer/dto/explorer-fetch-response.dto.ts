@@ -43,7 +43,7 @@ export class ExplorerStrainItemDto {
   @ApiProperty({ description: 'Country of origin extracted from the expanded row.', example: 'קנדה' })
   countryOfOrigin!: string;
 
-  @ApiProperty({ description: 'Terpene details extracted from the expanded row.', example: 'לא ידוע' })
+  @ApiProperty({ description: 'Terpene details extracted from the expanded row.', example: '' })
   terpenes!: string;
 
   @ApiProperty({ description: 'Package type extracted from the expanded row.', example: 'שקית' })

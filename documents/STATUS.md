@@ -58,3 +58,9 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Verified: frontend build passes after the Explorer table-cell updates.
 - Completed: Explorer package type now renders as an icon for `צנצנת` or `שקית`, with a package fallback for unknown values.
 - Verified: frontend build passes after the package-type icon update.
+- Completed: Explorer `terpenes` now renders as a conditional full-width detail row instead of a standalone table column.
+- Verified: frontend build passes after the terpenes row update.
+- Completed: removed Hebrew comments from Explorer frontend files and aligned Explorer Swagger description with the current scraper implementation.
+- Verified: frontend and backend builds pass after the Explorer cleanup.
+- Completed: Explorer regular table cells now show `לא ידוע` instead of rendering those values as empty cells, fixing missing-looking `manufacturer` values.
+- Verified: frontend build passes after the Explorer manufacturer display fix.

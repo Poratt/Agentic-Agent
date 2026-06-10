@@ -350,7 +350,7 @@ object example :
 [x] thc - למשל 24.2%-19.9%
 [x] cbd - למשל 4%-0%
 [] growType - למשל אינדור (נורות)
-[x] terpenes - למשל לא ידוע
+[x] terpenes - למשל
 [x] packageType - למשל שקית
 [] promotionText - טקסט מבצע מורחב
 [] promotionLimit - למשל עד גמר המלאי
@@ -1328,7 +1328,7 @@ Expanded row details structure :
           </a>
         </span>
         <span class="font-semibold">טרפנים</span>
-        <span>לא ידוע</span>
+        <span></span>
         <span class="font-semibold">סוג אריזה</span>
         <span>
           <div class="flex gap-1">

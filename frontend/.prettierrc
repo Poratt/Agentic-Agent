@@ -21,7 +21,7 @@
       ],
       "options": {
         "parser": "angular",
-        "printWidth": 120,
+        "printWidth": 140,
         "htmlWhitespaceInsensitivity": "ignore",
         "singleAttributePerLine": false,
         "bracketSameLine": false

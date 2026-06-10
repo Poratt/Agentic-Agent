@@ -26,7 +26,7 @@ export class ExplorerController {
     summaryHe: 'שולף את נתוני הזנים ממקור האקספלורר הקבוע בשרת',
     toolIcon: 'ph-compass',
     description:
-      'Uses the configured Jane API source to load and return normalized strain item data.',
+      'Uses the configured Jane store page scraper to load and return normalized strain item data.',
   } as CustomApiOperationOptions)
   @ApiOkResponse({
     description: 'Explorer items fetched and normalized successfully.',

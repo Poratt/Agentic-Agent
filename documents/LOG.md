@@ -69,3 +69,13 @@
 - Kept `catalogPrice` searchable while hiding it as a standalone table column.
 - Replaced Explorer package type text with icons: jar for `צנצנת`, bag for `שקית`, and package fallback for unknown values.
 - Verified frontend build after the package-type icon update.
+- Explorer table terpenes display update: removed `terpenes` as a standalone table column and render it as a conditional full-width row under each product.
+- `terpenes` remains part of global search through embedded table fields.
+- Verified frontend build after the terpenes row update.
+- Removed Hebrew comments from the Explorer frontend files.
+- Cleaned Explorer CSS to use project tokens instead of hardcoded colors and invalid `white-space: wrap`.
+- Updated Explorer Swagger description to match the current Jane store page scraper flow.
+- Verified frontend and backend builds after the Explorer cleanup.
+- Compared the Explorer dark table against the Jane source table and found the missing `manufacturer` display was caused by the frontend hiding normal column values equal to `לא ידוע`.
+- Updated the Explorer table fallback cell rendering to display `לא ידוע` in regular columns such as `manufacturer`, while keeping the terpenes-specific empty display behavior unchanged.
+- Verified frontend build after the Explorer manufacturer display fix.
