@@ -64,3 +64,27 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Verified: frontend and backend builds pass after the Explorer cleanup.
 - Completed: Explorer regular table cells now show `לא ידוע` instead of rendering those values as empty cells, fixing missing-looking `manufacturer` values.
 - Verified: frontend build passes after the Explorer manufacturer display fix.
+- Reviewed: Explorer strain filter behavior was inspected only; no implementation status changed.
+- Completed: generalized Explorer table filters so strain, marketer, manufacturer, and brand values can all create active filter chips.
+- Verified: frontend build passes after the generic Explorer filter update.
+- Completed: Explorer table filter buttons now toggle their matching active filter on repeated clicks.
+- Verified: frontend build passes after the Explorer filter toggle update.
+- Completed: Explorer package type is now a clickable/toggleable table filter.
+- Verified: frontend build passes after the Explorer package-type filter update.
+- Completed: Explorer country of origin is now a clickable/toggleable table filter.
+- Verified: frontend build passes after the Explorer country filter update.
+- Completed: Explorer backend now uses Puppeteer network-response capture plus scrolling to collect lazy-loaded Jane product batches beyond the initial 25 rows.
+- Completed: Explorer Jane JSON responses are normalized back into the existing `items` table payload without requiring frontend changes.
+- Verified: backend build passes after the Explorer network-capture update.
+- Completed: Explorer `isNew` is restored for the network-capture path by combining explicit JSON flags with visible `חדש!` DOM markers.
+- Verified: backend build passes after the Explorer `isNew` fix.
+- Completed: Explorer `NEW` badge is now a clickable/toggleable table filter.
+- Verified: frontend build passes after the Explorer `isNew` filter update.
+- Completed: Explorer `isNew` active filter chip now displays `חדש`, and the `NEW` badge hover contrast was fixed.
+- Verified: frontend build passes after the Explorer `isNew` label/hover fix.
+- Completed: Explorer terpenes now render as individual clickable/toggleable filters.
+- Completed: Explorer country of origin now displays flags in the table.
+- Verified: frontend build passes after the Explorer terpenes filter and country flag update.
+- Completed: Explorer terpene buttons now keep percentage text visible when supplied by Jane while still filtering by terpene name.
+- Completed: Explorer country flags now use local tiny SVG assets from `frontend/public/flags`.
+- Verified: frontend and backend builds pass after the Explorer terpene percentage and SVG flag update.

@@ -29,10 +29,10 @@
             <div class="filters-container">
                 <span class="filters-label">מסננים פעילים:</span>
                 <div class="filters-list">
-                    @for (f of activeFilters(); track f) {
+                    @for (f of activeFilters(); track f.key) {
                         <span class="filter-chip">
-                            <span class="chip-text">{{ f }}</span>
-                            <button class="chip-remove-btn" type="button" (click)="removeFilter(f)" title="הסר מסנן">
+                            <span class="chip-text">{{ f.label }}</span>
+                            <button class="chip-remove-btn" type="button" (click)="removeFilter(f.key)" title="הסר מסנן">
                                 <span class="ph ph-x"></span>
                             </button>
                         </span>
@@ -97,7 +97,9 @@
                                                 <span class="strain-heb-name">{{ formatValue(item.name) }}</span>
 
                                                 @if (item.isNew === true) {
-                                                    <span class="strain-new-tag">NEW</span>
+                                                    <button class="strain-new-tag" type="button" (click)="applyDataFilter('isNew', item.isNew, 'חדש')">
+                                                        NEW
+                                                    </button>
                                                 }
                                             </div>
 
@@ -132,12 +134,12 @@
                                     <!-- strain -->
                                     @else if (column == 'originStrain') {
                                         <div class="strain-origin-cell">
-                                            <div class="root-nodes" [class.filter-by-parent]="strainFilter() === 'parent'">
+                                            <div class="root-nodes">
                                                 @if (hasDisplayValue(item.originStrain)) {
                                                     <button
-                                                        class="node"
+                                                        class="filter-node"
                                                         type="button"
-                                                        (click)="applyStrainFilter('originStrain', item.originStrain)"
+                                                        (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.originStrain)"
                                                     >
                                                         {{ formatValue(item.originStrain) }}
                                                     </button>
@@ -145,58 +147,98 @@
                                                 <div class="parents-cell">
                                                     @if (hasDisplayValue(item.parent1)) {
                                                         <button
-                                                            class="node"
+                                                            class="filter-node"
                                                             type="button"
-                                                            (click)="applyStrainFilter('parent', item.parent1)"
+                                                            (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.parent1)"
                                                         >
                                                             {{ formatValue(item.parent1) }}
                                                         </button>
                                                     }
                                                     @if (hasDisplayValue(item.parent2)) {
                                                         <button
-                                                            class="node"
+                                                            class="filter-node"
                                                             type="button"
-                                                            (click)="applyStrainFilter('parent', item.parent2)"
+                                                            (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.parent2)"
                                                         >
                                                             {{ formatValue(item.parent2) }}
                                                         </button>
                                                     }
                                                 </div>
                                             </div>
-                                            @if (hasDisplayValue(item.terpenes) && formatValue(item.terpenes) !== 'לא ידוע') {
+                                            @if (splitTerpenes(item.terpenes).length > 0) {
                                                 <div class="terpenes">
                                                     <span class="ph ph-chef-hat"></span>
-                                                    <span>{{ formatValue(item.terpenes) }}</span>
+                                                    <div class="terpene-list">
+                                                        @for (terpene of splitTerpenes(item.terpenes); track terpene.label) {
+                                                            <button
+                                                                class="terpene-node filter-node"
+                                                                type="button"
+                                                                (click)="applyDataFilter('terpenes', terpene.name, terpene.label)"
+                                                            >
+                                                                {{ terpene.label }}
+                                                            </button>
+                                                        }
+                                                    </div>
                                                 </div>
                                             }
                                         </div>
                                     }
+                                    <!-- Country -->
+                                    @else if (column === 'countryOfOrigin') {
+                                        @if (hasDisplayValue(item.countryOfOrigin)) {
+                                            <button
+                                                class="country-filter filter-node"
+                                                type="button"
+                                                (click)="applyDataFilter('countryOfOrigin', item.countryOfOrigin)"
+                                            >
+                                                @if (countryFlagUrl(item.countryOfOrigin)) {
+                                                    <img
+                                                        class="country-flag"
+                                                        [src]="countryFlagUrl(item.countryOfOrigin)"
+                                                        alt=""
+                                                        aria-hidden="true"
+                                                    />
+                                                }
+                                                <span>{{ formatValue(item.countryOfOrigin) }}</span>
+                                            </button>
+                                        }
+                                    }
                                     <!-- Package -->
                                     @else if (column === 'packageType') {
-                                        <div
-                                            class="package-type-cell"
+                                        <button
+                                            class="package-type-cell filter-node"
+                                            type="button"
                                             [attr.aria-label]="formatValue(item.packageType)"
                                             [attr.title]="formatValue(item.packageType)"
+                                            (click)="applyDataFilter('packageType', item.packageType)"
                                         >
                                             <span class="ph package-type-icon" [ngClass]="packageTypeIconClass(item.packageType)"></span>
-                                        </div>
+                                        </button>
                                     }
                                     <!--  Marketer -->
                                     @else if (column === 'marketer') {
                                         <div class="market-cell">
                                             @if (hasDisplayValue(item.marketer)) {
-                                                <div class="meta-row">
+                                                <button class="meta-row filter-node" type="button" (click)="applyDataFilter('marketer', item.marketer)">
                                                     <span class="ph ph-storefront"></span>
-                                                    {{ formatValue(item.marketer) }}
-                                                </div>
-                                                <div class="meta-row">
+                                                    <span>{{ formatValue(item.marketer) }}</span>
+                                                </button>
+                                            }
+                                            @if (hasDisplayValue(item.manufacturer)) {
+                                                <button
+                                                    class="meta-row filter-node"
+                                                    type="button"
+                                                    (click)="applyDataFilter('manufacturer', item.manufacturer)"
+                                                >
                                                     <span class="ph ph-tree-palm"></span>
-                                                    {{ formatValue(item.manufacturer) }}
-                                                </div>
-                                                <div class="meta-row">
+                                                    <span>{{ formatValue(item.manufacturer) }}</span>
+                                                </button>
+                                            }
+                                            @if (hasDisplayValue(item.brand)) {
+                                                <button class="meta-row filter-node" type="button" (click)="applyDataFilter('brand', item.brand)">
                                                     <span class="ph ph-cube-focus"></span>
-                                                    {{ formatValue(item.brand) }}
-                                                </div>
+                                                    <span>{{ formatValue(item.brand) }}</span>
+                                                </button>
                                             }
                                         </div>
                                     }

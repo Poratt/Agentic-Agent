@@ -7,6 +7,7 @@ export type ExplorerStrainItem = {
     isNew: boolean;
     rating: string;
     deal: string;
+    marketer: string;
     manufacturer: string;
     brand: string;
     expiry: string;
@@ -21,8 +22,11 @@ export type ExplorerStrainItem = {
 };
 
 type BrowserExtractedItem = ExplorerStrainItem | null;
+type JaneProductRecord = Record<string, unknown>;
 
 const DEFAULT_VALUE = '';
+const JANE_PRODUCTS_API_PATH = '/api/widget/products/store/tiltan/';
+const MAX_SCROLL_ATTEMPTS = 18;
 const PRODUCT_ROW_SELECTOR =
     'table[role="table"] tbody[role="rowgroup"] > tr[role="row"], table[role="table"] tbody tr';
 const EXPLORER_SOURCE_URL =
@@ -38,6 +42,7 @@ export class ExplorerService {
         let browser: puppeteer.Browser | null = null;
 
         try {
+            const capturedProducts = new Map<string, JaneProductRecord>();
             browser = await puppeteer.launch({
                 headless: true,
                 args: [
@@ -54,8 +59,33 @@ export class ExplorerService {
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
             );
 
+            page.on('response', async (response) => {
+                const responseUrl = response.url();
+                if (!responseUrl.includes(JANE_PRODUCTS_API_PATH) || response.status() >= 400) return;
+
+                try {
+                    const json = (await response.json()) as unknown;
+                    this.extractJaneProducts(json).forEach((product) => {
+                        capturedProducts.set(this.getJaneProductKey(product), product);
+                    });
+                } catch {
+                    // Some matching responses can be blocked, empty, or already disposed.
+                }
+            });
+
             await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
             await this.waitForProductRows(page);
+            await this.scrollUntilJaneStopsLoading(page, capturedProducts);
+            const newProductKeys = await this.extractVisibleNewProductKeys(page);
+
+            if (capturedProducts.size > 0) {
+                await browser.close();
+                return {
+                    items: Array.from(capturedProducts.values()).map((product) =>
+                        this.normalizeJaneProduct(product, newProductKeys),
+                    ),
+                };
+            }
 
             const rowCount = await this.getProductRowCount(page);
             const items: ExplorerStrainItem[] = [];
@@ -87,6 +117,305 @@ export class ExplorerService {
 
     private wait(ms: number) {
         return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    private async scrollUntilJaneStopsLoading(
+        page: puppeteer.Page,
+        capturedProducts: Map<string, JaneProductRecord>,
+    ): Promise<void> {
+        let stableAttempts = 0;
+        let previousCount = capturedProducts.size;
+
+        for (let attempt = 0; attempt < MAX_SCROLL_ATTEMPTS; attempt += 1) {
+            await page.evaluate(() => {
+                window.scrollTo(0, document.body.scrollHeight);
+
+                const scrollableElements = Array.from(document.querySelectorAll<HTMLElement>('*'))
+                    .filter((element) => element.scrollHeight > element.clientHeight + 40)
+                    .sort((a, b) => b.scrollHeight - a.scrollHeight)
+                    .slice(0, 6);
+
+                scrollableElements.forEach((element) => {
+                    element.scrollTop = element.scrollHeight;
+                });
+            });
+
+            await this.wait(1200);
+
+            if (capturedProducts.size === previousCount) {
+                stableAttempts += 1;
+            } else {
+                stableAttempts = 0;
+                previousCount = capturedProducts.size;
+            }
+
+            if (stableAttempts >= 3) return;
+        }
+    }
+
+    private async extractVisibleNewProductKeys(page: puppeteer.Page): Promise<Set<string>> {
+        const keys = await page.evaluate((selector) => {
+            const normalize = (value: string | null | undefined) => (value ?? '').replace(/\s+/g, ' ').trim();
+
+            const isVisible = (element: Element) => {
+                const rect = element.getBoundingClientRect();
+                return rect.width > 0 && rect.height > 0;
+            };
+
+            const isProductRow = (row: Element) => {
+                if (!isVisible(row) || row.querySelector('th')) return false;
+
+                const cells = Array.from(row.querySelectorAll('td, [role="cell"]'));
+                const firstCell = cells[0];
+                const text = row.textContent?.trim() ?? '';
+                return cells.length >= 8 && text.length > 0 && !!firstCell?.querySelector('[dir="ltr"], img, a');
+            };
+
+            const toNameKey = (name: string, enName: string) => `${name.toLowerCase()}|${enName.toLowerCase()}`;
+
+            return Array.from(document.querySelectorAll(selector))
+                .filter(isProductRow)
+                .map((row) => {
+                    const firstCell = row.querySelector('td:first-child, [role="cell"]:first-child');
+                    const firstCellText = firstCell?.textContent ?? '';
+                    if (!firstCellText.includes('חדש')) return '';
+
+                    const enName = normalize(firstCell?.querySelector('[dir="ltr"]')?.textContent);
+                    const hebNameCandidate = Array.from(firstCell?.querySelectorAll('.text-gray-900, .text-base') ?? [])
+                        .map((element) => normalize(element.textContent))
+                        .find((text) => text && text !== enName && !text.includes('חדש'));
+                    const name = normalize(
+                        (hebNameCandidate ?? firstCellText).replace(/חדש!?/g, '').replace(enName, ''),
+                    );
+
+                    return name || enName ? toNameKey(name, enName) : '';
+                })
+                .filter(Boolean);
+        }, PRODUCT_ROW_SELECTOR);
+
+        return new Set(keys);
+    }
+
+    private extractJaneProducts(value: unknown): JaneProductRecord[] {
+        if (Array.isArray(value)) {
+            const productRecords = value.filter((item): item is JaneProductRecord => this.isJaneProductRecord(item));
+            if (productRecords.length > 0) return productRecords;
+
+            return value.flatMap((item) => this.extractJaneProducts(item));
+        }
+
+        if (!this.isPlainObject(value)) return [];
+        if (this.isJaneProductRecord(value)) return [value];
+
+        return Object.values(value).flatMap((item) => this.extractJaneProducts(item));
+    }
+
+    private isJaneProductRecord(value: unknown): value is JaneProductRecord {
+        if (!this.isPlainObject(value)) return false;
+
+        const hasName = typeof value.heb_name === 'string' || typeof value.eng_name === 'string';
+        const hasStoreIdentity =
+            typeof value.store_product_id === 'number' ||
+            typeof value.store_product_id === 'string' ||
+            typeof value.store_price === 'number';
+
+        return hasName && hasStoreIdentity;
+    }
+
+    private isPlainObject(value: unknown): value is JaneProductRecord {
+        return typeof value === 'object' && value !== null && !Array.isArray(value);
+    }
+
+    private getJaneProductKey(product: JaneProductRecord): string {
+        const explicitKey = this.pickText(product.store_product_id, product.id, product.product_id);
+        if (explicitKey) return explicitKey;
+
+        return [
+            this.pickText(product.heb_name, product.eng_name),
+            this.toText(product.batch_id),
+            this.toText(product.store_price),
+        ].join(':');
+    }
+
+    private normalizeJaneProduct(product: JaneProductRecord, newProductKeys = new Set<string>()): ExplorerStrainItem {
+        const nestedProduct = this.asRecord(product.product);
+        const batch = this.asRecord(product.batch);
+        const reviews = this.asRecord(product.reviews);
+        const name = this.pickText(product.heb_name, nestedProduct?.heb_name);
+        const enName = this.pickText(product.eng_name, nestedProduct?.eng_name);
+
+        return {
+            name,
+            enName,
+            isNew: this.isJaneProductNew(product, name, enName, newProductKeys),
+            rating: this.formatRating(reviews),
+            deal: this.extractPromotionText(product),
+            marketer: this.pickText(product.marketer_heb_name, product.marketer__heb_name),
+            manufacturer: this.pickText(product.manufacturer_heb_name, product.manufacturer__heb_name),
+            brand: this.pickText(
+                product.manufacturer_series_heb_name,
+                product.manufacturer_series__heb_name,
+                product.series_heb_name,
+            ),
+            expiry: this.formatExpiry(this.pickText(batch?.expiration_date, product.store_product_date)),
+            price: this.formatPrice(product.store_price),
+            catalogPrice: this.formatPrice(product.catalog_price),
+            parent1: this.extractFirstName(product.parent_strains_heb_name, product.parents),
+            parent2: this.extractFirstName(product.parents_second_strains_heb_name, product.parents_second),
+            originStrain: this.pickText(product.strain_heb_name),
+            countryOfOrigin: this.formatCountry(product.origin_country),
+            terpenes: this.formatTerpenes(product.terpenes),
+            packageType: this.formatPackageType(product.packaging_options),
+        };
+    }
+
+    private isJaneProductNew(
+        product: JaneProductRecord,
+        name: string,
+        enName: string,
+        newProductKeys: Set<string>,
+    ): boolean {
+        const explicitFlag = this.pickText(product.is_new, product.isNew, product.is_new_product, product.is_new_in_store);
+        if (this.toBoolean(explicitFlag)) return true;
+
+        const nameKey = `${name.toLowerCase()}|${enName.toLowerCase()}`;
+        if (newProductKeys.has(nameKey)) return true;
+
+        return this.collectTextValues(product).some((value) => /(^|\s)חדש!?($|\s)/.test(value));
+    }
+
+    private asRecord(value: unknown): JaneProductRecord | null {
+        return this.isPlainObject(value) ? value : null;
+    }
+
+    private pickText(...values: unknown[]): string {
+        return values.map((value) => this.toText(value)).find((value) => value !== DEFAULT_VALUE) ?? DEFAULT_VALUE;
+    }
+
+    private toText(value: unknown): string {
+        if (typeof value === 'string') return value.replace(/\s+/g, ' ').trim();
+        if (typeof value === 'number') return String(value);
+        return DEFAULT_VALUE;
+    }
+
+    private toBoolean(value: unknown): boolean {
+        return value === true || value === 'true' || value === 1 || value === '1';
+    }
+
+    private formatPrice(value: unknown): string {
+        if (typeof value !== 'number') return this.toText(value);
+        return `₪${Math.round(value)}`;
+    }
+
+    private formatExpiry(value: string): string {
+        const match = value.match(/^(\d{4})-(\d{2})-\d{2}/);
+        if (!match) return value;
+
+        return `${match[2]}/${match[1].slice(2)}`;
+    }
+
+    private formatRating(reviews: JaneProductRecord | null): string {
+        if (!reviews) return DEFAULT_VALUE;
+
+        const count = typeof reviews.total_reviews_count === 'number' ? reviews.total_reviews_count : 0;
+        const average = typeof reviews.total_reviews_avg === 'number' ? reviews.total_reviews_avg : 0;
+
+        return average > 0 ? `(${count}) ${average}` : `(${count})`;
+    }
+
+    private extractFirstName(namesValue: unknown, recordsValue: unknown): string {
+        if (Array.isArray(namesValue) && typeof namesValue[0] === 'string') return namesValue[0];
+        if (!Array.isArray(recordsValue)) return DEFAULT_VALUE;
+
+        const firstRecord = this.asRecord(recordsValue[0]);
+        return this.pickText(firstRecord?.heb_name, firstRecord?.eng_name);
+    }
+
+    private extractPromotionText(product: JaneProductRecord): string {
+        const candidates = this.collectTextValues(product).filter((value) => /\d+\s*ב-?\s*₪\s*\d+/.test(value));
+        return candidates[0] ?? DEFAULT_VALUE;
+    }
+
+    private collectTextValues(value: unknown): string[] {
+        if (typeof value === 'string') return [value];
+        if (Array.isArray(value)) return value.flatMap((item) => this.collectTextValues(item));
+        if (!this.isPlainObject(value)) return [];
+
+        return Object.values(value).flatMap((item) => this.collectTextValues(item));
+    }
+
+    private formatCountry(value: unknown): string {
+        const country = this.toText(value).toUpperCase();
+        const countryMap: Record<string, string> = {
+            IL: 'ישראל',
+            CA: 'קנדה',
+            PT: 'פורטוגל',
+            UY: 'אורוגוואי',
+            UG: 'אוגנדה',
+            ES: 'ספרד',
+            DE: 'גרמניה',
+        };
+
+        return countryMap[country] ?? this.toText(value);
+    }
+
+    private formatPackageType(value: unknown): string {
+        const values = Array.isArray(value) ? value.map((item) => this.toText(item)) : [this.toText(value)];
+        if (values.some((item) => item.toLowerCase().includes('bag'))) return 'שקית';
+        if (values.some((item) => ['jar', 'can', 'bottle'].some((keyword) => item.toLowerCase().includes(keyword)))) {
+            return 'צנצנת';
+        }
+
+        return values.find((item) => item !== DEFAULT_VALUE) ?? DEFAULT_VALUE;
+    }
+
+    private formatTerpenes(value: unknown): string {
+        if (!Array.isArray(value)) return DEFAULT_VALUE;
+
+        return value
+            .map((item) => {
+                if (typeof item === 'string') return item;
+
+                const record = this.asRecord(item);
+                if (!record) return DEFAULT_VALUE;
+
+                const name = this.pickText(
+                    record.heb_name,
+                    record.hebrew_name,
+                    record.name,
+                    record.label,
+                    record.terpene_name,
+                    record.terpene,
+                    record.eng_name,
+                    this.asRecord(record.terpene)?.heb_name,
+                    this.asRecord(record.terpene)?.name,
+                    this.asRecord(record.terpene)?.eng_name,
+                );
+                const percent = this.formatTerpenePercent(
+                    record.percent,
+                    record.percentage,
+                    record.value,
+                    record.amount,
+                    record.concentration,
+                    record.terpene_percent,
+                    record.terpene_percentage,
+                );
+
+                if (!name) return DEFAULT_VALUE;
+
+                return percent ? `${name} ${percent}` : name;
+            })
+            .filter((item) => item !== DEFAULT_VALUE)
+            .join(', ');
+    }
+
+    private formatTerpenePercent(...values: unknown[]): string {
+        const value = values.map((item) => this.toText(item)).find((item) => item !== DEFAULT_VALUE) ?? DEFAULT_VALUE;
+        if (!value) return DEFAULT_VALUE;
+        if (value.includes('%')) return value;
+        if (!/^\d+(?:[.,]\d+)?$/.test(value)) return value;
+
+        return `${value}%`;
     }
 
     private async waitForProductRows(page: puppeteer.Page): Promise<void> {

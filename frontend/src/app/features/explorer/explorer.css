@@ -153,11 +153,20 @@
       align-items: center;
       padding: var(--space-1) var(--space-2);
       background-color: var(--color-success-glow);
+      border: thin solid var(--color-success-glow);
       border-radius: var(--radius-sm);
       color: var(--color-success);
+      cursor: pointer;
+      font: inherit;
       font-size: var(--font-size-xs);
       font-weight: var(--font-weight-semibold);
       line-height: 1;
+      transition: background-color var(--transition-fast), border-color var(--transition-fast);
+
+      &:hover {
+        background-color: var(--color-success-glow);
+        border-color: var(--color-success);
+      }
     }
 
     .strain-en-name {
@@ -206,6 +215,23 @@
     }
   }
 
+  .filter-node {
+    padding: var(--space-1) var(--space-2);
+    background: transparent;
+    border: thin solid var(--color-border);
+    border-radius: var(--radius-lg);
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    transition: var(--transition-colors);
+
+    &:hover {
+      background-color: var(--primary-30);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+  }
+
   .strain-origin-cell {
     display: flex;
     flex-direction: column;
@@ -219,23 +245,6 @@
       flex-direction: column;
       align-items: center;
       gap: var(--space-1);
-    }
-
-    .node {
-      padding: var(--space-1) var(--space-2);
-      background: transparent;
-      border: thin solid var(--color-border);
-      border-radius: var(--radius-lg);
-      color: inherit;
-      cursor: pointer;
-      font: inherit;
-      transition: var(--transition-colors);
-
-      &:hover {
-        background-color: var(--primary-30);
-        border-color: var(--color-primary);
-        color: var(--color-primary);
-      }
     }
 
     .parents-cell {
@@ -258,6 +267,30 @@
       .ph {
         font-size: var(--font-size-md);
       }
+
+      .terpene-list {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: var(--space-1);
+      }
+
+      .terpene-node {
+        color: var(--color-primary);
+      }
+    }
+  }
+
+  .country-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+
+    .country-flag {
+      width: var(--space-5);
+      height: auto;
+      border-radius: var(--radius-sm);
+      flex: 0 0 auto;
     }
   }
 
@@ -265,6 +298,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: var(--space-1);
 
     .meta-row {
       display: flex;
@@ -272,7 +306,6 @@
       gap: var(--space-2);
       color: var(--color-text-secondary);
       font-size: var(--font-size-xs);
-
     }
   }
 

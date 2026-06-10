@@ -103,3 +103,43 @@ documents/
 - `frontend/src/app/features/explorer/explorer.html` now renders regular fallback cells with `formatValue(item[column])`, so `לא ידוע` appears in columns such as `manufacturer`.
 - The terpenes cell still hides `לא ידוע` through its explicit condition.
 - Frontend build was verified after this Explorer display fix.
+- Reviewed the Explorer strain filter flow in `frontend/src/app/features/explorer/explorer.html`, `explorer.ts`, and `explorer.css`; no code changes were made.
+- Explorer table filters were generalized from strain-only string filters to field-aware filters in `frontend/src/app/features/explorer/explorer.ts`.
+- The strain cell now uses `applyDataFilter(...)` for the full genetics field group, preserving the previous behavior of matching origin and parents by value.
+- The marketer cell meta rows now render as filter buttons for `marketer`, `manufacturer`, and `brand`.
+- Shared `.filter-node` styling in `frontend/src/app/features/explorer/explorer.css` now covers both strain nodes and marketer metadata rows.
+- Frontend build was verified after the generic Explorer filter update.
+- No architecture diagram update was needed because this was local Explorer table UI filtering only.
+- `applyDataFilter(...)` now toggles active filters: clicking the same table filter button again removes that filter chip.
+- Frontend build was verified after the Explorer filter toggle update.
+- Explorer `packageType` now participates in `applyDataFilter(...)`, and the package icon cell is a toggleable filter button.
+- Frontend build was verified after the Explorer package-type filter update.
+- Explorer `countryOfOrigin` now participates in `applyDataFilter(...)`, and the country cell is a toggleable filter button.
+- Frontend build was verified after the Explorer country filter update.
+- `ExplorerService` now listens to Jane `api/widget/products/store/tiltan/` responses inside Puppeteer, scrolls the source page until product batches stop increasing, deduplicates captured products, and normalizes the captured JSON into the existing Explorer `items` response shape.
+- The DOM click/extract flow remains as a fallback if no Jane API responses are captured during page load and scrolling.
+- `ExplorerFetchResponseDto` now documents the existing `marketer` field that the frontend already uses.
+- `ExplorerFetchResponseDto` now documents `name` instead of the stale `hebName` property, matching the actual Explorer payload consumed by the frontend.
+- Backend build was verified after the Explorer network-capture update.
+- Runtime validation against the live Jane page still depends on external network access and Jane/Cloudflare behavior.
+- No architecture diagram update was needed because the Explorer module boundary and external Jane dependency stayed the same.
+- Explorer `isNew` now participates in `applyDataFilter(...)`, and the `NEW` badge is a toggleable filter button.
+- Explorer field filtering now compares fields through `formatValue(...)`, so boolean filters such as `isNew` match the displayed Hebrew boolean value.
+- Frontend build was verified after the Explorer `isNew` filter update.
+- Explorer active filters now store a separate display `label`, so the `isNew` filter chip shows `חדש` instead of the boolean display value `כן`.
+- The `NEW` badge hover was softened to keep the green badge readable instead of inverting to poor contrast.
+- Frontend build was verified after the Explorer `isNew` filter label and hover fix.
+- `ExplorerService` `isNew` was fixed after the network-capture refactor: the service now extracts visible `חדש!` markers from loaded rows and maps them to captured Jane JSON products by Hebrew/English name, while still honoring any explicit JSON new flags if Jane adds them.
+- Backend build was verified after the Explorer `isNew` fix.
+- Explorer terpenes now split into individual toggleable filter buttons under each product.
+- Explorer country-of-origin cells now render a country flag next to the country name.
+- Frontend build was verified after the Explorer terpenes filter and country flag update.
+- No architecture diagram update was needed because this was local Explorer table UI rendering/filtering only.
+- Explorer terpene filter buttons now preserve percentage text in their visible label while filtering by the terpene name.
+- `ExplorerService.formatTerpenes(...)` now recognizes additional Jane terpene percentage field names such as `percentage`, `amount`, `concentration`, `terpene_percent`, and `terpene_percentage`.
+- Country flags were changed from emoji text to local tiny SVG assets served from `frontend/public/flags/*.svg`.
+- Frontend and backend builds were verified after the terpene percentage and SVG flag update.
+- Next exact step: visually check `/explorer` in the browser and confirm SVG flag sizing plus terpene percentage labels on live Jane data.
+- Files touched this session: `frontend/src/app/features/explorer/explorer.ts`, `frontend/src/app/features/explorer/explorer.html`, `frontend/src/app/features/explorer/explorer.css`, `backend/src/modules/explorer/explorer.service.ts`, and `frontend/public/flags/*.svg`.
+- Decisions made: keep the active filter value as the clean terpene name, but show the percentage-bearing terpene label in the button/chip; store flags locally instead of relying on emoji or a remote flag CDN.
+- Open questions for the user: none.

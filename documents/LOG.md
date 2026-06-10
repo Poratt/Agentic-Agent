@@ -1,5 +1,10 @@
 # Documentation Change Log
 
+## 2026-06-10 Explorer Terpene Flags Update
+
+- Preserved Explorer terpene percentage labels by separating the visible terpene label from the filter value and by broadening backend Jane terpene percentage-field normalization.
+- Replaced Explorer country emoji flags with local SVG assets under `frontend/public/flags` so the table renders consistent tiny flag images without a remote dependency.
+
 ## 2026-06-09
 
 - Added documentation control files:
@@ -79,3 +84,16 @@
 - Compared the Explorer dark table against the Jane source table and found the missing `manufacturer` display was caused by the frontend hiding normal column values equal to `לא ידוע`.
 - Updated the Explorer table fallback cell rendering to display `לא ידוע` in regular columns such as `manufacturer`, while keeping the terpenes-specific empty display behavior unchanged.
 - Verified frontend build after the Explorer manufacturer display fix.
+- Reviewed the Explorer strain filter flow; no code or architecture changes were made.
+- Generalized Explorer UI filtering from strain-only string values to field-aware filters and made marketer metadata rows clickable filter controls.
+- No architecture diagram update was needed for the local Explorer table filtering change.
+- Changed Explorer table filter clicks to toggle existing field-aware filters off when the same filter is clicked again.
+- Added `packageType` to the Explorer field-aware UI filters and made the package icon cell clickable.
+- Added `countryOfOrigin` to the Explorer field-aware UI filters and made the country cell clickable.
+- Updated `ExplorerService` to capture Jane `api/widget/products/store/tiltan/` network responses through Puppeteer while scrolling the source page, so Explorer can collect additional lazy-loaded batches instead of stopping at the initial 25 visible rows.
+- Added Jane JSON normalization for the existing Explorer table shape, including marketer, manufacturer, brand, prices, expiry, parents, origin strain, country, terpenes, and package type.
+- No architecture diagram update was needed because the Explorer module boundary and external Jane dependency stayed the same.
+- Added `isNew` to the Explorer field-aware UI filters and made the `NEW` badge clickable.
+- Added a display label to Explorer active filters so boolean-backed filters can show user-facing labels independent of their filter value.
+- Added individual terpene filter buttons and country flag rendering to the Explorer table UI.
+- Fixed the Explorer network-capture path so `isNew` no longer depends only on a missing Jane `is_new` JSON field; it now also maps visible `חדש!` DOM markers back to captured JSON products by Hebrew/English name.

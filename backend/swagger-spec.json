@@ -2308,7 +2308,7 @@
       "ExplorerStrainItemDto": {
         "type": "object",
         "properties": {
-          "hebName": {
+          "name": {
             "type": "string",
             "description": "Hebrew product or strain name.",
             "example": "גורילה גלו"
@@ -2332,6 +2332,11 @@
             "type": "string",
             "description": "Visible or expanded promotion deal text.",
             "example": "3 ב-₪279"
+          },
+          "marketer": {
+            "type": "string",
+            "description": "Marketer name.",
+            "example": "קנטק"
           },
           "manufacturer": {
             "type": "string",
@@ -2390,11 +2395,12 @@
           }
         },
         "required": [
-          "hebName",
+          "name",
           "enName",
           "isNew",
           "rating",
           "deal",
+          "marketer",
           "manufacturer",
           "brand",
           "expiry",

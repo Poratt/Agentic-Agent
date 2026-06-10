@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ExplorerStrainItemDto {
   @ApiProperty({ description: 'Hebrew product or strain name.', example: 'גורילה גלו' })
-  hebName!: string;
+  name!: string;
 
   @ApiProperty({ description: 'English product or strain name.', example: 'Gorilla Glue' })
   enName!: string;
@@ -15,6 +15,9 @@ export class ExplorerStrainItemDto {
 
   @ApiProperty({ description: 'Visible or expanded promotion deal text.', example: '3 ב-₪279' })
   deal!: string;
+
+  @ApiProperty({ description: 'Marketer name.', example: 'קנטק' })
+  marketer!: string;
 
   @ApiProperty({ description: 'Manufacturer name.', example: 'קנאפארמה' })
   manufacturer!: string;

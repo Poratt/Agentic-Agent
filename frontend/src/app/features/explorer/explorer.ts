@@ -12,6 +12,30 @@ type ExplorerResponse = {
   items: Record<string, unknown>[];
 };
 
+type ExplorerFilterField =
+  | 'originStrain'
+  | 'parent1'
+  | 'parent2'
+  | 'marketer'
+  | 'manufacturer'
+  | 'brand'
+  | 'packageType'
+  | 'countryOfOrigin'
+  | 'terpenes'
+  | 'isNew';
+
+type ExplorerFilter = {
+  key: string;
+  fields: ExplorerFilterField[];
+  label: string;
+  value: string;
+};
+
+type TerpeneFilter = {
+  name: string;
+  label: string;
+};
+
 @Component({
   selector: 'app-explorer',
   standalone: true,
@@ -59,8 +83,7 @@ export class Explorer implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
 
-  activeFilters = signal<string[]>([]);
-  strainFilter = signal('originStrain');
+  activeFilters = signal<ExplorerFilter[]>([]);
 
   items = computed(() => {
     const raw = this.rawItems();
@@ -70,16 +93,13 @@ export class Explorer implements OnInit {
       return raw;
     }
 
-    return raw.filter((item) => {
-      return filters.every((filterVal) => {
-        const val = filterVal.toLowerCase();
-        const origin = String(item.originStrain || '').toLowerCase();
-        const p1 = String(item.parent1 || '').toLowerCase();
-        const p2 = String(item.parent2 || '').toLowerCase();
+    return raw.filter((item) =>
+      filters.every((filter) => {
+        const val = filter.value.toLowerCase();
 
-        return origin.includes(val) || p1.includes(val) || p2.includes(val);
-      });
-    });
+        return filter.fields.some((field) => this.formatValue(item[field]).toLowerCase().includes(val));
+      }),
+    );
   });
 
   pageState = computed<PageStates>(() => {
@@ -135,19 +155,25 @@ export class Explorer implements OnInit {
       });
   }
 
-  applyStrainFilter(filterBy: 'originStrain' | 'parent', value: string) {
-    if (!value) return;
+  applyDataFilter(fields: ExplorerFilterField | ExplorerFilterField[], value: unknown, label?: string) {
+    const filterValue = this.formatValue(value);
+    if (!filterValue) return;
 
-    if (this.activeFilters().includes(value)) {
-      return;
-    }
+    const filterLabel = label ?? filterValue;
+    const filterFields = Array.isArray(fields) ? fields : [fields];
+    const key = `${filterFields.join('|')}:${filterValue.toLowerCase()}`;
 
-    this.strainFilter.set(filterBy);
-    this.activeFilters.update((prev) => [...prev, value]);
+    this.activeFilters.update((prev) => {
+      if (prev.some((filter) => filter.key === key)) {
+        return prev.filter((filter) => filter.key !== key);
+      }
+
+      return [...prev, { key, fields: filterFields, label: filterLabel, value: filterValue }];
+    });
   }
 
-  removeFilter(value: string) {
-    this.activeFilters.update((prev) => prev.filter((f) => f !== value));
+  removeFilter(key: string) {
+    this.activeFilters.update((prev) => prev.filter((filter) => filter.key !== key));
   }
 
   clearAllFilters() {
@@ -179,6 +205,47 @@ export class Explorer implements OnInit {
     if (packageType.includes('צנצנת')) return 'ph-jar-label';
     if (packageType.includes('שקית')) return 'ph-bag-simple';
     return 'ph-question-mark';
+  }
+
+  splitTerpenes(value: unknown): TerpeneFilter[] {
+    const terpenes = this.formatValue(value);
+    if (!terpenes || terpenes === 'לא ידוע') return [];
+
+    return terpenes
+      .split(',')
+      .map((terpene) => this.toTerpeneFilter(terpene))
+      .filter((terpene): terpene is TerpeneFilter => terpene !== null);
+  }
+
+  countryFlagUrl(value: unknown): string {
+    const country = this.formatValue(value);
+    const flags: Record<string, string> = {
+      ישראל: 'il',
+      קנדה: 'ca',
+      פורטוגל: 'pt',
+      אורוגוואי: 'uy',
+      אוגנדה: 'ug',
+      ספרד: 'es',
+      גרמניה: 'de',
+      מרוקו: 'ma',
+      דנמרק: 'dk',
+      הולנד: 'nl',
+    };
+
+    const code = flags[country];
+    return code ? `/flags/${code}.svg` : '';
+  }
+
+  private toTerpeneFilter(value: string): TerpeneFilter | null {
+    const label = value.trim();
+    if (!label) return null;
+
+    const name = label
+      .replace(/\s*\(?\d+(?:[.,]\d+)?\s*%\)?\s*$/u, '')
+      .replace(/\s*\(?%\s*\d+(?:[.,]\d+)?\)?\s*$/u, '')
+      .trim();
+
+    return { label, name: name || label };
   }
 
   private getErrorMessage(error: unknown): string {
