@@ -31,6 +31,11 @@
             <span class="nav-label">צ'אט</span>
         </button>
 
+        <button routerLink="/settings" routerLinkActive="active" class="nav-item">
+            <span class="ph ph-gear nav-icon"></span>
+            <span class="nav-label">הגדרות</span>
+        </button>
+
         @if (chatStore.recentSessions().length > 0) {
             <div class="nav-sub-list">
                 <app-dropdown #chatDropdown (closed)="cancelDelete()" [position]="'bottom-right'">

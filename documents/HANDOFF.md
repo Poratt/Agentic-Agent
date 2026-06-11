@@ -331,3 +331,61 @@ documents/
 - Files touched this session: `C:\Users\porat\.claude\prompts\code-agent\*.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: store reusable agent prompts outside the repo under the user-level Claude config, not inside project rules or feature plans.
 - Open questions for the user: none.
+- Tightened the local-agent Angular prompt and rules after the settings-page dry run.
+- `C:\Users\porat\.claude\prompts\code-agent\angular-task.md` now tells the small agent to proceed automatically after the pre-implementation report unless approval is explicitly required, a pattern is missing, backend/API scope appears unexpectedly, or the request is ambiguous.
+- The Angular prompt now explicitly says not to ask "shall I proceed?" when the path is clear.
+- `angular-task.md`, `C:\Users\porat\.claude\rules\angular-rules.md`, `AGENTS.md`, and `CLAUDE.md` now clarify that `PageStates` are only required for pages with async loading/error/empty/ready states, not static placeholder pages.
+- Frontend verification commands in `AGENTS.md` and `CLAUDE.md` now instruct agents to run from `frontend/` with `npx ng build` / `npx ng test --watch=false`, and to avoid `npx ng build frontend` unless known supported.
+- Next exact step: rerun the settings-page prompt with the small local agent and verify it proceeds without the extra approval question.
+- Files touched this session: `C:\Users\porat\.claude\prompts\code-agent\angular-task.md`, `C:\Users\porat\.claude\rules\angular-rules.md`, `AGENTS.md`, `CLAUDE.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep the local-agent Angular prompt autonomous by default for clear, scoped tasks.
+- Open questions for the user: none.
+- Added stricter local-agent completion gates after reviewing the poor settings-page result.
+- `C:\Users\porat\.claude\prompts\code-agent\angular-task.md` now includes Hebrew/UTF-8 rules, CSS gates, a Definition of Done, and a required self-review before final answer.
+- `C:\Users\porat\.claude\rules\angular-rules.md` now includes a dedicated Hebrew/UTF-8 section, CSS placeholder/static-page rules, and an Angular Definition of Done.
+- `AGENTS.md` and `CLAUDE.md` now include an Angular Definition of Done requiring requirement-by-requirement confirmation, route/menu/import checks, Hebrew corruption scan, CSS rules, successful verification, and reporting known limitations.
+- Verification: searched the prompt/rule docs for the new gates and ran the corruption scan; matches are only the documented regex examples.
+- Next exact step: send the updated `angular-task.md` prompt to the local agent and ask it to repair the existing settings page implementation.
+- Files touched this session: `C:\Users\porat\.claude\prompts\code-agent\angular-task.md`, `C:\Users\porat\.claude\rules\angular-rules.md`, `AGENTS.md`, `CLAUDE.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: require explicit Definition of Done and self-review for Angular tasks because build success alone does not catch broken Hebrew text or poor UI/CSS quality.
+- Open questions for the user: none.
+- Added a specific static-page shell requirement after the local agent created a custom `settings-container` instead of using global page styles.
+- `angular-task.md`, `angular-rules.md`, `AGENTS.md`, and `CLAUDE.md` now state that static pages do not need `PageStates`, but still must use the standard page shell: `page-content`, `page-header`, `page-state empty-state`, `icon`, `title`, and `subtitle`.
+- The rules now forbid `settings-container`, `*-container`, or other page-specific wrapper classes for simple static pages, and instruct agents to delete unnecessary component CSS files and remove `styleUrl`/`styleUrls`.
+- Verification: searched all updated prompt/rule files for the new static-page shell guidance and corruption markers; matches are only the documented regex examples.
+- Next exact step: send the updated prompt to the local agent and ask it to repair the existing settings page using the standard page shell and no unnecessary CSS.
+- Files touched this session: `C:\Users\porat\.claude\prompts\code-agent\angular-task.md`, `C:\Users\porat\.claude\rules\angular-rules.md`, `AGENTS.md`, `CLAUDE.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: treat standard page shell as required even when `PageStates` is not required.
+- Open questions for the user: none.
+- Corrected the static-page shell guidance after realizing `empty-state` is semantically wrong for generic coming-soon/static placeholder content.
+- `angular-task.md`, `angular-rules.md`, `AGENTS.md`, and `CLAUDE.md` now instruct static placeholder pages to use `page-content`, `page-header`, `glass-effect card`, `card-header`, and `subtitle`.
+- The rules now explicitly say not to use `.page-state.empty-state` unless representing a real no-data state.
+- Verification: searched all updated rule/prompt files for the new `glass-effect card` shell and no-data-state warning; corruption-scan matches are only the documented regex examples.
+- Next exact step: send the updated prompt to the local agent and ask it to repair `frontend/src/app/features/settings/settings.html` with real Hebrew and `glass-effect card`, not `empty-state`.
+- Files touched this session: `C:\Users\porat\.claude\prompts\code-agent\angular-task.md`, `C:\Users\porat\.claude\rules\angular-rules.md`, `AGENTS.md`, `CLAUDE.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: reserve `empty-state` for real empty data states, not static placeholder pages.
+- Open questions for the user: none.
+- Tightened Hebrew handling after the local agent reversed Hebrew strings such as `הגדרות` into `תורדגה`.
+- `angular-task.md`, `angular-rules.md`, `AGENTS.md`, and `CLAUDE.md` now forbid generating, translating, reversing, transliterating, or visually reordering Hebrew text.
+- Hebrew text must be copied exactly from the user prompt or an existing valid project file; if exact Hebrew is not supplied, the local agent must stop and ask.
+- The rules now require `Select-String -SimpleMatch "EXACT_HEBREW_TEXT" <file>` for required Hebrew strings.
+- The rules also clarify that a clean `rg` corruption scan returns no output and exit code `1`, and agents must not chain the corruption scan with build using `&&`.
+- Next exact step: send the updated prompt plus exact Hebrew strings/code block to the local agent, or fix `frontend/src/app/features/settings/settings.html` directly.
+- Files touched this session: `C:\Users\porat\.claude\prompts\code-agent\angular-task.md`, `C:\Users\porat\.claude\rules\angular-rules.md`, `AGENTS.md`, `CLAUDE.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: local agents should not author Hebrew text; they should only copy exact approved strings.
+- Open questions for the user: none.
+- Simplified the Hebrew rules again after the user clarified that Hebrew authoring itself works and the issue was overcomplication from terminal/RTL interpretation.
+- Removed the strict "do not generate Hebrew", `Select-String -SimpleMatch`, reversed-Hebrew, and separate-scan/build requirements from `angular-task.md`, `angular-rules.md`, `AGENTS.md`, and `CLAUDE.md`.
+- Kept only a simple Hebrew/UTF-8 guard: Hebrew is allowed, preserve existing user-facing Hebrew when editing, do not copy corrupted terminal output, and fix actual mojibake if seen.
+- Next exact step: send the simplified prompt to the local agent with the static-page/card-shell requirement, or repair the settings page directly.
+- Files touched this session: `C:\Users\porat\.claude\prompts\code-agent\angular-task.md`, `C:\Users\porat\.claude\rules\angular-rules.md`, `AGENTS.md`, `CLAUDE.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep Hebrew guidance lightweight; focus the local agent rules on structure/CSS/DoD instead of overconstraining Hebrew writing.
+- Open questions for the user: none.
+- Tightened the static-page guidance again after identifying that the local agent understood generic classes but not the required page structure.
+- `angular-task.md`, `angular-rules.md`, `AGENTS.md`, and `CLAUDE.md` now tell the local agent to copy the static placeholder page structure exactly and only replace `PAGE_TITLE`, `SECTION_TITLE`, icon class, and `PLACEHOLDER_TEXT`.
+- The rules now explicitly forbid improvising the HTML structure, moving placeholder text into the header, or using loose standalone text blocks for static placeholder content.
+- Verification: searched updated files for the exact-structure guidance and confirmed the previously over-strict Hebrew rules remain removed.
+- Next exact step: send the simplified but structure-strict Angular prompt to the local agent, or fix `frontend/src/app/features/settings/settings.html` directly.
+- Files touched this session: `C:\Users\porat\.claude\prompts\code-agent\angular-task.md`, `C:\Users\porat\.claude\rules\angular-rules.md`, `AGENTS.md`, `CLAUDE.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: enforce exact page structure for static pages because generic class guidance alone is not enough for the local agent.
+- Open questions for the user: none.

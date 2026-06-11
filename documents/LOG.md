@@ -41,6 +41,13 @@
 - No architecture diagram update was needed because this was documentation and agent-rule metadata only.
 - Hardened `C:\Users\porat\.claude\rules\angular-rules.md` for the local coding agent by replacing the loose prose with a strict checklist structure and removing a stale embedded task comment.
 - Created user-level reusable prompt snippets for the local coding agent under `C:\Users\porat\.claude\prompts\code-agent\`, covering default work, Angular, NestJS, CSS, review, bugfix, docs update, and commit-message workflows.
+- Tightened the Angular local-agent prompt after a settings-page dry run: clear scoped tasks now proceed automatically after the pre-implementation report, static pages do not need `PageStates`, and frontend verification is standardized as `npx ng build` from `frontend/`.
+- Added stricter Angular Definition of Done gates to the local-agent prompt/rules and project agent guides after the settings-page dry run showed that route/build success alone was not enough to prevent broken Hebrew text and weak CSS/UI completion.
+- Added an explicit static-page shell rule to the local-agent prompt/rules and project guides: static pages do not need `PageStates`, but they must still use global page shell classes instead of custom wrappers or unnecessary component CSS.
+- Corrected the static-page shell rule to use `glass-effect card` for generic placeholder content and reserve `empty-state` for real empty data states.
+- Tightened Hebrew safety rules after a local-agent failure reversed Hebrew strings; local agents must now copy exact approved Hebrew strings and verify them with `Select-String -SimpleMatch` instead of generating or visually reordering Hebrew.
+- Rolled back the over-strict Hebrew prompt/rule additions after the user clarified Hebrew authoring is fine; retained only lightweight mojibake safeguards and kept the focus on page shell/CSS/Definition-of-Done quality gates.
+- Tightened static page guidance to require copying the exact standard page shell structure because the local agent understood generic classes but still improvised the page layout.
 
 ## 2026-06-10 Explorer Terpene Flags Update
 

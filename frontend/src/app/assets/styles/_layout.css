@@ -96,6 +96,11 @@
   box-shadow: var(--shadow-soft);
   border-radius: var(--radius-lg);
 
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
 }
 
 .metric-card {

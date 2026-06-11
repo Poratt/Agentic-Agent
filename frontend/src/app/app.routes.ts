@@ -18,6 +18,7 @@ export const routes: Routes = [
       { path: 'chat', loadComponent: () => import('./features/chat/chat/chat').then(m => m.Chat) },
       { path: 'chat/history', loadComponent: () => import('./features/chat/chat-history/chat-history').then(m => m.ChatHistory) },
       { path: 'design-system', loadComponent: () => import('./features/design-system/design-system').then(m => m.DesignSystem) },
+      { path: 'settings', loadComponent: () => import('./features/settings/settings').then(m => m.Settings) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

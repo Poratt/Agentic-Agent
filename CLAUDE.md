@@ -86,7 +86,8 @@ Before editing any file, the agent MUST:
 5. Define success criteria and verification command.
 6. Only then edit files.
 
-For Angular page components, this is mandatory:
+For Angular page components with async loading/error/empty/ready states, this is mandatory.
+Static placeholder pages do not need `PageStates`:
 
 - Use `PageStates`
 - Expose `readonly PageStates = PageStates`
@@ -105,15 +106,58 @@ If the agent cannot identify the applicable pattern, it must stop and ask before
 When editing files that contain Hebrew text:
 
 1. Always read the file with UTF-8 encoding before editing.
-2. Never copy Hebrew text from terminal output that appears corrupted.
-3. After editing, verify the file with UTF-8 reading.
-4. Search for corrupted characters before finishing:
+2. Hebrew text is allowed.
+3. Preserve user-facing Hebrew text exactly when editing existing Hebrew.
+4. Never copy Hebrew text from terminal output that appears corrupted.
+5. After editing, verify the file with UTF-8 reading.
+6. Search for corrupted characters before finishing if Hebrew looks suspicious:
 
 ```bash
 rg -n "׳|ג€�|ג†|ג€|�" path/to/file
 ```
 
-If corrupted text is found, fix it before running build or returning the answer.
+If actual mojibake is found, fix it before running build or returning the answer.
+
+## Angular Definition Of Done
+
+Before marking an Angular task complete:
+
+1. Confirm each user requirement was satisfied.
+2. Confirm all required routes, menu links, imports, and templates are connected.
+3. Confirm Hebrew text is readable in the edited file and has no actual mojibake.
+4. Run the corrupted-character scan on touched Hebrew files.
+5. Confirm CSS follows project rules, or no component CSS file was created because existing global classes were enough.
+6. Confirm the verification command completed successfully.
+7. Report files changed, verification result, and known limitations.
+
+For placeholder/static pages, prefer existing global classes such as `page-content`, `page-header`, `glass-effect`, `card`, `card-header`, and `subtitle`.
+Static pages do not need `PageStates`, but they still must use the standard page shell:
+For simple static placeholder pages, copy this structure exactly and only replace `PAGE_TITLE`, `SECTION_TITLE`, icon class, and `PLACEHOLDER_TEXT`:
+
+```html
+<div class="page-content">
+  <header class="page-header">
+    <h2>PAGE_TITLE</h2>
+  </header>
+
+  <section class="glass-effect card">
+    <div class="card-header">
+      <span class="ph ph-gear"></span>
+      <h3>SECTION_TITLE</h3>
+    </div>
+    <p class="subtitle">PLACEHOLDER_TEXT</p>
+  </section>
+</div>
+```
+
+Do not improvise the HTML structure for a simple static page.
+Do not move placeholder text into the header.
+Do not use `.page-state.empty-state` unless representing a real no-data state.
+Do not use loose standalone text blocks for static placeholder content.
+Do not create `settings-container`, `*-container`, or page-specific wrapper classes for a simple static page.
+Do not create a component CSS file unless existing classes are insufficient.
+If an unnecessary component CSS file exists, delete it and remove `styleUrl`/`styleUrls` from the component.
+Never style bare `h1`, `p`, `button`, `table`, `th`, or `td` in component CSS.
 
 ## File Editing Safety Rule
 
@@ -168,13 +212,17 @@ Frontend platform baseline:
 
 ## Build & Dev Commands
 
+Run frontend verification commands from `frontend/` unless a task explicitly says otherwise.
+Do not use `npx ng build frontend` unless the workspace command is known to support that project argument.
+
 | Action        | Command                              |
 | ------------- | ------------------------------------ |
-| Frontend dev  | `npx ng serve frontend`              |
+| Frontend dev  | `npx ng serve`                       |
 | Backend dev   | `npm run start:dev -w backend`       |
-| Frontend lint | `npx ng lint frontend`               |
+| Frontend lint | `npx ng lint`                        |
 | Backend lint  | `npm run lint -w backend`            |
-| Frontend test | `npx ng test frontend --watch=false` |
+| Frontend test | `npx ng test --watch=false`          |
+| Frontend build | `npx ng build`                      |
 | Backend test  | `npm run test -w backend`            |
 
 ## Playwright Testing / Browser Rules
