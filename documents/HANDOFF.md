@@ -210,3 +210,37 @@ documents/
 - Files touched this session: `frontend/src/app/features/explorer/explorer.ts`, `frontend/src/app/features/explorer/explorer.html`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: keep displayed price strings unchanged and solve sorting in the table comparator only.
 - Open questions for the user: none.
+- Angular 22 upgrade continuation was attempted from `frontend` with `npx ng update @angular/core@22 @angular/cli@22` and again with `--force`.
+- Both attempts stopped before modifying project files because Angular CLI 22 detected Node `v24.13.0`; the required versions are `22.22.3+`, `24.15.0+`, or `26.0.0+`.
+- User asked to stop and will update Node manually from their terminal.
+- Next exact step: after Node is updated, rerun `npx ng update @angular/core@22 @angular/cli@22` from `frontend`, then run the breaking-change scan and `npx ng build`.
+- Files touched this session: `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: stop the upgrade until Node is manually updated; do not use `nvm` from the sandbox.
+- Open questions for the user: none.
+- Continued the Angular 22 upgrade after the user manually updated Node to `v24.15.0`.
+- `frontend/package.json` and `frontend/package-lock.json` now use Angular `22.0.1` packages and TypeScript `6.0.3`.
+- `npx -p @angular/cli@22.0.1 ng update @angular/core@22 @angular/cli@22` updated dependencies and ran CLI migrations, but the core migration initially failed because Angular generated paths like `app/features/auth/login/login.ts` instead of `src/app/features/auth/login/login.ts`.
+- To complete the official migrations, a temporary `frontend/app -> frontend/src/app` junction was created, `change-detection-eager` and the remaining Angular Core migrations were rerun in `migrate-only` mode, and the junction was removed afterward.
+- Angular migrations changed app files by adding `ChangeDetectionStrategy.Eager`, adding `withXhr()` in `frontend/src/app/app.config.ts`, wrapping affected optional chains with `$safeNavigationMigration(...)`, and adding extended diagnostic suppressions to `frontend/tsconfig.app.json`.
+- `frontend/src/app/app.spec.ts` was updated because the old default Angular title test expected an `h1` that the current app shell no longer renders.
+- Verification passed: `npx ng test --watch=false` from `frontend` passes, and `npx ng build` from `frontend` passes.
+- Remaining warnings: `AccessToDirective` unused in `ChatHistory`, `explorer.css` warning budget, and `chat-message.css` warning budget.
+- Remaining risk: `npm ls @angular/core @angular/cli @angular/build @angular/compiler-cli typescript primeng` fails with `ELSPROBLEMS` because `primeng@21.1.8` declares Angular `^21.0.7`; npm currently reports latest PrimeNG as `21.1.9` and no PrimeNG 22 package.
+- Next exact step: decide whether to temporarily accept the PrimeNG peer mismatch, wait for PrimeNG 22, or replace/patch the PrimeNG dependency strategy before treating dependency validation as clean.
+- Files touched this session: `frontend/package.json`, `frontend/package-lock.json`, `frontend/tsconfig.app.json`, `frontend/src/app/app.config.ts`, `frontend/src/app/app.spec.ts`, all Angular component `.ts` files under `frontend/src/app`, `frontend/src/app/features/dashboard/dashboard.html`, `frontend/src/app/features/layout/main-sidebar/main-sidebar.html`, `frontend/src/app/features/users/users-management.html`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: preserve Angular 21 runtime change detection semantics with explicit `ChangeDetectionStrategy.Eager`; do not add artificial npm overrides for PrimeNG's Angular 21 peer range.
+- Open questions for the user: how to handle PrimeNG's missing Angular 22 peer support.
+- Marked the completed/reviewed checklist items in `documents/angular-22-update-guide.md`.
+- Verification: no unchecked English checklist entries remain in `documents/angular-22-update-guide.md`, and the corruption scan for that file returned clean.
+- Next exact step: resolve or explicitly accept the PrimeNG Angular 21 peer dependency mismatch before treating dependency validation as fully clean.
+- Files touched this session: `documents/angular-22-update-guide.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: only mark checklist items that were performed by the Angular 22 upgrade or explicitly reviewed during the migration scan.
+- Open questions for the user: none for the checklist update.
+- Cleaned up Angular 22 migration helpers after review: removed `$safeNavigationMigration(...)` from `frontend/src/app/features/layout/main-sidebar/main-sidebar.html`, `frontend/src/app/features/dashboard/dashboard.html`, and `frontend/src/app/features/users/users-management.html`.
+- The role badge guards now use normal Angular 22 safe navigation, e.g. `@if (authStore.user()?.role)`, and badge bindings call `getUserRoleData(...)?....` directly.
+- Verification: `rg '$safeNavigationMigration' frontend/src` returned no matches; `npx ng test --watch=false` passed 16 tests; `npx ng build` passed.
+- Remaining warnings are unchanged: unused `AccessToDirective` in `ChatHistory`, `explorer.css` warning budget, and `chat-message.css` warning budget.
+- Next exact step: resolve or explicitly accept the PrimeNG Angular 21 peer dependency mismatch before treating dependency validation as fully clean.
+- Files touched this session: `frontend/src/app/features/layout/main-sidebar/main-sidebar.html`, `frontend/src/app/features/dashboard/dashboard.html`, `frontend/src/app/features/users/users-management.html`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: remove temporary Angular migration compatibility helpers instead of keeping the old null-safe-navigation behavior.
+- Open questions for the user: none.

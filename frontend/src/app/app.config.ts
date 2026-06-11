@@ -7,7 +7,7 @@ import { registerLocaleData } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
 import { AuthStore } from './core/store/auth.store';
 import localeHe from '@angular/common/locales/he';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { withCredentialsInterceptor } from './core/interceptors/with-credentials.interceptor';
 import { PRIME_NG_PROVIDERS } from './core/config/primeng-define-preset';
@@ -15,32 +15,27 @@ import { ThemeService } from './core/services/theme.service';
 
 registerLocaleData(localeHe);
 
-
 export function initializeApp(authService: AuthService, authStore: AuthStore, themeService: ThemeService) {
-  return async () => {
-    themeService.init();
-    const user = await authService.checkSession();
-    authStore.user.set(user);
-
-  };
+    return async () => {
+        themeService.init();
+        const user = await authService.checkSession();
+        authStore.user.set(user);
+    };
 }
 
-
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
-    provideAnimationsAsync(),
-    provideHttpClient(
-      withInterceptors([withCredentialsInterceptor, authInterceptor]),
-    ),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initializeApp,
-      deps: [AuthService, AuthStore, ThemeService],
-      multi: true,
-    },
-    { provide: LOCALE_ID, useValue: 'he-IL' },
-    ...PRIME_NG_PROVIDERS,
-  ]
+    providers: [
+        provideBrowserGlobalErrorListeners(),
+        provideRouter(routes),
+        provideAnimationsAsync(),
+        provideHttpClient(withXhr(), withInterceptors([withCredentialsInterceptor, authInterceptor])),
+        {
+            provide: APP_INITIALIZER,
+            useFactory: initializeApp,
+            deps: [AuthService, AuthStore, ThemeService],
+            multi: true,
+        },
+        { provide: LOCALE_ID, useValue: 'he-IL' },
+        ...PRIME_NG_PROVIDERS,
+    ],
 };

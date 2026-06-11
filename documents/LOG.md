@@ -7,6 +7,17 @@
 - Verified `npx ng build` from `frontend` now passes again. Remaining output is warnings only: unused `AccessToDirective`, `chat-message.css` warning budget, and `explorer.css` warning budget at 7.97 kB.
 - Fixed Explorer price sorting by enabling PrimeNG `customSort` and comparing `price`/`catalogPrice` through numeric values extracted from their display strings.
 - Verified `npx ng build` from `frontend` after the Explorer numeric sort fix.
+- Attempted the Angular 22 upgrade with `npx ng update @angular/core@22 @angular/cli@22`; Angular CLI 22 stopped before changing files because the current Node runtime is `v24.13.0`, below the required `24.15.0+` / `22.22.3+`.
+- Completed the Angular 22 frontend upgrade after Node was updated to `v24.15.0`.
+- Updated Angular packages to `22.0.1` and TypeScript to `6.0.3`.
+- Applied Angular 22 migrations. The official migration had to be resumed with a temporary `frontend/app -> frontend/src/app` junction because the CLI generated migration paths without the `src/` prefix; the junction was removed after migration.
+- Angular added explicit `ChangeDetectionStrategy.Eager` to all app components, added `withXhr()` to `provideHttpClient(...)`, added `$safeNavigationMigration(...)` wrappers in affected templates, and added extended diagnostic suppressions in `frontend/tsconfig.app.json`.
+- Updated the stale `frontend/src/app/app.spec.ts` title test to assert the current root `router-outlet`.
+- Verified `npx ng test --watch=false` and `npx ng build` after the upgrade.
+- Recorded a remaining dependency risk: `primeng@21.1.8` still declares Angular 21 peer dependencies, and npm does not currently publish a PrimeNG 22 package.
+- Marked the completed/reviewed Angular 22 update-guide checklist items in `documents/angular-22-update-guide.md`.
+- Removed the temporary Angular 22 `$safeNavigationMigration(...)` helpers from `dashboard`, `main-sidebar`, and `users-management` templates, replacing them with normal Angular 22 safe-navigation expressions.
+- Verified the cleanup with `rg '$safeNavigationMigration' frontend/src`, `npx ng test --watch=false`, and `npx ng build`.
 
 ## 2026-06-10 Explorer Terpene Flags Update
 

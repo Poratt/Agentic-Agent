@@ -7,11 +7,7 @@
             (click)="themeService.toggle()"
             [attr.aria-label]="themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
         >
-            <span
-                class="ph nav-icon"
-                [class.ph-moon]="themeService.isDark()"
-                [class.ph-sun]="!themeService.isDark()"
-            ></span>
+            <span class="ph nav-icon" [class.ph-moon]="themeService.isDark()" [class.ph-sun]="!themeService.isDark()"></span>
         </button>
     </div>
 
@@ -54,28 +50,16 @@
                                     <div class="delete-confirmation">
                                         <span class="warning-text typewriter">האם אתה בטוח?</span>
                                         <div class="action-btns">
-                                            <button
-                                                class="icon-only transparent-btn sm"
-                                                type="button"
-                                                (click)="cancelDelete()"
-                                            >
+                                            <button class="icon-only transparent-btn sm" type="button" (click)="cancelDelete()">
                                                 <span class="ph ph-x"></span>
                                             </button>
-                                            <button
-                                                class="icon-only danger-btn sm"
-                                                type="button"
-                                                (click)="confirmDelete()"
-                                            >
+                                            <button class="icon-only danger-btn sm" type="button" (click)="confirmDelete()">
                                                 <span class="ph ph-check"></span>
                                             </button>
                                         </div>
                                     </div>
                                 } @else {
-                                    <button
-                                        class="nav-item sm"
-                                        type="button"
-                                        (click)="navigateTo(session.id); chatDropdown.hideDropdown()"
-                                    >
+                                    <button class="nav-item sm" type="button" (click)="navigateTo(session.id); chatDropdown.hideDropdown()">
                                         <span class="ph ph-chat-centered-text"></span>
                                         <span class="nav-label session-title-label">{{ session.title }}</span>
                                     </button>
@@ -102,7 +86,7 @@
             </div>
             <div class="user-info">
                 <span class="user-name">{{ authStore.user()?.email }}</span>
-                @if (authStore.user()?.role !== null && authStore.user()?.role !== undefined) {
+                @if (authStore.user()?.role) {
                     <span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)?.color">
                         <span class="ph sm" [ngClass]="getUserRoleData(authStore.user()!.role)?.icon"></span>
                         {{ getUserRoleData(authStore.user()!.role)?.heLabel }}

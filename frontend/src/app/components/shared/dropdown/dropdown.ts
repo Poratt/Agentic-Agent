@@ -1,4 +1,4 @@
-import { Component, OnDestroy, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
     standalone: true,
     imports: [CommonModule],
     templateUrl: './dropdown.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './dropdown.css',
 })
 export class Dropdown implements OnDestroy {

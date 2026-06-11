@@ -178,6 +178,11 @@ Full-stack monorepo: Angular frontend + NestJS backend.
 - One browser action at a time, confirm before next
 - If session exceeds 15 tool calls, start fresh with /clear
 
+## Environment Notes
+
+- node --version may fail in sandbox — use `npx node --version` instead
+- Always verify environment via build output, not direct CLI checks
+
 ## Documentation
 
 - Use context7 when writing code that involves third-party library APIs
