@@ -14,11 +14,11 @@ const OPENROUTER_MODELS: LlmModelGroupDto[] = [
       },
       {
         value: 'nvidia/nemotron-3-super-120b-a12b:free',
-        label: ' Nemotron 3 Super 120b A12B(NVIDIA)',
+        label: 'Nemotron 3 Super 120b A12B(NVIDIA)',
       },
       {
-        value: 'moonshotai/kimi-k2.6:free',
-        label: 'Kimi K2.6(Moonshot AI)',
+        value: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+        label: 'Nemotron 3 Ultra 550b A55B(NVIDIA)',
       },
       {
         value: 'z-ai/glm-4.5-air:free',

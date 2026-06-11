@@ -18,6 +18,15 @@
 - Marked the completed/reviewed Angular 22 update-guide checklist items in `documents/angular-22-update-guide.md`.
 - Removed the temporary Angular 22 `$safeNavigationMigration(...)` helpers from `dashboard`, `main-sidebar`, and `users-management` templates, replacing them with normal Angular 22 safe-navigation expressions.
 - Verified the cleanup with `rg '$safeNavigationMigration' frontend/src`, `npx ng test --watch=false`, and `npx ng build`.
+- Moved the completed Angular 22 upgrade guide to `documents/done/angular-22-update-guide.md`; no architecture diagram update was needed.
+- Completed AiFormat sanitizer Phase 2/3 in `frontend/src/app/core/directives/ai-format.directive.ts`.
+- Added private GenUI HTML/CSS sanitization before raw component rendering: dangerous tags are removed, `:root`/`html`/`body` blocks and CSS custom property declarations are stripped, unscoped global selectors are blocked, scoped/local selectors and `@keyframes` are preserved.
+- Added focused directive specs covering sanitizer behavior and verified with `npx ng test --watch=false` plus `npx ng build`.
+- Completed and closed the AiFormat directive improvement plan.
+- Added `renderSkeletonOnce()` for skeleton DOM rendering, centralized Hebrew role labels, preserved English role support, and expanded directive specs for component-stream detection, CSS code fences, role badge rendering, and markdown/table behavior.
+- Moved the plan to `documents/done/ai-format-directive-improvement-plan.md`; no architecture diagram update was needed.
+- Added `documents/features/todo/chat-stop-stream-button-plan.md` for changing the chat submit button into a stream stop/cancel button during loading.
+- Documented that frontend cancellation can use the existing `ChatService.sendMessageStream(...)` Observable teardown, which already calls `AbortController.abort()`.
 
 ## 2026-06-10 Explorer Terpene Flags Update
 

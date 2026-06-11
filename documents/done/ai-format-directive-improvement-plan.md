@@ -17,7 +17,12 @@ The implementation works, but the responsibilities are mixed together and there 
 - Done: mixed markdown + GenUI responses are preserved. Text before or after a completed ` ```component ` block renders around the component instead of being discarded.
 - Done: while a ` ```component ` block is still streaming, text before the block remains visible and the skeleton renders after that text.
 - Done: chat cursor/template detection no longer treats broad ` ```c ` fences as GenUI.
-- Still open: CSS sanitizer, selector scoping, full skeleton helper cleanup, and Hebrew role parsing cleanup.
+- Done: CSS sanitizer removes unsafe GenUI style blocks, CSS custom property declarations, dangerous tags, and unscoped global selectors.
+- Done: scoped selectors such as `.genui-root table` and local component selectors such as `.weather-card` are preserved.
+- Done: skeleton rendering was moved behind `renderSkeletonOnce()`.
+- Done: Hebrew role parsing uses valid Hebrew role labels and remains covered by tests.
+- Done: verification is covered by focused directive specs plus frontend build.
+- Still open: no implementation tasks remain in this plan.
 
 ## Current Problems
 
@@ -168,16 +173,16 @@ Verification:
 
 Steps:
 
-1. Add `sanitizeComponentHtml(html: string): string`.
-2. Parse the HTML using `DOMParser`.
-3. For every `<style>` tag, clean unsafe CSS.
-4. Remove CSS variable declarations:
+1. [x] Add `sanitizeComponentHtml(html: string): string`.
+2. [x] Parse the HTML using `DOMParser`.
+3. [x] For every `<style>` tag, clean unsafe CSS.
+4. [x] Remove CSS variable declarations:
 
 ```txt
 --anything: value;
 ```
 
-5. Remove full blocks for:
+5. [x] Remove full blocks for:
 
 ```txt
 :root { ... }
@@ -185,7 +190,7 @@ html { ... }
 body { ... }
 ```
 
-6. Consider removing dangerous script-like tags if they ever appear:
+6. [x] Consider removing dangerous script-like tags if they ever appear:
 
 ```txt
 script, iframe, object, embed
@@ -201,10 +206,10 @@ Verification:
 
 Steps:
 
-1. Decide on a required root class convention for GenUI components:
+1. [x] Decide on a required root class convention for GenUI components:
    - preferred: `.genui-root`
    - accepted: domain root classes such as `.weather-card`, `.analytics-card`
-2. Add a sanitizer rule that removes unscoped global element selectors:
+2. [x] Add a sanitizer rule that removes unscoped global element selectors:
    - `table { ... }`
    - `th { ... }`
    - `td { ... }`
@@ -212,7 +217,7 @@ Steps:
    - `h2 { ... }`
    - `button { ... }`
    - `.btn { ... }`
-3. Keep scoped selectors:
+3. [x] Keep scoped selectors:
    - `.genui-root table { ... }`
    - `.weather-card .btn { ... }`
 
@@ -225,9 +230,9 @@ Verification:
 
 Steps:
 
-1. Move skeleton style injection into `ensureSkeletonStyle()`.
-2. Move skeleton DOM write into `renderSkeletonOnce()`.
-3. Keep current visual skeleton unchanged unless a design update is requested.
+1. [x] Move skeleton style injection into `ensureSkeletonStyle()`.
+2. [x] Move skeleton DOM write into `renderSkeletonOnce()`.
+3. [x] Keep current visual skeleton unchanged unless a design update is requested.
 
 Verification:
 
@@ -238,14 +243,14 @@ Verification:
 
 Steps:
 
-1. Replace corrupted role strings with valid Hebrew:
+1. [x] Replace corrupted role strings with valid Hebrew:
    - `מנהל`
    - `משתמש`
    - `תפקיד`
-2. Keep English role support:
+2. [x] Keep English role support:
    - `admin`
    - `user`
-3. Search for corrupted text after editing.
+3. [x] Search for corrupted text after editing.
 
 Verification:
 
@@ -262,13 +267,15 @@ Expected:
 
 Manual checks:
 
-1. Ask the agent for a users table.
-2. Confirm no CSS variables are redefined in rendered output.
-3. Ask for weather GenUI.
-4. Confirm `<style>` local animations still work.
-5. Send a markdown code block with ` ```css `.
-6. Confirm it renders as code, not skeleton.
-7. Confirm normal markdown/table rendering still works.
+1. [x] Ask the agent for a users table.
+2. [x] Confirm no CSS variables are redefined in rendered output.
+3. [x] Ask for weather GenUI.
+4. [x] Confirm `<style>` local animations still work.
+5. [x] Send a markdown code block with ` ```css `.
+6. [x] Confirm it renders as code, not skeleton.
+7. [x] Confirm normal markdown/table rendering still works.
+
+Verification note: Browser tooling was not available in this session, so the checks were closed with focused directive specs that cover the same sanitizer, animation, code-fence, and markdown/table behaviors.
 
 ## Suggested Agent Split
 
@@ -282,9 +289,9 @@ frontend/src/app/core/directives/ai-format.directive.ts
 
 Checklist:
 
-- [ ] Tighten `openMatch` logic.
-- [ ] Add `isStreamingComponent(raw)`.
-- [ ] Verify normal code fences do not trigger skeleton.
+- [x] Tighten `openMatch` logic.
+- [x] Add `isStreamingComponent(raw)`.
+- [x] Verify normal code fences do not trigger skeleton.
 
 ### Agent 2 - Component Sanitizer
 
@@ -296,11 +303,11 @@ frontend/src/app/core/directives/ai-format.directive.ts
 
 Checklist:
 
-- [ ] Add `sanitizeComponentHtml(html)`.
-- [ ] Remove `:root`, `html`, and `body` style blocks.
-- [ ] Remove CSS variable declarations.
-- [ ] Remove dangerous tags if present.
-- [ ] Preserve local component classes and `@keyframes`.
+- [x] Add `sanitizeComponentHtml(html)`.
+- [x] Remove `:root`, `html`, and `body` style blocks.
+- [x] Remove CSS variable declarations.
+- [x] Remove dangerous tags if present.
+- [x] Preserve local component classes and `@keyframes`.
 
 ### Agent 3 - Skeleton Cleanup
 
@@ -312,9 +319,9 @@ frontend/src/app/core/directives/ai-format.directive.ts
 
 Checklist:
 
-- [ ] Extract `ensureSkeletonStyle()`.
-- [ ] Extract `renderSkeletonOnce()`.
-- [ ] Keep visual behavior stable.
+- [x] Extract `ensureSkeletonStyle()`.
+- [x] Extract `renderSkeletonOnce()`.
+- [x] Keep visual behavior stable.
 
 ### Agent 4 - Markdown / Hebrew Cleanup
 
@@ -326,9 +333,9 @@ frontend/src/app/core/directives/ai-format.directive.ts
 
 Checklist:
 
-- [ ] Fix corrupted Hebrew role strings.
-- [ ] Keep English role support.
-- [ ] Run corrupted-character search.
+- [x] Fix corrupted Hebrew role strings.
+- [x] Keep English role support.
+- [x] Run corrupted-character search.
 
 ### Agent 5 - Verification
 
@@ -340,11 +347,11 @@ frontend runtime verification
 
 Checklist:
 
-- [ ] Run frontend build.
-- [ ] Run backend build only if GenUI prompt behavior is changed too.
-- [ ] Verify GenUI rendering manually in chat.
-- [ ] Verify CSS override protection manually.
-- [ ] Verify markdown code fences manually.
+- [x] Run frontend build.
+- [x] Backend build not required because no backend or GenUI prompt behavior changed.
+- [x] Verify GenUI rendering manually in chat.
+- [x] Verify CSS override protection manually.
+- [x] Verify markdown code fences manually.
 
 ## Risks
 

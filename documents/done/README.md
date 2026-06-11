@@ -8,12 +8,12 @@ The application is an internal admin system where users can sign in, manage user
 
 ## Stack
 
-| Layer | Technologies |
-|---|---|
-| Frontend | Angular 21, standalone components, signals, Reactive Forms, PrimeNG, Phosphor Icons |
-| Backend | NestJS 11, TypeORM, MySQL, Swagger, JWT, cookies |
+| Layer    | Technologies                                                                          |
+| -------- | ------------------------------------------------------------------------------------- |
+| Frontend | Angular 22, standalone components, signals, Reactive Forms, PrimeNG, Phosphor Icons   |
+| Backend  | NestJS 11, TypeORM, MySQL, Swagger, JWT, cookies                                      |
 | AI Agent | OpenAI-compatible Chat Completions through providers such as `nvidia` or `openrouter` |
-| API Docs | Swagger at `/api`, including `summaryHe` for Hebrew semantic action labels |
+| API Docs | Swagger at `/api`, including `summaryHe` for Hebrew semantic action labels            |
 
 ## Project Structure
 
@@ -34,30 +34,30 @@ backend/
 
 The frontend is built with Angular standalone components only. Screens live under `frontend/src/app/features`, and the main route map is defined in `frontend/src/app/app.routes.ts`.
 
-| Route | Feature | Description |
-|---|---|---|
-| `/login` | Auth Login | User login |
-| `/register` | Auth Register | New user registration |
-| `/dashboard` | Dashboard | Authenticated home screen |
-| `/users` | Users Management | User list and permission management |
-| `/explorer` | Explorer | System explorer screen |
-| `/chat` | Chat | Chat with the Admin Agent |
-| `/chat/history` | Chat History | Chat session history |
-| `/design-system` | Design System | Design-system inspection screen, routed but not shown in the main menu |
+| Route            | Feature          | Description                                                            |
+| ---------------- | ---------------- | ---------------------------------------------------------------------- |
+| `/login`         | Auth Login       | User login                                                             |
+| `/register`      | Auth Register    | New user registration                                                  |
+| `/dashboard`     | Dashboard        | Authenticated home screen                                              |
+| `/users`         | Users Management | User list and permission management                                    |
+| `/explorer`      | Explorer         | System explorer screen                                                 |
+| `/chat`          | Chat             | Chat with the Admin Agent                                              |
+| `/chat/history`  | Chat History     | Chat session history                                                   |
+| `/design-system` | Design System    | Design-system inspection screen, routed but not shown in the main menu |
 
 The sidebar shows Dashboard, Users, Explorer, and Chat. It also includes a dropdown for recent conversations, session deletion, theme switching, user profile details, and logout.
 
 ### Core Stores and Services
 
-| Store / Service | Responsibility |
-|---|---|
-| `AuthStore` + `AuthService` | Login, register, logout, refresh, session check |
-| `UsersStore` + `UserService` | Load users, current user profile, update, delete, role changes |
-| `ChatStore` + `ChatService` | Chat sessions, history loading, session creation/deletion, streaming queries |
-| `ThemeService` | Dark/light mode through `data-theme` and localStorage |
-| `authGuard` | Protects the authenticated application area |
-| `authInterceptor` | Handles `401` responses and refresh flow |
-| `withCredentialsInterceptor` | Sends cookies with every API request |
+| Store / Service              | Responsibility                                                               |
+| ---------------------------- | ---------------------------------------------------------------------------- |
+| `AuthStore` + `AuthService`  | Login, register, logout, refresh, session check                              |
+| `UsersStore` + `UserService` | Load users, current user profile, update, delete, role changes               |
+| `ChatStore` + `ChatService`  | Chat sessions, history loading, session creation/deletion, streaming queries |
+| `ThemeService`               | Dark/light mode through `data-theme` and localStorage                        |
+| `authGuard`                  | Protects the authenticated application area                                  |
+| `authInterceptor`            | Handles `401` responses and refresh flow                                     |
+| `withCredentialsInterceptor` | Sends cookies with every API request                                         |
 
 ### Frontend Conventions
 
@@ -76,33 +76,33 @@ The backend is a NestJS application using TypeORM and MySQL. There is no global 
 
 ### Modules
 
-| Module | Responsibility |
-|---|---|
-| `AuthModule` | Registration, login, refresh token, logout, user identity |
-| `UsersModule` | User CRUD and role management |
+| Module             | Responsibility                                                  |
+| ------------------ | --------------------------------------------------------------- |
+| `AuthModule`       | Registration, login, refresh token, logout, user identity       |
+| `UsersModule`      | User CRUD and role management                                   |
 | `AdminAgentModule` | Agent chat, sessions, LLM access, Swagger tools, tool execution |
 
 ### Main Endpoints
 
-| Method | Path | Authorization | Description |
-|---|---|---|---|
-| `GET` | `/` | Public | Basic health check |
-| `POST` | `/auth/register` | Public | Register a user |
-| `POST` | `/auth/login` | Public | Login and set auth cookies |
-| `POST` | `/auth/refresh` | Refresh cookie | Refresh the access token |
-| `POST` | `/auth/logout` | Access cookie | Logout |
-| `GET` | `/auth/me` | JWT | User data from the token |
-| `GET` | `/users` | JWT | User list |
-| `GET` | `/users/me` | JWT | Current user data |
-| `GET` | `/users/:id` | JWT | User by id |
-| `PATCH` | `/users/:id` | Admin | Update user |
-| `DELETE` | `/users/:id` | Admin | Delete user |
-| `PATCH` | `/users/:id/role` | Admin | Change user role |
-| `GET` | `/admin-agent/sessions` | JWT | Chat session list |
-| `POST` | `/admin-agent/sessions` | JWT | Create a new session |
-| `GET` | `/admin-agent/sessions/:id/messages` | JWT | Session messages |
-| `DELETE` | `/admin-agent/sessions/:id` | JWT | Delete a session |
-| `POST` | `/admin-agent/query-stream` | JWT | Streamed conversation with the agent |
+| Method   | Path                                 | Authorization  | Description                          |
+| -------- | ------------------------------------ | -------------- | ------------------------------------ |
+| `GET`    | `/`                                  | Public         | Basic health check                   |
+| `POST`   | `/auth/register`                     | Public         | Register a user                      |
+| `POST`   | `/auth/login`                        | Public         | Login and set auth cookies           |
+| `POST`   | `/auth/refresh`                      | Refresh cookie | Refresh the access token             |
+| `POST`   | `/auth/logout`                       | Access cookie  | Logout                               |
+| `GET`    | `/auth/me`                           | JWT            | User data from the token             |
+| `GET`    | `/users`                             | JWT            | User list                            |
+| `GET`    | `/users/me`                          | JWT            | Current user data                    |
+| `GET`    | `/users/:id`                         | JWT            | User by id                           |
+| `PATCH`  | `/users/:id`                         | Admin          | Update user                          |
+| `DELETE` | `/users/:id`                         | Admin          | Delete user                          |
+| `PATCH`  | `/users/:id/role`                    | Admin          | Change user role                     |
+| `GET`    | `/admin-agent/sessions`              | JWT            | Chat session list                    |
+| `POST`   | `/admin-agent/sessions`              | JWT            | Create a new session                 |
+| `GET`    | `/admin-agent/sessions/:id/messages` | JWT            | Session messages                     |
+| `DELETE` | `/admin-agent/sessions/:id`          | JWT            | Delete a session                     |
+| `POST`   | `/admin-agent/query-stream`          | JWT            | Streamed conversation with the agent |
 
 ### Auth and Permissions
 
@@ -111,8 +111,8 @@ The actual implementation is cookie-based. After login, the server sets `access_
 User roles are numeric enum values:
 
 ```ts
-Admin = 1
-User = 2
+Admin = 1;
+User = 2;
 ```
 
 Most business responses are wrapped in `ServiceResultContainer<T>` with `success`, `message`, and `result`. Error responses may also include fields such as `error` and `statusCode`.
@@ -136,14 +136,14 @@ User prompt
 
 ### Agent Components
 
-| Component | Responsibility |
-|---|---|
-| `AdminAgentService` | Orchestrator: conversation, iterations, tools, streaming, persistence |
-| `LlmService` | Model calls, retries, streaming |
-| `SwaggerToolsParser` | Reads `swagger-spec.json` and converts endpoints into LLM tools |
-| `AgentToolExecutorService` | Runs a tool call as an internal HTTP request to the API |
-| `AgentSessionService` | Stores sessions/messages and enforces ownership by `userId` |
-| `ChatSession` / `ChatMessage` | Chat history tables |
+| Component                     | Responsibility                                                        |
+| ----------------------------- | --------------------------------------------------------------------- |
+| `AdminAgentService`           | Orchestrator: conversation, iterations, tools, streaming, persistence |
+| `LlmService`                  | Model calls, retries, streaming                                       |
+| `SwaggerToolsParser`          | Reads `swagger-spec.json` and converts endpoints into LLM tools       |
+| `AgentToolExecutorService`    | Runs a tool call as an internal HTTP request to the API               |
+| `AgentSessionService`         | Stores sessions/messages and enforces ownership by `userId`           |
+| `ChatSession` / `ChatMessage` | Chat history tables                                                   |
 
 ### Swagger as Tools
 
@@ -168,10 +168,10 @@ Every new endpoint that should be available to the agent must be fully documente
 
 The `POST /admin-agent/query-stream` endpoint returns newline-delimited JSON. The UI displays two event types:
 
-| Type | Meaning |
-|---|---|
-| `step` | An action the agent is performing, including an icon and display message |
-| `token` | Streamed response text from the model |
+| Type    | Meaning                                                                  |
+| ------- | ------------------------------------------------------------------------ |
+| `step`  | An action the agent is performing, including an icon and display message |
+| `token` | Streamed response text from the model                                    |
 
 This lets the user see both the final answer and the actions executed along the way.
 

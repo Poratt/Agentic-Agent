@@ -244,3 +244,31 @@ documents/
 - Files touched this session: `frontend/src/app/features/layout/main-sidebar/main-sidebar.html`, `frontend/src/app/features/dashboard/dashboard.html`, `frontend/src/app/features/users/users-management.html`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: remove temporary Angular migration compatibility helpers instead of keeping the old null-safe-navigation behavior.
 - Open questions for the user: none.
+- Moved `documents/angular-22-update-guide.md` to `documents/done/angular-22-update-guide.md`.
+- Current open work after closing the guide: PrimeNG peer dependency mismatch, existing frontend warnings, and active plans in `documents/features/todo/`.
+- Next exact step: decide the PrimeNG strategy for Angular 22, or pick the next active plan from `documents/features/todo/`.
+- Files touched this session: `documents/done/angular-22-update-guide.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: treat the Angular 22 guide as completed because upgrade, migration review, build, and test verification are done.
+- Open questions for the user: whether to accept the PrimeNG peer mismatch temporarily or wait for/update to a compatible PrimeNG release.
+- Completed Phase 2 and Phase 3 of `documents/features/todo/ai-format-directive-improvement-plan.md`.
+- `frontend/src/app/core/directives/ai-format.directive.ts` now sanitizes GenUI component HTML before `innerHTML`, removes `script`, `iframe`, `object`, and `embed`, cleans unsafe CSS blocks/selectors, removes CSS custom property declarations, and preserves scoped/local CSS plus `@keyframes`.
+- Added `frontend/src/app/core/directives/ai-format.directive.spec.ts` coverage for `:root` token override removal, `.weather-card` preservation, unscoped selector removal, scoped selector preservation, mixed selector lists, `@keyframes`, and dangerous tag removal.
+- Verification: `npx ng test --watch=false` passed 19 tests; `npx ng build` passed with existing warnings only.
+- Next exact step: continue AiFormat Phase 4 by extracting the remaining skeleton rendering flow into a dedicated helper, or Phase 5 Hebrew role parsing cleanup if preferred.
+- Files touched this session: `frontend/src/app/core/directives/ai-format.directive.ts`, `frontend/src/app/core/directives/ai-format.directive.spec.ts`, `documents/features/todo/ai-format-directive-improvement-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep the sanitizer private inside the directive for now; preserve local class selectors and only remove unscoped global selectors; for mixed selector lists, drop only the unsafe selectors and keep the scoped selectors.
+- Open questions for the user: none.
+- Completed the remaining AiFormat directive plan phases and moved `documents/features/todo/ai-format-directive-improvement-plan.md` to `documents/done/ai-format-directive-improvement-plan.md`.
+- `frontend/src/app/core/directives/ai-format.directive.ts` now uses `renderSkeletonOnce()` for skeleton DOM writing, centralizes Hebrew role labels in constants, removes the old inline GenUI parse comments, and keeps English role support.
+- `frontend/src/app/core/directives/ai-format.directive.spec.ts` now covers component-stream detection, CSS/csharp code fences not triggering skeleton, CSS code fences rendering as markdown code, Hebrew/English role badges, sanitizer behavior, and dangerous tag removal.
+- Verification: `npx ng test --watch=false` passed 22 tests; `npx ng build` passed with existing warnings only; corrupted-character scan on the AiFormat directive/spec returned clean.
+- Next exact step: choose the next active todo from `documents/features/todo/` or clean the existing frontend warnings (`AccessToDirective`, `chat-message.css`, `explorer.css`).
+- Files touched this session: `frontend/src/app/core/directives/ai-format.directive.ts`, `frontend/src/app/core/directives/ai-format.directive.spec.ts`, `documents/done/ai-format-directive-improvement-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: close Phase 6 with focused automated coverage because Browser tooling was not available in this session; no backend build was required because no backend or GenUI prompt source changed.
+- Open questions for the user: none.
+- Added new active plan `documents/features/todo/chat-stop-stream-button-plan.md`.
+- The plan covers changing the chat submit button into a stop button while `loading()` is true, storing the active stream subscription, cancelling it through the existing `ChatService.sendMessageStream(...)` Observable teardown / `AbortController`, keeping partial assistant content visible, and cleaning up on route changes or destroy.
+- Next exact step: implement Phase 1 in `frontend/src/app/features/chat/chat/chat.ts` by storing the active stream subscription and adding `stopStreaming()`.
+- Files touched this session: `documents/features/todo/chat-stop-stream-button-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: no backend API change is planned because `ChatService.sendMessageStream(...)` already aborts fetch on unsubscribe.
+- Open questions for the user: whether a cancelled assistant message should show a visible "cancelled" marker when no token has arrived yet.

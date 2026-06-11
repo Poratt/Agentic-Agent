@@ -7,6 +7,10 @@ type ComponentRenderParts = {
   after: string;
 };
 
+const HEBREW_ROLE_LABEL = 'תפקיד';
+const HEBREW_ADMIN_LABEL = 'מנהל';
+const HEBREW_USER_LABEL = 'משתמש';
+
 @Directive({
   selector: '[aiFormat]',
   standalone: true,
@@ -96,6 +100,10 @@ export class AiFormat implements OnChanges {
 
     this.el.nativeElement.innerHTML = '';
     this.appendMarkdown(textBeforeComponent);
+    this.renderSkeletonOnce();
+  }
+
+  private renderSkeletonOnce(): void {
     this.ensureSkeletonStyle();
     this.appendHtml(this.skeletonHtml());
     this.skeletonVisible = true;
@@ -111,7 +119,142 @@ export class AiFormat implements OnChanges {
   private appendComponentHtml(html: string): void {
     const div = this.renderer.createElement('div');
     this.el.nativeElement.appendChild(div);
-    div.innerHTML = html;
+    div.innerHTML = this.sanitizeComponentHtml(html);
+  }
+
+  private sanitizeComponentHtml(html: string): string {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    doc.querySelectorAll('script, iframe, object, embed').forEach((node) => {
+      node.remove();
+    });
+
+    doc.querySelectorAll('style').forEach((style) => {
+      const sanitizedCss = this.sanitizeComponentCss(style.textContent ?? '');
+      if (!sanitizedCss.trim()) {
+        style.remove();
+        return;
+      }
+
+      style.textContent = sanitizedCss;
+    });
+
+    const headStyles = Array.from(doc.head.querySelectorAll('style'))
+      .map((style) => {
+        return style.outerHTML;
+      })
+      .join('');
+
+    return `${headStyles}${doc.body.innerHTML}`;
+  }
+
+  private sanitizeComponentCss(css: string): string {
+    return this.splitCssRules(css)
+      .map((rule) => {
+        return this.sanitizeCssRule(rule.selector, rule.body);
+      })
+      .filter((rule) => {
+        return rule.trim();
+      })
+      .join('\n');
+  }
+
+  private splitCssRules(css: string): { selector: string; body: string }[] {
+    const rules: { selector: string; body: string }[] = [];
+    let cursor = 0;
+
+    while (cursor < css.length) {
+      const openIndex = css.indexOf('{', cursor);
+      if (openIndex === -1) break;
+
+      const selector = css.slice(cursor, openIndex).trim();
+      let depth = 1;
+      let closeIndex = openIndex + 1;
+
+      while (closeIndex < css.length && depth > 0) {
+        const char = css[closeIndex];
+        if (char === '{') depth++;
+        if (char === '}') depth--;
+        closeIndex++;
+      }
+
+      if (depth !== 0) break;
+
+      rules.push({
+        selector,
+        body: css.slice(openIndex + 1, closeIndex - 1),
+      });
+      cursor = closeIndex;
+    }
+
+    return rules;
+  }
+
+  private sanitizeCssRule(selector: string, body: string): string {
+    const normalizedSelector = selector.trim();
+    if (!normalizedSelector) return '';
+
+    if (/^@keyframes\b/i.test(normalizedSelector)) {
+      return `${normalizedSelector} {${body}}`;
+    }
+
+    if (normalizedSelector.startsWith('@')) {
+      const sanitizedNestedCss = this.sanitizeComponentCss(body);
+      return sanitizedNestedCss ? `${normalizedSelector} {\n${sanitizedNestedCss}\n}` : '';
+    }
+
+    const sanitizedSelector = this.sanitizeSelectorList(normalizedSelector);
+    if (!sanitizedSelector) return '';
+
+    const sanitizedBody = this.removeCssCustomPropertyDeclarations(body);
+    return sanitizedBody ? `${sanitizedSelector} { ${sanitizedBody} }` : '';
+  }
+
+  private removeCssCustomPropertyDeclarations(body: string): string {
+    return body
+      .split(';')
+      .map((declaration) => {
+        return declaration.trim();
+      })
+      .filter((declaration) => {
+        return declaration && !/^--[\w-]+\s*:/.test(declaration);
+      })
+      .join('; ');
+  }
+
+  private sanitizeSelectorList(selectorList: string): string {
+    return selectorList
+      .split(',')
+      .map((selector) => {
+        return selector.trim();
+      })
+      .filter((selector) => {
+        return selector && !this.isUnsafeSelector(selector);
+      })
+      .join(', ');
+  }
+
+  private isUnsafeSelector(selector: string): boolean {
+    const normalizedSelector = selector.trim().toLowerCase();
+    if (!normalizedSelector) return false;
+    if (/^(:root|html|body)(?=$|[\s.#:[>+~])/.test(normalizedSelector)) return true;
+    if (!this.containsUnsafeGlobalTarget(normalizedSelector)) return false;
+
+    return !this.startsWithLocalScope(normalizedSelector);
+  }
+
+  private containsUnsafeGlobalTarget(selector: string): boolean {
+    return selector
+      .split(/[\s>+~]+/)
+      .some((compound) => {
+        return /^(table|th|td|h1|h2|button)(?=$|[.#:[*])/.test(compound) || /^\.btn(?=$|[.#:[*])/.test(compound);
+      });
+  }
+
+  private startsWithLocalScope(selector: string): boolean {
+    const firstCompound = selector.split(/[\s>+~]+/)[0] ?? '';
+    return /^\.(?!btn(?=$|[.#:[*]))[\w-]+/.test(firstCompound);
   }
 
   private appendMarkdown(markdown: string): void {
@@ -189,11 +332,11 @@ export class AiFormat implements OnChanges {
   }
   private roleBadge(text: string): string {
     const t = text.trim();
-    if (t === 'מנהל' || t.toLowerCase() === 'admin') {
-      return '<span class="badge badge-admin"><span class="ph sm">shield</span>מנהל</span>';
+    if (t === HEBREW_ADMIN_LABEL || t.toLowerCase() === 'admin') {
+      return `<span class="badge badge-admin"><span class="ph sm">shield</span>${HEBREW_ADMIN_LABEL}</span>`;
     }
-    if (t === 'משתמש' || t.toLowerCase() === 'user') {
-      return '<span class="badge badge-info"><span class="ph sm">person</span>משתמש</span>';
+    if (t === HEBREW_USER_LABEL || t.toLowerCase() === 'user') {
+      return `<span class="badge badge-info"><span class="ph sm">person</span>${HEBREW_USER_LABEL}</span>`;
     }
     return `<span>${t}</span>`;
   }
@@ -226,10 +369,9 @@ export class AiFormat implements OnChanges {
   }
 
   private parse(text: string): string {
-    // GenUI: component block - לפני כל דבר אחר
     const componentMatch = text.match(/```component\s*([\s\S]*?)```/);
     if (componentMatch) {
-      return componentMatch[1].trim(); // HTML גולמי - מגיע ישר ל-sanitizer
+      return componentMatch[1].trim();
     }
     const TABLE_PLACEHOLDER = 'TABLE_PLACEHOLDER_';
     const tables: string[] = [];
@@ -264,20 +406,20 @@ export class AiFormat implements OnChanges {
 
     processed = processed
       .replace(
-        /(תפקיד|Role):\s*(מנהל|Admin)/g,
-        '$1: <span class="badge badge-admin"><span class="ph sm">shield</span>מנהל</span>'
+        new RegExp(`(${HEBREW_ROLE_LABEL}|Role):\\s*(${HEBREW_ADMIN_LABEL}|Admin)`, 'g'),
+        `$1: <span class="badge badge-admin"><span class="ph sm">shield</span>${HEBREW_ADMIN_LABEL}</span>`
       )
       .replace(
-        /(תפקיד|Role):\s*(משתמש|User)/g,
-        '$1: <span class="badge badge-info"><span class="ph sm">person</span>משתמש</span>'
+        new RegExp(`(${HEBREW_ROLE_LABEL}|Role):\\s*(${HEBREW_USER_LABEL}|User)`, 'g'),
+        `$1: <span class="badge badge-info"><span class="ph sm">person</span>${HEBREW_USER_LABEL}</span>`
       )
       .replace(
-        /\b(Admin|מנהל)\s*\(ID:\s*(\d+)\)/gi,
-        '<span class="badge badge-admin"><span class="ph sm">shield</span>מנהל</span> (ID: $2)'
+        new RegExp(`\\b(Admin|${HEBREW_ADMIN_LABEL})\\s*\\(ID:\\s*(\\d+)\\)`, 'gi'),
+        `<span class="badge badge-admin"><span class="ph sm">shield</span>${HEBREW_ADMIN_LABEL}</span> (ID: $2)`
       )
       .replace(
-        /\b(User|משתמש)\s*\(ID:\s*(\d+)\)/gi,
-        '<span class="badge badge-info"><span class="ph sm">person</span>משתמש</span> (ID: $2)'
+        new RegExp(`\\b(User|${HEBREW_USER_LABEL})\\s*\\(ID:\\s*(\\d+)\\)`, 'gi'),
+        `<span class="badge badge-info"><span class="ph sm">person</span>${HEBREW_USER_LABEL}</span> (ID: $2)`
       );
 
     return processed.replace(new RegExp(`${TABLE_PLACEHOLDER}(\\d+)_`, 'g'), (_, i) => {
@@ -322,7 +464,7 @@ export class AiFormat implements OnChanges {
 
     const roleColIndex = headerCells.findIndex((h) => {
       const cleanH = h.replace(/\*/g, '').trim();
-      return cleanH === 'תפקיד' || cleanH.toLowerCase() === 'role';
+      return cleanH === HEBREW_ROLE_LABEL || cleanH.toLowerCase() === 'role';
     });
 
     const thead = `<thead><tr>${headerCells

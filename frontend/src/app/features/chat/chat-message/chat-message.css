@@ -25,12 +25,13 @@
 	}
 
 	&.assistant-message {
-		align-self: flex-end;
-		width: 100%;
+		align-self: center;
+		width: 90%;
 		min-width: 0;
 		/* background: var(--color-surface); */
 		/* border: 1px solid var(--color-primary-glow); */
 		text-align: right;
+
 	}
 
 	&.typing-active {

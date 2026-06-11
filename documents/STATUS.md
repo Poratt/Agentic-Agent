@@ -22,8 +22,8 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Rolled back: GenUI builder split and dedicated weather template experiment.
 - Current GenUI source of truth: `backend/src/modules/admin-agent/constants/gen-ui-spec.constant.ts`.
 - Verified: backend build passes after the rollback state.
-- Active todo: `documents/features/todo/ai-format-directive-improvement-plan.md`.
-- Candidate cleanup: `frontend/src/app/core/directives/ai-format.directive.ts` should protect the app from unsafe generated CSS before larger GenUI prompt changes.
+- Completed: `documents/done/ai-format-directive-improvement-plan.md`.
+- Candidate GenUI cleanup after AiFormat: larger backend prompt refinements can now assume frontend CSS/token protection exists.
 - Completed: added protected `ExplorerModule`/`ExplorerController` for `ExplorerService`.
 - Verified: backend build passes after the Explorer module addition.
 - Completed: added Angular `Explorer` page with direct in-component API call and table rendering.
@@ -113,3 +113,10 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Documented: `documents/angular-22-update-guide.md` checklist items were marked as completed for the Angular 22 work that was performed or reviewed.
 - Completed: removed Angular's temporary `$safeNavigationMigration(...)` helpers from frontend templates after the Angular 22 migration review.
 - Verified: no `$safeNavigationMigration` usages remain under `frontend/src`; `npx ng test --watch=false` and `npx ng build` pass.
+- Completed: moved the Angular 22 upgrade guide to `documents/done/angular-22-update-guide.md`.
+- Remaining open work: decide how to handle PrimeNG's Angular 21 peer dependency range, clean existing frontend warnings, and continue the active feature plans under `documents/features/todo/`.
+- Completed: AiFormat Phase 2/3 now sanitize GenUI component HTML before raw rendering, removing dangerous tags, unsafe token overrides, and unscoped global selectors while preserving local scoped CSS and `@keyframes`.
+- Verified: `npx ng test --watch=false` passes 19 tests, and `npx ng build` passes after the AiFormat sanitizer update.
+- Completed: AiFormat Phase 4/5/6 finished. Skeleton rendering now goes through `renderSkeletonOnce()`, Hebrew/English role parsing is covered by tests, CSS code fences render as markdown code, and the plan moved to `documents/done/ai-format-directive-improvement-plan.md`.
+- Verified: `npx ng test --watch=false` passes 22 tests, `npx ng build` passes, and the AiFormat corrupted-character scan returned clean.
+- Active todo: `documents/features/todo/chat-stop-stream-button-plan.md` documents replacing the disabled chat submit button during streaming with a clickable stop/cancel button.
