@@ -178,11 +178,8 @@
         transition: background-color var(--transition-fast), border-color var(--transition-fast);
 
         &:hover {
-          background-color: var(--color-success-glow);
           border-color: var(--color-success);
         }
-
-
       }
     }
 
@@ -288,8 +285,6 @@
       flex-direction: column;
       align-items: center;
       gap: var(--space-1);
-
-
     }
 
     .package-type-cell {
@@ -308,22 +303,6 @@
       }
     }
   }
-}
-
-
-::ng-deep .p-datatable-sort-icon {
-  margin: 0 var(--space-2) 0 0 !important;
-  width: 10px !important;
-  height: 10px !important;
-}
-
-
-::ng-deep .p-datatable-thead>tr>th.p-datatable-column-sorted:not(:hover),
-::ng-deep .p-datatable-thead>tr>th.p-datatable-column-sorted .p-datatable-sort-icon {
-  color: var(--color-primary);
-  background-color: transparent;
-
-
 }
 
 @media (max-width: var(--sm)) {

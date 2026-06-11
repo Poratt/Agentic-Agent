@@ -1,5 +1,13 @@
 # Documentation Change Log
 
+## 2026-06-11 Explorer CSS Budget Fix
+
+- Removed duplicate PrimeNG sort-icon overrides from `frontend/src/app/features/explorer/explorer.css`; the equivalent global rules already live in `frontend/src/app/assets/styles/_utilities.css`.
+- Removed a redundant `NEW` badge hover background declaration in Explorer CSS.
+- Verified `npx ng build` from `frontend` now passes again. Remaining output is warnings only: unused `AccessToDirective`, `chat-message.css` warning budget, and `explorer.css` warning budget at 7.97 kB.
+- Fixed Explorer price sorting by enabling PrimeNG `customSort` and comparing `price`/`catalogPrice` through numeric values extracted from their display strings.
+- Verified `npx ng build` from `frontend` after the Explorer numeric sort fix.
+
 ## 2026-06-10 Explorer Terpene Flags Update
 
 - Preserved Explorer terpene percentage labels by separating the visible terpene label from the filter value and by broadening backend Jane terpene percentage-field normalization.

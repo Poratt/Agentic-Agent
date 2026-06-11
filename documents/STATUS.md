@@ -1,6 +1,6 @@
 # Project Documentation Status
 
-Last updated: 2026-06-10
+Last updated: 2026-06-11
 
 ## Document Areas
 
@@ -102,4 +102,6 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: AiFormat now preserves markdown text that appears before or after a streamed `component` block instead of replacing the whole assistant message with the GenUI template.
 - Completed: Chat template detection no longer treats generic ` ```c ` code fences as GenUI rendering.
 - Verified: `npx tsc -p tsconfig.app.json --noEmit` passes for the frontend after the AiFormat/chat-message fix.
-- Blocked verification: `npx ng build` is currently blocked by the unrelated `frontend/src/app/features/explorer/explorer.css` 8KB budget overage.
+- Completed: Explorer CSS budget blocker was fixed by removing duplicate PrimeNG sort-icon overrides from `frontend/src/app/features/explorer/explorer.css`; `npx ng build` now passes.
+- Completed: Explorer price sorting now uses numeric custom table sorting, so price strings like `₪99`, `₪425`, and `₪499` sort by number instead of text.
+- Verified: `npx ng build` passes after the Explorer numeric price sort fix.

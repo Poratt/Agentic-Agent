@@ -193,3 +193,20 @@ documents/
 - Files touched this session: `frontend/src/app/core/directives/ai-format.directive.ts`, `frontend/src/app/features/chat/chat-message/chat-message.ts`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: keep the public `[aiFormat]` API unchanged and fix the mixed-response rendering inside the directive.
 - Open questions for the user: none.
+- Fixed the Explorer CSS budget blocker before Angular 22 upgrade validation.
+- `frontend/src/app/features/explorer/explorer.css` no longer contains duplicate `::ng-deep` PrimeNG sort-icon overrides because the shared rules already exist in `frontend/src/app/assets/styles/_utilities.css`.
+- Also removed a redundant `background-color` declaration from the Explorer `NEW` badge hover state.
+- Verification: `npx ng build` from `frontend` passed. Remaining warnings: unused `AccessToDirective` in `ChatHistory`, `chat-message.css` warning budget, and `explorer.css` warning budget at 7.97 kB.
+- Next exact step: continue the Angular 22 upgrade plan from `documents/features/todo/angular-22-update.md` with the frontend build blocker cleared.
+- Files touched this session: `frontend/src/app/features/explorer/explorer.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep PrimeNG table sort styling global in `_utilities.css` instead of duplicating it inside Explorer component CSS.
+- Open questions for the user: none.
+- Fixed Explorer price sorting.
+- Root cause: Explorer prices are display strings with currency text, so PrimeNG's default sort treated them as formatted text instead of numeric values.
+- `frontend/src/app/features/explorer/explorer.html` now enables `[customSort]="true"` and wires `(sortFunction)="sortTable($event)"`.
+- `frontend/src/app/features/explorer/explorer.ts` now extracts numeric values for `price` and `catalogPrice`, while other columns keep text sorting through an `Intl.Collator`.
+- Verification: `npx ng build` from `frontend` passed. Remaining warnings are unchanged budget/unused-import warnings.
+- Next exact step: visually check `/explorer`, click the price header in both directions, and confirm ordering is numeric.
+- Files touched this session: `frontend/src/app/features/explorer/explorer.ts`, `frontend/src/app/features/explorer/explorer.html`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep displayed price strings unchanged and solve sorting in the table comparator only.
+- Open questions for the user: none.

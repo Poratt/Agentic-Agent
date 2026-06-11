@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import type { SortEvent } from 'primeng/api';
 import { InputTextModule } from 'primeng/inputtext';
 import { Table, TableModule } from 'primeng/table';
 import { Subscription, timeout } from 'rxjs';
@@ -48,6 +49,8 @@ export class Explorer implements OnInit {
   private base = `${environment.apiUrl}/explorer`;
   private table = viewChild<Table>('table');
   private requestSubscription: Subscription | null = null;
+  private readonly numericSortColumns = new Set(['price', 'catalogPrice']);
+  private readonly textCollator = new Intl.Collator('he', { numeric: true, sensitivity: 'base' });
 
   protected readonly PageStates = PageStates;
   protected readonly columnLabels: Record<string, string> = {
@@ -184,6 +187,17 @@ export class Explorer implements OnInit {
     this.table()?.filterGlobal((event.target as HTMLInputElement).value, 'contains');
   }
 
+  sortTable(event: SortEvent): void {
+    if (!event.data || !event.field) return;
+
+    const field = event.field;
+    const order = event.order ?? 1;
+
+    event.data.sort((first, second) => {
+      return this.compareSortValues(first?.[field], second?.[field], field) * order;
+    });
+  }
+
   columnLabel(column: string): string {
     return this.columnLabels[column] ?? column;
   }
@@ -246,6 +260,39 @@ export class Explorer implements OnInit {
       .trim();
 
     return { label, name: name || label };
+  }
+
+  private compareSortValues(first: unknown, second: unknown, field: string): number {
+    const firstValue = this.sortValue(first, field);
+    const secondValue = this.sortValue(second, field);
+
+    if (firstValue === null && secondValue === null) return 0;
+    if (firstValue === null) return 1;
+    if (secondValue === null) return -1;
+
+    if (typeof firstValue === 'number' && typeof secondValue === 'number') {
+      return firstValue - secondValue;
+    }
+
+    return this.textCollator.compare(String(firstValue), String(secondValue));
+  }
+
+  private sortValue(value: unknown, field: string): number | string | null {
+    const formattedValue = this.formatValue(value);
+    if (!formattedValue) return null;
+
+    if (this.numericSortColumns.has(field)) {
+      return this.toNumber(formattedValue);
+    }
+
+    return formattedValue;
+  }
+
+  private toNumber(value: string): number | null {
+    const normalized = value.replace(/[^\d.,-]/g, '').replace(',', '.');
+    const numberValue = Number(normalized);
+
+    return Number.isFinite(numberValue) ? numberValue : null;
   }
 
   private getErrorMessage(error: unknown): string {
