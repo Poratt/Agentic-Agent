@@ -279,6 +279,12 @@ documents/
 - Files touched this session: `documents/done/backend-llm-documentation-audit.md`, `documents/audit/phosphor-icons.web.instruction.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: keep `documents/audit/` reserved for active audit findings; completed/closed audits go under `documents/done/`.
 - Open questions for the user: none.
+- Expanded `documents/features/todo/provider-and-llm-db-plan.md` from a short schema sketch into a full implementation plan for DB-backed LLM providers and models plus Angular Settings management UI.
+- The plan preserves compatibility for existing chat endpoints (`GET /llm/model-options`, `GET /llm/status`, and per-request provider/model overrides), while adding admin-only management endpoints under `/llm/admin/...`.
+- Next exact step: begin Phase 1 of `documents/features/todo/provider-and-llm-db-plan.md` by adding `LlmProvider` and `LlmModel` TypeORM entities and registering them in `backend/src/modules/llm/llm.module.ts`.
+- Files touched this session: `documents/features/todo/provider-and-llm-db-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: DB should become the future source of truth for cloud providers and manually managed models; env config should remain as bootstrap/fallback, not the admin-managed source of truth.
+- Open questions for the user: whether API keys must be encrypted at rest in the first implementation phase, whether provider/model deletion should be soft-disable only, and whether Ollama discovered models should be persisted or remain dynamic.
 - Completed `documents/features/todo/chat-stop-stream-button-plan.md` and moved it to `documents/done/chat-stop-stream-button-plan.md`.
 - Completed `documents/features/todo/chat-message-actions-plan.md` and moved it to `documents/done/chat-message-actions-plan.md`.
 - Chat streaming now stores the active stream subscription, and the send button becomes a stop button while `loading()` is true. Stopping unsubscribes from the stream, aborts the fetch, exits loading state, and keeps partial assistant content visible.

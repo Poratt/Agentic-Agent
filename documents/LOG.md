@@ -152,5 +152,11 @@
 - No architecture diagram update was needed because the Explorer module boundary and external Jane dependency stayed the same.
 - Added `isNew` to the Explorer field-aware UI filters and made the `NEW` badge clickable.
 - Added a display label to Explorer active filters so boolean-backed filters can show user-facing labels independent of their filter value.
+
+## 2026-06-11
+
+- Added the full DB-backed provider/model management plan in `documents/features/todo/provider-and-llm-db-plan.md`.
+- Planning decision: keep existing chat-facing LLM endpoints response-compatible while moving admin-managed provider/model definitions to DB.
+- Planning decision: treat environment variables as bootstrap/fallback configuration after DB provider management is introduced.
 - Added individual terpene filter buttons and country flag rendering to the Explorer table UI.
 - Fixed the Explorer network-capture path so `isNew` no longer depends only on a missing Jane `is_new` JSON field; it now also maps visible `חדש!` DOM markers back to captured JSON products by Hebrew/English name.
