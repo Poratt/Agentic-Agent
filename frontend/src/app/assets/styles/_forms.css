@@ -32,28 +32,26 @@ select {
   font-size: var(--font-size-sm);
   transition: var(--transition-colors);
   outline: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 
   &::placeholder {
-    color: var(--color-text-secondary);
+    color: var(--color-text-muted);
   }
 
 
   &:focus {
     background: var(--color-input-bg);
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 var(--space-1) var(--color-primary-glow);
+    box-shadow: 0 0 0 3px var(--color-primary-glow), 0 0 0 1px var(--color-primary);
   }
 
-  &:hover:not(:focus),
-  l &:hover:not(:disabled) {
-    background: var(--color-input-bg);
+  &:hover:not(:focus):not(:disabled) {
     border-color: var(--primary-300);
   }
 
   &:disabled {
-    background: var(--color-input-bg);
-    border-color: var(--color-border);
-    color: var(--color-text-secondary);
+    opacity: 0.5;
     cursor: not-allowed;
   }
 

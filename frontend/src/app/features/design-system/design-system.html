@@ -24,10 +24,10 @@
 
       <section class="showcase-section">
         <div class="section-heading">
-          <span class="ph ph-palette"></span>
+          <span class="ph ph-palette icon-tile"></span>
           <div>
             <h2>Color Palette Explorer</h2>
-            <p>Click any token card to copy its CSS variable reference.</p>
+            <p>Every color token from the live variables file. Click any card to copy its CSS variable reference.</p>
           </div>
         </div>
 
@@ -41,7 +41,37 @@
                     <span class="color-swatch" [ngClass]="token.className"></span>
                     <span class="token-copy">
                       <strong>{{ token.name }}</strong>
-                      <small>{{ token.value }}</small>
+                      <small [attr.title]="token.value">{{ token.value }}</small>
+                    </span>
+                    <span class="copy-state">{{ copiedToken() === token.name ? 'Copied' : 'Copy' }}</span>
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="showcase-section">
+        <div class="section-heading">
+          <span class="ph ph-warning-circle icon-tile"></span>
+          <div>
+            <h2>Semantic Colors</h2>
+            <p>All status tokens for success, danger, warning, and information states.</p>
+          </div>
+        </div>
+
+        <div class="color-grid">
+          @for (group of semanticColorGroups(); track group.name) {
+            <article class="token-panel glass-effect">
+              <h3>{{ group.name }}</h3>
+              <div class="token-list">
+                @for (token of group.tokens; track token.name) {
+                  <button class="color-token" type="button" (click)="copyToken(token.name)" [attr.aria-label]="'Copy ' + token.name">
+                    <span class="color-swatch" [ngClass]="token.className"></span>
+                    <span class="token-copy">
+                      <strong>{{ token.name }}</strong>
+                      <small [attr.title]="token.value">{{ token.value }}</small>
                     </span>
                     <span class="copy-state">{{ copiedToken() === token.name ? 'Copied' : 'Copy' }}</span>
                   </button>
@@ -55,7 +85,7 @@
       <section class="showcase-section two-column">
         <article class="token-panel glass-effect">
           <div class="section-heading compact">
-            <span class="ph ph-text-aa"></span>
+            <span class="ph ph-text-aa icon-tile"></span>
             <div>
               <h2>Typography Scale</h2>
               <p>Font family, size, and weight tokens resolved from the current theme.</p>
@@ -79,7 +109,7 @@
 
         <article class="token-panel glass-effect">
           <div class="section-heading compact">
-            <span class="ph ph-ruler"></span>
+            <span class="ph ph-ruler icon-tile"></span>
             <div>
               <h2>Spacing & Layout Grid</h2>
               <p>Bounding boxes visualize the exact rhythm used for padding, margin, and gaps.</p>
@@ -103,7 +133,7 @@
       <section class="showcase-section two-column">
         <article class="token-panel glass-effect">
           <div class="section-heading compact">
-            <span class="ph ph-corners-out"></span>
+            <span class="ph ph-corners-out icon-tile"></span>
             <div>
               <h2>Radius & Effects</h2>
               <p>Reusable surface details for glass panels, controls, and overlays.</p>
@@ -128,7 +158,7 @@
 
         <article class="token-panel glass-effect">
           <div class="section-heading compact">
-            <span class="ph ph-layout"></span>
+            <span class="ph ph-layout icon-tile"></span>
             <div>
               <h2>Design Patterns Showcase</h2>
               <p>Preview the global classes developers already use across pages.</p>
@@ -162,7 +192,7 @@
 
       <section class="showcase-section">
         <div class="section-heading">
-          <span class="ph ph-cursor-click"></span>
+          <span class="ph ph-cursor-click icon-tile"></span>
           <div>
             <h2>Button System</h2>
             <p>Every global button class, size, state, and link treatment from the tokenized button stylesheet.</p>
@@ -289,7 +319,7 @@
 
       <section class="showcase-section">
         <div class="section-heading">
-          <span class="ph ph-sliders-horizontal"></span>
+          <span class="ph ph-sliders-horizontal icon-tile"></span>
           <div>
             <h2>Component Sandbox</h2>
             <p>Test real controls against the current theme, spacing density, and global form/button rules.</p>
@@ -320,7 +350,7 @@
           >
             <div class="sandbox-card card">
               <div class="metric-header">
-                <span class="ph ph-chart-line-up metric-icon"></span>
+                <span class="ph ph-chart-line-up icon-tile metric-icon"></span>
                 <h3>{{ sandboxTitle() }}</h3>
               </div>
               <div class="metric-value">98%</div>

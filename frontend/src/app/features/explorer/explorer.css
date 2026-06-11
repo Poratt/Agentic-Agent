@@ -154,7 +154,7 @@
         }
 
         .strain-rating {
-          color: var(--color-rating);
+          color: var(--color-warning);
         }
 
         .strain-deal {

@@ -149,3 +149,38 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: Hebrew handling rules now forbid local agents from generating/reversing Hebrew; they must copy exact approved strings and verify with `Select-String -SimpleMatch`.
 - Revised: Hebrew handling was simplified again; local agents may write Hebrew, with only lightweight mojibake safeguards retained.
 - Completed: static page guidance now requires copying the exact standard page shell structure instead of improvising HTML around generic classes.
+- Completed: Design System showcase color-token layout was tightened so color groups no longer stretch to the tallest panel and long token names no longer collide with the copy state.
+- Completed: documented breakpoint tokens were added to `_variables.css`, and Design System media queries now use `var(--sm)` instead of hardcoded `900px`.
+- Verified: `npx ng build` passes after the Design System update with existing unrelated warnings only.
+- Completed: added `frontend/src/app/assets/styles/_primeng-overrides.css` and connected it from `frontend/src/styles.css`.
+- Completed: moved PrimeNG datatable sort-icon overrides out of `_utilities.css` into the dedicated PrimeNG override stylesheet.
+- Verified: `npx ng build` passes after the PrimeNG override stylesheet addition with existing unrelated warnings only.
+- Completed: Users management now renders with PrimeNG `p-table` instead of the native global `.table`.
+- Completed: Users table search now uses PrimeNG global filtering, and columns render sortable headers with `p-sortIcon` like Explorer.
+- Verified: `npx ng build` passes after the Users PrimeNG table migration with existing unrelated warnings only.
+- Completed: fixed the Users search placeholder to `חפש משתמש...`.
+- Verified: `npx ng build` passes after the placeholder fix with existing unrelated warnings only.
+- Completed: `documents/features/todo/TASK.md` design-system token upgrade.
+- Completed: rewrote `frontend/src/app/assets/styles/_variables.css` with the audited WCAG-oriented theme token system.
+- Completed: updated `frontend/src/app/assets/styles/_reset.css` `body::before` to use `--color-primary-glow-bg` and `--color-secondary-glow-bg`.
+- Completed: moved the finished task to `documents/done/design-system-token-upgrade-task.md`.
+- Verified: no missing CSS custom property references were found in app CSS, old transparent surface values were removed, and `npm.cmd run build` passes from `frontend` with existing unrelated warnings only.
+- Completed: `documents/features/todo/DESIGN_UPGRADE_TASK.md` design-language glassmorphism upgrade.
+- Completed: updated global glass, card, metric-card, table-container, logo, badge, error-badge, form input, primary button, and ambient body glow styles.
+- Completed: added `--glass-*` theme tokens and stronger ambient glow token values to `_variables.css`.
+- Completed: moved the finished task to `documents/done/design-language-glassmorphism-upgrade-task.md`.
+- Verified: `npm.cmd run build` passes from `frontend` with existing unrelated warnings only.
+- Completed: theme switching now temporarily disables CSS transitions while `data-theme` changes.
+- Completed: `ThemeService.applyMode(...)` calls `blockTransitions()` and `_reset.css` defines `.no-transitions`.
+- Verified: `npm.cmd run build` passes from `frontend` with existing unrelated warnings only.
+- Completed: removed the duplicate dedicated rating color token and switched Explorer rating color to `--color-warning`.
+- Completed: Design System color palette now lists all current color-related tokens from `_variables.css`.
+- Completed: Design System semantic colors are separated into Success, Danger, Warning, and Info groups.
+- Completed: Design System page padding was added, color swatches were reduced, and long gradient token values now truncate instead of overflowing.
+- Verified: token coverage comparison is clean and `npm.cmd run build` passes from `frontend` with existing unrelated warnings only.
+- Completed: `documents/done/light-mode-character-upgrade-task.md`.
+- Completed: light mode now uses teal primary tokens, a cool blue-grey background, light glass tokens, adjusted borders, and updated light shadows.
+- Verified: `.primary-btn.filled` uses acceptable light text on the new teal primary, and `npm.cmd run build` passes from `frontend` with existing unrelated warnings only.
+- Completed: added global `.icon-tile` padded icon styling and applied it to Dashboard metric-card icons.
+- Completed: Design System section-heading icons now reuse `.icon-tile` instead of local duplicated icon CSS.
+- Verified: `npm.cmd run build` passes after the global icon-tile update with existing unrelated warnings only.

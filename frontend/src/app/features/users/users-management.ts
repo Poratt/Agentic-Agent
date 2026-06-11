@@ -1,61 +1,67 @@
-import { Component, inject, OnInit, computed, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, OnInit, computed, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { InputTextModule } from 'primeng/inputtext';
+import { Table, TableModule } from 'primeng/table';
 import { AuthStore } from '../../core/store/auth.store';
 import { UsersStore } from '../../core/store/users.store';
 import { UserRole } from '../../core/enums/user-role.enum';
 import { PageStates } from '../../core/enums/page-states.enum';
 import { getUserRoleData } from '../../core/enums/user-role.enum';
 import { BadgeColor } from '../../core/directives/badge-color.directive';
-import { FormsModule } from '@angular/forms';
+import { User } from '../../core/models/user.interface';
+
+type UserColumn = {
+    field: keyof User;
+    label: string;
+};
+
+type UserTableRow = User & {
+    roleLabel: string;
+    roleHeLabel: string;
+};
 
 @Component({
     selector: 'app-users-management',
     standalone: true,
-    imports: [CommonModule, BadgeColor, FormsModule],
+    imports: [CommonModule, InputTextModule, TableModule, BadgeColor],
     changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './users-management.html',
 })
 export class UsersManagement implements OnInit {
+    private table = viewChild<Table>('table');
+
     protected authStore = inject(AuthStore);
     protected usersStore = inject(UsersStore);
     protected readonly getUserRoleData = getUserRoleData;
     protected readonly PageStates = PageStates;
+    protected readonly columns: UserColumn[] = [
+        { field: 'id', label: 'ID' },
+        { field: 'fullName', label: 'שם מלא' },
+        { field: 'email', label: 'אימייל' },
+        { field: 'role', label: 'תפקיד' },
+        { field: 'createdAt', label: 'תאריך הרשמה' },
+    ];
+    protected readonly globalFilterFields = ['id', 'fullName', 'email', 'roleLabel', 'roleHeLabel', 'createdAt'];
 
     pageState = computed(() => this.usersStore.pageState());
-    searchQuery = signal('');
-    roleFilter = signal<UserRole | null>(null);
-    dateFilter = signal('');
-
-    filteredUsers = computed(() => {
-        const query = this.searchQuery().trim().toLowerCase();
-        const role = this.roleFilter();
-        const date = this.dateFilter();
-
-        return this.usersStore.users().filter((user) => {
+    tableUsers = computed<UserTableRow[]>(() =>
+        this.usersStore.users().map((user) => {
             const roleData = this.getUserRoleData(user.role);
-            const userDate = new Date(user.createdAt).toISOString().slice(0, 10);
 
-            const matchesQuery =
-                !query ||
-                user.fullName?.toLowerCase().includes(query) ||
-                user.email?.toLowerCase().includes(query) ||
-                roleData?.label.toLowerCase().includes(query) ||
-                roleData?.heLabel?.toLowerCase().includes(query);
-
-            const matchesRole = role === null || user.role === role;
-            const matchesDate = !date || userDate === date;
-
-            return matchesQuery && matchesRole && matchesDate;
-        });
-    });
+            return {
+                ...user,
+                roleLabel: roleData?.label ?? '',
+                roleHeLabel: roleData?.heLabel ?? '',
+            };
+        }),
+    );
 
     ngOnInit() {
         this.usersStore.loadUsers();
-        console.log(this.getUserRoleData(1)?.icon);
     }
 
-    onSearchChange(query: string) {
-        this.searchQuery.set(query);
+    applyGlobalFilter(event: Event) {
+        this.table()?.filterGlobal((event.target as HTMLInputElement).value, 'contains');
     }
 
     toggleRole(userId: number, currentRole: UserRole) {

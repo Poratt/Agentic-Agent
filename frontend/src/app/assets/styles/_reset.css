@@ -3,6 +3,11 @@
   box-sizing: border-box;
 }
 
+.no-transitions,
+.no-transitions * {
+  transition: none !important;
+}
+
 html {
   scroll-behavior: smooth;
   direction: rtl;
@@ -39,11 +44,10 @@ body {
     inset: 0;
     z-index: -1;
     background:
-      radial-gradient(circle at 20% 30%, var(--color-primary-glow) 0%, transparent 60%),
-      radial-gradient(circle at 80% 70%, var(--color-secondary-glow) 0%, transparent 60%);
-    opacity: 0.6;
+      radial-gradient(ellipse 60% 50% at 15% 20%, var(--color-primary-glow-bg) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 85% 75%, var(--color-secondary-glow-bg) 0%, transparent 70%);
+    opacity: 1;
     pointer-events: none;
-    will-change: transform;
   }
 }
 

@@ -29,8 +29,19 @@ export class ThemeService {
   }
 
   private applyMode(mode: ThemeMode): void {
+    this.blockTransitions();
     this.modeSignal.set(mode);
     document.documentElement.setAttribute('data-theme', mode);
+  }
+
+  private blockTransitions(): void {
+    const el = document.documentElement;
+    el.classList.add('no-transitions');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        el.classList.remove('no-transitions');
+      });
+    });
   }
 
   private persistMode(mode: ThemeMode): void {
@@ -49,4 +60,3 @@ export class ThemeService {
     return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? 'dark' : 'light';
   }
 }
-

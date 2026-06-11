@@ -65,7 +65,7 @@
     background: var(--color-input-bg);
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: var(--sm)) {
     .button-showcase-grid,
     .button-size-row {
       grid-template-columns: 1fr;

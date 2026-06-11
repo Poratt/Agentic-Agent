@@ -28,10 +28,10 @@
                     <div class="form-field-has-icon">
                         <span class="ph ph-magnifying-glass field-icon"></span>
                         <input
+                            pInputText
                             type="text"
-                            [ngModel]="searchQuery()"
-                            (ngModelChange)="onSearchChange($event)"
-                            placeholder="חפש שיחה..."
+                            (input)="applyGlobalFilter($event)"
+                            placeholder="חפש משתמש..."
                             class="form-control"
                         />
                     </div>
@@ -39,21 +39,28 @@
             </div>
 
             <div class="glass-effect card table-container">
-                <table class="table">
-                    <thead>
+                <p-table
+                    #table
+                    styleClass="users-table"
+                    [value]="tableUsers()"
+                    [globalFilterFields]="globalFilterFields"
+                    [scrollable]="true"
+                    scrollHeight="flex"
+                >
+                    <ng-template pTemplate="header">
                         <tr>
-                            <th>ID</th>
-                            <th>שם מלא</th>
-                            <th>אימייל</th>
-                            <th>תפקיד</th>
-                            <th>תאריך הרשמה</th>
+                            @for (column of columns; track column.field) {
+                                <th [pSortableColumn]="column.field">
+                                    <span>{{ column.label }}</span>
+                                    <p-sortIcon [field]="column.field" />
+                                </th>
+                            }
                             @if (authStore.user()?.role === 1) {
                                 <th>פעולות</th>
                             }
                         </tr>
-                    </thead>
-                    <tbody>
-                        @for (user of filteredUsers(); track user.id) {
+                    </ng-template>
+                    <ng-template pTemplate="body" let-user>
                             <tr>
                                 <td>{{ user.id }}</td>
                                 <td>{{ user.fullName || 'לא הוגדר' }}</td>
@@ -82,9 +89,13 @@
                                     </td>
                                 }
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td [attr.colspan]="authStore.user()?.role === 1 ? columns.length + 1 : columns.length">לא נמצאו תוצאות.</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
             </div>
         </div>
     }

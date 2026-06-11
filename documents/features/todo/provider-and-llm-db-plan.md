@@ -650,10 +650,9 @@ Manual:
 ## Open Decisions
 
 - Should provider deletion be hard delete or soft disable only?
-- Should API keys be encrypted at rest in the first implementation phase?
+- Should API keys be encrypted at rest in the first implementation phase? - MANDATORY!!!
 - Should Ollama metadata rows be created automatically for every discovered model, or only after the admin edits/marks a model?
 - Should there be exactly one global default provider/model, or one default model per provider plus env/global active provider?
 - Should model capabilities be manually configured or probed automatically?
 - What initial quality scoring method should be used before adding judge-model evaluation?
 - What cron frequency is acceptable for paid providers if the default 6-hour cadence is too expensive?
-

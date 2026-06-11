@@ -398,3 +398,97 @@ documents/
 - Files touched this session: `C:\Users\porat\.claude\prompts\code-agent\angular-task.md`, `C:\Users\porat\.claude\rules\angular-rules.md`, `AGENTS.md`, `CLAUDE.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: enforce exact page structure for static pages because generic class guidance alone is not enough for the local agent.
 - Open questions for the user: none.
+- Updated the Design System showcase color-token layout so token cards no longer stretch to the tallest color group and long token names no longer collide with the copy state.
+- Added the documented global breakpoint tokens `--xs`, `--sm`, `--md`, `--lg`, and `--xl` to `_variables.css`, then replaced hardcoded Design System `900px` media queries with `var(--sm)`.
+- Kept the Design System changes CSS-only and scoped to the existing component partials plus global variables.
+- Verification: `npx ng build` from `frontend` passed. Remaining warnings are existing ones only: unused `AccessToDirective`, `explorer.css` budget, and `chat-message.css` budget.
+- Dev server note: `npx.cmd ng serve --host 127.0.0.1 --port 4200` is running after sandbox cache access required escalation; `npx ng serve` via PowerShell failed because `npx.ps1` is blocked by execution policy.
+- Browser note: the in-app Browser `iab` was unavailable and Playwright/Puppeteer were not installed locally, so visual browser verification could not be completed in this session.
+- Next exact step: open `http://127.0.0.1:4200/design-system` locally and visually confirm the color-token cards at desktop and mobile widths.
+- Files touched this session: `frontend/src/app/assets/styles/_variables.css`, `frontend/src/app/features/design-system/design-system.css`, `frontend/src/app/features/design-system/_design-system-tokens.css`, `frontend/src/app/features/design-system/_design-system-buttons.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: use the existing token partial for token-card-specific CSS to keep the main component stylesheet under the Angular CSS warning budget; no architecture diagram update was needed because this was local styling/token metadata only.
+- Open questions for the user: none.
+- Added a dedicated PrimeNG global override file at `frontend/src/app/assets/styles/_primeng-overrides.css`.
+- Connected the new override file from `frontend/src/styles.css` after `_utilities.css`.
+- Moved the existing PrimeNG datatable sort-icon overrides out of `_utilities.css` into `_primeng-overrides.css`.
+- Replaced the old hardcoded PrimeNG override dimensions with existing spacing tokens.
+- Verification: `npx ng build` from `frontend` passed. Remaining warnings are existing ones only: unused `AccessToDirective`, `chat-message.css` budget, and `explorer.css` budget.
+- Next exact step: use `_primeng-overrides.css` for future PrimeNG global overrides instead of adding PrimeNG selectors to `_utilities.css` or component styles.
+- Files touched this session: `frontend/src/styles.css`, `frontend/src/app/assets/styles/_utilities.css`, `frontend/src/app/assets/styles/_primeng-overrides.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep PrimeNG vendor overrides in a dedicated global stylesheet loaded after utilities; no architecture diagram update was needed because this was stylesheet organization only.
+- Open questions for the user: none.
+- Converted the Users management table from a native `<table>` to PrimeNG `p-table`, following the Explorer table pattern.
+- Users table now uses `TableModule`, `InputTextModule`, `#table`, `globalFilterFields`, `pSortableColumn`, `p-sortIcon`, `scrollable`, and `scrollHeight="flex"`.
+- The Users search input now uses PrimeNG `pInputText` and calls `table.filterGlobal(...)` like Explorer.
+- Added derived `roleLabel` and `roleHeLabel` fields for table search so role text remains searchable after moving filtering to PrimeNG.
+- Removed the old manual users filtering signals/computed and a stray `console.log` from `UsersManagement`.
+- Verification: `npx ng build` from `frontend` passed. Remaining warnings are existing ones only: unused `AccessToDirective`, `chat-message.css` budget, and `explorer.css` budget.
+- Next exact step: visually check `/users` and compare it with `/explorer` to confirm the PrimeNG table spacing, sorting icons, scroll area, and empty-message rendering match the new global overrides.
+- Files touched this session: `frontend/src/app/features/users/users-management.ts`, `frontend/src/app/features/users/users-management.html`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep Users-specific CSS absent and rely on the existing table container plus global PrimeNG overrides; no architecture diagram update was needed because this was local Users UI rendering only.
+- Open questions for the user: none.
+- Fixed the Users management search input placeholder from chat wording to user wording: `חפש משתמש...`.
+- Verification: `npx ng build` from `frontend` passed. Remaining warnings are existing ones only: unused `AccessToDirective`, `chat-message.css` budget, and `explorer.css` budget.
+- Files touched this session: `frontend/src/app/features/users/users-management.html`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: no architecture diagram update was needed because this was a copy-only UI text fix.
+- Open questions for the user: none.
+- Completed the Design System token upgrade from `documents/features/todo/TASK.md`.
+- `frontend/src/app/assets/styles/_variables.css` was rewritten with the audited token system: solid dark/light surfaces, stronger borders, updated typography scale, status tokens, `--radius-pill`, elevated surfaces, muted/disabled text, glow background tokens, and updated shadows.
+- `frontend/src/app/assets/styles/_reset.css` `body::before` now uses `--color-primary-glow-bg` and `--color-secondary-glow-bg` with `opacity: 1`.
+- Moved the finished task document to `documents/done/design-system-token-upgrade-task.md`.
+- Verification: no missing CSS custom property references were found; the old transparent surface values were removed; `npm.cmd run build` from `frontend` passed.
+- Remaining warnings are existing ones only: unused `AccessToDirective`, `explorer.css` budget, and `chat-message.css` budget.
+- Next exact step: visually check dark and light themes in the app, especially card/background contrast on dashboard/users/chat/explorer.
+- Files touched this session: `frontend/src/app/assets/styles/_variables.css`, `frontend/src/app/assets/styles/_reset.css`, `documents/done/design-system-token-upgrade-task.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: update `_reset.css` despite the "only variables" wording because the same TASK explicitly required the `body::before` glow-token migration; no architecture diagram update was needed because this was global styling/token maintenance only.
+- Open questions for the user: none.
+- Completed the Design Language glassmorphism upgrade from `documents/features/todo/DESIGN_UPGRADE_TASK.md`.
+- Updated global glass styling in `frontend/src/app/assets/styles/_utilities.css`: `.glass-effect` now uses `--glass-*` tokens and `.badge` uses the refined pill style.
+- Updated global layout primitives in `frontend/src/app/assets/styles/_layout.css`: `.card`, `.metric-card`, `.table-container`, `.logo`, and `.error-badge` now use the glass/depth treatment from the task.
+- Updated `frontend/src/app/assets/styles/_forms.css` so inputs/selects/textareas use blur, muted placeholders, stronger focus glow, and cleaned hover/disabled states.
+- Updated `frontend/src/app/assets/styles/_buttons.css` so `.primary-btn.filled` gets primary glow and brighter hover treatment.
+- Updated `frontend/src/app/assets/styles/_variables.css` with `--glass-bg`, `--glass-border`, `--glass-shadow`, `--glass-blur`, and stronger ambient glow tokens.
+- Updated `frontend/src/app/assets/styles/_reset.css` ambient body glow to the larger ellipse gradients requested by the task.
+- Moved the finished task document to `documents/done/design-language-glassmorphism-upgrade-task.md`.
+- Verification: `npm.cmd run build` from `frontend` passed. Remaining warnings are existing ones only: unused `AccessToDirective`, `explorer.css` budget, and `chat-message.css` budget.
+- Visual browser verification was not completed because no Browser tool is available in this session.
+- Next exact step: visually check dark/light mode cards, filled primary button hover, and any sidebar area using `.glass-effect`.
+- Files touched this session: `frontend/src/app/assets/styles/_variables.css`, `_reset.css`, `_utilities.css`, `_layout.css`, `_forms.css`, `_buttons.css`, `documents/done/design-language-glassmorphism-upgrade-task.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep `_animations.css`, `_typography.css`, `_primeng-overrides.css`, TS files, and HTML files untouched as requested; no architecture diagram update was needed because this was global styling only.
+- Open questions for the user: none.
+- Fixed theme switching transition inconsistency.
+- `frontend/src/app/core/services/theme.service.ts` now calls `blockTransitions()` before changing `data-theme`; it adds `no-transitions` to `<html>` and removes it after two nested `requestAnimationFrame(...)` callbacks.
+- `frontend/src/app/assets/styles/_reset.css` now defines `.no-transitions, .no-transitions * { transition: none !important; }`.
+- Verification: `npm.cmd run build` from `frontend` passed. Remaining warnings are existing ones only: unused `AccessToDirective`, `chat-message.css` budget, and `explorer.css` budget.
+- Next exact step: visually toggle dark/light mode and confirm the transition no longer mixes instant and animated elements.
+- Files touched this session: `frontend/src/app/core/services/theme.service.ts`, `frontend/src/app/assets/styles/_reset.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: use the requested two-frame `requestAnimationFrame` approach; no `setTimeout`, no computed delay, and no other CSS changes. No architecture diagram update was needed because this was local theme-toggle behavior only.
+- Open questions for the user: none.
+- Removed the duplicate dedicated rating color token and switched Explorer rating text to the semantic `--color-warning` token.
+- Updated the Design System color palette showcase so it covers all current color-related tokens from `_variables.css`, including brand, surfaces, text, inputs, glass, and semantic tokens.
+- Design System semantic colors now render in their own section, grouped by Success, Danger, Warning, and Info.
+- Design System color swatches were reduced in size, the page now has padding, and long values such as `var(--color-bg-gradient)` are truncated with ellipsis instead of overflowing into the copy action.
+- Verification: token coverage comparison returned no missing color tokens, the removed rating token no longer appears in frontend code or the completed token spec, and `npm.cmd run build` from `frontend` passed.
+- Remaining build warnings are existing unrelated warnings only: unused `AccessToDirective`, `explorer.css` budget, and `chat-message.css` budget.
+- Next exact step: visually check `/design-system` in the browser to confirm the grouped semantic section and gradient-token ellipsis look correct in dark and light modes.
+- Files touched this session: `frontend/src/app/assets/styles/_variables.css`, `frontend/src/app/features/explorer/explorer.css`, `frontend/src/app/features/design-system/design-system.ts`, `frontend/src/app/features/design-system/design-system.html`, `frontend/src/app/features/design-system/design-system.css`, `frontend/src/app/features/design-system/_design-system-tokens.css`, `frontend/src/app/features/design-system/_design-system-swatches.css`, `documents/done/design-system-token-upgrade-task.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: rating is not a separate semantic token; it uses warning yellow. Color swatch background mappings were split into a dedicated component stylesheet to keep component style budgets clean. No architecture diagram update was needed because this was local design-system UI/token maintenance only.
+- Open questions for the user: none.
+- Completed the light-mode character upgrade from `documents/done/light-mode-character-upgrade-task.md`.
+- `frontend/src/app/assets/styles/_variables.css` light theme now uses the teal primary palette, cool blue-grey background, stronger light glass tokens, adjusted light borders, teal focus/glow tokens, and updated light shadows.
+- Confirmed `_buttons.css` already satisfies the task: `.primary-btn.filled` uses `color: var(--color-bg)`, which is acceptable on the new dark teal primary.
+- Confirmed no changes were needed in `_layout.css` or `_utilities.css`; the card shimmer, metric top bar, and logo gradient already consume the updated tokens correctly.
+- Verification: `npm.cmd run build` from `frontend` passed. Remaining warnings are existing unrelated warnings only: unused `AccessToDirective`, `chat-message.css` budget, and `explorer.css` budget.
+- Visual browser verification was not performed in this session.
+- Next exact step: visually check light mode in the running app, especially background glow, cards, primary buttons, links, icons, and metric-card teal-to-violet top bar.
+- Files touched for this task: `frontend/src/app/assets/styles/_variables.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep the light-mode upgrade token-only as specified; no architecture diagram update was needed because this was theme-token styling only.
+- Open questions for the user: none.
+- Added a reusable global `.icon-tile` style in `frontend/src/app/assets/styles/_utilities.css` for padded icon backgrounds.
+- Dashboard metric cards now use `.icon-tile metric-icon` for the card icons.
+- Design System section-heading icons now use `.icon-tile`, and the duplicated local `section-heading > .ph` styling was removed from `design-system.css`.
+- Verification: `npm.cmd run build` from `frontend` passed. Remaining warnings are existing unrelated warnings only: unused `AccessToDirective`, `explorer.css` budget, and `chat-message.css` budget.
+- Next exact step: visually check `/dashboard` and `/design-system` to confirm the icon tile spacing and visual weight are right in dark and light themes.
+- Files touched this session: `frontend/src/app/assets/styles/_utilities.css`, `frontend/src/app/assets/styles/_layout.css`, `frontend/src/app/features/dashboard/dashboard.html`, `frontend/src/app/features/design-system/design-system.html`, `frontend/src/app/features/design-system/design-system.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep the padded icon treatment global instead of duplicating it in feature CSS. No architecture diagram update was needed because this was styling only.
+- Open questions for the user: none.

@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { PageStates } from '../../core/enums/page-states.enum';
 import { ThemeMode, ThemeService } from '../../core/services/theme.service';
 
-type ColorGroup = 'Primary' | 'Secondary' | 'Neutrals' | 'Feedback';
 type TokenCategory = 'color' | 'type' | 'space' | 'radius' | 'effect';
 
 interface TokenItem {
@@ -16,7 +15,7 @@ interface TokenItem {
 }
 
 interface ColorGroupView {
-    name: ColorGroup;
+    name: string;
     tokens: TokenItem[];
 }
 
@@ -38,6 +37,7 @@ interface PatternPreview {
         './_design-system-showcase.css',
         './_design-system-buttons.css',
         './_design-system-tokens.css',
+        './_design-system-swatches.css',
     ],
 })
 export class DesignSystem {
@@ -52,39 +52,100 @@ export class DesignSystem {
 
     protected readonly colorGroups = signal<ColorGroupView[]>([
         {
-            name: 'Primary',
+            name: 'Constants',
+            tokens: [
+                this.createToken('--color-white', 'White constant', 'color', 'swatch-white'),
+                this.createToken('--color-black', 'Black constant', 'color', 'swatch-black'),
+            ],
+        },
+        {
+            name: 'Brand',
             tokens: [
                 this.createToken('--color-primary', 'Primary accent', 'color', 'swatch-primary'),
                 this.createToken('--color-primary-glow', 'Primary glow', 'color', 'swatch-primary-glow'),
-            ],
-        },
-        {
-            name: 'Secondary',
-            tokens: [
+                this.createToken('--primary-30', 'Primary soft fill', 'color', 'swatch-primary-30'),
+                this.createToken('--primary-300', 'Primary focus ring', 'color', 'swatch-primary-300'),
+                this.createToken('--primary-400', 'Primary light', 'color', 'swatch-primary-400'),
+                this.createToken('--primary-600', 'Primary dark', 'color', 'swatch-primary-600'),
                 this.createToken('--color-secondary', 'Secondary accent', 'color', 'swatch-secondary'),
                 this.createToken('--color-secondary-glow', 'Secondary glow', 'color', 'swatch-secondary-glow'),
+                this.createToken('--color-secondary-border', 'Secondary border', 'color', 'swatch-secondary-border'),
+                this.createToken('--color-primary-glow-bg', 'Primary ambient glow', 'color', 'swatch-primary-glow-bg'),
+                this.createToken('--color-secondary-glow-bg', 'Secondary ambient glow', 'color', 'swatch-secondary-glow-bg'),
             ],
         },
         {
-            name: 'Neutrals',
+            name: 'Surfaces',
             tokens: [
                 this.createToken('--color-bg', 'App background', 'color', 'swatch-bg'),
-                this.createToken('--color-surface', 'Surface glass', 'color', 'swatch-surface'),
+                this.createToken('--color-bg-gradient', 'Background gradient', 'color', 'swatch-bg-gradient'),
+                this.createToken('--color-surface', 'Surface', 'color', 'swatch-surface'),
+                this.createToken('--color-surface-elevated', 'Elevated surface', 'color', 'swatch-surface-elevated'),
+                this.createToken('--color-surface-hover', 'Surface hover', 'color', 'swatch-surface-hover'),
                 this.createToken('--color-border', 'Border', 'color', 'swatch-border'),
-                this.createToken('--color-text-primary', 'Text primary', 'color', 'swatch-text-primary'),
-                this.createToken('--color-text-secondary', 'Text secondary', 'color', 'swatch-text-secondary'),
-                this.createToken('--color-input-bg', 'Input background', 'color', 'swatch-input'),
-                this.createToken('--color-white', 'White constant', 'color', 'swatch-white'),
+                this.createToken('--color-border-strong', 'Strong border', 'color', 'swatch-border-strong'),
+                this.createToken('--grey-30', 'Subtle grey overlay', 'color', 'swatch-grey-30'),
             ],
         },
         {
-            name: 'Feedback',
+            name: 'Text',
+            tokens: [
+                this.createToken('--color-text-primary', 'Text primary', 'color', 'swatch-text-primary'),
+                this.createToken('--color-text-secondary', 'Text secondary', 'color', 'swatch-text-secondary'),
+                this.createToken('--color-text-muted', 'Text muted', 'color', 'swatch-text-muted'),
+                this.createToken('--color-text-disabled', 'Text disabled', 'color', 'swatch-text-disabled'),
+            ],
+        },
+        {
+            name: 'Inputs',
+            tokens: [
+                this.createToken('--color-input-bg', 'Input background', 'color', 'swatch-input'),
+                this.createToken('--color-input-focus', 'Input focus', 'color', 'swatch-input-focus'),
+            ],
+        },
+        {
+            name: 'Glass',
+            tokens: [
+                this.createToken('--glass-bg', 'Glass background', 'color', 'swatch-glass-bg'),
+                this.createToken('--glass-border', 'Glass border', 'color', 'swatch-glass-border'),
+            ],
+        },
+    ]);
+
+    protected readonly semanticColorGroups = signal<ColorGroupView[]>([
+        {
+            name: 'Success',
             tokens: [
                 this.createToken('--color-success', 'Success', 'color', 'swatch-success'),
+                this.createToken('--color-success-glow', 'Success glow', 'color', 'swatch-success-glow'),
+                this.createToken('--color-success-bg', 'Success background', 'color', 'swatch-success-bg'),
+                this.createToken('--color-success-border', 'Success border', 'color', 'swatch-success-border'),
+            ],
+        },
+        {
+            name: 'Danger',
+            tokens: [
                 this.createToken('--color-danger', 'Danger', 'color', 'swatch-danger'),
+                this.createToken('--color-danger-glow', 'Danger glow', 'color', 'swatch-danger-glow'),
                 this.createToken('--color-danger-bg', 'Danger background', 'color', 'swatch-danger-bg'),
+                this.createToken('--color-danger-border', 'Danger border', 'color', 'swatch-danger-border'),
+                this.createToken('--red-600', 'Danger dark', 'color', 'swatch-red-600'),
+            ],
+        },
+        {
+            name: 'Warning',
+            tokens: [
+                this.createToken('--color-warning', 'Warning', 'color', 'swatch-warning'),
+                this.createToken('--color-warning-bg', 'Warning background', 'color', 'swatch-warning-bg'),
+                this.createToken('--color-warning-border', 'Warning border', 'color', 'swatch-warning-border'),
+            ],
+        },
+        {
+            name: 'Info',
+            tokens: [
                 this.createToken('--color-info', 'Information', 'color', 'swatch-info'),
                 this.createToken('--color-info-bg', 'Info background', 'color', 'swatch-info-bg'),
+                this.createToken('--color-info-border', 'Info border', 'color', 'swatch-info-border'),
             ],
         },
     ]);
@@ -188,6 +249,12 @@ export class DesignSystem {
         const styles = getComputedStyle(document.documentElement);
 
         this.colorGroups.update((groups) =>
+            groups.map((group) => ({
+                ...group,
+                tokens: group.tokens.map((token) => this.withResolvedValue(token, styles)),
+            })),
+        );
+        this.semanticColorGroups.update((groups) =>
             groups.map((group) => ({
                 ...group,
                 tokens: group.tokens.map((token) => this.withResolvedValue(token, styles)),

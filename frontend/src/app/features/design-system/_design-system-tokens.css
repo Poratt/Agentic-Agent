@@ -6,31 +6,41 @@
     font-weight: var(--font-weight-semibold);
   }
 
-  .color-swatch {
-    width: 48px;
-    height: 48px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-
-    &.swatch-primary { background: var(--color-primary); }
-    &.swatch-primary-glow { background: var(--color-primary-glow); }
-    &.swatch-secondary { background: var(--color-secondary); }
-    &.swatch-secondary-glow { background: var(--color-secondary-glow); }
-    &.swatch-bg { background: var(--color-bg); }
-    &.swatch-surface { background: var(--color-surface); }
-    &.swatch-border { background: var(--color-border); }
-    &.swatch-text-primary { background: var(--color-text-primary); }
-    &.swatch-text-secondary { background: var(--color-text-secondary); }
-    &.swatch-input { background: var(--color-input-bg); }
-    &.swatch-white { background: var(--color-white); }
-    &.swatch-success { background: var(--color-success); }
-    &.swatch-danger { background: var(--color-danger); }
-    &.swatch-danger-bg { background: var(--color-danger-bg); }
-    &.swatch-info { background: var(--color-info); }
-    &.swatch-info-bg { background: var(--color-info-bg); }
+  .copy-state {
+    justify-self: end;
+    white-space: nowrap;
   }
 
-  @media (max-width: 900px) {
+  .color-token {
+    grid-template-columns: 44px minmax(0, 1fr) minmax(52px, auto);
+    min-height: 64px;
+
+    .token-copy {
+      strong,
+      small {
+        line-height: 1.25;
+      }
+
+      small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      strong {
+        font-size: var(--font-size-sm);
+      }
+    }
+  }
+
+  .color-swatch {
+    width: 44px;
+    height: 44px;
+    border: thin solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+
+  @media (max-width: var(--sm)) {
     .showcase-hero,
     .pattern-row {
       grid-template-columns: 1fr;
@@ -47,6 +57,24 @@
     .sandbox-grid,
     .detail-grid {
       grid-template-columns: 1fr;
+    }
+
+    .color-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .color-token {
+      grid-template-columns: 40px minmax(0, 1fr);
+
+      .copy-state {
+        grid-column: 2;
+        justify-self: start;
+      }
+    }
+
+    .color-swatch {
+      width: 40px;
+      height: 40px;
     }
   }
 }

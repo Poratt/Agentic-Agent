@@ -1,5 +1,42 @@
 # Documentation Change Log
 
+## 2026-06-11 Global Icon Tile
+
+- Added global `.icon-tile` as the shared padded-background icon treatment for dashboard metrics and design-system headings.
+- Decision: keep the padded icon treatment in global utilities instead of repeating `section-heading > .ph` styling in feature CSS.
+- Verified `npm.cmd run build` from `frontend` passes. Remaining warnings are existing unrelated warnings: unused `AccessToDirective`, `explorer.css` budget, and `chat-message.css` budget.
+- No architecture diagram update was needed because this was styling only.
+
+## 2026-06-11 Theme Switch Transition Block
+
+- Added a temporary transition blocker to `frontend/src/app/core/services/theme.service.ts` so theme changes do not mix instant elements with animated `background-color` / `color` transitions.
+- `ThemeService.applyMode(...)` now adds `no-transitions` before updating `data-theme` and removes it after two nested `requestAnimationFrame(...)` callbacks.
+- Added `.no-transitions, .no-transitions * { transition: none !important; }` to `frontend/src/app/assets/styles/_reset.css`.
+- Verified `npm.cmd run build` from `frontend` passes. Remaining warnings are existing unrelated warnings: unused `AccessToDirective`, `chat-message.css` budget, and `explorer.css` budget.
+- No architecture diagram update was needed because this was local theme-toggle behavior only.
+
+## 2026-06-11 Design Language Glassmorphism Upgrade
+
+- Executed `documents/features/todo/DESIGN_UPGRADE_TASK.md`.
+- Added theme-level glass tokens to `frontend/src/app/assets/styles/_variables.css` and increased ambient glow strengths for the new design language.
+- Updated global visual primitives: `.glass-effect`, `.card`, `.metric-card`, `.table-container`, `.logo`, `.badge`, `.error-badge`, inputs, and `.primary-btn.filled`.
+- Updated `body::before` in `frontend/src/app/assets/styles/_reset.css` to use the larger ambient ellipse gradients.
+- Kept `_animations.css`, `_typography.css`, `_primeng-overrides.css`, component TS files, and component HTML files untouched as requested.
+- Verified `npm.cmd run build` from `frontend` passes. Remaining warnings are existing unrelated warnings: unused `AccessToDirective`, `explorer.css` budget, and `chat-message.css` budget.
+- Moved the completed task file to `documents/done/design-language-glassmorphism-upgrade-task.md`.
+- No architecture diagram update was needed because this was global styling/design-language maintenance only.
+
+## 2026-06-11 Design System Token Upgrade
+
+- Rewrote `frontend/src/app/assets/styles/_variables.css` with the audited WCAG-oriented token system from `documents/features/todo/TASK.md`.
+- Token decisions: dark and light surfaces are now solid instead of translucent, text secondary colors are stronger, borders are more visible, hover backgrounds use stronger `--primary-30` values, and the typography scale now uses a `15px` `--font-size-md` baseline.
+- Added the missing shared tokens called out by the task: `--radius-xs`, `--radius-pill`, `--color-surface-elevated`, `--color-text-muted`, `--color-text-disabled`, `--color-border-strong`, warning tokens, status background/border tokens, elevated shadows, and glow background tokens.
+- Updated `frontend/src/app/assets/styles/_reset.css` so `body::before` uses `--color-primary-glow-bg` and `--color-secondary-glow-bg` with full opacity.
+- Verified no missing CSS custom property references were found across app CSS and no old transparent surface values remain under `frontend/src/app/assets/styles`.
+- Verified `npm.cmd run build` from `frontend` passes. Remaining warnings are existing unrelated warnings: unused `AccessToDirective`, `explorer.css` budget, and `chat-message.css` budget.
+- Moved the completed task file to `documents/done/design-system-token-upgrade-task.md`.
+- No architecture diagram update was needed because this was global styling/token maintenance only.
+
 ## 2026-06-11 Explorer CSS Budget Fix
 
 - Removed duplicate PrimeNG sort-icon overrides from `frontend/src/app/features/explorer/explorer.css`; the equivalent global rules already live in `frontend/src/app/assets/styles/_utilities.css`.
@@ -155,6 +192,18 @@
 
 ## 2026-06-11
 
+- Design token decision: removed the duplicate dedicated rating color token; rating UI uses the existing semantic `--color-warning` token.
+- Design System decision: keep semantic status colors in a separate showcase section grouped by state, while the main palette focuses on constants, brand, surfaces, text, inputs, and glass tokens.
+- Design token decision: light mode now mirrors the dark-mode glassmorphism language with teal as the primary color, while dark mode remains unchanged.
+- Updated the Design System showcase CSS so color-token panels size to their own content, long token names wrap cleanly, and copy labels no longer overlap token text.
+- Added global breakpoint design tokens (`--xs`, `--sm`, `--md`, `--lg`, `--xl`) to `_variables.css`, matching the documented responsive token system.
+- No architecture diagram update was needed because this was local CSS/design-token maintenance only.
+- Added a dedicated PrimeNG override stylesheet, imported from `frontend/src/styles.css`, and moved the existing PrimeNG datatable sort-icon overrides out of `_utilities.css`.
+- Decision: future PrimeNG vendor overrides should go in `_primeng-overrides.css` instead of generic utilities or feature component styles.
+- Migrated the Users management table to PrimeNG `p-table`, using the Explorer table pattern for global filtering, sortable headers, sort icons, scrollable layout, and empty-message rendering.
+- Decision: Users table styling should rely on the shared PrimeNG override stylesheet rather than adding a Users component stylesheet.
+- Fixed the Users search input placeholder text so it refers to users instead of chat.
+
 - Added the full DB-backed provider/model management plan in `documents/features/todo/provider-and-llm-db-plan.md`.
 - Planning decision: keep existing chat-facing LLM endpoints response-compatible while moving admin-managed provider/model definitions to DB.
 - Planning decision: treat environment variables as bootstrap/fallback configuration after DB provider management is introduced.
@@ -162,3 +211,5 @@
 - Planning decision: Ollama installed models should remain runtime-discovered; DB stores Ollama metadata and historical test results but not installation truth.
 - Added individual terpene filter buttons and country flag rendering to the Explorer table UI.
 - Fixed the Explorer network-capture path so `isNew` no longer depends only on a missing Jane `is_new` JSON field; it now also maps visible `חדש!` DOM markers back to captured JSON products by Hebrew/English name.
+- Completed the light-mode character upgrade by replacing only the `[data-theme="light"]` token block in `_variables.css`.
+- No architecture diagram update was needed because this was global design-token styling only.

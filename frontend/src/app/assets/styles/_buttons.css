@@ -147,12 +147,14 @@ button {
 
   &.filled {
     background-color: var(--color-primary);
-    color: var(--color-white);
+    color: var(--color-bg);
     border-color: transparent;
+    font-weight: var(--font-weight-semibold);
+    box-shadow: 0 0 12px var(--color-primary-glow);
 
     &:hover:not(:disabled) {
-      background-color: var(--primary-600);
-      border-color: transparent;
+      background-color: var(--primary-400);
+      box-shadow: 0 0 20px var(--color-primary-glow), 0 4px 12px rgba(0, 0, 0, 0.2);
     }
   }
 }

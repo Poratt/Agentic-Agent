@@ -1,0 +1,56 @@
+/* ------------------------------ */
+/* PrimeNG Overrides              */
+/* ------------------------------ */
+
+.p-datatable {
+  .p-datatable-sort-icon {
+    width: var(--space-3);
+    height: var(--space-3);
+  }
+
+
+
+  .p-datatable-thead {
+    background: transparent !important;
+
+    p-sortIcon {
+      margin: 0 var(--space-2) 0 0;
+      color: var(--color-text-secondary);
+    }
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: -1;
+    }
+
+    >tr {
+      >th {
+        background-color: transparent;
+        padding-block: 24px;
+
+        &.p-datatable-column-sorted:not(:hover) {
+          background-color: transparent;
+        }
+
+        &.p-datatable-column-sorted {
+          color: var(--color-primary);
+
+          .p-datatable-sort-icon {
+            color: var(--color-primary);
+          }
+
+        }
+      }
+
+    }
+  }
+
+  tr {
+    background: transparent !important;
+  }
+}

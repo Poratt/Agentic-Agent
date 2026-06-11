@@ -1,0 +1,48 @@
+.design-system-page {
+  .color-swatch {
+    &.swatch-primary { background: var(--color-primary); }
+    &.swatch-primary-glow { background: var(--color-primary-glow); }
+    &.swatch-primary-30 { background: var(--primary-30); }
+    &.swatch-primary-300 { background: var(--primary-300); }
+    &.swatch-primary-400 { background: var(--primary-400); }
+    &.swatch-primary-600 { background: var(--primary-600); }
+    &.swatch-secondary { background: var(--color-secondary); }
+    &.swatch-secondary-glow { background: var(--color-secondary-glow); }
+    &.swatch-secondary-border { background: var(--color-secondary-border); }
+    &.swatch-primary-glow-bg { background: var(--color-primary-glow-bg); }
+    &.swatch-secondary-glow-bg { background: var(--color-secondary-glow-bg); }
+    &.swatch-bg { background: var(--color-bg); }
+    &.swatch-bg-gradient { background: var(--color-bg-gradient); }
+    &.swatch-surface { background: var(--color-surface); }
+    &.swatch-surface-elevated { background: var(--color-surface-elevated); }
+    &.swatch-surface-hover { background: var(--color-surface-hover); }
+    &.swatch-border { background: var(--color-border); }
+    &.swatch-border-strong { background: var(--color-border-strong); }
+    &.swatch-text-primary { background: var(--color-text-primary); }
+    &.swatch-text-secondary { background: var(--color-text-secondary); }
+    &.swatch-text-muted { background: var(--color-text-muted); }
+    &.swatch-text-disabled { background: var(--color-text-disabled); }
+    &.swatch-input { background: var(--color-input-bg); }
+    &.swatch-input-focus { background: var(--color-input-focus); }
+    &.swatch-white { background: var(--color-white); }
+    &.swatch-black { background: var(--color-black); }
+    &.swatch-success { background: var(--color-success); }
+    &.swatch-success-glow { background: var(--color-success-glow); }
+    &.swatch-success-bg { background: var(--color-success-bg); }
+    &.swatch-success-border { background: var(--color-success-border); }
+    &.swatch-danger { background: var(--color-danger); }
+    &.swatch-danger-glow { background: var(--color-danger-glow); }
+    &.swatch-danger-bg { background: var(--color-danger-bg); }
+    &.swatch-danger-border { background: var(--color-danger-border); }
+    &.swatch-red-600 { background: var(--red-600); }
+    &.swatch-warning { background: var(--color-warning); }
+    &.swatch-warning-bg { background: var(--color-warning-bg); }
+    &.swatch-warning-border { background: var(--color-warning-border); }
+    &.swatch-info { background: var(--color-info); }
+    &.swatch-info-bg { background: var(--color-info-bg); }
+    &.swatch-info-border { background: var(--color-info-border); }
+    &.swatch-grey-30 { background: var(--grey-30); }
+    &.swatch-glass-bg { background: var(--glass-bg); }
+    &.swatch-glass-border { background: var(--glass-border); }
+  }
+}
