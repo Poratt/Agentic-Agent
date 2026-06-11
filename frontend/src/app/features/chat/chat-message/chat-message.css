@@ -63,9 +63,9 @@
 	}
 
 	.message-body {
-		font-size: var(--font-size-xs);
+		font-size: var(--font-size-sm);
 		font-weight: 300;
-		color: var(--color-text-primary);
+		color: var(--color-text-secondary);
 
 
 		::ng-deep .ai-bold {
