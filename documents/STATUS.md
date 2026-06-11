@@ -124,6 +124,7 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Removed: `documents/audit/phosphor-icons.web.instruction.md` because `@phosphor-icons/web` is already in active use and the file was reference material, not an audit finding.
 - Current audit folder contains only the active CSS conventions audit: `documents/audit/css-conventions-component-audit.md`.
 - Planned: `documents/features/todo/provider-and-llm-db-plan.md` now contains the full provider/model DB plan, including entities, admin endpoints, service refactor phases, Angular Settings UI phases, security notes, and verification checklist.
+- Planned: provider/model DB plan now includes scheduled/manual LLM test runs every 6 hours by default, persisted test results, model rankings, provider/model forms, and a Settings test-results table.
 - Completed: `documents/done/chat-stop-stream-button-plan.md`.
 - Completed: `documents/done/chat-message-actions-plan.md`.
 - Chat submit now becomes a clickable stop button during streaming and cancels the active fetch through the existing stream Observable teardown.

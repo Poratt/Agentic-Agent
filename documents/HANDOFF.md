@@ -285,6 +285,9 @@ documents/
 - Files touched this session: `documents/features/todo/provider-and-llm-db-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: DB should become the future source of truth for cloud providers and manually managed models; env config should remain as bootstrap/fallback, not the admin-managed source of truth.
 - Open questions for the user: whether API keys must be encrypted at rest in the first implementation phase, whether provider/model deletion should be soft-disable only, and whether Ollama discovered models should be persisted or remain dynamic.
+- Updated `documents/features/todo/provider-and-llm-db-plan.md` to reflect the final objective: scheduled/manual LLM evaluations, persisted test runs/results, model rankings, provider/model forms, and a Settings test-results table.
+- Cron planning decision: default scheduled model test cadence is every 6 hours, with manual test runs available from Settings; paid providers can later get a slower cadence if cost/rate limits require it.
+- Ollama planning decision: cloud models are DB-managed, but Ollama installed models remain runtime-discovered; DB stores only provider config, optional model metadata, and historical test results keyed by model name.
 - Completed `documents/features/todo/chat-stop-stream-button-plan.md` and moved it to `documents/done/chat-stop-stream-button-plan.md`.
 - Completed `documents/features/todo/chat-message-actions-plan.md` and moved it to `documents/done/chat-message-actions-plan.md`.
 - Chat streaming now stores the active stream subscription, and the send button becomes a stop button while `loading()` is true. Stopping unsubscribes from the stream, aborts the fetch, exits loading state, and keeps partial assistant content visible.

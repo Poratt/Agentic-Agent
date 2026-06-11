@@ -158,5 +158,7 @@
 - Added the full DB-backed provider/model management plan in `documents/features/todo/provider-and-llm-db-plan.md`.
 - Planning decision: keep existing chat-facing LLM endpoints response-compatible while moving admin-managed provider/model definitions to DB.
 - Planning decision: treat environment variables as bootstrap/fallback configuration after DB provider management is introduced.
+- Planning decision: scheduled LLM model tests should run every 6 hours by default, with manual runs from Settings and persisted test results used for model ranking.
+- Planning decision: Ollama installed models should remain runtime-discovered; DB stores Ollama metadata and historical test results but not installation truth.
 - Added individual terpene filter buttons and country flag rendering to the Explorer table UI.
 - Fixed the Explorer network-capture path so `isNew` no longer depends only on a missing Jane `is_new` JSON field; it now also maps visible `חדש!` DOM markers back to captured JSON products by Hebrew/English name.

@@ -4,6 +4,8 @@
 
 Move LLM provider and model management from static constants and environment-only configuration into the database, and expose an Angular settings UI for admins to manage providers and models.
 
+The longer-term purpose is scheduled LLM evaluation: run cron/manual tests, store historical results, and rank models by availability, latency, speed, and quality.
+
 The chat UI must continue to work through the existing model selection flow:
 
 - `GET /llm/model-options`
@@ -15,6 +17,7 @@ The chat UI must continue to work through the existing model selection flow:
 - Backend LLM runtime configuration is mostly environment-driven through `LlmProviderConfigService`.
 - Static cloud model options come from `backend/src/modules/llm/constants/llm-model-catalog.constant.ts`.
 - Ollama models are discovered dynamically through the local Ollama `/api/tags` endpoint.
+- Existing health checks are request-time checks only; test results are not persisted and cannot currently be used for model ranking.
 - Angular chat consumes `frontend/src/app/core/services/llm.service.ts`.
 - `frontend/src/app/features/settings/` currently exists but is incomplete and should be treated as a rough placeholder, not as the final implementation pattern.
 
@@ -67,6 +70,11 @@ Fields:
 - `supportsTools: boolean`
 - `contextWindow: number | null`
 - `sortOrder: number`
+- `runtimeDiscovered: boolean`
+  - True for records discovered from a runtime source such as Ollama.
+  - False for admin-managed cloud models.
+- `lastSeenAt: Date | null`
+  - Used for runtime-discovered models that may disappear from the local Ollama app.
 - `createdAt: Date`
 - `updatedAt: Date`
 
@@ -75,6 +83,94 @@ Constraints:
 - Unique pair: `providerId + name`.
 - `name` required.
 - `label` required.
+
+### LlmModelTestRun Entity
+
+Table: `llm_model_test_runs`
+
+Stores each manual or scheduled model evaluation run.
+
+Fields:
+
+- `id: number`
+- `startedAt: Date`
+- `finishedAt: Date | null`
+- `trigger: 'manual' | 'cron'`
+- `status: 'running' | 'completed' | 'failed'`
+- `totalModels: number`
+- `testedModels: number`
+- `failedModels: number`
+- `createdAt: Date`
+- `updatedAt: Date`
+
+### LlmModelTestResult Entity
+
+Table: `llm_model_test_results`
+
+Stores per-model metrics for one evaluation run.
+
+Fields:
+
+- `id: number`
+- `runId: number`
+- `providerId: number`
+- `modelId: number | null`
+- `providerKey: string`
+  - Denormalized snapshot for stable historical reporting.
+- `modelName: string`
+  - Denormalized snapshot for stable historical reporting.
+- `modelLabel: string`
+  - Denormalized snapshot for stable historical reporting.
+- `available: boolean`
+- `success: boolean`
+- `errorMessage: string | null`
+- `latencyMs: number | null`
+- `timeToFirstTokenMs: number | null`
+- `tokensPerSecond: number | null`
+- `inputTokens: number | null`
+- `outputTokens: number | null`
+- `qualityScore: number | null`
+- `qualityReason: string | null`
+- `testedAt: Date`
+
+Indexes:
+
+- `providerKey + modelName + testedAt`
+- `runId`
+- `modelId`
+
+## Ollama Model Strategy
+
+Ollama models are runtime state of the machine, not a stable cloud catalog. They can change outside this app through `ollama pull`, `ollama rm`, app shutdown, or server replacement.
+
+Decision:
+
+- Cloud provider models are DB-managed.
+- Ollama provider configuration is DB-managed.
+- Ollama installed models are discovered dynamically from the Ollama app.
+- DB may store Ollama metadata and test history keyed by provider + model name, but DB is not the source of truth for whether an Ollama model is currently installed.
+- Ollama models that exist in DB metadata but are not currently installed should be marked `missing` in admin UI and excluded from chat model options by default.
+
+## Cron Test Cadence
+
+Default cadence:
+
+- Run scheduled model tests every 6 hours.
+- Allow manual test runs from the Settings UI at any time.
+- Keep one global cron job initially; add per-provider cadence only if paid provider cost or rate limits require it.
+
+Runtime limits:
+
+- Limit concurrency to avoid saturating local Ollama or paid APIs.
+- Use per-model timeout so one stuck model does not block the entire run.
+- Persist failed results instead of dropping them.
+- Store enough data for ranking, but do not store full prompt/response text unless explicitly needed later.
+
+Future cadence options:
+
+- Local Ollama: every 3-6 hours is acceptable.
+- Paid cloud providers: every 6-12 hours by default.
+- Manual tests should always be available for immediate validation after adding a provider/model.
 
 ## API Contract
 
@@ -128,6 +224,27 @@ Add management endpoints:
   - Sets provider default model.
   - Validate model belongs to provider.
 
+### Test Runs And Rankings
+
+- `POST /llm/admin/test-runs`
+  - Starts a manual test run across active configured models.
+  - Optional filters: provider id/key, model ids/names, test profile.
+
+- `GET /llm/admin/test-runs`
+  - Returns recent test runs.
+
+- `GET /llm/admin/test-runs/:id/results`
+  - Returns per-model results for one run.
+
+- `GET /llm/admin/model-rankings`
+  - Returns current ranked models based on recent test results.
+
+- `GET /llm/admin/models/:id/test-history`
+  - Returns historical metrics for one managed DB model.
+
+- `GET /llm/admin/runtime-models/ollama`
+  - Returns currently installed Ollama models merged with DB metadata and latest scores.
+
 ## DTO Rules
 
 Provider response DTO must include:
@@ -159,6 +276,41 @@ Model response DTO must include:
 - `supportsTools`
 - `contextWindow`
 - `sortOrder`
+- `runtimeDiscovered`
+- `installed`
+- `missing`
+- `lastSeenAt`
+
+Model test result DTO must include:
+
+- `id`
+- `runId`
+- `providerKey`
+- `modelName`
+- `modelLabel`
+- `available`
+- `success`
+- `errorMessage`
+- `latencyMs`
+- `timeToFirstTokenMs`
+- `tokensPerSecond`
+- `qualityScore`
+- `qualityReason`
+- `testedAt`
+
+Model ranking DTO must include:
+
+- `providerKey`
+- `modelName`
+- `modelLabel`
+- `available`
+- `overallScore`
+- `availabilityScore`
+- `latencyScore`
+- `speedScore`
+- `qualityScore`
+- `sampleSize`
+- `lastTestedAt`
 
 Existing chat model options response should remain grouped:
 
@@ -283,9 +435,41 @@ Verification:
 - Existing LLM test endpoints compile and keep response shape.
 - Runtime manual check with one configured provider.
 
+### Phase 6 - Scheduled Test Runs And Ranking
+
+Files likely touched:
+
+- `backend/src/modules/llm/services/llm-model-test-runner.service.ts`
+- `backend/src/modules/llm/services/llm-model-ranking.service.ts`
+- `backend/src/modules/llm/entities/llm-model-test-run.entity.ts`
+- `backend/src/modules/llm/entities/llm-model-test-result.entity.ts`
+
+Tasks:
+
+- Add manual test-run service that tests active DB-managed cloud models and currently installed Ollama models.
+- Persist one `LlmModelTestRun` per run.
+- Persist one `LlmModelTestResult` per tested model.
+- Measure at minimum:
+  - availability
+  - success/failure
+  - error message
+  - latency
+  - token/output estimate when available
+  - quality score placeholder
+- Add ranking calculation from recent results.
+- Add cron execution every 6 hours after manual test runs are stable.
+- Keep timeout and concurrency limits.
+
+Verification:
+
+- Manual test run creates a run row and result rows.
+- Failed model calls are persisted as failed results.
+- Ranking endpoint returns deterministic sorted results.
+- `npm.cmd run build` from `backend/`.
+
 ## Frontend Implementation Phases
 
-### Phase 6 - Angular Service Contract
+### Phase 7 - Angular Service Contract
 
 Files likely touched:
 
@@ -305,12 +489,16 @@ Tasks:
   - `updateModel(modelId, ...)`
   - `disableModel(modelId)`
   - `setDefaultModel(providerId, modelId)`
+  - `startModelTestRun(...)`
+  - `getModelTestRuns()`
+  - `getModelTestRunResults(runId)`
+  - `getModelRankings()`
 
 Verification:
 
 - `npx ng build` from `frontend/`.
 
-### Phase 7 - Settings Page State
+### Phase 8 - Settings Page State
 
 Files likely touched:
 
@@ -332,7 +520,7 @@ Verification:
 
 - `npx ng build` from `frontend/`.
 
-### Phase 8 - Settings UI
+### Phase 9 - Settings UI
 
 UI requirements:
 
@@ -350,12 +538,48 @@ UI requirements:
   - edit provider
   - disable provider
   - set default model
+- Provider form:
+  - provider key
+  - label
+  - base URL
+  - write-only API key field
+  - active toggle
+  - save/cancel actions
 - Model list per provider:
   - model label
   - model name
   - active/inactive
   - streaming/tools capability badges
+  - latest score
+  - latest latency
+  - latest availability
+  - installed/missing indicator for Ollama
   - edit/disable actions
+- Model form:
+  - provider selector or fixed provider context
+  - model name
+  - label
+  - active toggle
+  - supports streaming toggle
+  - supports tools toggle
+  - context window number input
+  - sort order number input
+  - save/cancel actions
+- Test results table:
+  - provider
+  - model
+  - availability
+  - latency
+  - tokens/sec
+  - quality score
+  - overall score
+  - tested at
+  - error message when failed
+- Test actions:
+  - start manual all-model test
+  - start provider-only test
+  - view latest run
+  - view run history
 - Forms:
   - use project form controls and global button styles.
   - avoid unnecessary component-specific CSS.
@@ -386,8 +610,10 @@ Verification:
 1. Add DB entities and seed from current static/env config.
 2. Keep current public LLM endpoints response-compatible.
 3. Switch model option reads to DB.
-4. Add Angular admin UI.
-5. Once stable, decide whether `LLM_STATIC_MODEL_GROUPS` remains as seed data only or is deleted.
+4. Add manual test-run persistence and ranking endpoints.
+5. Add Angular admin UI for providers, models, rankings, and test results.
+6. Add cron after manual test runs are stable.
+7. Once stable, decide whether `LLM_STATIC_MODEL_GROUPS` remains as seed data only or is deleted.
 
 ## Testing Checklist
 
@@ -399,6 +625,9 @@ Backend:
 - Admin CRUD rejects non-admin users.
 - API key is never returned in responses.
 - Default model must belong to the selected provider.
+- Manual test run persists one run and per-model result rows.
+- Ranking endpoint sorts by deterministic score.
+- Missing Ollama models do not appear in chat model options unless explicitly allowed.
 
 Frontend:
 
@@ -407,6 +636,7 @@ Frontend:
 - Add/edit provider updates list without page reload.
 - Add/edit model updates provider model list.
 - Chat model selector still receives model options in the previous shape.
+- Settings shows provider forms, model forms, rankings, and latest test results.
 
 Manual:
 
@@ -414,13 +644,16 @@ Manual:
 - Set it as default.
 - Send one chat request with that model.
 - Run single model test.
+- Run manual all-model test and confirm stored results appear in Settings.
 - Disable model and confirm it disappears from chat selector.
 
 ## Open Decisions
 
 - Should provider deletion be hard delete or soft disable only?
 - Should API keys be encrypted at rest in the first implementation phase?
-- Should Ollama discovered models be persisted, or should they remain dynamic discovered options?
+- Should Ollama metadata rows be created automatically for every discovered model, or only after the admin edits/marks a model?
 - Should there be exactly one global default provider/model, or one default model per provider plus env/global active provider?
 - Should model capabilities be manually configured or probed automatically?
+- What initial quality scoring method should be used before adding judge-model evaluation?
+- What cron frequency is acceptable for paid providers if the default 6-hour cadence is too expensive?
 
