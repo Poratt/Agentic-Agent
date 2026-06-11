@@ -27,6 +27,7 @@
 - Moved the plan to `documents/done/ai-format-directive-improvement-plan.md`; no architecture diagram update was needed.
 - Added `documents/features/todo/chat-stop-stream-button-plan.md` for changing the chat submit button into a stream stop/cancel button during loading.
 - Documented that frontend cancellation can use the existing `ChatService.sendMessageStream(...)` Observable teardown, which already calls `AbortController.abort()`.
+- Cleaned documentation audit folder: kept only `css-conventions-component-audit.md` in `documents/audit/`, moved `backend-llm-documentation-audit.md` to `documents/done/`, and deleted the Phosphor reference document.
 
 ## 2026-06-10 Explorer Terpene Flags Update
 

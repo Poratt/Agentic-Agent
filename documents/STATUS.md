@@ -120,3 +120,6 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: AiFormat Phase 4/5/6 finished. Skeleton rendering now goes through `renderSkeletonOnce()`, Hebrew/English role parsing is covered by tests, CSS code fences render as markdown code, and the plan moved to `documents/done/ai-format-directive-improvement-plan.md`.
 - Verified: `npx ng test --watch=false` passes 22 tests, `npx ng build` passes, and the AiFormat corrupted-character scan returned clean.
 - Active todo: `documents/features/todo/chat-stop-stream-button-plan.md` documents replacing the disabled chat submit button during streaming with a clickable stop/cancel button.
+- Completed: moved `documents/audit/backend-llm-documentation-audit.md` to `documents/done/backend-llm-documentation-audit.md`.
+- Removed: `documents/audit/phosphor-icons.web.instruction.md` because `@phosphor-icons/web` is already in active use and the file was reference material, not an audit finding.
+- Current audit folder contains only the active CSS conventions audit: `documents/audit/css-conventions-component-audit.md`.

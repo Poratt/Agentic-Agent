@@ -272,3 +272,10 @@ documents/
 - Files touched this session: `documents/features/todo/chat-stop-stream-button-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: no backend API change is planned because `ChatService.sendMessageStream(...)` already aborts fetch on unsubscribe.
 - Open questions for the user: whether a cancelled assistant message should show a visible "cancelled" marker when no token has arrived yet.
+- Cleaned `documents/audit/` so it now contains only `documents/audit/css-conventions-component-audit.md`.
+- Moved the completed backend LLM documentation audit to `documents/done/backend-llm-documentation-audit.md`.
+- Deleted `documents/audit/phosphor-icons.web.instruction.md` because it was package reference material, not an active audit, and `@phosphor-icons/web` is already used in the frontend.
+- Next exact step: continue with `documents/features/todo/chat-stop-stream-button-plan.md` or address the active CSS conventions audit.
+- Files touched this session: `documents/done/backend-llm-documentation-audit.md`, `documents/audit/phosphor-icons.web.instruction.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep `documents/audit/` reserved for active audit findings; completed/closed audits go under `documents/done/`.
+- Open questions for the user: none.
