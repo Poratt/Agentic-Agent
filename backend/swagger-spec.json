@@ -690,6 +690,55 @@
         "toolIcon": "ph-trash"
       }
     },
+    "/admin-agent/sessions/{sessionId}/messages/{messageId}": {
+      "delete": {
+        "description": "Permanently deletes one message owned by the authenticated user and every later message in the same session. This preserves conversation consistency by preventing later assistant or tool messages from remaining without their original context.",
+        "genUiSpec": "After this tool succeeds, do not invent response data. Tell the user that the selected chat message and later session history were permanently deleted.",
+        "operationId": "AdminAgentController_deleteSessionMessage",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "description": "Numeric chat session id that owns the message.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "messageId",
+            "required": true,
+            "in": "path",
+            "description": "Numeric chat message id to delete from.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Chat message and later session history deleted successfully."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "The session or message does not belong to the authenticated user."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a chat message and later history",
+        "summaryHe": "מוחק הודעת צאט ואת כל ההודעות שאחריה",
+        "tags": [
+          "Admin Agent"
+        ],
+        "toolIcon": "ph-trash"
+      }
+    },
     "/admin-agent/query-stream": {
       "post": {
         "description": "Streams newline-delimited JSON objects over a text/event-stream response. Each line is an AgentStreamEventDto. Token events use { \"type\": \"token\", \"content\": \"...\" }. Step events use { \"type\": \"step\", \"icon\": \"...\", \"message\": \"...\" }. The stream is complete when the HTTP response ends.",

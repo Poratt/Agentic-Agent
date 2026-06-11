@@ -8,7 +8,12 @@
         <div class="chat-history" [autoScrollBottom]="true" [autoScrollBottomTrigger]="messages().length">
             @for (msg of messages(); track $index) {
                 @if (msg.role !== 'tool') {
-                    <app-chat-message [message]="msg" [streamState]="getStreamState($index, msg)" />
+                    <app-chat-message
+                        [message]="msg"
+                        [streamState]="getStreamState($index, msg)"
+                        [actionsDisabled]="loading() || deletingMessageId() === msg.id"
+                        (actionRequested)="handleMessageAction($event)"
+                    />
                 }
             }
 
@@ -23,6 +28,9 @@
     }
 
     <div class="chat-input-area">
+        @if (actionError()) {
+            <div class="chat-action-error" role="alert">{{ actionError() }}</div>
+        }
         <form [formGroup]="chatForm" (ngSubmit)="sendMessage()">
             <div class="chat-prompt-field">
                 <textarea
@@ -56,12 +64,18 @@
                     </p-select>
 
                     <button
-                        type="submit"
+                        [type]="loading() ? 'button' : 'submit'"
                         class="chat-send-btn"
-                        [disabled]="chatForm.invalid || loading() || historyLoading()"
-                        aria-label="שלח הודעה"
+                        [class.stop]="loading()"
+                        [disabled]="!loading() && (chatForm.invalid || historyLoading())"
+                        [attr.aria-label]="loading() ? 'Stop response' : 'Send message'"
+                        (click)="loading() ? stopStreaming() : null"
                     >
-                        <span class="ph ph-arrow-up md"></span>
+                        @if (loading()) {
+                            <span class="ph ph-stop md"></span>
+                        } @else {
+                            <span class="ph ph-arrow-up md"></span>
+                        }
                     </button>
                 </div>
             </div>

@@ -1,5 +1,7 @@
 # Chat Stop Stream Button Plan
 
+Status: Completed on 2026-06-11. Implemented the loading-state stop button, active stream cancellation, and route/destroy subscription cleanup.
+
 ## Goal
 
 Change the chat submit button behavior while an assistant response is streaming.

@@ -1,5 +1,7 @@
 # Chat Message Actions Plan
 
+Status: Completed on 2026-06-11. Implemented the message action bar, copy/edit/resend handling, and persistent delete from the selected message onward.
+
 ## Goal
 
 Add a compact action bar to every chat message so the user can manage individual messages directly from the conversation.

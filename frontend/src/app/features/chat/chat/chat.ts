@@ -18,7 +18,7 @@ import { ChatStore } from '../../../core/store/chat.store';
 import { AuthStore } from '../../../core/store/auth.store';
 import { IChatMessage } from '../../../core/models/chat-message.interface';
 import { AutoScrollBottomDirective } from '../../../core/directives/auto-scroll-bottom.directive';
-import { ChatMessage, ChatMessageStreamState } from '../chat-message/chat-message';
+import { ChatMessage, ChatMessageActionEvent, ChatMessageStreamState } from '../chat-message/chat-message';
 import { UsersStore } from '../../../core/store/users.store';
 import { Select } from 'primeng/select';
 
@@ -46,6 +46,8 @@ export class Chat implements OnInit, OnDestroy {
     messages = signal<IChatMessage[]>([]);
     loading = signal<boolean>(false);
     historyLoading = signal<boolean>(false);
+    actionError = signal<string | null>(null);
+    deletingMessageId = signal<number | null>(null);
     activeAssistantIndex = signal<number | null>(null);
     activeStreamState = signal<ChatMessageStreamState>('idle');
 
@@ -58,6 +60,7 @@ export class Chat implements OnInit, OnDestroy {
     });
 
     private routeSub?: Subscription;
+    private activeStreamSub?: Subscription;
 
     ngOnInit() {
         this.promptTextarea?.nativeElement.focus();
@@ -71,7 +74,7 @@ export class Chat implements OnInit, OnDestroy {
         this.routeSub = this.route.queryParams.subscribe((params) => {
             const sessionId = params['sessionId'] ? Number(params['sessionId']) : null;
 
-            this.clearActiveStream();
+            this.cancelActiveStream();
 
             if (!sessionId) {
                 this.chatStore.clearCurrentSession();
@@ -86,6 +89,8 @@ export class Chat implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.cancelActiveStream();
+
         if (this.routeSub) {
             this.routeSub.unsubscribe();
         }
@@ -156,6 +161,9 @@ export class Chat implements OnInit, OnDestroy {
     }
 
     private sendPromptToSession(promptValue: string, sessionId: number, modelSelection?: ChatModelSelection) {
+        this.cancelActiveStream();
+        this.actionError.set(null);
+
         const userMsg: IChatMessage = {
             role: 'user',
             content: promptValue,
@@ -171,21 +179,24 @@ export class Chat implements OnInit, OnDestroy {
             return [...prev, userMsg, assistantMsg];
         });
         this.loading.set(true);
-        this.activeAssistantIndex.set(this.messages().length - 1);
+        const assistantIndex = this.messages().length - 1;
+        this.activeAssistantIndex.set(assistantIndex);
         this.activeStreamState.set('streaming');
 
         const isFirstMessage = this.messages().length <= 2;
 
-        this.chatService.sendMessageStream(promptValue, sessionId, modelSelection).subscribe({
+        this.activeStreamSub = this.chatService.sendMessageStream(promptValue, sessionId, modelSelection).subscribe({
             next: (event) => {
                 if (event.type === 'step' && event.message && event.icon) {
                     this.messages.update((prev) => {
                         const updated = [...prev];
-                        const lastIndex = updated.length - 1;
-                        const currentSteps = updated[lastIndex].steps || [];
+                        const current = updated[assistantIndex];
+                        if (!current) return prev;
 
-                        updated[lastIndex] = {
-                            ...updated[lastIndex],
+                        const currentSteps = current.steps || [];
+
+                        updated[assistantIndex] = {
+                            ...current,
                             steps: [...currentSteps, { icon: event.icon, message: event.message }],
                         };
 
@@ -197,11 +208,12 @@ export class Chat implements OnInit, OnDestroy {
                 if (event.type === 'token' && event.content) {
                     this.messages.update((prev) => {
                         const updated = [...prev];
-                        const lastIndex = updated.length - 1;
+                        const current = updated[assistantIndex];
+                        if (!current) return prev;
 
-                        updated[lastIndex] = {
-                            ...updated[lastIndex],
-                            content: updated[lastIndex].content + event.content!,
+                        updated[assistantIndex] = {
+                            ...current,
+                            content: current.content + event.content!,
                         };
 
                         return updated;
@@ -209,14 +221,16 @@ export class Chat implements OnInit, OnDestroy {
                 }
             },
             error: () => {
+                this.activeStreamSub = undefined;
                 this.loading.set(false);
                 this.activeStreamState.set('errored');
                 this.messages.update((prev) => {
                     const updated = [...prev];
-                    const lastIndex = updated.length - 1;
+                    const current = updated[assistantIndex];
+                    if (!current) return prev;
 
-                    updated[lastIndex] = {
-                        ...updated[lastIndex],
+                    updated[assistantIndex] = {
+                        ...current,
                         content: '[שגיאה בקבלת תגובה מהשרת. נא לנסות שוב]',
                     };
 
@@ -224,6 +238,7 @@ export class Chat implements OnInit, OnDestroy {
                 });
             },
             complete: () => {
+                this.activeStreamSub = undefined;
                 this.loading.set(false);
                 this.activeStreamState.set('completed');
 
@@ -237,6 +252,35 @@ export class Chat implements OnInit, OnDestroy {
 
                 this.router.navigate(['/chat'], { queryParams: { sessionId }, replaceUrl: true });
             },
+        });
+    }
+
+    stopStreaming(): void {
+        if (!this.activeStreamSub) {
+            this.clearActiveStream();
+            return;
+        }
+
+        this.activeStreamSub.unsubscribe();
+        this.activeStreamSub = undefined;
+        this.loading.set(false);
+        this.activeStreamState.set('completed');
+
+        const assistantIndex = this.activeAssistantIndex();
+        if (assistantIndex === null) {
+            return;
+        }
+
+        this.messages.update((prev) => {
+            const current = prev[assistantIndex];
+            if (!current || current.content.trim()) return prev;
+
+            const updated = [...prev];
+            updated[assistantIndex] = {
+                ...current,
+                content: '\u05d4\u05ea\u05d2\u05d5\u05d1\u05d4 \u05d1\u05d5\u05d8\u05dc\u05d4.',
+            };
+            return updated;
         });
     }
 
@@ -257,10 +301,127 @@ export class Chat implements OnInit, OnDestroy {
         return this.activeStreamState();
     }
 
+    handleMessageAction(event: ChatMessageActionEvent): void {
+        this.actionError.set(null);
+
+        if (event.action === 'delete') {
+            this.deleteMessageFromSession(event.message);
+            return;
+        }
+
+        if (event.action === 'sendAgain') {
+            this.sendAgain(event.message);
+            return;
+        }
+
+        if (event.action === 'copy') {
+            this.copyMessage(event.message);
+            return;
+        }
+
+        if (event.action === 'edit') {
+            this.editMessage(event.message);
+        }
+    }
+
+    private cancelActiveStream(): void {
+        if (this.activeStreamSub) {
+            this.activeStreamSub.unsubscribe();
+            this.activeStreamSub = undefined;
+        }
+
+        this.clearActiveStream();
+    }
+
     private clearActiveStream(): void {
         this.loading.set(false);
         this.activeAssistantIndex.set(null);
         this.activeStreamState.set('idle');
+    }
+
+    private deleteMessageFromSession(message: IChatMessage): void {
+        const sessionId = message.sessionId ?? this.chatStore.currentSessionId();
+
+        if (!sessionId || !message.id) {
+            this.actionError.set('\u05d0\u05d9 \u05d0\u05e4\u05e9\u05e8 \u05dc\u05de\u05d7\u05d5\u05e7 \u05d4\u05d5\u05d3\u05e2\u05d4 \u05e9\u05e2\u05d3\u05d9\u05d9\u05df \u05dc\u05d0 \u05e0\u05e9\u05de\u05e8\u05d4.');
+            return;
+        }
+
+        this.deletingMessageId.set(message.id);
+        this.chatService.deleteMessage(sessionId, message.id).subscribe({
+            next: () => {
+                this.messages.update((prev) => {
+                    const deleteFromIndex = prev.findIndex((item) => {
+                        return item.id === message.id;
+                    });
+
+                    if (deleteFromIndex < 0) return prev;
+
+                    return prev.slice(0, deleteFromIndex);
+                });
+                this.deletingMessageId.set(null);
+                this.chatStore.loadSessions();
+            },
+            error: () => {
+                this.deletingMessageId.set(null);
+                this.actionError.set('\u05de\u05d7\u05d9\u05e7\u05ea \u05d4\u05d4\u05d5\u05d3\u05e2\u05d4 \u05e0\u05db\u05e9\u05dc\u05d4. \u05e0\u05e1\u05d4 \u05e9\u05d5\u05d1.');
+            },
+        });
+    }
+
+    private copyMessage(message: IChatMessage): void {
+        if (!navigator.clipboard) {
+            this.actionError.set('\u05d4\u05d3\u05e4\u05d3\u05e4\u05df \u05dc\u05d0 \u05de\u05d0\u05e4\u05e9\u05e8 \u05d4\u05e2\u05ea\u05e7\u05d4 \u05db\u05e8\u05d2\u05e2.');
+            return;
+        }
+
+        void navigator.clipboard.writeText(message.content).catch(() => {
+            this.actionError.set('\u05d4\u05e2\u05ea\u05e7\u05ea \u05d4\u05d4\u05d5\u05d3\u05e2\u05d4 \u05e0\u05db\u05e9\u05dc\u05d4.');
+        });
+    }
+
+    private sendAgain(message: IChatMessage): void {
+        if (this.loading()) {
+            return;
+        }
+
+        const prompt = message.role === 'user' ? message.content : this.findPreviousUserPrompt(message);
+
+        if (!prompt.trim()) {
+            this.actionError.set('\u05dc\u05d0 \u05e0\u05de\u05e6\u05d0\u05d4 \u05d4\u05d5\u05d3\u05e2\u05ea \u05de\u05e9\u05ea\u05de\u05e9 \u05e7\u05d5\u05d3\u05de\u05ea.');
+            return;
+        }
+
+        this.chatForm.patchValue({ prompt });
+        this.sendMessage();
+    }
+
+    private editMessage(message: IChatMessage): void {
+        if (message.role !== 'user') return;
+
+        this.chatForm.patchValue({ prompt: message.content });
+        this.promptTextarea?.nativeElement.focus();
+    }
+
+    private findPreviousUserPrompt(message: IChatMessage): string {
+        const messageIndex = this.messages().findIndex((item) => {
+            if (message.id && item.id) {
+                return item.id === message.id;
+            }
+
+            return item === message;
+        });
+
+        if (messageIndex < 0) return '';
+
+        const previousUserMessage = this.messages()
+            .slice(0, messageIndex)
+            .reverse()
+            .find((item) => {
+                return item.role === 'user';
+            });
+
+        return previousUserMessage?.content ?? '';
     }
 
     private toSelectableModelGroups(groups: LlmModelGroup[]): LlmModelGroup[] {

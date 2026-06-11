@@ -1,3 +1,7 @@
+# Explorer Source Reference
+
+Status: Closed on 2026-06-11. This is not an active implementation plan. It is retained as a Jane source-data and DOM reference for the completed Explorer feature work.
+
 object example :
 
 Current UI note:

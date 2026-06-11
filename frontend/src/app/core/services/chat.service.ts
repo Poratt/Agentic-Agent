@@ -38,6 +38,10 @@ export class ChatService {
 		return this.http.delete<void>(`${this.base}/sessions/${sessionId}`);
 	}
 
+	deleteMessage(sessionId: number, messageId: number): Observable<void> {
+		return this.http.delete<void>(`${this.base}/sessions/${sessionId}/messages/${messageId}`);
+	}
+
 	sendMessageStream(
 		prompt: string,
 		sessionId?: number,

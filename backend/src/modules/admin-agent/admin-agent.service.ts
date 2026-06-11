@@ -85,6 +85,10 @@ export class AdminAgentService implements OnModuleInit {
     return this.agentSessionService.deleteSession(sessionId, userId);
   }
 
+  async deleteSessionMessage(sessionId: number, messageId: number, userId: number): Promise<void> {
+    return this.agentSessionService.deleteSessionMessage(sessionId, messageId, userId);
+  }
+
   async queryDatabase(
     prompt: string,
     userId: number,

@@ -123,3 +123,20 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: moved `documents/audit/backend-llm-documentation-audit.md` to `documents/done/backend-llm-documentation-audit.md`.
 - Removed: `documents/audit/phosphor-icons.web.instruction.md` because `@phosphor-icons/web` is already in active use and the file was reference material, not an audit finding.
 - Current audit folder contains only the active CSS conventions audit: `documents/audit/css-conventions-component-audit.md`.
+- Completed: `documents/done/chat-stop-stream-button-plan.md`.
+- Completed: `documents/done/chat-message-actions-plan.md`.
+- Chat submit now becomes a clickable stop button during streaming and cancels the active fetch through the existing stream Observable teardown.
+- Chat messages now expose delete, resend, copy, and edit actions through a typed `ChatMessageActionEvent`.
+- Added persistent backend deletion: `DELETE /admin-agent/sessions/:sessionId/messages/:messageId`, scoped to the authenticated user and deleting the selected message plus later messages to preserve conversation context.
+- Updated `backend/swagger-spec.json` with the new message deletion operation.
+- Updated `documents/architecture-diagram.md` for chat stream cancellation and message action deletion flow.
+- Verified: `npx ng test --watch=false`, `npx ng build`, and `npm.cmd run build` pass after the chat action/stop work.
+- Remaining warnings are unchanged: unused `AccessToDirective` in `ChatHistory`, `chat-message.css` warning budget, and `explorer.css` warning budget.
+- Closed: `documents/features/todo/explorer-plan.md` was not an active implementation plan; it is now `documents/done/explorer-source-reference.md`.
+- Active feature todo now contains only `documents/features/todo/database-storage-monitor-plan.md`.
+- Completed: Chat message action buttons now render without borders; hover/focus uses tokenized color/background only.
+- Verified: `npx ng build` passes after the chat action-button border cleanup with existing warnings only.
+- Completed: Angular 22 baseline documentation was updated in `frontend/README.md`, `AGENTS.md`, `CLAUDE.md`, and `C:\Users\porat\.claude\rules\angular-rules.md`.
+- Documented: Angular/CLI `22.0.1`, TypeScript `6.0.3`, Node `22.22.3+` or `24.15.0+`, Angular 22 safe-navigation behavior, and the known PrimeNG peer mismatch.
+- Completed: `C:\Users\porat\.claude\rules\angular-rules.md` was hardened into a strict checklist format for the local coding agent.
+- Completed: reusable local-agent prompt snippets were created under `C:\Users\porat\.claude\prompts\code-agent\`.

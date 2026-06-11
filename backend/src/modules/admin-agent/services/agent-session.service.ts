@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, In } from 'typeorm';
+import { Repository, IsNull, In, MoreThanOrEqual } from 'typeorm';
 import { ChatSession } from '../entities/chat-session.entity';
 import { ChatMessage } from '../entities/chat-message.entity';
 import { LlmMessage } from '../../llm/types/llm.types';
@@ -72,6 +72,30 @@ export class AgentSessionService {
     }
 
     await this.chatSessionRepository.delete(sessionId);
+  }
+
+  async deleteSessionMessage(sessionId: number, messageId: number, userId: number): Promise<void> {
+    const session = await this.chatSessionRepository.findOne({
+      where: { id: sessionId, userId },
+    });
+
+    if (!session) {
+      throw new ForbiddenException('You are not allowed to delete messages from this chat session.');
+    }
+
+    const message = await this.chatMessageRepository.findOne({
+      where: { id: messageId, sessionId, userId },
+    });
+
+    if (!message) {
+      throw new ForbiddenException('You are not allowed to delete this message or it does not exist.');
+    }
+
+    await this.chatMessageRepository.delete({
+      sessionId,
+      userId,
+      id: MoreThanOrEqual(message.id),
+    });
   }
 
   async getOrCreateSession(userId: number, requestedSessionId?: number): Promise<ChatSession> {

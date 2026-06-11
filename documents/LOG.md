@@ -28,6 +28,19 @@
 - Added `documents/features/todo/chat-stop-stream-button-plan.md` for changing the chat submit button into a stream stop/cancel button during loading.
 - Documented that frontend cancellation can use the existing `ChatService.sendMessageStream(...)` Observable teardown, which already calls `AbortController.abort()`.
 - Cleaned documentation audit folder: kept only `css-conventions-component-audit.md` in `documents/audit/`, moved `backend-llm-documentation-audit.md` to `documents/done/`, and deleted the Phosphor reference document.
+- Completed chat stop-stream behavior: the chat submit button now switches to a stop button during loading, unsubscribes from the active stream, and aborts the underlying fetch through the existing `ChatService.sendMessageStream(...)` teardown.
+- Completed chat message actions: each rendered chat message can request delete, send again, copy, or edit through a typed child-to-parent event.
+- Added persistent message deletion endpoint `DELETE /admin-agent/sessions/:sessionId/messages/:messageId`; backend verifies session ownership and message membership, then deletes the selected message and later messages in that session.
+- Regenerated `backend/swagger-spec.json` so the admin-agent tool catalog includes the new message deletion operation.
+- Updated `documents/architecture-diagram.md` to document stream cancellation and persistent chat message action deletion flow.
+- Verified after the chat changes with `npx ng test --watch=false`, `npx ng build`, and `npm.cmd run build`.
+- Closed the stale Explorer todo entry by moving `documents/features/todo/explorer-plan.md` to `documents/done/explorer-source-reference.md`; it is now treated as source/reference material, not an active plan.
+- Removed borders from chat message action buttons and verified the frontend build; no architecture diagram update was needed because this was a local styling change.
+- Updated Angular 22 baseline documentation in `frontend/README.md`, `AGENTS.md`, `CLAUDE.md`, and `C:\Users\porat\.claude\rules\angular-rules.md`.
+- Clarified that the project uses explicit Angular change detection and preserves current behavior with `ChangeDetectionStrategy.Eager`; the old strict-zoneless wording was removed from the local Angular rules.
+- No architecture diagram update was needed because this was documentation and agent-rule metadata only.
+- Hardened `C:\Users\porat\.claude\rules\angular-rules.md` for the local coding agent by replacing the loose prose with a strict checklist structure and removing a stale embedded task comment.
+- Created user-level reusable prompt snippets for the local coding agent under `C:\Users\porat\.claude\prompts\code-agent\`, covering default work, Angular, NestJS, CSS, review, bugfix, docs update, and commit-message workflows.
 
 ## 2026-06-10 Explorer Terpene Flags Update
 

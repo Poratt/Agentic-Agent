@@ -5,6 +5,7 @@ import {
     computed,
     effect,
     input,
+    output,
     signal,
     untracked,
     ChangeDetectionStrategy,
@@ -14,6 +15,11 @@ import { AiFormat } from '../../../core/directives/ai-format.directive';
 import { AutoScrollBottomDirective } from '../../../core/directives/auto-scroll-bottom.directive';
 
 export type ChatMessageStreamState = 'idle' | 'streaming' | 'completed' | 'errored';
+export type ChatMessageAction = 'delete' | 'sendAgain' | 'copy' | 'edit';
+export type ChatMessageActionEvent = {
+    action: ChatMessageAction;
+    message: IChatMessage;
+};
 type ChatMessageRowState = 'idle' | 'thinking' | 'typing' | 'complete';
 type ChatDisplayStep = {
     icon: string;
@@ -37,19 +43,26 @@ const CHARACTER_DELAY_JITTER_MS = 17;
 export class ChatMessage implements OnDestroy {
     message = input.required<IChatMessage>();
     streamState = input<ChatMessageStreamState>('idle');
+    actionsDisabled = input(false);
+    actionRequested = output<ChatMessageActionEvent>();
 
     private queuedText = '';
     private typeTimer?: ReturnType<typeof setTimeout>;
+    private copiedTimer?: ReturnType<typeof setTimeout>;
     private lastCanonicalLength = 0;
     private currentWordDelay = this.nextCharacterDelay();
 
     displayedContent = signal('');
     rowState = signal<ChatMessageRowState>('idle');
     hasQueuedText = signal(false);
+    copied = signal(false);
 
     isAssistant = computed(() => this.message().role === 'assistant');
     isUser = computed(() => this.message().role === 'user');
     isActiveStream = computed(() => this.isAssistant() && this.streamState() !== 'idle');
+    canDelete = computed(() => !!this.message().id && !this.isActiveStream() && !this.actionsDisabled());
+    canSendAgain = computed(() => !this.isActiveStream() && !this.actionsDisabled());
+    canEdit = computed(() => this.isUser() && !this.actionsDisabled());
     steps = computed(() => this.message().steps ?? []);
     displaySteps = computed<ChatDisplayStep[]>(() => {
         return this.steps().reduce<ChatDisplayStep[]>((displaySteps, step) => {
@@ -153,6 +166,18 @@ export class ChatMessage implements OnDestroy {
 
     ngOnDestroy(): void {
         this.stopTyping();
+        this.clearCopiedTimer();
+    }
+
+    requestAction(action: ChatMessageAction): void {
+        if (action === 'copy') {
+            this.showCopiedState();
+        }
+
+        this.actionRequested.emit({
+            action,
+            message: this.message(),
+        });
     }
 
     private resetLocalState(content: string): void {
@@ -196,6 +221,21 @@ export class ChatMessage implements OnDestroy {
         if (!this.typeTimer) return;
         clearTimeout(this.typeTimer);
         this.typeTimer = undefined;
+    }
+
+    private showCopiedState(): void {
+        this.copied.set(true);
+        this.clearCopiedTimer();
+        this.copiedTimer = setTimeout(() => {
+            this.copied.set(false);
+            this.copiedTimer = undefined;
+        }, 1200);
+    }
+
+    private clearCopiedTimer(): void {
+        if (!this.copiedTimer) return;
+        clearTimeout(this.copiedTimer);
+        this.copiedTimer = undefined;
     }
 
     private nextChunkSize(): number {

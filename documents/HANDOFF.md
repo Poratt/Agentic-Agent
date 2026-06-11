@@ -279,3 +279,55 @@ documents/
 - Files touched this session: `documents/done/backend-llm-documentation-audit.md`, `documents/audit/phosphor-icons.web.instruction.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: keep `documents/audit/` reserved for active audit findings; completed/closed audits go under `documents/done/`.
 - Open questions for the user: none.
+- Completed `documents/features/todo/chat-stop-stream-button-plan.md` and moved it to `documents/done/chat-stop-stream-button-plan.md`.
+- Completed `documents/features/todo/chat-message-actions-plan.md` and moved it to `documents/done/chat-message-actions-plan.md`.
+- Chat streaming now stores the active stream subscription, and the send button becomes a stop button while `loading()` is true. Stopping unsubscribes from the stream, aborts the fetch, exits loading state, and keeps partial assistant content visible.
+- Chat messages now render a compact action bar with delete, send again, copy, and edit actions. `ChatMessage` emits typed events; `Chat` owns conversation-level behavior.
+- Added persistent backend deletion at `DELETE /admin-agent/sessions/:sessionId/messages/:messageId`. The backend verifies authenticated session ownership and message membership, then deletes the selected message and later messages in the session.
+- Updated `documents/architecture-diagram.md` for chat stream cancellation and message-action deletion request flow.
+- Verification: `npx ng test --watch=false` from `frontend` passed 22 tests.
+- Verification: `npx ng build` from `frontend` passed with existing warnings only (`AccessToDirective`, `chat-message.css`, `explorer.css`).
+- Verification: `npm.cmd run build` from `backend` passed.
+- Next exact step: manually test `/chat` with a slow model: stop mid-stream, copy a rendered message, edit a user message, resend an assistant answer, delete a persisted message, then reload the session and confirm the deleted message and later history are gone.
+- Files touched this session: `frontend/src/app/features/chat/chat/chat.ts`, `frontend/src/app/features/chat/chat/chat.html`, `frontend/src/app/features/chat/chat/chat.css`, `frontend/src/app/features/chat/chat-message/chat-message.ts`, `frontend/src/app/features/chat/chat-message/chat-message.html`, `frontend/src/app/features/chat/chat-message/chat-message.css`, `frontend/src/app/core/services/chat.service.ts`, `backend/src/modules/admin-agent/admin-agent.controller.ts`, `backend/src/modules/admin-agent/admin-agent.service.ts`, `backend/src/modules/admin-agent/services/agent-session.service.ts`, `backend/swagger-spec.json`, `documents/architecture-diagram.md`, `documents/done/chat-message-actions-plan.md`, `documents/done/chat-stop-stream-button-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: delete message means deleting the selected persisted message and all later messages; copy remains local; edit patches the prompt; resend preserves the current selected model because it reuses the existing chat form model selection.
+- Open questions for the user: none.
+- Closed the stale Explorer todo document by renaming and moving `documents/features/todo/explorer-plan.md` to `documents/done/explorer-source-reference.md`.
+- The moved file is retained as a Jane source-data and DOM reference, not as an active implementation plan.
+- Active feature todo now contains only `documents/features/todo/database-storage-monitor-plan.md`.
+- Next exact step: pick up `documents/features/todo/database-storage-monitor-plan.md` or address the existing frontend warnings.
+- Files touched this session: `documents/done/explorer-source-reference.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep the Explorer source reference instead of deleting it because it contains Jane payload/DOM examples that may still help future scraper work.
+- Open questions for the user: none.
+- Removed borders from the new chat message action buttons in `frontend/src/app/features/chat/chat-message/chat-message.css`.
+- Also removed the duplicate `@media (hover: none)` block from the same CSS section.
+- Verification: `npx ng build` from `frontend` passed with existing warnings only.
+- Next exact step: visually check `/chat` message action buttons to confirm the no-border treatment matches the desired UI.
+- Files touched this session: `frontend/src/app/features/chat/chat-message/chat-message.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep hover/focus feedback through `color: var(--color-primary)` and `background: var(--primary-30)` instead of borders.
+- Open questions for the user: none.
+- Updated Angular 22 version documentation in the project rules and frontend README.
+- `frontend/README.md` no longer claims Angular CLI `21.2.12`; it now documents Angular/CLI `22.0.1`.
+- `AGENTS.md` and `CLAUDE.md` now list the frontend baseline: Angular `22.0.1`, Angular CLI `22.0.1`, TypeScript `6.0.3`, Node `22.22.3+` or `24.15.0+`, and the known PrimeNG peer mismatch.
+- `C:\Users\porat\.claude\rules\angular-rules.md` now includes the same Angular 22 baseline, forbids keeping `$safeNavigationMigration()`, documents Angular 22 safe-navigation behavior, and replaces the inaccurate strict-zoneless wording with the current explicit `changeDetection` rule.
+- Verification: searched the touched docs for stale `21.2.12`, Angular 22 baseline text, and corrupted-character markers; no new corruption was found.
+- Next exact step: continue with `documents/features/todo/database-storage-monitor-plan.md` or manually test the recent `/chat` message action flow.
+- Files touched this session: `frontend/README.md`, `AGENTS.md`, `CLAUDE.md`, `C:\Users\porat\.claude\rules\angular-rules.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: do not update `documents/architecture-diagram.md` because this was documentation/rules metadata only.
+- Open questions for the user: none.
+- Hardened `C:\Users\porat\.claude\rules\angular-rules.md` for use by a smaller local coding agent.
+- The Angular rules file is now organized as a strict checklist with `Version Baseline`, `Before Editing`, `Always`, `Never`, `Angular 22 Notes`, `Page Component Pattern`, `Services`, `Stores`, `Templates`, `CSS`, and `Verification`.
+- Removed the stale embedded Hebrew task comment from the Angular rules file.
+- Verification: read back the full rules file, confirmed the stale comment and `Strictly Zoneless` wording are gone, and confirmed the corrupted-character scan returned no matches.
+- Next exact step: continue with `documents/features/todo/database-storage-monitor-plan.md` or harden the next rule file for the local agent.
+- Files touched this session: `C:\Users\porat\.claude\rules\angular-rules.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep the rules in English and checklist-oriented so a smaller model can follow them with less ambiguity.
+- Open questions for the user: none.
+- Created reusable prompt snippets for the smaller local coding agent under `C:\Users\porat\.claude\prompts\code-agent\`.
+- Prompt files created: `default.md`, `angular-task.md`, `nestjs-task.md`, `css-task.md`, `review.md`, `bugfix.md`, `docs-update.md`, and `commit.md`.
+- The prompts are short, checklist-oriented, and split by task type so they can be copied quickly into the local agent without loading excessive context.
+- Verification: listed all created prompt files, searched for expected prompt anchors, and confirmed the corruption scan returned no matches.
+- Next exact step: optionally add PowerShell helper functions in the user profile to list/copy these prompt snippets quickly.
+- Files touched this session: `C:\Users\porat\.claude\prompts\code-agent\*.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: store reusable agent prompts outside the repo under the user-level Claude config, not inside project rules or feature plans.
+- Open questions for the user: none.

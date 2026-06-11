@@ -139,7 +139,15 @@ Before using `str_replace` on any file:
 
 ## Project Overview
 
-Full-stack monorepo: Angular frontend + NestJS backend.
+Full-stack monorepo: Angular 22 frontend + NestJS backend.
+
+Frontend platform baseline:
+
+- Angular `22.0.1`
+- Angular CLI `22.0.1`
+- TypeScript `6.0.3`
+- Node.js `22.22.3+` or `24.15.0+`
+- PrimeNG is currently `21.1.8`; its Angular 22 peer dependency mismatch is a known open risk.
 
 ## Rules
 

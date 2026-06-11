@@ -19,6 +19,7 @@ import {
   ApiBody,
   ApiConsumes,
   ApiExtraModels,
+  ApiForbiddenResponse,
   ApiOperation,
   ApiParam,
   ApiQuery,
@@ -137,6 +138,35 @@ export class AdminAgentController {
       throw new UnauthorizedException();
     }
     await this.adminAgentService.deleteSession(id, req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('sessions/:sessionId/messages/:messageId')
+  @HttpCode(204)
+  @ApiOperation({
+    summary: 'Delete a chat message and later history',
+    summaryHe: 'מוחק הודעת צאט ואת כל ההודעות שאחריה',
+    toolIcon: 'ph-trash',
+    genUiSpec:
+      'After this tool succeeds, do not invent response data. Tell the user that the selected chat message and later session history were permanently deleted.',
+    description:
+      'Permanently deletes one message owned by the authenticated user and every later message in the same session. ' +
+      'This preserves conversation consistency by preventing later assistant or tool messages from remaining without their original context.',
+  } as CustomApiOperationOptions)
+  @ApiParam({ name: 'sessionId', type: Number, description: 'Numeric chat session id that owns the message.' })
+  @ApiParam({ name: 'messageId', type: Number, description: 'Numeric chat message id to delete from.' })
+  @ApiResponse({ status: 204, description: 'Chat message and later session history deleted successfully.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  @ApiForbiddenResponse({ description: 'The session or message does not belong to the authenticated user.' })
+  async deleteSessionMessage(
+    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Param('messageId', ParseIntPipe) messageId: number,
+    @Req() req: RequestWithUser,
+  ) {
+    if (!req.user) {
+      throw new UnauthorizedException();
+    }
+    await this.adminAgentService.deleteSessionMessage(sessionId, messageId, req.user.sub);
   }
 
   @UseGuards(JwtAuthGuard)

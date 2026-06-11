@@ -42,4 +42,39 @@
     }
 
     <div class="message-body" [aiFormat]="contentForDisplay()"></div>
+
+    <div class="message-actions" aria-label="Message actions">
+        <button
+            type="button"
+            class="message-action-btn"
+            [disabled]="!canDelete()"
+            aria-label="Delete message"
+            (click)="requestAction('delete')"
+        >
+            <span class="ph ph-trash"></span>
+        </button>
+        <button
+            type="button"
+            class="message-action-btn"
+            [disabled]="!canSendAgain()"
+            aria-label="Send again"
+            (click)="requestAction('sendAgain')"
+        >
+            <span class="ph ph-arrow-clockwise"></span>
+        </button>
+        <button type="button" class="message-action-btn" aria-label="Copy message" (click)="requestAction('copy')">
+            <span class="ph" [class.ph-copy]="!copied()" [class.ph-check]="copied()"></span>
+        </button>
+        @if (isUser()) {
+            <button
+                type="button"
+                class="message-action-btn"
+                [disabled]="!canEdit()"
+                aria-label="Edit message"
+                (click)="requestAction('edit')"
+            >
+                <span class="ph ph-pencil-simple"></span>
+            </button>
+        }
+    </div>
 </div>

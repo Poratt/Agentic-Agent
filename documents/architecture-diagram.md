@@ -126,6 +126,10 @@ sequenceDiagram
 
   Admin->>Chat: Send prompt
   Chat->>API: POST /admin-agent/query-stream
+  opt User stops active response
+    Chat-->>API: Abort stream request
+    API-->>Agent: Stop writing response
+  end
   API->>Agent: queryDatabaseStream(...)
   Agent->>Sessions: Save user message
   Agent->>Parser: Load Swagger tools
@@ -155,6 +159,36 @@ sequenceDiagram
     LLM-->>Agent: Assistant content
     Agent-->>API: Stream tokens
     API-->>Chat: SSE
+  end
+```
+
+## Chat Message Actions Flow
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Admin as Admin User
+  participant Chat as Angular Chat UI
+  participant Msg as ChatMessage Component
+  participant Service as ChatService
+  participant API as AdminAgentController
+  participant Agent as AdminAgentService
+  participant Sessions as AgentSessionService
+  participant DB as Database
+
+  Admin->>Msg: Click message action
+  Msg-->>Chat: actionRequested(action, message)
+
+  alt Delete message
+    Chat->>Service: deleteMessage(sessionId, messageId)
+    Service->>API: DELETE /admin-agent/sessions/:sessionId/messages/:messageId
+    API->>Agent: deleteSessionMessage(...)
+    Agent->>Sessions: Verify ownership and message membership
+    Sessions->>DB: Delete selected message and later messages
+    DB-->>Chat: 204 No Content
+    Chat->>Chat: Remove selected and later messages locally
+  else Copy / edit / send again
+    Chat->>Chat: Copy content, patch prompt, or resend resolved prompt
   end
 ```
 
@@ -250,6 +284,8 @@ sequenceDiagram
 - The agent currently runs in a single active flow.
 - Read-only tools run in parallel, mutations run sequentially.
 - Full conversation history is persisted in the backend.
+- Chat message deletion is persistent and deletes the selected message plus later session history to preserve context consistency.
+- Active chat streams can be cancelled from the Angular UI by unsubscribing from the stream request, which aborts the underlying fetch.
 - `LlmService` is the public facade used by controllers and `AdminAgentService`.
 - Internal LLM responsibilities are split into provider config, provider client, model catalog, and health-check services.
 - `ExplorerModule` fetches Jane store data from the configured Jane API source and exposes normalized items through a protected backend endpoint.
