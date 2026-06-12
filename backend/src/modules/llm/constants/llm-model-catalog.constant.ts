@@ -74,8 +74,6 @@ const NVIDIA_MODELS: LlmModelGroupDto[] = [
 
 
 
-
-
 export const LLM_STATIC_MODEL_GROUPS: LlmModelGroupDto[] = [
   ...OPENROUTER_MODELS,
   ...NVIDIA_MODELS,

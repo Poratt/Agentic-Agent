@@ -492,3 +492,19 @@ documents/
 - Files touched this session: `frontend/src/app/assets/styles/_utilities.css`, `frontend/src/app/assets/styles/_layout.css`, `frontend/src/app/features/dashboard/dashboard.html`, `frontend/src/app/features/design-system/design-system.html`, `frontend/src/app/features/design-system/design-system.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: keep the padded icon treatment global instead of duplicating it in feature CSS. No architecture diagram update was needed because this was styling only.
 - Open questions for the user: none.
+- Fixed missing search icons in PrimeNG-backed search fields by making the shared `.form-field-has-icon` wrapper own icon positioning and input padding for normal inputs and `.p-inputtext`.
+- This restores the search icon spacing for Users management and Explorer, and also keeps the existing Chat History search field on the same global pattern.
+- Verification: `npm.cmd run build` from `frontend` passed. Remaining warnings are existing unrelated warnings only: unused `AccessToDirective`, `chat-message.css` budget, and `explorer.css` budget.
+- Visual browser verification was not completed because no Browser tool is available in this session.
+- Next exact step: visually refresh `/users` and `/explorer` and confirm the magnifying-glass icon is visible inside each search input.
+- Files touched this session: `frontend/src/app/assets/styles/_forms.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: fix the shared form icon wrapper instead of adding Users/Explorer-specific CSS. No architecture diagram update was needed because this was global form styling only.
+- Replaced the old `documents/features/todo/provider-and-llm-db-plan.md` with the two new planning files that already lock the 9 open edges.
+- The new active plan set is now `documents/features/todo/LLM_EDGES_RESOLVED.md` + `documents/features/todo/LLM_PROVIDER_DB_TASK.md`. The old draft was archived to `documents/done/provider-and-llm-db-plan.md`.
+- `LLM_EDGES_RESOLVED.md` records the locked decisions: hybrid global-default, hardcoded `ProviderType` enum (4 values), read-only `ollama-cloud`, soft-disable only deletion with hard-delete blocked when test results exist, `rateLimitFlag: boolean` on the provider entity, fail-fast `ENCRYPTION_KEY` validation, `backend/.env.example` with all LLM vars, async config resolution with a 5-minute cache, and graceful Ollama offline handling.
+- `LLM_PROVIDER_DB_TASK.md` is the implementation task that consumes those decisions across 9 phases (entities + encryption, registry service, admin controller, seed/bootstrap, health integration, scheduled test runs + ranking, Angular service, Settings state, Settings UI) plus a security checklist and final build verification.
+- No backend or frontend code was changed in this session — only documentation.
+- Next exact step: pick Phase 1 from `LLM_PROVIDER_DB_TASK.md` (entities + encryption utility) when implementation is approved, or continue with `documents/features/todo/database-storage-monitor-plan.md` first.
+- Files touched this session: `documents/done/provider-and-llm-db-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: treat the two new files as the single canonical LLM provider/DB plan; no code changes yet.
+- Open questions for the user: none.

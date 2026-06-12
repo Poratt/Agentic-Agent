@@ -13,9 +13,20 @@
 
   .field-icon {
     position: absolute;
+    top: 50%;
     right: var(--space-3);
     color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+    line-height: 1;
     pointer-events: none;
+    transform: translateY(-50%);
+    z-index: 1;
+  }
+
+  input,
+  input.p-inputtext,
+  input.form-control {
+    padding: var(--space-2) var(--field-icon-padding) var(--space-2) var(--space-4);
   }
 }
 

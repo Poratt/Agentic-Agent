@@ -1,6 +1,6 @@
 # Project Documentation Status
 
-Last updated: 2026-06-11
+Last updated: 2026-06-12
 
 ## Document Areas
 
@@ -184,3 +184,8 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: added global `.icon-tile` padded icon styling and applied it to Dashboard metric-card icons.
 - Completed: Design System section-heading icons now reuse `.icon-tile` instead of local duplicated icon CSS.
 - Verified: `npm.cmd run build` passes after the global icon-tile update with existing unrelated warnings only.
+- Completed: restored missing search icons in Users management and Explorer by hardening the shared `.form-field-has-icon` global form pattern for PrimeNG `.p-inputtext` inputs.
+- Verified: `npm.cmd run build` passes after the form icon fix with existing unrelated warnings only.
+- Replaced: `documents/features/todo/provider-and-llm-db-plan.md` is now archived to `documents/done/`; the new canonical LLM provider/DB plan is `documents/features/todo/LLM_EDGES_RESOLVED.md` + `documents/features/todo/LLM_PROVIDER_DB_TASK.md`.
+- Documented: the 9 resolved open edges (hybrid global default, hardcoded `ProviderType` enum, read-only `ollama-cloud`, soft-disable only deletion, `rateLimitFlag`, fail-fast encryption key, `backend/.env.example`, async config cache, Ollama offline handling) and the 9 implementation phases in the new task file.
+- No code changes were made in this planning-cleanup session.

@@ -1,5 +1,12 @@
 # Documentation Change Log
 
+## 2026-06-12 Form Search Icon Fix
+
+- Fixed the shared `.form-field-has-icon` pattern in `frontend/src/app/assets/styles/_forms.css` so PrimeNG `pInputText` search inputs keep right-side icon padding and a visible positioned field icon.
+- Decision: keep the fix global because Users management, Explorer, and Chat History all use the same search-field wrapper.
+- Verified `npm.cmd run build` from `frontend` passes. Remaining warnings are existing unrelated warnings: unused `AccessToDirective`, `chat-message.css` budget, and `explorer.css` budget.
+- No architecture diagram update was needed because this was global form styling only.
+
 ## 2026-06-11 Global Icon Tile
 
 - Added global `.icon-tile` as the shared padded-background icon treatment for dashboard metrics and design-system headings.
@@ -213,3 +220,11 @@
 - Fixed the Explorer network-capture path so `isNew` no longer depends only on a missing Jane `is_new` JSON field; it now also maps visible `חדש!` DOM markers back to captured JSON products by Hebrew/English name.
 - Completed the light-mode character upgrade by replacing only the `[data-theme="light"]` token block in `_variables.css`.
 - No architecture diagram update was needed because this was global design-token styling only.
+
+## 2026-06-12 LLM Plan Replacement
+
+- Replaced the old LLM provider/DB plan: archived `documents/features/todo/provider-and-llm-db-plan.md` to `documents/done/` and made the two new files the single canonical plan.
+- The new active plan is `documents/features/todo/LLM_EDGES_RESOLVED.md` (locked decisions on 9 previously open edges) and `documents/features/todo/LLM_PROVIDER_DB_TASK.md` (9-phase implementation task that consumes those decisions).
+- Locked decisions: hybrid global default with bootstrap provider + per-provider default model, hardcoded `ProviderType` enum (`openrouter`, `nvidia`, `ollama`, `ollama-cloud`), read-only `ollama-cloud` virtual provider, soft-disable only deletion with hard delete blocked when test results exist, `rateLimitFlag: boolean` on `LlmProvider` for cron escalation, fail-fast `ENCRYPTION_KEY` validation, `backend/.env.example` template, async provider-config resolution with a 5-minute cache invalidated on `PATCH`, and graceful Ollama offline handling with explicit-vs-bootstrap distinction.
+- No backend or frontend code was changed in this planning-cleanup session.
+- Files touched this session: `documents/done/provider-and-llm-db-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
