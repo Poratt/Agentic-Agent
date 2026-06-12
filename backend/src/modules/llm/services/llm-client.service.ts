@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
-import { LlmRequest, LlmResponse, LlmToolCall, LlmProvider } from '../types/llm.types';
+import { LlmRequest, LlmResponse, LlmToolCall, LlmProviderKey } from '../types/llm.types';
 import { LlmProviderConfigService } from './llm-provider-config.service';
 
 const MAX_RETRIES = 4;
@@ -9,24 +9,46 @@ const BASE_DELAY_MS = 1500;
 @Injectable()
 export class LlmClientService {
   private readonly logger = new Logger(LlmClientService.name);
-  private readonly openai: OpenAI;
+  private openai?: OpenAI;
 
-  constructor(private readonly providerConfig: LlmProviderConfigService) {
+  constructor(private readonly providerConfig: LlmProviderConfigService) {}
+
+  /**
+   * Lazily creates an OpenAI client based on the currently active provider configuration.
+   * The client is cached for the lifetime of the service unless a provider override is used.
+   */
+  private async initClient(): Promise<OpenAI> {
     const activeProvider = this.providerConfig.getActiveProvider();
-    const config = this.providerConfig.getProviderConfig(activeProvider);
+    const config = await this.providerConfig.getProviderConfig(activeProvider);
 
-    this.openai = new OpenAI({
+    return new OpenAI({
       baseURL: config.baseUrl,
       apiKey: config.apiKey,
       defaultHeaders: this.providerConfig.getDefaultHeaders(activeProvider),
     });
   }
 
+  /**
+   * Returns an initialized OpenAI client. If a provider override is supplied we always
+   * create a new client instance for that provider; otherwise we reuse the cached client.
+   */
+  private async getInitializedClient(): Promise<OpenAI> {
+    if (this.openai) {
+      return this.openai;
+    }
+    this.openai = await this.initClient();
+    return this.openai;
+  }
+
   async generateResponse(llmRequest: LlmRequest): Promise<LlmResponse> {
     const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools } = llmRequest;
-    const client = this.getClient(providerOverride);
+    const client = providerOverride ? await this.getClient(providerOverride) : await this.getInitializedClient();
     const activeProvider = this.providerConfig.getActiveProvider();
-    const activeModel = modelOverride || this.providerConfig.getActiveModel();
+    let activeModel = modelOverride || this.providerConfig.getActiveModel();
+    if (!activeModel) {
+      const cfg = await this.providerConfig.getProviderConfig(activeProvider);
+      activeModel = cfg.model;
+    }
 
     if (!activeModel) {
       throw new Error('Missing active model configuration');
@@ -64,9 +86,13 @@ export class LlmClientService {
 
   async *generateStream(llmRequest: LlmRequest): AsyncIterable<string> {
     const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools } = llmRequest;
-    const client = this.getClient(providerOverride);
+    const client = providerOverride ? await this.getClient(providerOverride) : await this.getInitializedClient();
     const activeProvider = this.providerConfig.getActiveProvider();
-    const activeModel = modelOverride || this.providerConfig.getActiveModel();
+    let activeModel = modelOverride || this.providerConfig.getActiveModel();
+    if (!activeModel) {
+      const cfg = await this.providerConfig.getProviderConfig(activeProvider);
+      activeModel = cfg.model;
+    }
 
     if (!activeModel) {
       throw new Error('Missing active model configuration');
@@ -101,12 +127,12 @@ export class LlmClientService {
     }
   }
 
-  private getClient(providerOverride?: LlmProvider): OpenAI {
+  private async getClient(providerOverride?: LlmProviderKey): Promise<OpenAI> {
     if (!providerOverride) {
       return this.openai;
     }
 
-    const config = this.providerConfig.getProviderConfig(providerOverride);
+    const config = await this.providerConfig.getProviderConfig(providerOverride);
 
     return new OpenAI({
       baseURL: config.baseUrl,

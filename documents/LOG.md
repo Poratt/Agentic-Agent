@@ -1,5 +1,46 @@
 # Documentation Change Log
 
+## 2026-06-12 LLM Provider DB — Admin API response wrapper + DTO alignment
+
+- Fixed the empty Settings table bug: the LLM admin controller returned raw arrays/objects while the frontend `LlmService` admin methods expected `ServiceResultContainer<T>`. With the wrapper missing, `res.result` was `undefined` and the store treated every response as an empty list, so the page fell through to the empty state even when providers existed.
+- Aligned the admin API responses to the project-wide `ServiceResultContainer<T>` wrapper used by the public LLM controller and `LlmHealthService`.
+- New Swagger DTOs: `backend/src/modules/llm/dto/llm-admin-provider-result-response.dto.ts` and `llm-admin-model-result-response.dto.ts`, modeled after the existing `llm-provider-result-response.dto.ts` (success/message/result envelope).
+- `LlmProviderRegistryService` now exposes `*Result()` wrappers alongside the existing raw methods: `findAllProvidersResult`, `findProviderByIdResult`, `createProviderResult`, `updateProviderResult`, `disableProviderResult`, `findModelsByProviderResult`, `createModelResult`, `updateModelResult`, `disableModelResult`, `setDefaultModelResult`.
+- `LlmAdminController` now calls the `*Result()` wrappers and uses the new Swagger envelope DTOs in `@ApiOkResponse` / `@ApiCreatedResponse`. The old `async` returning `{ success: true }` shape on `disableProvider`, `disableModel`, and `setDefaultModel` is replaced by the wrapper return value.
+- Aligned the frontend DTOs to the actual backend payload: removed the optimistic `createdAt` / `updatedAt` from `ProviderResponseDto` and `ModelResponseDto`, and added `modelsCount: number` to `ProviderResponseDto` (which the backend `mapToResponseDto` already returned but the frontend interface did not declare).
+- Added a new Hebrew column "מודלים" to the Settings providers table, backed by `provider.modelsCount` and rendered through `formatValue(...)` so `0` displays as `לא ידוע` like other nullable cells.
+- Verification: `npm.cmd run build` from `backend` passes (no warnings); `npm.cmd run build` from `frontend` passes (settings chunk 5.97 kB, only the pre-existing `chat-message.css` / `explorer.css` budget warnings).
+- No architecture diagram update was needed because the admin endpoint URLs and request/response envelope are unchanged in shape — only the response body now wraps the same data.
+- Next exact step: refresh `/settings` in the browser; the providers table should now render the seeded rows from `/llm/admin/providers` (assuming the backend seed service ran with valid env vars), or the table will be empty only if the DB truly has no providers.
+
+## 2026-06-12 LLM Provider DB — Phase 8 Settings Page Wiring
+
+- Implemented Phase 8 (Settings Page State) of `LLM_PROVIDER_DB_TASK.md` for the providers list.
+- Created `frontend/src/app/core/store/llm-admin.store.ts` — signal-store mirroring the `UsersStore` pattern with `_providers`, `_loading`, `_error` private signals, public `providers`/`loading`/`error` computed selectors, and a `pageState` computed that returns `Loading | Error | Empty | Ready`. Action: `loadProviders()` calls `LlmService.getAdminProviders()` and sets state with `finalize` teardown.
+- Updated `frontend/src/app/features/settings/settings.ts` — wired `LlmAdminStore` via `inject()`, exposed `PageStates`, `columns`, `pageState`, `providers`, `errorMessage`, and a `formatValue(...)` helper for nullable provider fields. Implemented `OnInit` to call `loadProviders()` and a retry path that re-invokes the store action.
+- Updated `frontend/src/app/features/settings/settings.html` — replaced the static `page-content` shell with the standard `@switch (pageState())` page-states pattern (`loading-state`, `error-state`, `empty-state`, `ready`). The Ready state renders a `glass-effect card` section header and a `glass-effect card table-container` PrimeNG `p-table` listing providers (id, key, label, baseUrl, hasApiKey, defaultModelId, active). The active column uses the existing `BadgeColor` directive with the project's success/danger token hexes. The error state shows the backend error message and a `primary-btn filled` retry button.
+- No new component CSS, no wrapper classes, no `settings-container` — used only the existing global `page-content` / `page-header` / `glass-effect card` / `table-container` / `page-state` / `primary-btn` / `badge` classes.
+- Verification: `npm.cmd run build` from `frontend` passes. Settings chunk is 5.84 kB. Remaining warnings are unchanged pre-existing ones (`explorer.css` budget, `chat-message.css` budget).
+- Forbidden-pattern scan (PowerShell `Select-String` against the touched files): no `$safeNavigationMigration`, `*ngIf`, `*ngFor`, `*ngSwitch`, or `constructor(` matches.
+- No architecture diagram update was needed because Phase 8 only adds a frontend page state + table over the existing `/llm/admin/providers` endpoint.
+- Next exact step: Phase 8b — provider create/edit form, model list under each provider, and default-model assignment controls. These will reuse the same `LlmAdminStore` signals and the new admin service methods.
+
+## 2026-06-12 LLM Provider DB — Phase 1 Complete
+
+- Implemented Phase 1 (Entities & Encryption Utility) of `LLM_PROVIDER_DB_TASK.md`.
+- Created `backend/src/core/utils/encryption.util.ts` — pure AES-256-GCM encrypt/decrypt functions.
+- Created `backend/src/modules/llm/services/encryption.service.ts` — `@Injectable` wrapper with fail-fast `ENCRYPTION_KEY` validation (64-char hex).
+- Created 4 TypeORM entities under `backend/src/modules/llm/entities/`:
+  - `LlmProvider` — routing key, label, baseUrl, encrypted API key (`select: false`), `defaultModelId`, `active`, `rateLimitFlag`.
+  - `LlmModel` — provider FK, name, label, `active`, `supportsStreaming`, `supportsTools`, `contextWindow`, `sortOrder`, `runtimeDiscovered`, `lastSeenAt`.
+  - `LlmModelTestRun` — `startedAt`, `finishedAt`, `trigger` (manual/cron), `status` (running/completed/failed), counters.
+  - `LlmModelTestResult` — per-model metrics: latency, TTFB, tokens/sec, quality score, denormalized provider/model keys.
+- Registered all entities in `LlmModule` via `TypeOrmModule.forFeature([...])`.
+- Added `ENCRYPTION_KEY` to `backend/.env.example` with generation command.
+- Added `ProviderType` enum (`openrouter`, `nvidia`, `ollama`, `ollama-cloud`) — `ollama-cloud` is virtual/read-only.
+- Verification: `npm.cmd run build` (backend) and `npx ng build` (frontend) pass.
+- No architecture diagram update needed — DB entities are internal to LLM module.
+
 ## 2026-06-12 Form Search Icon Fix
 
 - Fixed the shared `.form-field-has-icon` pattern in `frontend/src/app/assets/styles/_forms.css` so PrimeNG `pInputText` search inputs keep right-side icon padding and a visible positioned field icon.

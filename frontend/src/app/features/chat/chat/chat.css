@@ -10,6 +10,7 @@
 	height: 100%;
 	overflow: hidden;
 	padding: 0;
+	gap: 6px;
 
 	.chat-history-loader {
 		flex: 1;

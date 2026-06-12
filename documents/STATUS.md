@@ -114,7 +114,10 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: removed Angular's temporary `$safeNavigationMigration(...)` helpers from frontend templates after the Angular 22 migration review.
 - Verified: no `$safeNavigationMigration` usages remain under `frontend/src`; `npx ng test --watch=false` and `npx ng build` pass.
 - Completed: moved the Angular 22 upgrade guide to `documents/done/angular-22-update-guide.md`.
-- Remaining open work: decide how to handle PrimeNG's Angular 21 peer dependency range, clean existing frontend warnings, and continue the active feature plans under `documents/features/todo/`.
+- Completed: removed unused `AccessToDirective` from `ChatHistory` component.
+- Verified: `npx ng build` passes without the `AccessToDirective` warning.
+- Remaining warnings: `explorer.css` and `chat-message.css` budget overages.
+- Current active todo: `documents/features/todo/database-storage-monitor-plan.md` or LLM Provider DB Phase 1.
 - Completed: AiFormat Phase 2/3 now sanitize GenUI component HTML before raw rendering, removing dangerous tags, unsafe token overrides, and unscoped global selectors while preserving local scoped CSS and `@keyframes`.
 - Verified: `npx ng test --watch=false` passes 19 tests, and `npx ng build` passes after the AiFormat sanitizer update.
 - Completed: AiFormat Phase 4/5/6 finished. Skeleton rendering now goes through `renderSkeletonOnce()`, Hebrew/English role parsing is covered by tests, CSS code fences render as markdown code, and the plan moved to `documents/done/ai-format-directive-improvement-plan.md`.
@@ -189,3 +192,25 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Replaced: `documents/features/todo/provider-and-llm-db-plan.md` is now archived to `documents/done/`; the new canonical LLM provider/DB plan is `documents/features/todo/LLM_EDGES_RESOLVED.md` + `documents/features/todo/LLM_PROVIDER_DB_TASK.md`.
 - Documented: the 9 resolved open edges (hybrid global default, hardcoded `ProviderType` enum, read-only `ollama-cloud`, soft-disable only deletion, `rateLimitFlag`, fail-fast encryption key, `backend/.env.example`, async config cache, Ollama offline handling) and the 9 implementation phases in the new task file.
 - No code changes were made in this planning-cleanup session.
+- Completed: Phase 1 of `LLM_PROVIDER_DB_TASK.md` — Entities & Encryption Utility.
+  - Created `encryption.util.ts` (AES-256-GCM), `EncryptionService` (fail-fast with `ENCRYPTION_KEY` validation).
+  - Created 4 TypeORM entities: `LlmProvider`, `LlmModel`, `LlmModelTestRun`, `LlmModelTestResult`.
+  - Registered all entities in `LlmModule`.
+  - Added `ENCRYPTION_KEY` to `.env.example` with generation instructions.
+  - Added `ProviderType` enum (4 values, `ollama-cloud` read-only).
+  - Verification: `npm.cmd run build` (backend) and `npx ng build` (frontend) pass.
+- Completed: Resolved Phase 2 build errors (type collisions, missing awaits, missing imports) for LLM Provider DB task. Verified: npm.cmd run build passes.
+- Completed: Phase 5 of `LLM_PROVIDER_DB_TASK.md` — LLM Health Integration. `LlmHealthService.testAllModels()` now loads active models from the DB via `LlmProviderRegistryService` and uses `getDecryptedApiKey()` for provider auth. `LlmClientService` resolves provider config from DB first and falls back to env.
+- Completed: Phase 7 of `LLM_PROVIDER_DB_TASK.md` — Angular service admin methods.
+  - Created `frontend/src/app/core/models/llm.models.ts` with all DTO interfaces (`ProviderResponseDto`, `CreateProviderDto`, `UpdateProviderDto`, `ModelResponseDto`, `CreateModelDto`, `UpdateModelDto`, `StartTestRunDto`, `TestRunDto`, `TestResultDto`, `ModelRankingDto`, `OllamaRuntimeModelDto`).
+  - Added DTO imports and admin method signatures to `frontend/src/app/core/services/llm.service.ts` (`getAdminProviders`, `createProvider`, `updateProvider`, `disableProvider`, `getProviderModels`, `createModel`, `updateModel`, `disableModel`, `setDefaultModel`, `startModelTestRun`, `getModelTestRuns`, `getModelTestRunResults`, `getModelRankings`, `getOllamaRuntimeModels`).
+  - Methods follow the existing `ServiceResultContainer<T>` response pattern.
+- Completed: Phase 8 (initial) of `LLM_PROVIDER_DB_TASK.md` — Settings page state + providers table.
+  - Created `frontend/src/app/core/store/llm-admin.store.ts` mirroring the `UsersStore` signal-store pattern: private `_providers` / `_loading` / `_error` signals, public computed selectors (`providers`, `loading`, `error`, `pageState` returning `Loading | Error | Empty | Ready`), and a `loadProviders()` action that calls `LlmService.getAdminProviders()` and updates state via `finalize`.
+  - Wired `frontend/src/app/features/settings/settings.ts` to `LlmAdminStore` via `inject()`; added `OnInit` to load providers, exposed `PageStates`, `columns`, `pageState`, `providers`, `errorMessage`, and a `formatValue(...)` helper for nullable provider fields.
+  - Replaced the static `settings.html` shell with the standard `@switch (pageState())` pattern: `loading-state` (spinner), `error-state` (warning icon, Hebrew title, backend error message, retry button), `empty-state` (database icon, Hebrew title/subtitle), and `ready` (page-header with Hebrew title + `glass-effect card` providers table inside `glass-effect card table-container`).
+  - Providers table uses PrimeNG `p-table` with Hebrew column headers (id, מפתח, שם תצוגה, כתובת בסיס, מפתח API, מודל ברירת מחדל, פעיל); the active column renders as a colored badge via the existing `BadgeColor` directive using the project's success (`#10B981`) and danger (`#F87171`) token hexes.
+  - No new component CSS, no `settings-container` wrapper; reused global `page-content`, `page-header`, `glass-effect card`, `table-container`, `page-state`, `primary-btn`, and `badge` classes.
+  - Verification: `npm.cmd run build` from `frontend` passes; settings chunk is 5.84 kB. Remaining warnings are unchanged pre-existing ones (`explorer.css` budget, `chat-message.css` budget). Forbidden-pattern scan (PowerShell `Select-String`) on touched files: no `$safeNavigationMigration`, `*ngIf`, `*ngFor`, `*ngSwitch`, or `constructor(` matches.
+- Completed: aligned LLM admin API responses to the project-wide `ServiceResultContainer<T>` wrapper, matching what the frontend `LlmService` admin methods already expected. New `LlmAdminProviderResultResponseDto` and `LlmAdminModelResultResponseDto` Swagger envelopes, `*Result()` wrappers on `LlmProviderRegistryService`, updated `LlmAdminController` to call them. Aligned frontend `ProviderResponseDto` (dropped optimistic `createdAt`/`updatedAt`, added `modelsCount`) and `ModelResponseDto` (dropped `createdAt`/`updatedAt`/`lastSeenAt`) to the actual backend payload. Added a "מודלים" column to the Settings providers table. Verification: backend and frontend builds pass.
+- Next exact step: Phase 8b — provider create/edit form, model list per provider, default-model assignment controls; then Phase 9 polish (Hebrew labels review, RTL layout, global button/form classes, no component CSS).

@@ -7,7 +7,7 @@ import { LlmClientService } from './services/llm-client.service';
 import { LlmHealthService } from './services/llm-health.service';
 import { LlmModelCatalogService } from './services/llm-model-catalog.service';
 import { LlmProviderConfigService } from './services/llm-provider-config.service';
-import { LlmModelTestResult, LlmProvider, LlmRequest, LlmResponse, LlmRuntimeSelection } from './types/llm.types';
+import { LlmModelTestResult, LlmProviderKey, LlmRequest, LlmResponse, LlmRuntimeSelection } from './types/llm.types';
 
 @Injectable()
 export class LlmService {
@@ -40,7 +40,7 @@ export class LlmService {
     };
   }
 
-  getRuntimeSelection(providerOverride?: LlmProvider, modelOverride?: string): LlmRuntimeSelection {
+  getRuntimeSelection(providerOverride?: LlmProviderKey, modelOverride?: string): LlmRuntimeSelection {
     return this.providerConfig.getRuntimeSelection(providerOverride, modelOverride);
   }
 
@@ -53,11 +53,11 @@ export class LlmService {
   }
 
   testLlm(
-    provider: LlmProvider,
+    provider: LlmProviderKey,
     model: string,
     prompt: string,
     systemContext: string,
-  ): Promise<ServiceResultContainer<{ provider: LlmProvider; model: string; available: boolean }>> {
+  ): Promise<ServiceResultContainer<{ provider: LlmProviderKey; model: string; available: boolean }>> {
     return this.health.testLlm(provider, model, prompt, systemContext);
   }
 

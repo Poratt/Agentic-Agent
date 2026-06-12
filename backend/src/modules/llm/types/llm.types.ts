@@ -1,7 +1,13 @@
-export type LlmProvider = 'openrouter' | 'nvidia' | 'ollama' | 'ollama-cloud';
+import { ProviderType } from "./provider-type.enum";
+
+/**
+ * Routing key for the LLM client.
+ * Derived from `ProviderType` so the type and the enum can never drift.
+ */
+export type LlmProviderKey = `${ProviderType}`;
 
 export type LlmToolSchema = {
-  type: 'function';
+  type: "function";
   function?: {
     name: string;
     description?: string;
@@ -11,7 +17,7 @@ export type LlmToolSchema = {
 
 export type LlmToolCall = {
   id: string;
-  type: 'function';
+  type: "function";
   function: {
     name: string;
     arguments: string;
@@ -24,26 +30,26 @@ export type LlmResponse = {
 };
 
 export type LlmMessage =
-  | { role: 'user'; content: string }
-  | { role: 'assistant'; content: string | null; tool_calls?: LlmToolCall[] }
-  | { role: 'tool'; tool_call_id: string; content: string };
+  | { role: "user"; content: string }
+  | { role: "assistant"; content: string | null; tool_calls?: LlmToolCall[] }
+  | { role: "tool"; tool_call_id: string; content: string };
 
 export interface LlmRequest {
   prompt: string;
   systemContext?: string;
   tools?: LlmToolSchema[];
   messageHistory?: LlmMessage[];
-  providerOverride?: LlmProvider;
+  providerOverride?: LlmProviderKey;
   modelOverride?: string;
 }
 
 export type LlmRuntimeSelection = {
-  provider: LlmProvider;
+  provider: LlmProviderKey;
   model: string;
 };
 
 export type LlmModelCheckTarget = {
-  provider: LlmProvider;
+  provider: LlmProviderKey;
   name: string;
   active: boolean;
   sizeGb?: number;
@@ -52,12 +58,12 @@ export type LlmModelCheckTarget = {
 
 export type LlmModelTestResult = {
   name: string;
-  provider: LlmProvider;
+  provider: LlmProviderKey;
   available: boolean;
 };
 
 export type LlmProviderConfig = {
-  id: LlmProvider;
+  id: LlmProviderKey;
   apiKey: string;
   baseUrl: string;
   model: string;

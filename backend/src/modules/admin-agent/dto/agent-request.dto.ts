@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import type { LlmProvider } from '../../llm/types/llm.types';
+import type { LlmProviderKey } from '../../llm/types/llm.types';
 
-const LLM_PROVIDER_OPTIONS: LlmProvider[] = ['openrouter', 'nvidia', 'ollama'];
+const LLM_PROVIDER_OPTIONS: LlmProviderKey[] = ['openrouter', 'nvidia', 'ollama'];
 
 export class AgentRequestDto {
   @ApiProperty({
@@ -28,7 +28,7 @@ export class AgentRequestDto {
   })
   @IsOptional()
   @IsIn(LLM_PROVIDER_OPTIONS)
-  provider?: LlmProvider;
+  provider?: LlmProviderKey;
 
   @ApiPropertyOptional({
     description: 'Optional LLM model override for this request only.',

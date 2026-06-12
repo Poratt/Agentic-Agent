@@ -14,7 +14,7 @@ import { LlmProviderResultResponseDto } from './dto/llm-provider-result-response
 import { LlmStatusResultResponseDto } from './dto/llm-status-result-response.dto';
 import { LlmService } from './llm.service';
 import { GenUiSpec } from '../admin-agent/constants/gen-ui-spec.constant';
-import { LlmProvider } from './types/llm.types';
+import { LlmProviderKey } from './types/llm.types';
 
 @ApiTags('llm')
 @ApiBearerAuth()
@@ -91,7 +91,7 @@ export class LlmController {
   @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
   @ApiInternalServerErrorResponse({ description: 'Unexpected server error.' })
   testLlm(
-    @Query('provider') provider: LlmProvider,
+    @Query('provider') provider: LlmProviderKey,
     @Query('model') model: string,
     @Query('prompt') prompt: string,
     @Query('systemContext') systemContext: string,

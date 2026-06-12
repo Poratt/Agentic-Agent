@@ -18,7 +18,7 @@
 
 ### 1a. Encryption utility
 
-Create `backend/src/common/utils/encryption.util.ts`:
+Create `backend/src/core/utils/encryption.util.ts` (pure functions only — no NestJS decorators):
 
 ```typescript
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
@@ -45,6 +45,12 @@ export function decrypt(encoded: string, key: string): string {
   return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("utf8");
 }
 ```
+
+Then create `backend/src/modules/llm/services/encryption.service.ts` that wraps these pure functions
+in an `@Injectable` class. The constructor must read `process.env.ENCRYPTION_KEY`,
+validate it against `/^[a-f0-9]{64}$/`, and throw an `Error` if it is missing or malformed
+(fail-fast at module init). The service must be registered in `LlmModule`'s `providers`
+before any service that depends on it.
 
 `ENCRYPTION_KEY` must be a 64-char hex string (32 bytes). Add to `.env`:
 
@@ -267,8 +273,6 @@ Add all four entities to `TypeOrmModule.forFeature([...])` in `LlmModule`.
 ```bash
 cd backend && npm.cmd run build
 ```
-
-No new errors. Tables created on next app start via `synchronize: true`.
 
 ---
 
@@ -750,3 +754,11 @@ cd frontend && npx ng build
 ```
 
 Zero new errors beyond pre-existing budget warnings.
+
+✅ Phase 1 COMPLETED — Entities, encryption utility, and ENCRYPTION_KEY set up; backend & frontend builds pass.
+✅ Phase 2 COMPLETED — LlmProviderRegistryService implemented with full CRUD, DTO mapping, encryption handling, and DB‑backed config resolution.
+✅ Phase 3 COMPLETED — Admin controller (LlmAdminController) added, guarded with JwtAuthGuard + AdminGuard, full Swagger docs, soft‑disable endpoints, and default‑model assignment.
+✅ Phase 4 COMPLETED — LlmProviderSeedService created, registered in LlmModule, seeds providers from env vars and static model groups without overwriting admin edits.
+
+✅ Phase 5 IN PROGRESS — LLM health integration (testAllModels) updated to use DB‑backed provider registry.
+All changes compiled (npm run build succeeds). Next steps: integrate these admin endpoints into the Angular service (Phase 7) and build the Settings UI (Phase 9).

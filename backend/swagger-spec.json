@@ -989,6 +989,483 @@
         "toolIcon": "ph-cpu"
       }
     },
+    "/llm/admin/providers": {
+      "get": {
+        "description": "Returns all provider records with basic metadata (no secret keys).",
+        "operationId": "LlmAdminController_getProviders",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Providers retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmAdminProviderResultResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid JWT."
+          },
+          "403": {
+            "description": "Admin role required."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all LLM providers",
+        "tags": [
+          "LLM Admin"
+        ]
+      },
+      "post": {
+        "description": "Creates a provider record. API key (if supplied) is stored encrypted.",
+        "operationId": "LlmAdminController_createProvider",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProviderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Provider created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmAdminProviderResultResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Missing or invalid JWT."
+          },
+          "403": {
+            "description": "Admin role required."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new LLM provider",
+        "tags": [
+          "LLM Admin"
+        ]
+      }
+    },
+    "/llm/admin/providers/{id}": {
+      "patch": {
+        "description": "Partial update of provider fields. Empty apiKey keeps the existing encrypted key.",
+        "operationId": "LlmAdminController_updateProvider",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Provider database ID",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProviderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Provider updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmAdminProviderResultResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Missing or invalid JWT."
+          },
+          "403": {
+            "description": "Admin role required."
+          },
+          "404": {
+            "description": "Provider not found."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update an existing LLM provider",
+        "tags": [
+          "LLM Admin"
+        ]
+      },
+      "delete": {
+        "description": "Marks the provider as inactive. The record remains for historical purposes.",
+        "operationId": "LlmAdminController_disableProvider",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Provider database ID",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider disabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmAdminProviderResultResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid JWT."
+          },
+          "403": {
+            "description": "Admin role required."
+          },
+          "404": {
+            "description": "Provider not found."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Soft?`disable an LLM provider",
+        "tags": [
+          "LLM Admin"
+        ]
+      }
+    },
+    "/llm/admin/providers/{providerId}/models": {
+      "get": {
+        "description": "Returns all model records belonging to the specified provider.",
+        "operationId": "LlmAdminController_getModels",
+        "parameters": [
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "description": "Provider database ID",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Models retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmAdminModelResultResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid JWT."
+          },
+          "403": {
+            "description": "Admin role required."
+          },
+          "404": {
+            "description": "Provider not found."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List models for a provider",
+        "tags": [
+          "LLM Admin"
+        ]
+      },
+      "post": {
+        "description": "Adds a model record under the given provider.",
+        "operationId": "LlmAdminController_createModel",
+        "parameters": [
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "description": "Provider database ID",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateModelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Model created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmAdminModelResultResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Missing or invalid JWT."
+          },
+          "403": {
+            "description": "Admin role required."
+          },
+          "404": {
+            "description": "Provider not found."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new model for a provider",
+        "tags": [
+          "LLM Admin"
+        ]
+      }
+    },
+    "/llm/admin/models/{id}": {
+      "patch": {
+        "description": "Partial update of model fields.",
+        "operationId": "LlmAdminController_updateModel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Model database ID",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateModelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Model updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmAdminModelResultResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Missing or invalid JWT."
+          },
+          "403": {
+            "description": "Admin role required."
+          },
+          "404": {
+            "description": "Model not found."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update an existing model",
+        "tags": [
+          "LLM Admin"
+        ]
+      },
+      "delete": {
+        "description": "Marks the model as inactive. The record stays for audit purposes.",
+        "operationId": "LlmAdminController_disableModel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Model database ID",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model disabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmAdminModelResultResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid JWT."
+          },
+          "403": {
+            "description": "Admin role required."
+          },
+          "404": {
+            "description": "Model not found."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Soft?`disable a model",
+        "tags": [
+          "LLM Admin"
+        ]
+      }
+    },
+    "/llm/admin/providers/{providerId}/default-model/{modelId}": {
+      "patch": {
+        "description": "Updates the provider record to point to the chosen model ID.",
+        "operationId": "LlmAdminController_setDefaultModel",
+        "parameters": [
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "description": "Provider database ID",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "modelId",
+            "required": true,
+            "in": "path",
+            "description": "Model database ID",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default model set.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmAdminProviderResultResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid JWT."
+          },
+          "403": {
+            "description": "Admin role required."
+          },
+          "404": {
+            "description": "Provider or model not found."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the default model for a provider",
+        "tags": [
+          "LLM Admin"
+        ]
+      }
+    },
     "/analytics/query": {
       "post": {
         "description": "Runs a supported analytics metric from the server-side catalog and returns chart-ready data.",
@@ -2037,6 +2514,328 @@
           "message",
           "result"
         ]
+      },
+      "ProviderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Provider database ID"
+          },
+          "key": {
+            "type": "string",
+            "description": "Provider key",
+            "example": "openrouter"
+          },
+          "label": {
+            "type": "string",
+            "description": "Provider label",
+            "example": "OpenRouter"
+          },
+          "baseUrl": {
+            "type": "string",
+            "description": "Provider base URL",
+            "example": "https://openrouter.ai/api/v1"
+          },
+          "hasApiKey": {
+            "type": "boolean",
+            "description": "Whether the provider has an API key configured",
+            "example": true
+          },
+          "defaultModelId": {
+            "type": "number",
+            "description": "Default model ID",
+            "example": 1
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the provider is active",
+            "example": true
+          },
+          "modelsCount": {
+            "type": "number",
+            "description": "Count of models associated with this provider",
+            "example": 5
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "label",
+          "baseUrl",
+          "hasApiKey",
+          "active",
+          "modelsCount"
+        ]
+      },
+      "LlmAdminProviderResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the providers request succeeded.",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable result message.",
+            "example": "LLM providers retrieved successfully."
+          },
+          "result": {
+            "description": "Provider metadata.",
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderResponseDto"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "result"
+        ]
+      },
+      "CreateProviderDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "openrouter",
+            "description": "Unique provider key (e.g., openrouter, nvidia, ollama)"
+          },
+          "label": {
+            "type": "string",
+            "example": "OpenRouter",
+            "description": "Human-readable provider label"
+          },
+          "baseUrl": {
+            "type": "string",
+            "example": "https://openrouter.ai/api/v1",
+            "description": "Base URL for the provider API"
+          },
+          "apiKey": {
+            "type": "string",
+            "example": "sk-or-xxxxx",
+            "description": "API key for the provider (will be encrypted)"
+          },
+          "defaultModelId": {
+            "type": "number",
+            "example": 1,
+            "description": "Default model ID from the models table",
+            "default": null
+          },
+          "active": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the provider is active",
+            "default": true
+          },
+          "rateLimitFlag": {
+            "type": "boolean",
+            "example": false,
+            "description": "Whether the provider has rate limits",
+            "default": false
+          }
+        },
+        "required": [
+          "key",
+          "label"
+        ]
+      },
+      "UpdateProviderDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "example": "OpenRouter Updated",
+            "description": "Updated human-readable label"
+          },
+          "baseUrl": {
+            "type": "string",
+            "example": "https://new-url.com/api",
+            "description": "Updated base URL"
+          },
+          "apiKey": {
+            "type": "string",
+            "example": "sk-or-newkey",
+            "description": "Updated API key (will be encrypted)"
+          },
+          "defaultModelId": {
+            "type": "number",
+            "example": 2,
+            "description": "Updated default model ID"
+          },
+          "active": {
+            "type": "boolean",
+            "example": false,
+            "description": "Updated active status"
+          },
+          "rateLimitFlag": {
+            "type": "boolean",
+            "example": true,
+            "description": "Updated rate limit flag"
+          }
+        }
+      },
+      "ModelResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "providerId": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "supportsStreaming": {
+            "type": "boolean"
+          },
+          "supportsTools": {
+            "type": "boolean"
+          },
+          "contextWindow": {
+            "type": "number"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "runtimeDiscovered": {
+            "type": "boolean",
+            "description": "Whether the model was discovered at runtime (e.g. Ollama)"
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "name",
+          "label",
+          "active",
+          "supportsStreaming",
+          "supportsTools",
+          "contextWindow",
+          "sortOrder",
+          "runtimeDiscovered"
+        ]
+      },
+      "LlmAdminModelResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the models request succeeded.",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable result message.",
+            "example": "LLM models retrieved successfully."
+          },
+          "result": {
+            "description": "Model metadata.",
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelResponseDto"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "result"
+        ]
+      },
+      "CreateModelDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "gpt-4o",
+            "description": "Unique model name/ID within the provider"
+          },
+          "label": {
+            "type": "string",
+            "example": "GPT-4o",
+            "description": "Human-readable label"
+          },
+          "active": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the model is active",
+            "default": true
+          },
+          "supportsStreaming": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the model supports streaming",
+            "default": true
+          },
+          "supportsTools": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the model supports tool use",
+            "default": false
+          },
+          "contextWindow": {
+            "type": "number",
+            "example": 128000,
+            "description": "Context window size in tokens"
+          },
+          "sortOrder": {
+            "type": "number",
+            "example": 0,
+            "description": "Sort order for UI display",
+            "default": 0
+          }
+        },
+        "required": [
+          "name",
+          "label"
+        ]
+      },
+      "UpdateModelDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "example": "GPT-4o Updated",
+            "description": "Updated human-readable label"
+          },
+          "active": {
+            "type": "boolean",
+            "example": false,
+            "description": "Updated active status"
+          },
+          "supportsStreaming": {
+            "type": "boolean",
+            "example": false,
+            "description": "Updated streaming support"
+          },
+          "supportsTools": {
+            "type": "boolean",
+            "example": true,
+            "description": "Updated tools support"
+          },
+          "contextWindow": {
+            "type": "number",
+            "example": 64000,
+            "description": "Updated context window"
+          },
+          "sortOrder": {
+            "type": "number",
+            "example": 10,
+            "description": "Updated sort order"
+          }
+        }
       },
       "AnalyticsMetric": {
         "type": "number",

@@ -6,7 +6,7 @@ import { ChatSession } from './entities/chat-session.entity';
 import { ChatMessage } from './entities/chat-message.entity';
 import { SYSTEM_CONTEXT } from './constants/system-context.constant';
 import { SwaggerToolsParser } from './services/swagger-tools.parser';
-import type { LlmProvider, LlmToolCall } from '../llm/types/llm.types';
+import type { LlmProviderKey, LlmToolCall } from '../llm/types/llm.types';
 
 const MAX_ITERATIONS = 10;
 const PARALLEL_UNSAFE_TOOL_NAMES = new Set([
@@ -93,7 +93,7 @@ export class AdminAgentService implements OnModuleInit {
     prompt: string,
     userId: number,
     requestedSessionId?: number,
-    provider?: LlmProvider,
+    provider?: LlmProviderKey,
     model?: string,
   ): Promise<string> {
     const session = await this.agentSessionService.getOrCreateSession(userId, requestedSessionId);
@@ -147,7 +147,7 @@ export class AdminAgentService implements OnModuleInit {
     prompt: string,
     userId: number,
     requestedSessionId?: number,
-    provider?: LlmProvider,
+    provider?: LlmProviderKey,
     model?: string,
   ): AsyncIterable<string> {
     const session = await this.agentSessionService.getOrCreateSession(userId, requestedSessionId);
@@ -241,7 +241,7 @@ export class AdminAgentService implements OnModuleInit {
     }) + '\n';
   }
 
-  private getDynamicSystemContext(userId: number, provider?: LlmProvider, model?: string): string {
+  private getDynamicSystemContext(userId: number, provider?: LlmProviderKey, model?: string): string {
     const runtimeSelection = this.llmService.getRuntimeSelection(provider, model);
 
     return SYSTEM_CONTEXT

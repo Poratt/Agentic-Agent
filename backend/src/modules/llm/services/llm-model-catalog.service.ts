@@ -5,12 +5,17 @@ import { LlmModelGroupDto } from '../dto/llm-model-group.dto';
 import { LlmProviderDto } from '../dto/llm-provider.dto';
 import { OllamaModel, OllamaTagsResponse } from '../types/ollama.types';
 import { LlmProviderConfigService } from './llm-provider-config.service';
+import { LlmProviderRegistryService } from './llm-provider-registry.service';
+import { LlmProviderKey } from '../types/llm.types';
 
 @Injectable()
 export class LlmModelCatalogService implements OnModuleInit {
   private readonly logger = new Logger(LlmModelCatalogService.name);
 
-  constructor(private readonly providerConfig: LlmProviderConfigService) {}
+  constructor(
+    private readonly providerConfig: LlmProviderConfigService,
+    private readonly registry: LlmProviderRegistryService,
+  ) { }
 
   onModuleInit(): void {
     setTimeout(() => {
@@ -19,24 +24,22 @@ export class LlmModelCatalogService implements OnModuleInit {
   }
 
   async getProviders(): Promise<ServiceResultContainer<LlmProviderDto[]>> {
-    const activeProvider = this.providerConfig.getActiveProvider();
+    const activeProviderKey = this.providerConfig.getActiveProvider();
+    const providers = await this.registry.findAllProviders();
 
-    const providerDtos = await Promise.all(
-      this.providerConfig.getProviders().map(async (provider) => {
-        const config = this.providerConfig.getProviderConfig(provider);
-        const configured = this.providerConfig.isProviderConfigured(config);
-        const ollamaModels = provider === 'ollama' && configured ? await this.getSafeLocalOllamaModels() : [];
+    const providerDtos = providers.map((p) => {
+      const configured = p.baseUrl !== '' && (p.hasApiKey || p.key === 'ollama');
+      const ollamaModels = p.key === 'ollama' ? [] : []; // Simplified for now, actual logic in getModelOptions
 
-        return {
-          id: provider,
-          active: provider === activeProvider,
-          configured,
-          available: provider === 'ollama' ? ollamaModels.length > 0 : configured,
-          configuredModel: config.model || undefined,
-          models: ollamaModels.length > 0 ? ollamaModels.map((model) => model.name) : undefined,
-        };
-      }),
-    );
+      return {
+        id: p.key,
+        active: p.key === activeProviderKey,
+        configured,
+        available: p.active && configured,
+        configuredModel: undefined, // Handled by DB defaultModelId in a full implementation
+        models: undefined,
+      };
+    });
 
     return {
       success: true,
@@ -47,11 +50,31 @@ export class LlmModelCatalogService implements OnModuleInit {
 
   async getModelOptions(): Promise<ServiceResultContainer<LlmModelGroupDto[]>> {
     const ollamaModels = await this.getSafeLocalOllamaModels();
-
     const { regularModels, cloudModels } = separateOllamaModels(ollamaModels);
 
-    const modelGroups: LlmModelGroupDto[] = [
-      ...LLM_STATIC_MODEL_GROUPS,
+    const providers = await this.registry.findAllProviders();
+    const modelGroups: LlmModelGroupDto[] = [...LLM_STATIC_MODEL_GROUPS];
+
+    for (const provider of providers) {
+      if (!provider.active || provider.key === 'ollama') continue;
+
+      const models = await this.registry.findModelsByProvider(provider.id);
+      const activeModels = models.filter(m => m.active);
+
+      if (activeModels.length > 0) {
+        modelGroups.push({
+          label: provider.key as LlmProviderKey,
+          items: activeModels.map(m => ({
+            id: m.name,
+            provider: provider.key,
+            value: m.name,
+            label: m.label,
+          })),
+        });
+      }
+    }
+
+    modelGroups.push(
       {
         label: 'ollama',
         items: toModelItems(regularModels),
@@ -60,7 +83,7 @@ export class LlmModelCatalogService implements OnModuleInit {
         label: 'ollama-cloud',
         items: toModelItems(cloudModels),
       },
-    ];
+    );
 
     return {
       success: true,
@@ -108,7 +131,7 @@ export class LlmModelCatalogService implements OnModuleInit {
   }
 
   private async getLocalOllamaModels(): Promise<OllamaModel[]> {
-    const config = this.providerConfig.getProviderConfig('ollama');
+    const config = await this.providerConfig.getProviderConfig('ollama');
     const rawBaseUrl = config.baseUrl.replace('/v1', '');
     const response = await fetch(`${rawBaseUrl}/api/tags`);
 

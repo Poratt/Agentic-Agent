@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ServiceResultContainer } from '../../../core/models/service-result-container.model';
 import { LLM_STATIC_MODEL_GROUPS } from '../constants/llm-model-catalog.constant';
-import { LlmModelCheckTarget, LlmModelTestResult, LlmProvider } from '../types/llm.types';
+import { LlmProviderRegistryService } from './llm-provider-registry.service';
+// Phase 5 – health service now uses the provider registry to discover active models
+import { LlmModelCheckTarget, LlmModelTestResult, LlmProviderKey } from '../types/llm.types';
 import { LlmClientService } from './llm-client.service';
 import { LlmModelCatalogService } from './llm-model-catalog.service';
 import { LlmProviderConfigService } from './llm-provider-config.service';
@@ -12,14 +14,15 @@ export class LlmHealthService {
     private readonly client: LlmClientService,
     private readonly providerConfig: LlmProviderConfigService,
     private readonly modelCatalog: LlmModelCatalogService,
+    private readonly providerRegistry: LlmProviderRegistryService,
   ) {}
 
   async testLlm(
-    provider: LlmProvider,
+    provider: LlmProviderKey,
     model: string,
     prompt: string,
     systemContext: string,
-  ): Promise<ServiceResultContainer<{ provider: LlmProvider; model: string; available: boolean }>> {
+  ): Promise<ServiceResultContainer<{ provider: LlmProviderKey; model: string; available: boolean }>> {
     const runtimeSelection = this.providerConfig.getRuntimeSelection(provider, model);
     const response = await this.client.generateResponse({
       prompt: prompt || 'Hello',
@@ -79,24 +82,26 @@ export class LlmHealthService {
     const activeModel = this.providerConfig.getActiveModel();
 
     for (const provider of this.providerConfig.getProviders()) {
-      const config = this.providerConfig.getProviderConfig(provider);
+      const config = await this.providerConfig.getProviderConfig(provider);
       if (!this.providerConfig.isProviderConfigured(config)) {
         continue;
       }
 
       if (provider !== 'ollama') {
-        const staticGroup = LLM_STATIC_MODEL_GROUPS.find((group) => {
-          return group.label === provider;
-        });
-
-        staticGroup?.items.forEach((model) => {
+        // Use DB‑backed models via the provider registry
+        const providerEntity = await this.providerRegistry.findProviderByKey(provider);
+        if (!providerEntity) {
+          // No DB entry – skip (should not happen for configured providers)
+          continue;
+        }
+        const dbModels = await this.providerRegistry.findModelsByProvider(providerEntity.id);
+        dbModels.forEach((model) => {
           models.push({
             provider,
-            name: model.value,
-            active: provider === activeProvider && model.value === activeModel,
+            name: model.name,
+            active: provider === activeProvider && model.name === activeModel,
           });
         });
-
         continue;
       }
       if (provider === 'ollama') {

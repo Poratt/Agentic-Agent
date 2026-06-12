@@ -1,5 +1,76 @@
-<div class="page-content">
-    <header class="page-header">
-        <h2>הגדרות</h2>
-    </header>
-</div>
+@switch (pageState()) {
+    @case (PageStates.Loading) {
+        <div class="page-state loading-state">
+            <span class="custom-loader"></span>
+        </div>
+    }
+    @case (PageStates.Error) {
+        <div class="page-state error-state">
+            <span class="icon ph ph-warning"></span>
+            <h4 class="title">אירעה שגיאה בטעינת ספקי ה-LLM.</h4>
+            <p class="subtitle">{{ errorMessage() }}</p>
+            <button class="primary-btn filled" (click)="loadProviders()">נסה שוב</button>
+        </div>
+    }
+    @case (PageStates.Empty) {
+        <div class="page-state empty-state">
+            <span class="icon ph ph-database"></span>
+            <h4 class="title">לא נמצאו ספקי LLM.</h4>
+            <p class="subtitle">עדיין לא הוגדרו ספקים במערכת.</p>
+        </div>
+    }
+    @case (PageStates.Ready) {
+        <div class="page-content">
+            <div class="page-header">
+                <div class="header-row">
+                    <div class="header-content">
+                        <h2>הגדרות</h2>
+                    </div>
+                </div>
+            </div>
+
+            <section class="glass-effect card">
+                <div class="card-header">
+                    <span class="ph ph-cpu"></span>
+                    <h3>ספקי LLM</h3>
+                </div>
+                <p class="subtitle">ספקי המודלים המוגדרים במערכת. ניהול מלא של ספקים, מודלים ובדיקות יתווסף בשלב הבא.</p>
+            </section>
+
+            <div class="glass-effect card table-container">
+                <p-table #table styleClass="providers-table" [value]="providers()" [scrollable]="true" scrollHeight="flex">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            @for (column of columns; track column.field) {
+                                <th>
+                                    <span>{{ column.label }}</span>
+                                </th>
+                            }
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-provider>
+                        <tr>
+                            <td>{{ provider.id }}</td>
+                            <td>{{ provider.key }}</td>
+                            <td>{{ formatValue(provider.label) }}</td>
+                            <td>{{ formatValue(provider.baseUrl) }}</td>
+                            <td>{{ provider.hasApiKey ? 'מוגדר' : 'חסר' }}</td>
+                            <td>{{ formatValue(provider.modelsCount) }}</td>
+                            <td>{{ formatValue(provider.defaultModelId) }}</td>
+                            <td>
+                                <span class="badge" [badgeColor]="provider.active ? activeColor : inactiveColor">
+                                    {{ provider.active ? 'פעיל' : 'לא פעיל' }}
+                                </span>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td [attr.colspan]="columns.length">לא נמצאו ספקים.</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
+    }
+}

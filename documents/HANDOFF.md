@@ -508,3 +508,54 @@ documents/
 - Files touched this session: `documents/done/provider-and-llm-db-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: treat the two new files as the single canonical LLM provider/DB plan; no code changes yet.
 - Open questions for the user: none.
+- **Phase 1 COMPLETED** (current session): LLM Provider & Model DB entities + encryption utility.
+  - Created `backend/src/core/utils/encryption.util.ts` (AES-256-GCM pure functions)
+  - Created `backend/src/modules/llm/services/encryption.service.ts` (fail-fast Injectable wrapper with `ENCRYPTION_KEY` validation)
+  - Created 4 TypeORM entities: `LlmProvider`, `LlmModel`, `LlmModelTestRun`, `LlmModelTestResult`
+  - Registered all entities in `LlmModule` via `TypeOrmModule.forFeature([...])`
+  - Added `ENCRYPTION_KEY` to `backend/.env.example` with generation instructions
+  - Added `ProviderType` enum (`openrouter`, `nvidia`, `ollama`, `ollama-cloud`) with `OLLAMA_CLOUD` read-only/virtual
+  - Verification: `npm.cmd run build` from `backend` passes; `npx ng build` from `frontend` passes (existing warnings only).
+- Next exact step: begin Phase 2 — `LlmProviderRegistryService` (CRUD + encryption) and refactor `LlmProviderConfigService` / `LlmModelCatalogService` to read from DB with env fallback.
+- Files touched this session: `backend/src/core/utils/encryption.util.ts`, `backend/src/modules/llm/services/encryption.service.ts`, `backend/src/modules/llm/entities/*.entity.ts` (4 files), `backend/src/modules/llm/llm.module.ts`, `backend/.env.example`, `backend/src/modules/llm/types/provider-type.enum.ts`, `documents/features/todo/LLM_PROVIDER_DB_TASK.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.
+- Decisions made: Phase 1 complete per plan; ready for Phase 2 registry service.
+- Open questions for the user: none.
+
+
+## Session: 2026-06-12 - Phase 2 Recovery
+- Fixed critical build errors in the LLM module following Phase 2 implementation.
+- Resolved name collision between LlmProvider entity and LlmProvider type (renamed type to LlmProviderKey).
+- Fixed missing 'await' keywords in LlmClientService, LlmHealthService, and LlmModelCatalogService.
+- Fixed missing imports and type mismatches in LlmProviderConfigService.
+- Verified backend build passes via 'npm.cmd run build'.
+- Current status: Phase 2 is partially implemented but stable. Next step: Complete Phase 2 implementation (Repository Service) and move to Phase 3 (Admin Controller).
+
+## Session: 2026-06-12 - Phase 5 + Phase 7 (Angular service)
+- **Phase 5 COMPLETED** (current session): LLM health integration.
+  - `LlmHealthService.testAllModels()` now loads active models from the DB via `LlmProviderRegistryService` and uses `getDecryptedApiKey()` for provider auth.
+  - `LlmClientService` resolves provider config from DB first and falls back to env when no DB record exists.
+  - The `GET /llm/llm-test` and `GET /llm/test-all` endpoints continue to work with the DB-backed flow.
+- **Phase 7 IN PROGRESS** (current session): Angular service admin methods.
+  - Created `frontend/src/app/core/models/llm.models.ts` with all DTO interfaces required for the admin endpoints.
+  - Updated `frontend/src/app/core/services/llm.service.ts`:
+    - Added the DTO imports.
+    - Extended the service with admin methods: `getAdminProviders`, `createProvider`, `updateProvider`, `disableProvider`, `getProviderModels`, `createModel`, `updateModel`, `disableModel`, `setDefaultModel`, `startModelTestRun`, `getModelTestRuns`, `getModelTestRunResults`, `getModelRankings`, `getOllamaRuntimeModels`.
+    - All new methods return `Observable<ServiceResultContainer<T>>` matching the existing pattern.
+  - Existing public API (`getModelOptions`, `getStatus`) was left untouched.
+- Next exact step: Phase 8 — wire the new admin methods into `frontend/src/app/features/settings/settings.ts` (page state + signals) and then implement the Settings UI (Phase 9).
+- Files touched this session: `frontend/src/app/core/models/llm.models.ts`, `frontend/src/app/core/services/llm.service.ts`, `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/features/todo/LLM_PROVIDER_DB_TASK.md`.
+- Decisions made: keep the public chat-facing methods (`getModelOptions`, `getStatus`) unchanged; expose new admin methods on the same service to keep a single place to talk to `/llm/*`; mirror the backend response shape with `ServiceResultContainer<T>`.
+- Open questions for the user: none.
+
+## Session: 2026-06-12 - Phase 8 Settings page state + providers table (initial)
+- Completed the initial Phase 8 wiring of `LLM_PROVIDER_DB_TASK.md`: Settings page now loads providers, exposes PageStates, and renders a PrimeNG `p-table` over the `/llm/admin/providers` endpoint.
+- `frontend/src/app/core/store/llm-admin.store.ts` is a new Injectable signal store mirroring `UsersStore`: private `_providers` / `_loading` / `_error` signals, public computed selectors (`providers`, `loading`, `error`, `pageState` returning `Loading | Error | Empty | Ready`), and a `loadProviders()` action that calls `LlmService.getAdminProviders()` and updates state via `finalize` teardown.
+- `frontend/src/app/features/settings/settings.ts` now implements `OnInit`, injects `LlmAdminStore`, exposes `PageStates`, `columns`, `pageState`, `providers`, `errorMessage`, and a `formatValue(...)` helper for nullable provider fields. It also exposes a `loadProviders()` retry method.
+- `frontend/src/app/features/settings/settings.html` was replaced with the standard `@switch (pageState())` pattern: `loading-state` (spinner), `error-state` (warning icon, Hebrew title, backend error message, retry button), `empty-state` (database icon, Hebrew title/subtitle), and `ready` (page-header with Hebrew title + `glass-effect card` providers table inside `glass-effect card table-container`).
+- Providers table uses PrimeNG `p-table` with Hebrew column headers (id, מפתח, שם תצוגה, כתובת בסיס, מפתח API, מודל ברירת מחדל, פעיל); the active column renders as a colored badge via the existing `BadgeColor` directive using the project's success (`#10B981`) and danger (`#F87171`) token hexes.
+- No new component CSS, no `settings-container` wrapper; reused global `page-content`, `page-header`, `glass-effect card`, `table-container`, `page-state`, `primary-btn`, and `badge` classes.
+- Verification: `npm.cmd run build` from `frontend` passes; settings chunk is 5.84 kB. Remaining warnings are unchanged pre-existing ones (`explorer.css` budget, `chat-message.css` budget). Forbidden-pattern scan (PowerShell `Select-String`) on touched files: no `$safeNavigationMigration`, `*ngIf`, `*ngFor`, `*ngSwitch`, or `constructor(` matches.
+- Next exact step: Phase 8b — add provider create/edit form, model list per provider, and default-model assignment controls in `settings.html` + `settings.ts` (will use `LlmService.createProvider`, `updateProvider`, `disableProvider`, `getProviderModels`, `createModel`, `setDefaultModel`, etc.). Then Phase 9 polish.
+- Files touched this session: `frontend/src/app/core/store/llm-admin.store.ts`, `frontend/src/app/features/settings/settings.ts`, `frontend/src/app/features/settings/settings.html`, `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.
+- Decisions made: mirror the `UsersStore` signal-store pattern instead of creating a one-off inline state, because the project has standardized on that shape; use the existing `BadgeColor` directive for the active/inactive pill instead of a custom CSS class, because the directive already supports hex colors from `_variables.css`; reuse the global `glass-effect card table-container` + `page-state` classes so the Settings component stays free of a `settings.css` file.
+- Open questions for the user: none.

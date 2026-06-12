@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, computed, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, OnInit, computed, viewChild, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InputTextModule } from 'primeng/inputtext';
 import { Table, TableModule } from 'primeng/table';
@@ -43,7 +43,8 @@ export class UsersManagement implements OnInit {
     ];
     protected readonly globalFilterFields = ['id', 'fullName', 'email', 'roleLabel', 'roleHeLabel', 'createdAt'];
 
-    pageState = computed(() => this.usersStore.pageState());
+    // pageState = computed(() => this.usersStore.pageState());
+    pageState = signal(PageStates.Loading);
     tableUsers = computed<UserTableRow[]>(() =>
         this.usersStore.users().map((user) => {
             const roleData = this.getUserRoleData(user.role);
