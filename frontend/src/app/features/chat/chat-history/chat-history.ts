@@ -4,12 +4,11 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ChatStore } from '../../../core/store/chat.store';
 import { PageStates } from '../../../core/enums/page-states.enum';
-import { AccessToDirective } from '../../../core/directives/access-to.directive';
 
 @Component({
     selector: 'app-chat-history',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, AccessToDirective],
+    imports: [CommonModule, FormsModule, RouterLink],
     templateUrl: './chat-history.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./chat-history.css'],
