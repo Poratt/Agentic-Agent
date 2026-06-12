@@ -1,7 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as puppeteer from 'puppeteer';
+import { Strain } from './entities/strain';
 
-export type ExplorerStrainItem = {
+export type StrainItem = {
     name: string;
     enName: string;
     isNew: boolean;
@@ -21,7 +24,7 @@ export type ExplorerStrainItem = {
     packageType: string;
 };
 
-type BrowserExtractedItem = ExplorerStrainItem | null;
+type BrowserExtractedItem = StrainItem | null;
 type JaneProductRecord = Record<string, unknown>;
 
 const DEFAULT_VALUE = '';
@@ -29,16 +32,60 @@ const JANE_PRODUCTS_API_PATH = '/api/widget/products/store/tiltan/';
 const MAX_SCROLL_ATTEMPTS = 18;
 const PRODUCT_ROW_SELECTOR =
     'table[role="table"] tbody[role="rowgroup"] > tr[role="row"], table[role="table"] tbody tr';
+
 const EXPLORER_SOURCE_URL =
-    'https://jane.co.il/store/tiltan/?filters=productProductType%5Ein%5Eflower%3BproductCategory%5Ein%5ET22%2FC4%3BproductGrowType%5Ein%5Eindoor%3BproductFamily%5Ein%5Eindica&sortBy=store_price';
+    'https://jane.co.il/store/tiltan/?filters=productProductType%5Ein%5Eflower%3B' +
+    'productCategory%5Ein%5ET22%2FC4%3BproductGrowType%5Ein%5Eindoor%3B' +
+    'productFamily%5Ein%5Eindica&sortBy=store_price';
 
 @Injectable()
 export class ExplorerService {
-    fetchData(): Promise<{ items: ExplorerStrainItem[] }> {
-        return this.fetchDataFromUrl(EXPLORER_SOURCE_URL);
+    constructor(
+        @InjectRepository(Strain)
+        private readonly strainRepository: Repository<Strain>,
+    ) { }
+
+    async fetchData(forceRefresh = false): Promise<{ items: Strain[] }> {
+        if (!forceRefresh) {
+            const count = await this.strainRepository.count();
+            if (count > 0) {
+                const items = await this.strainRepository.find();
+                return { items };
+            }
+        }
+
+        const scraped = await this.fetchDataFromUrl(EXPLORER_SOURCE_URL);
+
+        await this.strainRepository.clear();
+
+        const entities = scraped.items.map((item) => {
+            return this.strainRepository.create({
+                name: item.name,
+                enName: item.enName,
+                isNew: item.isNew,
+                rating: item.rating,
+                deal: item.deal,
+                marketer: item.marketer,
+                manufacturer: item.manufacturer,
+                brand: item.brand,
+                expiry: item.expiry,
+                price: item.price,
+                catalogPrice: item.catalogPrice,
+                parent1: item.parent1,
+                parent2: item.parent2,
+                originStrain: item.originStrain,
+                countryOfOrigin: item.countryOfOrigin,
+                terpenes: item.terpenes,
+                packageType: item.packageType,
+            });
+        });
+
+        await this.strainRepository.save(entities);
+
+        return { items: entities };
     }
 
-    private async fetchDataFromUrl(url: string): Promise<{ items: ExplorerStrainItem[] }> {
+    private async fetchDataFromUrl(url: string): Promise<{ items: StrainItem[] }> {
         let browser: puppeteer.Browser | null = null;
 
         try {
@@ -56,12 +103,15 @@ export class ExplorerService {
             const page = await browser.newPage();
             await page.setViewport({ width: 1920, height: 1080 });
             await page.setUserAgent(
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+                '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
             );
 
             page.on('response', async (response) => {
                 const responseUrl = response.url();
-                if (!responseUrl.includes(JANE_PRODUCTS_API_PATH) || response.status() >= 400) return;
+                if (!responseUrl.includes(JANE_PRODUCTS_API_PATH) || response.status() >= 400) {
+                    return;
+                }
 
                 try {
                     const json = (await response.json()) as unknown;
@@ -69,7 +119,7 @@ export class ExplorerService {
                         capturedProducts.set(this.getJaneProductKey(product), product);
                     });
                 } catch {
-                    // Some matching responses can be blocked, empty, or already disposed.
+                    // Ignored
                 }
             });
 
@@ -81,18 +131,20 @@ export class ExplorerService {
             if (capturedProducts.size > 0) {
                 await browser.close();
                 return {
-                    items: Array.from(capturedProducts.values()).map((product) =>
-                        this.normalizeJaneProduct(product, newProductKeys),
-                    ),
+                    items: Array.from(capturedProducts.values()).map((product) => {
+                        return this.normalizeJaneProduct(product, newProductKeys);
+                    }),
                 };
             }
 
             const rowCount = await this.getProductRowCount(page);
-            const items: ExplorerStrainItem[] = [];
+            const items: StrainItem[] = [];
 
             for (let index = 0; index < rowCount; index += 1) {
                 const clicked = await this.clickProductRow(page, index);
-                if (!clicked) continue;
+                if (!clicked) {
+                    continue;
+                }
 
                 await this.wait(500);
 
@@ -108,7 +160,9 @@ export class ExplorerService {
             await browser.close();
             return { items };
         } catch (error: unknown) {
-            if (browser) await browser.close();
+            if (browser) {
+                await browser.close();
+            }
 
             const message = error instanceof Error ? error.message : 'Unknown scraping error';
             throw new HttpException(`Scraping failed: ${message}`, HttpStatus.BAD_REQUEST);
@@ -116,7 +170,9 @@ export class ExplorerService {
     }
 
     private wait(ms: number) {
-        return new Promise((resolve) => setTimeout(resolve, ms));
+        return new Promise((resolve) => {
+            setTimeout(resolve, ms);
+        });
     }
 
     private async scrollUntilJaneStopsLoading(
@@ -131,8 +187,12 @@ export class ExplorerService {
                 window.scrollTo(0, document.body.scrollHeight);
 
                 const scrollableElements = Array.from(document.querySelectorAll<HTMLElement>('*'))
-                    .filter((element) => element.scrollHeight > element.clientHeight + 40)
-                    .sort((a, b) => b.scrollHeight - a.scrollHeight)
+                    .filter((element) => {
+                        return element.scrollHeight > element.clientHeight + 40;
+                    })
+                    .sort((a, b) => {
+                        return b.scrollHeight - a.scrollHeight;
+                    })
                     .slice(0, 6);
 
                 scrollableElements.forEach((element) => {
@@ -149,13 +209,17 @@ export class ExplorerService {
                 previousCount = capturedProducts.size;
             }
 
-            if (stableAttempts >= 3) return;
+            if (stableAttempts >= 3) {
+                return;
+            }
         }
     }
 
     private async extractVisibleNewProductKeys(page: puppeteer.Page): Promise<Set<string>> {
         const keys = await page.evaluate((selector) => {
-            const normalize = (value: string | null | undefined) => (value ?? '').replace(/\s+/g, ' ').trim();
+            const normalize = (value: string | null | undefined) => {
+                return (value ?? '').replace(/\s+/g, ' ').trim();
+            };
 
             const isVisible = (element: Element) => {
                 const rect = element.getBoundingClientRect();
@@ -163,7 +227,9 @@ export class ExplorerService {
             };
 
             const isProductRow = (row: Element) => {
-                if (!isVisible(row) || row.querySelector('th')) return false;
+                if (!isVisible(row) || row.querySelector('th')) {
+                    return false;
+                }
 
                 const cells = Array.from(row.querySelectorAll('td, [role="cell"]'));
                 const firstCell = cells[0];
@@ -171,19 +237,29 @@ export class ExplorerService {
                 return cells.length >= 8 && text.length > 0 && !!firstCell?.querySelector('[dir="ltr"], img, a');
             };
 
-            const toNameKey = (name: string, enName: string) => `${name.toLowerCase()}|${enName.toLowerCase()}`;
+            const toNameKey = (name: string, enName: string) => {
+                return `${name.toLowerCase()}|${enName.toLowerCase()}`;
+            };
 
             return Array.from(document.querySelectorAll(selector))
                 .filter(isProductRow)
                 .map((row) => {
                     const firstCell = row.querySelector('td:first-child, [role="cell"]:first-child');
                     const firstCellText = firstCell?.textContent ?? '';
-                    if (!firstCellText.includes('חדש')) return '';
+                    if (!firstCellText.includes('חדש')) {
+                        return '';
+                    }
 
                     const enName = normalize(firstCell?.querySelector('[dir="ltr"]')?.textContent);
-                    const hebNameCandidate = Array.from(firstCell?.querySelectorAll('.text-gray-900, .text-base') ?? [])
-                        .map((element) => normalize(element.textContent))
-                        .find((text) => text && text !== enName && !text.includes('חדש'));
+                    const candidateSelectors = '.text-gray-900, .text-base';
+                    const candidates = firstCell?.querySelectorAll(candidateSelectors) ?? [];
+                    const hebNameCandidate = Array.from(candidates)
+                        .map((element) => {
+                            return normalize(element.textContent);
+                        })
+                        .find((text) => {
+                            return text && text !== enName && !text.includes('חדש');
+                        });
                     const name = normalize(
                         (hebNameCandidate ?? firstCellText).replace(/חדש!?/g, '').replace(enName, ''),
                     );
@@ -198,20 +274,34 @@ export class ExplorerService {
 
     private extractJaneProducts(value: unknown): JaneProductRecord[] {
         if (Array.isArray(value)) {
-            const productRecords = value.filter((item): item is JaneProductRecord => this.isJaneProductRecord(item));
-            if (productRecords.length > 0) return productRecords;
+            const productRecords = value.filter((item): item is JaneProductRecord => {
+                return this.isJaneProductRecord(item);
+            });
+            if (productRecords.length > 0) {
+                return productRecords;
+            }
 
-            return value.flatMap((item) => this.extractJaneProducts(item));
+            return value.flatMap((item) => {
+                return this.extractJaneProducts(item);
+            });
         }
 
-        if (!this.isPlainObject(value)) return [];
-        if (this.isJaneProductRecord(value)) return [value];
+        if (!this.isPlainObject(value)) {
+            return [];
+        }
+        if (this.isJaneProductRecord(value)) {
+            return [value];
+        }
 
-        return Object.values(value).flatMap((item) => this.extractJaneProducts(item));
+        return Object.values(value).flatMap((item) => {
+            return this.extractJaneProducts(item);
+        });
     }
 
     private isJaneProductRecord(value: unknown): value is JaneProductRecord {
-        if (!this.isPlainObject(value)) return false;
+        if (!this.isPlainObject(value)) {
+            return false;
+        }
 
         const hasName = typeof value.heb_name === 'string' || typeof value.eng_name === 'string';
         const hasStoreIdentity =
@@ -228,7 +318,9 @@ export class ExplorerService {
 
     private getJaneProductKey(product: JaneProductRecord): string {
         const explicitKey = this.pickText(product.store_product_id, product.id, product.product_id);
-        if (explicitKey) return explicitKey;
+        if (explicitKey) {
+            return explicitKey;
+        }
 
         return [
             this.pickText(product.heb_name, product.eng_name),
@@ -237,7 +329,7 @@ export class ExplorerService {
         ].join(':');
     }
 
-    private normalizeJaneProduct(product: JaneProductRecord, newProductKeys = new Set<string>()): ExplorerStrainItem {
+    private normalizeJaneProduct(product: JaneProductRecord, newProductKeys = new Set<string>()): StrainItem {
         const nestedProduct = this.asRecord(product.product);
         const batch = this.asRecord(product.batch);
         const reviews = this.asRecord(product.reviews);
@@ -275,13 +367,24 @@ export class ExplorerService {
         enName: string,
         newProductKeys: Set<string>,
     ): boolean {
-        const explicitFlag = this.pickText(product.is_new, product.isNew, product.is_new_product, product.is_new_in_store);
-        if (this.toBoolean(explicitFlag)) return true;
+        const explicitFlag = this.pickText(
+            product.is_new,
+            product.isNew,
+            product.is_new_product,
+            product.is_new_in_store,
+        );
+        if (this.toBoolean(explicitFlag)) {
+            return true;
+        }
 
         const nameKey = `${name.toLowerCase()}|${enName.toLowerCase()}`;
-        if (newProductKeys.has(nameKey)) return true;
+        if (newProductKeys.has(nameKey)) {
+            return true;
+        }
 
-        return this.collectTextValues(product).some((value) => /(^|\s)חדש!?($|\s)/.test(value));
+        return this.collectTextValues(product).some((value) => {
+            return /(^|\s)חדש!?($|\s)/.test(value);
+        });
     }
 
     private asRecord(value: unknown): JaneProductRecord | null {
@@ -289,12 +392,20 @@ export class ExplorerService {
     }
 
     private pickText(...values: unknown[]): string {
-        return values.map((value) => this.toText(value)).find((value) => value !== DEFAULT_VALUE) ?? DEFAULT_VALUE;
+        return values.map((value) => {
+            return this.toText(value);
+        }).find((value) => {
+            return value !== DEFAULT_VALUE;
+        }) ?? DEFAULT_VALUE;
     }
 
     private toText(value: unknown): string {
-        if (typeof value === 'string') return value.replace(/\s+/g, ' ').trim();
-        if (typeof value === 'number') return String(value);
+        if (typeof value === 'string') {
+            return value.replace(/\s+/g, ' ').trim();
+        }
+        if (typeof value === 'number') {
+            return String(value);
+        }
         return DEFAULT_VALUE;
     }
 
@@ -303,19 +414,25 @@ export class ExplorerService {
     }
 
     private formatPrice(value: unknown): string {
-        if (typeof value !== 'number') return this.toText(value);
+        if (typeof value !== 'number') {
+            return this.toText(value);
+        }
         return `₪${Math.round(value)}`;
     }
 
     private formatExpiry(value: string): string {
         const match = value.match(/^(\d{4})-(\d{2})-\d{2}/);
-        if (!match) return value;
+        if (!match) {
+            return value;
+        }
 
         return `${match[2]}/${match[1].slice(2)}`;
     }
 
     private formatRating(reviews: JaneProductRecord | null): string {
-        if (!reviews) return DEFAULT_VALUE;
+        if (!reviews) {
+            return DEFAULT_VALUE;
+        }
 
         const count = typeof reviews.total_reviews_count === 'number' ? reviews.total_reviews_count : 0;
         const average = typeof reviews.total_reviews_avg === 'number' ? reviews.total_reviews_avg : 0;
@@ -324,24 +441,40 @@ export class ExplorerService {
     }
 
     private extractFirstName(namesValue: unknown, recordsValue: unknown): string {
-        if (Array.isArray(namesValue) && typeof namesValue[0] === 'string') return namesValue[0];
-        if (!Array.isArray(recordsValue)) return DEFAULT_VALUE;
+        if (Array.isArray(namesValue) && typeof namesValue[0] === 'string') {
+            return namesValue[0];
+        }
+        if (!Array.isArray(recordsValue)) {
+            return DEFAULT_VALUE;
+        }
 
         const firstRecord = this.asRecord(recordsValue[0]);
         return this.pickText(firstRecord?.heb_name, firstRecord?.eng_name);
     }
 
     private extractPromotionText(product: JaneProductRecord): string {
-        const candidates = this.collectTextValues(product).filter((value) => /\d+\s*ב-?\s*₪\s*\d+/.test(value));
+        const candidates = this.collectTextValues(product).filter((value) => {
+            return /\d+\s*ב-?\s*₪\s*\d+/.test(value);
+        });
         return candidates[0] ?? DEFAULT_VALUE;
     }
 
     private collectTextValues(value: unknown): string[] {
-        if (typeof value === 'string') return [value];
-        if (Array.isArray(value)) return value.flatMap((item) => this.collectTextValues(item));
-        if (!this.isPlainObject(value)) return [];
+        if (typeof value === 'string') {
+            return [value];
+        }
+        if (Array.isArray(value)) {
+            return value.flatMap((item) => {
+                return this.collectTextValues(item);
+            });
+        }
+        if (!this.isPlainObject(value)) {
+            return [];
+        }
 
-        return Object.values(value).flatMap((item) => this.collectTextValues(item));
+        return Object.values(value).flatMap((item) => {
+            return this.collectTextValues(item);
+        });
     }
 
     private formatCountry(value: unknown): string {
@@ -360,24 +493,42 @@ export class ExplorerService {
     }
 
     private formatPackageType(value: unknown): string {
-        const values = Array.isArray(value) ? value.map((item) => this.toText(item)) : [this.toText(value)];
-        if (values.some((item) => item.toLowerCase().includes('bag'))) return 'שקית';
-        if (values.some((item) => ['jar', 'can', 'bottle'].some((keyword) => item.toLowerCase().includes(keyword)))) {
+        const values = Array.isArray(value) ? value.map((item) => {
+            return this.toText(item);
+        }) : [this.toText(value)];
+        if (values.some((item) => {
+            return item.toLowerCase().includes('bag');
+        })) {
+            return 'שקית';
+        }
+        if (values.some((item) => {
+            return ['jar', 'can', 'bottle'].some((keyword) => {
+                return item.toLowerCase().includes(keyword);
+            });
+        })) {
             return 'צנצנת';
         }
 
-        return values.find((item) => item !== DEFAULT_VALUE) ?? DEFAULT_VALUE;
+        return values.find((item) => {
+            return item !== DEFAULT_VALUE;
+        }) ?? DEFAULT_VALUE;
     }
 
     private formatTerpenes(value: unknown): string {
-        if (!Array.isArray(value)) return DEFAULT_VALUE;
+        if (!Array.isArray(value)) {
+            return DEFAULT_VALUE;
+        }
 
         return value
             .map((item) => {
-                if (typeof item === 'string') return item;
+                if (typeof item === 'string') {
+                    return item;
+                }
 
                 const record = this.asRecord(item);
-                if (!record) return DEFAULT_VALUE;
+                if (!record) {
+                    return DEFAULT_VALUE;
+                }
 
                 const name = this.pickText(
                     record.heb_name,
@@ -401,20 +552,36 @@ export class ExplorerService {
                     record.terpene_percentage,
                 );
 
-                if (!name) return DEFAULT_VALUE;
+                if (!name) {
+                    return DEFAULT_VALUE;
+                }
 
                 return percent ? `${name} ${percent}` : name;
             })
-            .filter((item) => item !== DEFAULT_VALUE)
+            .filter((item) => {
+                return item !== DEFAULT_VALUE;
+            })
             .join(', ');
     }
 
     private formatTerpenePercent(...values: unknown[]): string {
-        const value = values.map((item) => this.toText(item)).find((item) => item !== DEFAULT_VALUE) ?? DEFAULT_VALUE;
-        if (!value) return DEFAULT_VALUE;
-        if (value.includes('%')) return value;
-        if (!/^\d+(?:[.,]\d+)?$/.test(value)) return value;
-        if (Number(value.replace(',', '.')) === 0) return DEFAULT_VALUE;
+        const value = values.map((item) => {
+            return this.toText(item);
+        }).find((item) => {
+            return item !== DEFAULT_VALUE;
+        }) ?? DEFAULT_VALUE;
+        if (!value) {
+            return DEFAULT_VALUE;
+        }
+        if (value.includes('%')) {
+            return value;
+        }
+        if (!/^\d+(?:[.,]\d+)?$/.test(value)) {
+            return value;
+        }
+        if (Number(value.replace(',', '.')) === 0) {
+            return DEFAULT_VALUE;
+        }
 
         return `${value}%`;
     }
@@ -424,11 +591,17 @@ export class ExplorerService {
 
         for (let attempt = 0; attempt < 8; attempt += 1) {
             const rowCount = await this.getProductRowCount(page);
-            if (rowCount > 0) return;
+            if (rowCount > 0) {
+                return;
+            }
 
-            await page.evaluate(() => window.scrollBy(0, window.innerHeight));
+            await page.evaluate(() => {
+                return window.scrollBy(0, window.innerHeight);
+            });
             await this.wait(750);
-            await page.evaluate(() => window.scrollTo(0, 0));
+            await page.evaluate(() => {
+                return window.scrollTo(0, 0);
+            });
             await this.wait(750);
         }
 
@@ -443,10 +616,14 @@ export class ExplorerService {
             };
 
             const isProductRow = (row: Element) => {
-                if (!isVisible(row) || row.querySelector('th')) return false;
+                if (!isVisible(row) || row.querySelector('th')) {
+                    return false;
+                }
 
                 const cells = Array.from(row.querySelectorAll('td, [role="cell"]'));
-                if (cells.length < 8) return false;
+                if (cells.length < 8) {
+                    return false;
+                }
 
                 const firstCell = cells[0];
                 const text = row.textContent?.trim() ?? '';
@@ -464,7 +641,9 @@ export class ExplorerService {
         for (const row of rows) {
             const isProductRow = await row.evaluate((element) => {
                 const rect = element.getBoundingClientRect();
-                if (rect.width === 0 || rect.height === 0 || element.querySelector('th')) return false;
+                if (rect.width === 0 || rect.height === 0 || element.querySelector('th')) {
+                    return false;
+                }
 
                 const cells = Array.from(element.querySelectorAll('td, [role="cell"]'));
                 const firstCell = cells[0];
@@ -472,13 +651,19 @@ export class ExplorerService {
                 return cells.length >= 8 && text.length > 0 && !!firstCell?.querySelector('[dir="ltr"], img, a');
             });
 
-            if (isProductRow) productRows.push(row);
+            if (isProductRow) {
+                productRows.push(row);
+            }
         }
 
         const row = productRows[index];
-        if (!row) return false;
+        if (!row) {
+            return false;
+        }
 
-        await row.evaluate((element) => element.scrollIntoView({ block: 'center', inline: 'nearest' }));
+        await row.evaluate((element) => {
+            return element.scrollIntoView({ block: 'center', inline: 'nearest' });
+        });
         await row.click();
 
         return true;
@@ -487,7 +672,9 @@ export class ExplorerService {
     private async extractProductRow(page: puppeteer.Page, index: number): Promise<BrowserExtractedItem> {
         return page.evaluate(
             ({ rowIndex, selector, defaultValue }) => {
-                const countryNames = ['ישראל', 'קנדה', 'פורטוגל', 'אורוגוואי', 'אוגנדה', 'ספרד', 'גרמניה'];
+                const countryNames = [
+                    'ישראל', 'קנדה', 'פורטוגל', 'אורוגוואי', 'אוגנדה', 'ספרד', 'גרמניה'
+                ];
 
                 const normalize = (value: string | null | undefined) => {
                     const cleaned = (value ?? '').replace(/\s+/g, ' ').trim();
@@ -500,7 +687,9 @@ export class ExplorerService {
                 };
 
                 const isProductRow = (row: Element) => {
-                    if (!isVisible(row) || row.querySelector('th')) return false;
+                    if (!isVisible(row) || row.querySelector('th')) {
+                        return false;
+                    }
 
                     const cells = Array.from(row.querySelectorAll('td, [role="cell"]'));
                     const firstCell = cells[0];
@@ -537,7 +726,9 @@ export class ExplorerService {
 
                 const productRows = Array.from(document.querySelectorAll(selector)).filter(isProductRow);
                 const row = productRows[rowIndex];
-                if (!row) return null;
+                if (!row) {
+                    return null;
+                }
 
                 const getExpandedRoot = () => {
                     let sibling = row.nextElementSibling;
@@ -555,16 +746,24 @@ export class ExplorerService {
                 };
 
                 const readGridValue = (root: Element | null, labels: string[]) => {
-                    if (!root) return defaultValue;
+                    if (!root) {
+                        return defaultValue;
+                    }
 
                     const spans = Array.from(root.querySelectorAll('span'));
 
                     for (const span of spans) {
                         const label = normalize(span.textContent);
-                        if (!labels.some((candidate) => label.includes(candidate))) continue;
+                        if (!labels.some((candidate) => {
+                            return label.includes(candidate);
+                        })) {
+                            continue;
+                        }
 
                         const valueCell = span.nextElementSibling;
-                        if (valueCell) return normalize(valueCell.textContent);
+                        if (valueCell) {
+                            return normalize(valueCell.textContent);
+                        }
                     }
 
                     return defaultValue;
@@ -573,9 +772,15 @@ export class ExplorerService {
                 const expandedRoot = getExpandedRoot();
                 const firstCell = row.querySelector('td:first-child, [role="cell"]:first-child');
                 const enName = normalize(firstCell?.querySelector('[dir="ltr"]')?.textContent);
-                const hebNameCandidate = Array.from(firstCell?.querySelectorAll('.text-gray-900, .text-base') ?? [])
-                    .map((element) => normalize(element.textContent))
-                    .find((text) => text !== defaultValue && text !== enName && !text.includes('חדש'));
+                const candidateSelectors = '.text-gray-900, .text-base';
+                const candidates = firstCell?.querySelectorAll(candidateSelectors) ?? [];
+                const hebNameCandidate = Array.from(candidates)
+                    .map((element) => {
+                        return normalize(element.textContent);
+                    })
+                    .find((text) => {
+                        return text !== defaultValue && text !== enName && !text.includes('חדש');
+                    });
                 const name = normalize(
                     (hebNameCandidate ?? firstCell?.textContent)
                         ?.replace(/חדש!?/g, '')
@@ -594,7 +799,9 @@ export class ExplorerService {
                 const countryOfOrigin =
                     countryFromExpanded !== defaultValue
                         ? countryFromExpanded
-                        : countryNames.find((country) => getCellText(row, 6).includes(country)) ?? defaultValue;
+                        : countryNames.find((country) => {
+                            return getCellText(row, 6).includes(country);
+                        }) ?? defaultValue;
                 const price = getCellSelectorText(row, 9, '.text-green-600');
                 const catalogPrice = getCellSelectorText(row, 9, '.line-through');
 
@@ -603,11 +810,19 @@ export class ExplorerService {
                     enName,
                     isNew: (firstCell?.textContent ?? '').includes('חדש'),
                     rating: extractRating(firstCell),
-                    deal: extractDeal(expandedRoot) !== defaultValue ? extractDeal(expandedRoot) : extractDeal(firstCell),
+                    deal: extractDeal(expandedRoot) !== defaultValue ?
+                        extractDeal(expandedRoot) :
+                        extractDeal(firstCell),
                     marketer,
-                    manufacturer: manufacturerFromExpanded !== defaultValue ? manufacturerFromExpanded : getCellText(row, 3),
-                    brand: brandFromExpanded !== defaultValue ? brandFromExpanded : getCellText(row, 5),
-                    expiry: expiryFromExpanded !== defaultValue ? expiryFromExpanded : getCellText(row, 7),
+                    manufacturer: manufacturerFromExpanded !== defaultValue ?
+                        manufacturerFromExpanded :
+                        getCellText(row, 3),
+                    brand: brandFromExpanded !== defaultValue ?
+                        brandFromExpanded :
+                        getCellText(row, 5),
+                    expiry: expiryFromExpanded !== defaultValue ?
+                        expiryFromExpanded :
+                        getCellText(row, 7),
                     price,
                     catalogPrice,
                     parent1,

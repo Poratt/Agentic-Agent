@@ -1,3 +1,4 @@
+/* --- Generic Link --- */
 .link {
   color: var(--color-text-secondary);
   text-decoration: none;
@@ -9,6 +10,7 @@
   }
 }
 
+/* --- Section Divider --- */
 .divider {
   margin: var(--space-6) 0;
   display: flex;
@@ -29,6 +31,7 @@
   }
 }
 
+/* --- Glassmorphism Pattern --- */
 .glass-effect {
   position: relative;
   isolation: isolate;
@@ -47,7 +50,7 @@
   }
 }
 
-/* עיצוב ה-Badges הגלובלי - תומך כעת בצורה מושלמת בגבולות דינמיים ובירושת צבע מלאה של האייקון */
+/* --- Icon Tile Badge --- */
 .icon-tile {
   display: grid;
   place-items: center;
@@ -62,6 +65,7 @@
   font-size: var(--font-size-xl);
 }
 
+/* --- Global Badges --- */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -74,7 +78,6 @@
   border: 1px solid transparent;
   letter-spacing: 0.01em;
 
-  /* הבטחה שהאייקון בפנים יירש את הצבע הדינמי מההורה */
   .ph,
   .material-symbols-rounded {
     color: inherit;
@@ -99,12 +102,13 @@
   }
 }
 
+/* --- AI Entry Slideup Animation --- */
 .ai-node-fade-in {
   --slide-distance: var(--space-1);
   animation: slideUp var(--transition-slow) ease-out both;
 }
 
-/* API Status Pulse Animations */
+/* --- API Status Pulse Animation --- */
 .status-indicator {
   display: flex;
   align-items: center;
@@ -119,5 +123,51 @@
     border-radius: 50%;
     box-shadow: 0 0 8px var(--color-success-glow);
     animation: pulse 2s infinite;
+  }
+}
+
+
+/* --- Shared Custom Spinner/Loader --- */
+.custom-loader {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--color-border);
+  border-radius: 50%;
+  border-top-color: var(--color-primary);
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  box-sizing: border-box;
+}
+
+/* --- Unified Page-State Container --- */
+.page-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 320px;
+  gap: var(--space-4);
+  text-align: center;
+  padding: var(--space-8);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-sizing: border-box;
+
+  .icon {
+    font-size: var(--font-size-huge);
+    color: var(--color-text-secondary);
+  }
+
+  .title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+  }
+
+  .subtitle {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
   }
 }

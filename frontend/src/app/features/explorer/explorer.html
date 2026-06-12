@@ -6,18 +6,32 @@
             </div>
 
             <div class="header-actions">
-                <div class="form-group">
+                <div class="action-row">
                     <div class="form-field-has-icon">
                         <span class="field-icon ph ph-magnifying-glass"></span>
                         <input
                             pInputText
                             class="form-control"
                             type="search"
-                            placeholder="חיפוש בטבלה"
+                            placeholder="חיפוש בטבלה..."
                             [disabled]="loading()"
                             (input)="applyGlobalFilter($event)"
                         />
                     </div>
+                    <button
+                        class="primary-btn outlined md"
+                        type="button"
+                        [disabled]="loading()"
+                        (click)="refresh()"
+                        aria-label="רענן נתונים"
+                    >
+                        <span class="ph ph-arrows-clockwise" [class.spin-animation]="loading()"></span>
+                        <span>רענן נתונים</span>
+                    </button>
+                </div>
+
+                <div class="action-row">
+                    <span class="ph ph-plant"></span>|
                     <span>סה"כ זנים: {{ items().length }}</span>
                 </div>
             </div>
@@ -69,7 +83,6 @@
                 <p-table
                     #table
                     [sortField]="'price'"
-                    styleClass="explorer-table"
                     [value]="items()"
                     [globalFilterFields]="searchColumns()"
                     [scrollable]="true"
@@ -90,7 +103,6 @@
                     <ng-template pTemplate="body" let-item>
                         <tr>
                             @for (column of columns(); track column) {
-                                <!-- Name -->
                                 <td>
                                     @if (column === 'name') {
                                         <div class="strain-main-details">
@@ -126,18 +138,14 @@
                                                 }
                                             </div>
                                         </div>
-                                    }
-                                    <!--  Price-->
-                                    @else if (column === 'price') {
+                                    } @else if (column === 'price') {
                                         <div class="strain-price-cell">
                                             <span class="strain-current-price">{{ formatValue(item.price) }}</span>
                                             @if (hasDisplayValue(item.catalogPrice)) {
                                                 <span class="strain-catalog-price">{{ formatValue(item.catalogPrice) }}</span>
                                             }
                                         </div>
-                                    }
-                                    <!-- strain -->
-                                    @else if (column == 'originStrain') {
+                                    } @else if (column == 'originStrain') {
                                         <div class="strain-origin-cell">
                                             <div class="root-nodes">
                                                 @if (hasDisplayValue(item.originStrain)) {
@@ -174,7 +182,6 @@
                                                     }
                                                 </div>
                                             </div>
-                                            <!-- Terpenes -->
                                             @if (splitTerpenes(item.terpenes).length > 0) {
                                                 <div class="terpenes">
                                                     <span class="ph ph-chef-hat"></span>
@@ -192,9 +199,7 @@
                                                 </div>
                                             }
                                         </div>
-                                    }
-                                    <!-- Country -->
-                                    @else if (column === 'countryOfOrigin') {
+                                    } @else if (column === 'countryOfOrigin') {
                                         @if (hasDisplayValue(item.countryOfOrigin)) {
                                             <button
                                                 class="country-filter filter-node"
@@ -212,9 +217,7 @@
                                                 <span>{{ formatValue(item.countryOfOrigin) }}</span>
                                             </button>
                                         }
-                                    }
-                                    <!-- Package -->
-                                    @else if (column === 'packageType') {
+                                    } @else if (column === 'packageType') {
                                         <button
                                             class="package-type-cell filter-node"
                                             type="button"
@@ -224,9 +227,7 @@
                                         >
                                             <span class="ph package-type-icon" [ngClass]="packageTypeIconClass(item.packageType)"></span>
                                         </button>
-                                    }
-                                    <!--  Marketer -->
-                                    @else if (column === 'marketer') {
+                                    } @else if (column === 'marketer') {
                                         <div class="market-cell">
                                             @if (hasDisplayValue(item.marketer)) {
                                                 <button
@@ -255,9 +256,7 @@
                                                 </button>
                                             }
                                         </div>
-                                    }
-                                    <!-- Rest -->
-                                    @else {
+                                    } @else {
                                         {{ formatValue(item[column]) }}
                                     }
                                 </td>

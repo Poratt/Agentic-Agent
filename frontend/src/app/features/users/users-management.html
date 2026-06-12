@@ -25,28 +25,31 @@
                     <div class="header-content">
                         <h2>משתמשים</h2>
                     </div>
-                    <div class="form-field-has-icon">
-                        <span class="ph ph-magnifying-glass field-icon"></span>
-                        <input
-                            pInputText
-                            type="text"
-                            (input)="applyGlobalFilter($event)"
-                            placeholder="חפש משתמש..."
-                            class="form-control"
-                        />
+
+                    <div class="header-actions">
+                        <div class="action-row">
+                            <div class="form-field-has-icon">
+                                <span class="field-icon ph ph-magnifying-glass"></span>
+                                <input
+                                    pInputText
+                                    type="text"
+                                    (input)="applyGlobalFilter($event)"
+                                    placeholder="חפש משתמש..."
+                                    class="form-control"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="action-row">
+                            <span class="ph ph-users"></span>|
+                            <span>סה"כ משתמשים: {{ tableUsers().length }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="glass-effect card table-container">
-                <p-table
-                    #table
-                    styleClass="users-table"
-                    [value]="tableUsers()"
-                    [globalFilterFields]="globalFilterFields"
-                    [scrollable]="true"
-                    scrollHeight="flex"
-                >
+                <p-table #table [value]="tableUsers()" [globalFilterFields]="globalFilterFields" [scrollable]="true" scrollHeight="flex">
                     <ng-template pTemplate="header">
                         <tr>
                             @for (column of columns; track column.field) {
@@ -61,34 +64,34 @@
                         </tr>
                     </ng-template>
                     <ng-template pTemplate="body" let-user>
-                            <tr>
-                                <td>{{ user.id }}</td>
-                                <td>{{ user.fullName || 'לא הוגדר' }}</td>
-                                <td>{{ user.email }}</td>
-                                <td>
-                                    <span class="badge" [badgeColor]="getUserRoleData(user.role)?.color">
-                                        <span [class]="getUserRoleData(user.role)?.icon" class="xs"></span>
-                                        {{ getUserRoleData(user.role)?.heLabel }}
-                                    </span>
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.fullName || 'לא הוגדר' }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <span class="badge" [badgeColor]="getUserRoleData(user.role)?.color">
+                                    <span [class]="getUserRoleData(user.role)?.icon" class="xs"></span>
+                                    {{ getUserRoleData(user.role)?.heLabel }}
+                                </span>
+                            </td>
+                            <td>{{ user.createdAt | date: 'shortDate' }}</td>
+                            @if (authStore.user()?.role === 1) {
+                                <td class="table-actions">
+                                    <div class="actions">
+                                        <button
+                                            class="icon-only transparent-btn"
+                                            (click)="toggleRole(user.id, user.role)"
+                                            title="שנה תפקיד"
+                                        >
+                                            <span class="ph ph-swap"></span>
+                                        </button>
+                                        <button class="icon-only danger-btn" (click)="deleteUser(user.id)" title="מחק משתמש">
+                                            <span class="ph ph-trash"></span>
+                                        </button>
+                                    </div>
                                 </td>
-                                <td>{{ user.createdAt | date: 'shortDate' }}</td>
-                                @if (authStore.user()?.role === 1) {
-                                    <td class="table-actions">
-                                        <div class="actions">
-                                            <button
-                                                class="icon-only transparent-btn"
-                                                (click)="toggleRole(user.id, user.role)"
-                                                title="שנה תפקיד"
-                                            >
-                                                <span class="ph ph-swap"></span>
-                                            </button>
-                                            <button class="icon-only danger-btn" (click)="deleteUser(user.id)" title="מחק משתמש">
-                                                <span class="ph ph-trash"></span>
-                                            </button>
-                                        </div>
-                                    </td>
-                                }
-                            </tr>
+                            }
+                        </tr>
                     </ng-template>
                     <ng-template pTemplate="emptymessage">
                         <tr>

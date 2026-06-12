@@ -7,7 +7,6 @@ import { Table, TableModule } from 'primeng/table';
 import { Subscription, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { PageStates } from '../../core/enums/page-states.enum';
-import { mockData } from './mock';
 
 type ExplorerResponse = {
     items: Record<string, unknown>[];
@@ -82,6 +81,7 @@ export class Explorer implements OnInit {
         'packageType',
     ];
     private readonly embeddedColumns = [
+        'id',
         'enName',
         'deal',
         'rating',
@@ -100,7 +100,7 @@ export class Explorer implements OnInit {
 
     activeFilters = signal<ExplorerFilter[]>([]);
 
-    items = computed<ExplorerFilterField[]>(() => {
+    items = computed(() => {
         const raw = this.rawItems();
         const filters = this.activeFilters();
 
@@ -108,31 +108,41 @@ export class Explorer implements OnInit {
             return raw;
         }
 
-        return raw.filter((item) =>
-            filters.every((filter) => {
+        return raw.filter((item) => {
+            return filters.every((filter) => {
                 const val = filter.value.toLowerCase();
 
-                return filter.fields.some((field) => this.formatValue(item[field]).toLowerCase().includes(val));
-            }),
-        );
+                return filter.fields.some((field) => {
+                    return this.formatValue(item[field]).toLowerCase().includes(val);
+                });
+            });
+        });
     });
 
     pageState = computed<PageStates>(() => {
-        if (this.loading()) return PageStates.Loading;
-        if (this.error()) return PageStates.Error;
+        if (this.loading()) {
+            return PageStates.Loading;
+        }
+        if (this.error()) {
+            return PageStates.Error;
+        }
         return this.items().length > 0 ? PageStates.Ready : PageStates.Empty;
     });
 
     columns = computed(() => {
         const keys = new Set<string>();
         this.rawItems().forEach((item) => {
-            Object.keys(item).forEach((key) => keys.add(key));
+            Object.keys(item).forEach((key) => {
+                keys.add(key);
+            });
         });
 
-        const knownColumns = this.preferredColumns.filter((key) => keys.has(key));
-        const extraColumns = Array.from(keys).filter(
-            (key) => !this.preferredColumns.includes(key) && !this.embeddedColumns.includes(key),
-        );
+        const knownColumns = this.preferredColumns.filter((key) => {
+            return keys.has(key);
+        });
+        const extraColumns = Array.from(keys).filter((key) => {
+            return !this.preferredColumns.includes(key) && !this.embeddedColumns.includes(key) && key !== 'id';
+        });
 
         return [...knownColumns, ...extraColumns];
     });
@@ -143,23 +153,22 @@ export class Explorer implements OnInit {
     });
 
     ngOnInit() {
-        this.rawItems.set(mockData);
-        this.loading.set(false);
-        // this.load()
+        this.load(false);
     }
 
-    load() {
+    load(forceRefresh = false) {
         this.requestSubscription?.unsubscribe();
         this.loading.set(true);
         this.error.set(null);
 
+        const url = forceRefresh ? `${this.base}/fetch?forceRefresh=true` : `${this.base}/fetch`;
+
         this.requestSubscription = this.http
-            .get<ExplorerResponse>(`${this.base}/fetch`)
+            .get<ExplorerResponse>(url)
             .pipe(timeout(45000))
             .subscribe({
                 next: (response) => {
                     this.rawItems.set(response.items ?? []);
-                    console.log(this.rawItems());
                     this.loading.set(false);
                 },
                 error: (error: unknown) => {
@@ -170,17 +179,27 @@ export class Explorer implements OnInit {
             });
     }
 
+    refresh() {
+        this.load(true);
+    }
+
     applyDataFilter(fields: ExplorerFilterField | ExplorerFilterField[], value: unknown, label?: string) {
         const filterValue = this.formatValue(value);
-        if (!filterValue) return;
+        if (!filterValue) {
+            return;
+        }
 
         const filterLabel = label ?? filterValue;
         const filterFields = Array.isArray(fields) ? fields : [fields];
         const key = `${filterFields.join('|')}:${filterValue.toLowerCase()}`;
 
         this.activeFilters.update((prev) => {
-            if (prev.some((filter) => filter.key === key)) {
-                return prev.filter((filter) => filter.key !== key);
+            if (prev.some((filter) => {
+                return filter.key === key;
+            })) {
+                return prev.filter((filter) => {
+                    return filter.key !== key;
+                });
             }
 
             return [...prev, { key, fields: filterFields, label: filterLabel, value: filterValue }];
@@ -188,7 +207,11 @@ export class Explorer implements OnInit {
     }
 
     removeFilter(key: string) {
-        this.activeFilters.update((prev) => prev.filter((filter) => filter.key !== key));
+        this.activeFilters.update((prev) => {
+            return prev.filter((filter) => {
+                return filter.key !== key;
+            });
+        });
     }
 
     clearAllFilters() {
@@ -200,7 +223,9 @@ export class Explorer implements OnInit {
     }
 
     sortTable(event: SortEvent): void {
-        if (!event.data || !event.field) return;
+        if (!event.data || !event.field) {
+            return;
+        }
 
         const field = event.field;
         const order = event.order ?? 1;
@@ -215,10 +240,18 @@ export class Explorer implements OnInit {
     }
 
     formatValue(value: unknown): string {
-        if (value === null || value === undefined || value === '') return '';
-        if (typeof value === 'boolean') return value ? 'כן' : 'לא';
-        if (value instanceof Date) return value.toLocaleString();
-        if (typeof value === 'object') return JSON.stringify(value);
+        if (value === null || value === undefined || value === '') {
+            return '';
+        }
+        if (typeof value === 'boolean') {
+            return value ? 'כן' : 'לא';
+        }
+        if (value instanceof Date) {
+            return value.toLocaleString();
+        }
+        if (typeof value === 'object') {
+            return JSON.stringify(value);
+        }
         return String(value);
     }
 
@@ -228,34 +261,44 @@ export class Explorer implements OnInit {
 
     packageTypeIconClass(value: unknown): string {
         const packageType = this.formatValue(value);
-        if (packageType.includes('צנצנת')) return 'ph-jar-label';
-        if (packageType.includes('שקית')) return 'ph-bag-simple';
+        if (packageType.includes('צנצנת')) {
+            return 'ph-jar-label';
+        }
+        if (packageType.includes('שקית')) {
+            return 'ph-bag-simple';
+        }
         return 'ph-question-mark';
     }
 
     splitTerpenes(value: unknown): TerpeneFilter[] {
         const terpenes = this.formatValue(value);
-        if (!terpenes || terpenes === 'לא ידוע') return [];
+        if (!terpenes || terpenes === 'לא ידוע') {
+            return [];
+        }
 
         return terpenes
             .split(',')
-            .map((terpene) => this.toTerpeneFilter(terpene))
-            .filter((terpene): terpene is TerpeneFilter => terpene !== null);
+            .map((terpene) => {
+                return this.toTerpeneFilter(terpene);
+            })
+            .filter((terpene): terpene is TerpeneFilter => {
+                return terpene !== null;
+            });
     }
 
     countryFlagUrl(value: unknown): string {
         const country = this.formatValue(value);
         const flags: Record<string, string> = {
-            ישראל: 'il',
-            קנדה: 'ca',
-            פורטוגל: 'pt',
-            אורוגוואי: 'uy',
-            אוגנדה: 'ug',
-            ספרד: 'es',
-            גרמניה: 'de',
-            מרוקו: 'ma',
-            דנמרק: 'dk',
-            הולנד: 'nl',
+            'ישראל': 'il',
+            'קנדה': 'ca',
+            'פורטוגל': 'pt',
+            'אורוגוואי': 'uy',
+            'אוגנדה': 'ug',
+            'ספרד': 'es',
+            'גרמניה': 'de',
+            'מרוקו': 'ma',
+            'דנמרק': 'dk',
+            'הולנד': 'nl',
         };
 
         const code = flags[country];
@@ -264,7 +307,9 @@ export class Explorer implements OnInit {
 
     private toTerpeneFilter(value: string): TerpeneFilter | null {
         const label = value.trim();
-        if (!label) return null;
+        if (!label) {
+            return null;
+        }
 
         const name = label
             .replace(/\s*\(?\d+(?:[.,]\d+)?\s*%\)?\s*$/u, '')
@@ -278,9 +323,15 @@ export class Explorer implements OnInit {
         const firstValue = this.sortValue(first, field);
         const secondValue = this.sortValue(second, field);
 
-        if (firstValue === null && secondValue === null) return 0;
-        if (firstValue === null) return 1;
-        if (secondValue === null) return -1;
+        if (firstValue === null && secondValue === null) {
+            return 0;
+        }
+        if (firstValue === null) {
+            return 1;
+        }
+        if (secondValue === null) {
+            return -1;
+        }
 
         if (typeof firstValue === 'number' && typeof secondValue === 'number') {
             return firstValue - secondValue;
@@ -291,7 +342,9 @@ export class Explorer implements OnInit {
 
     private sortValue(value: unknown, field: string): number | string | null {
         const formattedValue = this.formatValue(value);
-        if (!formattedValue) return null;
+        if (!formattedValue) {
+            return null;
+        }
 
         if (this.numericSortColumns.has(field)) {
             return this.toNumber(formattedValue);
@@ -316,8 +369,8 @@ export class Explorer implements OnInit {
             typeof error.error?.message === 'string'
                 ? error.error.message
                 : typeof error.error === 'string'
-                  ? error.error
-                  : '';
+                    ? error.error
+                    : '';
 
         return serverMessage || 'טעינת נתוני הזנים נכשלה.';
     }

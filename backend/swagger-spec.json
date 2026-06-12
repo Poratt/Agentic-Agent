@@ -1165,9 +1165,19 @@
     },
     "/explorer/fetch": {
       "get": {
-        "description": "Uses the configured Jane store page scraper to load and return normalized strain item data.",
+        "description": "Uses the configured Jane store page scraper or local database cache to load and return normalized strain item data.",
         "operationId": "ExplorerController_fetchData",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "forceRefresh",
+            "required": false,
+            "in": "query",
+            "description": "Whether to force refresh and scrape new data, overwriting local database records.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Explorer items fetched and normalized successfully.",
@@ -1195,7 +1205,7 @@
           }
         ],
         "summary": "Fetch configured explorer strain data",
-        "summaryHe": "שולף את נתוני הזנים ממקור האקספלורר הקבוע בשרת",
+        "summaryHe": "בודק זנים..",
         "tags": [
           "explorer"
         ],

@@ -26,8 +26,8 @@ button {
   svg,
   .ph,
   app-icon {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     font-size: var(--font-size-md);
     fill: currentColor;
     flex-shrink: 0;
@@ -52,7 +52,7 @@ button {
 
   /* Sizes */
   &.xs {
-    padding: var(--space-1);
+    padding: var(--space-1) 6px;
     font-size: var(--font-size-xs);
 
     svg,
@@ -65,7 +65,7 @@ button {
   }
 
   &.sm {
-    padding: var(--space-1);
+    padding: var(--space-1) 6px;
     font-size: var(--font-size-xs);
 
     svg,
