@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { CreateProviderDto, UpdateProviderDto } from '../models/llm.models';
+import { CreateProviderDto, UpdateProviderDto, CreateModelDto, UpdateModelDto } from '../models/llm.models';
 import { LlmService } from '../services/llm.service';
 import { ProviderResponseDto } from '../models/llm.models';
 import { PageStates } from '../enums/page-states.enum';
@@ -150,25 +150,44 @@ export class LlmAdminStore {
         next: () => this.loadProviders(),
         error: (err) => this._error.set(err?.error?.message ?? 'Failed to set default model'),
       });
+  }
 
-
+  // Create model
+  createModel(providerId: number, dto: CreateModelDto) {
     this._loading.set(true);
     this._error.set(null);
-
     this.llmService
-      .getAdminProviders()
-      .pipe(
-        finalize(() => {
-          this._loading.set(false);
-        }),
-      )
+      .createModel(providerId, dto)
+      .pipe(finalize(() => this._loading.set(false)))
       .subscribe({
-        next: (res) => {
-          this._providers.set(res.result ?? []);
-        },
-        error: (err) => {
-          this._error.set(err?.error?.message ?? 'Failed to load providers');
-        },
+        next: () => this.loadModels(providerId),
+        error: (err) => this._error.set(err?.error?.message ?? 'Failed to create model'),
+      });
+  }
+
+  // Update model
+  updateModel(id: number, dto: UpdateModelDto) {
+    this._loading.set(true);
+    this._error.set(null);
+    this.llmService
+      .updateModel(id, dto)
+      .pipe(finalize(() => this._loading.set(false)))
+      .subscribe({
+        next: () => this.loadProviders(),
+        error: (err) => this._error.set(err?.error?.message ?? 'Failed to update model'),
+      });
+  }
+
+  // Disable model
+  disableModel(id: number) {
+    this._loading.set(true);
+    this._error.set(null);
+    this.llmService
+      .disableModel(id)
+      .pipe(finalize(() => this._loading.set(false)))
+      .subscribe({
+        next: () => this.loadProviders(),
+        error: (err) => this._error.set(err?.error?.message ?? 'Failed to disable model'),
       });
   }
 

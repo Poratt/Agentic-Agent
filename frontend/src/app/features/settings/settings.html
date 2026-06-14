@@ -1,76 +1,331 @@
-@switch (pageState()) {
-    @case (PageStates.Loading) {
-        <div class="page-state loading-state">
-            <span class="custom-loader"></span>
-        </div>
-    }
-    @case (PageStates.Error) {
-        <div class="page-state error-state">
-            <span class="icon ph ph-warning"></span>
-            <h4 class="title">אירעה שגיאה בטעינת ספקי ה-LLM.</h4>
-            <p class="subtitle">{{ errorMessage() }}</p>
-            <button class="primary-btn filled" (click)="loadProviders()">נסה שוב</button>
-        </div>
-    }
-    @case (PageStates.Empty) {
-        <div class="page-state empty-state">
-            <span class="icon ph ph-database"></span>
-            <h4 class="title">לא נמצאו ספקי LLM.</h4>
-            <p class="subtitle">עדיין לא הוגדרו ספקים במערכת.</p>
-        </div>
-    }
-    @case (PageStates.Ready) {
-        <div class="page-content">
-            <div class="page-header">
-                <div class="header-row">
-                    <div class="header-content">
-                        <h2>הגדרות</h2>
+<div dir="ltr">
+    @switch (pageState()) {
+        @case (PageStates.Loading) {
+            <div class="page-state loading-state">
+                <span class="custom-loader"></span>
+            </div>
+        }
+        @case (PageStates.Error) {
+            <div class="page-state error-state">
+                <span class="icon ph ph-warning"></span>
+                <h4 class="title">Failed to load LLM providers.</h4>
+                <p class="subtitle">{{ errorMessage() }}</p>
+                <button class="primary-btn filled" (click)="loadProviders()">Retry</button>
+            </div>
+        }
+        @case (PageStates.Empty) {
+            <div class="page-state empty-state">
+                <span class="icon ph ph-database"></span>
+                <h4 class="title">No LLM providers found.</h4>
+                <p class="subtitle">No providers have been defined in the system yet.</p>
+                <button class="primary-btn filled" type="button" (click)="openCreate()">Create new provider</button>
+            </div>
+        }
+        @case (PageStates.Ready) {
+            <div class="page-content">
+                <div class="page-header">
+                    <div class="header-row">
+                        <div class="header-content">
+                            <h2>Settings</h2>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <section class="glass-effect card">
-                <div class="card-header">
-                    <span class="ph ph-cpu"></span>
-                    <h3>ספקי LLM</h3>
+                <section class="glass-effect card">
+                    <div class="card-header">
+                        <span class="ph ph-cpu"></span>
+                        <h3>LLM Providers</h3>
+                    </div>
+                    <p class="subtitle">
+                        LLM providers configured in the system. Full management of providers, models, and tests will be added in the next
+                        phase.
+                    </p>
+                </section>
+
+                <div class="glass-effect card table-container">
+                    <p-table
+                        [value]="providers()"
+                        sortField="representative.name"
+                        sortMode="single"
+                        dataKey="representative.name"
+                        rowGroupMode="subheader"
+                        groupRowsBy="representative.name"
+                        [tableStyle]="{ 'min-width': '70rem' }"
+                    >
+                        <ng-template #header>
+                            <tr>
+                                <th style="width: 3rem"></th>
+                                @for (column of columns; track column.field) {
+                                    <th>
+                                        <span>{{ column.label }}</span>
+                                    </th>
+                                }
+                                <th style="width: 12rem">Actions</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template #groupheader let-provider let-rowIndex="rowIndex" let-expanded="expanded">
+                            <tr>
+                                <td>
+                                    <button type="button" [pRowToggler]="provider" class="icon-only btn-trasnparent">
+                                        <span class="ph" [ngClass]="expanded ? 'ph-caret-down' : 'ph-caret-right'"></span>
+                                    </button>
+                                </td>
+                                <td>{{ provider.id }}</td>
+                                <td>{{ provider.key }}</td>
+                                <td>{{ formatValue(provider.label) }}</td>
+                                <td>{{ formatValue(provider.baseUrl) }}</td>
+                                <td>{{ provider.hasApiKey ? 'Set' : 'Missing' }}</td>
+                                <td>{{ formatValue(provider.modelsCount) }}</td>
+                                <td>{{ formatValue(provider.defaultModelId) }}</td>
+                                <td>
+                                    <span class="badge" [badgeColor]="provider.active ? activeColor : inactiveColor">
+                                        {{ provider.active ? 'Active' : 'Inactive' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button
+                                        pButton
+                                        type="button"
+                                        icon="ph ph-pencil"
+                                        class="p-button-text"
+                                        (click)="openEdit(provider)"
+                                    ></button>
+                                    <button
+                                        pButton
+                                        type="button"
+                                        icon="ph ph-trash"
+                                        class="p-button-text"
+                                        (click)="disableProvider(provider.id)"
+                                    ></button>
+                                    <button
+                                        pButton
+                                        type="button"
+                                        icon="ph ph-plus"
+                                        class="p-button-text"
+                                        (click)="openModelCreate(provider.id)"
+                                    ></button>
+                                </td>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template #expandedrow let-provider>
+                            <tr>
+                                <td [attr.colspan]="columns.length + 2">
+                                    <div class="card-header">
+                                        <span class="ph ph-stack"></span>
+                                        <h4>Models for {{ provider.label }} ({{ provider.key }})</h4>
+                                        <button
+                                            class="primary-btn filled"
+                                            type="button"
+                                            style="margin-inline-start: auto"
+                                            (click)="openModelCreate(provider.id)"
+                                        >
+                                            <span class="ph ph-plus"></span>
+                                            <span>Add model</span>
+                                        </button>
+                                    </div>
+
+                                    @if (modelsLoadingFor(provider.id)) {
+                                        <div class="page-state loading-state" style="min-height: 6rem">
+                                            <span class="custom-loader"></span>
+                                        </div>
+                                    } @else if (modelsErrorFor(provider.id)) {
+                                        <div class="page-state error-state" style="min-height: 6rem">
+                                            <span class="icon ph ph-warning"></span>
+                                            <p class="subtitle">{{ modelsErrorFor(provider.id) }}</p>
+                                        </div>
+                                    } @else if (modelsFor(provider.id).length === 0) {
+                                        <div class="page-state empty-state" style="min-height: 6rem">
+                                            <span class="icon ph ph-package"></span>
+                                            <p class="subtitle">No models configured for this provider yet.</p>
+                                        </div>
+                                    } @else {
+                                        <p-table styleClass="models-table" [value]="modelsFor(provider.id)" dataKey="id">
+                                            <ng-template pTemplate="header">
+                                                <tr>
+                                                    @for (column of modelColumns; track column.field) {
+                                                        <th>
+                                                            <span>{{ column.label }}</span>
+                                                        </th>
+                                                    }
+                                                    <th style="width: 10rem">Actions</th>
+                                                </tr>
+                                            </ng-template>
+                                            <ng-template pTemplate="body" let-model>
+                                                <tr>
+                                                    <td>{{ model.id }}</td>
+                                                    <td dir="ltr">{{ model.name }}</td>
+                                                    <td>{{ model.label }}</td>
+                                                    <td>{{ formatValue(model.contextWindow) }}</td>
+                                                    <td>{{ formatValue(model.sortOrder) }}</td>
+                                                    <td>
+                                                        <span
+                                                            class="badge"
+                                                            [badgeColor]="model.supportsStreaming ? activeColor : inactiveColor"
+                                                        >
+                                                            {{ model.supportsStreaming ? 'Yes' : 'No' }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span
+                                                            class="badge"
+                                                            [badgeColor]="model.supportsTools ? activeColor : inactiveColor"
+                                                        >
+                                                            {{ model.supportsTools ? 'Yes' : 'No' }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge" [badgeColor]="model.active ? activeColor : inactiveColor">
+                                                            {{ model.active ? 'Active' : 'Inactive' }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button
+                                                            pButton
+                                                            type="button"
+                                                            icon="ph ph-pencil"
+                                                            class="p-button-text"
+                                                            (click)="openModelEdit(model)"
+                                                        ></button>
+                                                        <button
+                                                            pButton
+                                                            type="button"
+                                                            icon="ph ph-trash"
+                                                            class="p-button-text"
+                                                            (click)="disableModel(model.id, provider.id)"
+                                                        ></button>
+                                                        @if (model.id !== provider.defaultModelId) {
+                                                            <button
+                                                                pButton
+                                                                type="button"
+                                                                icon="ph ph-star"
+                                                                class="p-button-text"
+                                                                pTooltip="Set as default"
+                                                                tooltipPosition="top"
+                                                                (click)="changeDefaultModel(provider.id, model.id)"
+                                                            ></button>
+                                                        } @else {
+                                                            <span class="badge" [badgeColor]="activeColor">Default</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            </ng-template>
+                                        </p-table>
+                                    }
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
                 </div>
-                <p class="subtitle">ספקי המודלים המוגדרים במערכת. ניהול מלא של ספקים, מודלים ובדיקות יתווסף בשלב הבא.</p>
-            </section>
-
-            <div class="glass-effect card table-container">
-                <p-table #table styleClass="providers-table" [value]="providers()" [scrollable]="true" scrollHeight="flex">
-                    <ng-template pTemplate="header">
-                        <tr>
-                            @for (column of columns; track column.field) {
-                                <th>
-                                    <span>{{ column.label }}</span>
-                                </th>
-                            }
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="body" let-provider>
-                        <tr>
-                            <td>{{ provider.id }}</td>
-                            <td>{{ provider.key }}</td>
-                            <td>{{ formatValue(provider.label) }}</td>
-                            <td>{{ formatValue(provider.baseUrl) }}</td>
-                            <td>{{ provider.hasApiKey ? 'מוגדר' : 'חסר' }}</td>
-                            <td>{{ formatValue(provider.modelsCount) }}</td>
-                            <td>{{ formatValue(provider.defaultModelId) }}</td>
-                            <td>
-                                <span class="badge" [badgeColor]="provider.active ? activeColor : inactiveColor">
-                                    {{ provider.active ? 'פעיל' : 'לא פעיל' }}
-                                </span>
-                            </td>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="emptymessage">
-                        <tr>
-                            <td [attr.colspan]="columns.length">לא נמצאו ספקים.</td>
-                        </tr>
-                    </ng-template>
-                </p-table>
             </div>
-        </div>
+        }
     }
-}
+
+    <p-dialog
+        header="{{ isEdit() ? 'Edit provider' : 'New provider' }}"
+        [(visible)]="dialogVisibleModel"
+        [modal]="true"
+        [closable]="true"
+        [draggable]="false"
+        [resizable]="false"
+        [style]="{ width: '480px' }"
+        (onHide)="cancelDialog()"
+    >
+        <form [formGroup]="providerForm" class="form" (ngSubmit)="saveProvider()">
+            <div class="form-group">
+                <label for="provider-key">Provider key</label>
+                <input pInputText id="provider-key" type="text" formControlName="key" dir="ltr" autocomplete="off" [readonly]="isEdit()" />
+            </div>
+            <div class="form-group">
+                <label for="provider-label">Display name</label>
+                <input pInputText id="provider-label" type="text" formControlName="label" />
+            </div>
+            <div class="form-group">
+                <label for="provider-baseUrl">Base URL</label>
+                <input pInputText id="provider-baseUrl" type="url" formControlName="baseUrl" dir="ltr" autocomplete="off" />
+            </div>
+            <div class="form-group">
+                <label for="provider-apiKey">API key</label>
+                <input
+                    pInputText
+                    id="provider-apiKey"
+                    type="password"
+                    formControlName="apiKey"
+                    dir="ltr"
+                    autocomplete="off"
+                    placeholder="{{ isEdit() ? 'Leave empty to keep existing' : '' }}"
+                />
+            </div>
+            <div class="form-group form-group-checkbox">
+                <label class="checkbox-label">
+                    <input type="checkbox" formControlName="active" />
+                    <span>Active</span>
+                </label>
+            </div>
+        </form>
+        <ng-template pTemplate="footer">
+            <button class="transparent-btn" type="button" (click)="cancelDialog()">Cancel</button>
+            <button class="primary-btn filled" type="button" (click)="saveProvider()">Save</button>
+        </ng-template>
+    </p-dialog>
+
+    <p-dialog
+        header="{{ isModelEdit() ? 'Edit model' : 'New model' }}"
+        [(visible)]="modelDialogVisibleModel"
+        [modal]="true"
+        [closable]="true"
+        [draggable]="false"
+        [resizable]="false"
+        [style]="{ width: '480px' }"
+        (onHide)="cancelModelDialog()"
+    >
+        <form [formGroup]="modelForm" class="form" (ngSubmit)="saveModel()">
+            <div class="form-group">
+                <label for="model-name">Model name</label>
+                <input
+                    pInputText
+                    id="model-name"
+                    type="text"
+                    formControlName="name"
+                    dir="ltr"
+                    autocomplete="off"
+                    [readonly]="isModelEdit()"
+                />
+            </div>
+            <div class="form-group">
+                <label for="model-label">Display name</label>
+                <input pInputText id="model-label" type="text" formControlName="label" />
+            </div>
+            <div class="form-group">
+                <label for="model-contextWindow">Context window</label>
+                <input pInputText id="model-contextWindow" type="number" formControlName="contextWindow" min="0" />
+            </div>
+            <div class="form-group">
+                <label for="model-sortOrder">Sort order</label>
+                <input pInputText id="model-sortOrder" type="number" formControlName="sortOrder" />
+            </div>
+            <div class="form-group form-group-checkbox">
+                <label class="checkbox-label">
+                    <input type="checkbox" formControlName="active" />
+                    <span>Active</span>
+                </label>
+            </div>
+            <div class="form-group form-group-checkbox">
+                <label class="checkbox-label">
+                    <input type="checkbox" formControlName="supportsStreaming" />
+                    <span>Supports streaming</span>
+                </label>
+            </div>
+            <div class="form-group form-group-checkbox">
+                <label class="checkbox-label">
+                    <input type="checkbox" formControlName="supportsTools" />
+                    <span>Supports tools</span>
+                </label>
+            </div>
+        </form>
+        <ng-template pTemplate="footer">
+            <button class="transparent-btn" type="button" (click)="cancelModelDialog()">Cancel</button>
+            <button class="primary-btn filled" type="button" (click)="saveModel()">Save</button>
+        </ng-template>
+    </p-dialog>
+</div>

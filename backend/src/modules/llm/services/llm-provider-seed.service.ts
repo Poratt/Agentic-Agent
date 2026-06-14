@@ -24,7 +24,7 @@ export class LlmProviderSeedService implements OnModuleInit {
     private readonly registry: LlmProviderRegistryService,
     private readonly config: ConfigService,
     private readonly encryption: EncryptionService,
-  ) {}
+  ) { }
 
   async onModuleInit(): Promise<void> {
     await this.seedProviders();

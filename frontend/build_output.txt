@@ -1,0 +1,30 @@
+Application bundle generation failed. [2.712 seconds] - 2026-06-14T10:04:13.011Z
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2322: Type 'number | null' is not assignable to type 'null'.
+  Type 'number' is not assignable to type 'null'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/settings/settings.ts:183:12:
+[37m      183 │             [32mcontextWindow[37m: model.contextWindow ?? null,
+          ╵             [32m~~~~~~~~~~~~~[0m
+
+  The expected type comes from property 'contextWindow' which is declared here on type '{ name: string | null; label: string | null; active: boolean | null; supportsStreaming: boolean | null; supportsTools: boolean | null; contextWindow: null; sortOrder: number | null; }'
+
+    src/app/features/settings/settings.ts:56:8:
+[37m      56 │         [32mcontextWindow: [null][37m,
+         ╵         [32m~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'updateModel' does not exist on type 'LlmAdminStore'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/settings/settings.ts:193:35:
+[37m      193 │ ...           this.llmAdminStore.[32mupdateModel[37m(this.editModelId, dto);
+          ╵                                  [32m~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'createModel' does not exist on type 'LlmAdminStore'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/settings/settings.ts:197:35:
+[37m      197 │ ...       this.llmAdminStore.[32mcreateModel[37m(this.modelProviderId, dto);
+          ╵                              [32m~~~~~~~~~~~[0m
+
+

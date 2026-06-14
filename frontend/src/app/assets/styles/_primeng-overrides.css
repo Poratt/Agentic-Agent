@@ -54,3 +54,9 @@
     background: transparent !important;
   }
 }
+
+p-table.models-table {
+
+  border: 1px solid transparent !important;
+  background-color: red !important;
+}

@@ -196,4 +196,6 @@
   --shadow-soft: 0 2px 12px rgba(15, 23, 42, 0.08);
   --shadow-elevated: 0 8px 28px rgba(15, 23, 42, 0.12);
   --shadow-glow-primary: 0 0 14px rgba(2, 132, 199, 0.20);
+
+  --grey-30: rgba(255, 255, 255, 0.3);
 }
