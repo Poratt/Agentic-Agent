@@ -3,16 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { IChatSession } from '../models/chat-session.interface';
-import { IChatMessage, IChatStep } from '../models/chat-message.interface';
+import { IChatMessage, ChatModelSelection, ChatStreamEvent } from '../models/chat-message.interface';
 
-export type ChatStreamEvent =
-	| ({ type: 'step' } & IChatStep)
-	| { type: 'token'; content?: string };
-
-export interface ChatModelSelection {
-	provider: 'openrouter' | 'nvidia' | 'ollama';
-	model: string;
-}
 
 @Injectable({
 	providedIn: 'root',

@@ -12,15 +12,16 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { ChatModelSelection, ChatService } from '../../../core/services/chat.service';
 import { LlmModelGroup, LlmModelOption, LlmService, LlmStatus } from '../../../core/services/llm.service';
 import { ChatStore } from '../../../core/store/chat.store';
 import { AuthStore } from '../../../core/store/auth.store';
-import { IChatMessage } from '../../../core/models/chat-message.interface';
+import { ChatModelSelection, IChatMessage } from '../../../core/models/chat-message.interface';
 import { AutoScrollBottomDirective } from '../../../core/directives/auto-scroll-bottom.directive';
 import { ChatMessage, ChatMessageActionEvent, ChatMessageStreamState } from '../chat-message/chat-message';
 import { UsersStore } from '../../../core/store/users.store';
 import { Select } from 'primeng/select';
+import { LlmProviderStore } from '../../../core/store/llm-provider.store';
+import { ChatService } from '../../../core/services/chat.service';
 
 @Component({
     selector: 'app-chat',
@@ -36,9 +37,12 @@ export class Chat implements OnInit, OnDestroy {
 
     private chatService = inject(ChatService);
     private llmService = inject(LlmService);
+
     protected chatStore = inject(ChatStore);
     protected userStore = inject(UsersStore);
     protected authStore = inject(AuthStore);
+    protected llmProviderStore = inject(LlmProviderStore);
+
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private fb = inject(FormBuilder);
@@ -52,7 +56,7 @@ export class Chat implements OnInit, OnDestroy {
     activeStreamState = signal<ChatMessageStreamState>('idle');
 
     currentUserProfile = this.userStore.currentUserProfile;
-    models = signal<LlmModelGroup[]>([]);
+    models = signal<LlmModelGroup[]>(this.llmProviderStore.groupedProviders());
 
     chatForm: FormGroup = this.fb.group({
         prompt: ['', [Validators.required, Validators.minLength(1)]],
@@ -456,8 +460,8 @@ export class Chat implements OnInit, OnDestroy {
         });
         const activeOption = status
             ? allOptions.find((option) => {
-                  return option.provider === status.activeProvider && option.value === status.activeModel;
-              })
+                return option.provider === status.activeProvider && option.value === status.activeModel;
+            })
             : null;
         const fallbackOption = allOptions[0];
         const selectedOption = activeOption ?? fallbackOption;

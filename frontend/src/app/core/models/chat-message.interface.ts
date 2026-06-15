@@ -11,3 +11,13 @@ export interface IChatMessage {
   createdAt?: Date;
   steps?: IChatStep[];
 }
+
+export type ChatStreamEvent =
+  | ({ type: 'step' } & IChatStep)
+  | { type: 'token'; content?: string };
+
+export interface ChatModelSelection {
+  // provider: 'openrouter' | 'nvidia' | 'ollama';
+  provider: string;
+  model: string;
+}

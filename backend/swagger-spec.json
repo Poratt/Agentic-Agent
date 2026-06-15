@@ -1323,6 +1323,225 @@
         ],
         "toolIcon": "ph-calendar-days"
       }
+    },
+    "/llm-provider": {
+      "post": {
+        "description": "Adds a new LLM provider to the system configuration.",
+        "operationId": "LlmProviderController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLlmProviderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Provider created successfully"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create new provider",
+        "tags": [
+          "LLM Provider"
+        ]
+      },
+      "get": {
+        "description": "Retrieves a list of all configured LLM providers.",
+        "operationId": "LlmProviderController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of providers retrieved"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all providers",
+        "tags": [
+          "LLM Provider"
+        ]
+      }
+    },
+    "/llm-provider/{id}": {
+      "patch": {
+        "description": "Updates an existing LLM provider configuration.",
+        "operationId": "LlmProviderController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLlmProviderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Provider updated successfully"
+          },
+          "400": {
+            "description": "Invalid provider ID"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update provider",
+        "tags": [
+          "LLM Provider"
+        ]
+      }
+    },
+    "/llm-provider/{id}/models": {
+      "post": {
+        "description": "Creates a new model associated with the specified provider.",
+        "operationId": "LlmProviderController_createModel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLlmModelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Model created successfully"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add model to provider",
+        "tags": [
+          "LLM Provider"
+        ]
+      },
+      "get": {
+        "description": "Retrieves all models associated with the given provider.",
+        "operationId": "LlmProviderController_findModels",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of models retrieved"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get models for provider",
+        "tags": [
+          "LLM Provider"
+        ]
+      }
+    },
+    "/llm-provider/models/{id}": {
+      "patch": {
+        "description": "Updates an existing LLM model configuration.",
+        "operationId": "LlmProviderController_updateModel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLlmModelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Model updated successfully"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update model",
+        "tags": [
+          "LLM Provider"
+        ]
+      }
     }
   },
   "info": {
@@ -2487,6 +2706,125 @@
         "required": [
           "items"
         ]
+      },
+      "CreateLlmProviderDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Unique identifier key for the provider",
+            "example": "openai"
+          },
+          "label": {
+            "type": "string",
+            "description": "Display label of the provider",
+            "example": "OpenAI"
+          },
+          "baseUrl": {
+            "type": "string",
+            "description": "API base URL for LLM requests",
+            "example": "https://api.openai.com/v1"
+          },
+          "apiKey": {
+            "type": "string",
+            "description": "Optional secret API key",
+            "example": "sk-proj-exampleKey123"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Status indicating if provider is active",
+            "default": true
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "baseUrl"
+        ]
+      },
+      "UpdateLlmProviderDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Unique identifier key for the provider",
+            "example": "openai"
+          },
+          "label": {
+            "type": "string",
+            "description": "Display label of the provider",
+            "example": "OpenAI"
+          },
+          "baseUrl": {
+            "type": "string",
+            "description": "API base URL for LLM requests",
+            "example": "https://api.openai.com/v1"
+          },
+          "apiKey": {
+            "type": "string",
+            "description": "Optional secret API key",
+            "example": "sk-proj-exampleKey123"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Status indicating if provider is active",
+            "default": true
+          }
+        }
+      },
+      "CreateLlmModelDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Unique identifier key for the model",
+            "example": "gpt-4o"
+          },
+          "label": {
+            "type": "string",
+            "description": "Display name of the model",
+            "example": "GPT-4o"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Status indicating if the model is active",
+            "default": true
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Sort hierarchy order",
+            "default": 0
+          }
+        },
+        "required": [
+          "key",
+          "label"
+        ]
+      },
+      "UpdateLlmModelDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Unique identifier key for the model",
+            "example": "gpt-4o"
+          },
+          "label": {
+            "type": "string",
+            "description": "Display name of the model",
+            "example": "GPT-4o"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Status indicating if the model is active",
+            "default": true
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Sort hierarchy order",
+            "default": 0
+          }
+        }
       }
     }
   }

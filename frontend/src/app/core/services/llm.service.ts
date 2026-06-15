@@ -4,24 +4,25 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ServiceResultContainer } from '../models/service-result-container.model';
 
-export type LlmProviderLabel = 'openrouter' | 'nvidia' | 'ollama';
+// export type LlmProviderLabel = 'openrouter' | 'nvidia' | 'ollama';
 
 export interface LlmModelOption {
 	id?: string;
-	provider?: LlmProviderLabel;
+	provider?: string;
 	value: string;
 	label: string;
 }
 
 export interface LlmModelGroup {
-	label: LlmProviderLabel;
+	label: string;
 	items: LlmModelOption[];
 }
 
 export interface LlmStatus {
-	activeProvider: LlmProviderLabel;
+	activeProvider: string;
 	activeModel: string;
 }
+
 
 @Injectable({
 	providedIn: 'root',

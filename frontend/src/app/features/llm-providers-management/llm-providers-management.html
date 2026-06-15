@@ -1,0 +1,127 @@
+<div class="" dir="ltr">
+    @switch (pageState()) {
+        @case (PageStates.Loading) {
+            <div class="page-state loading-state">
+                <span class="custom-loader"></span>
+            </div>
+        }
+        @case (PageStates.Error) {
+            <div class="page-state error-state">
+                <span class="icon ph ph-warning"></span>
+                <h4 class="title">An error occurred while loading LLM providers.</h4>
+                <p class="subtitle">Please try again later.</p>
+            </div>
+        }
+        @case (PageStates.Empty) {
+            <div class="page-state empty-state">
+                <span class="icon ph ph-exclude"></span>
+                <h4 class="title">No LLM providers found.</h4>
+                <p class="subtitle">No providers are currently defined in the system.</p>
+            </div>
+        }
+        @case (PageStates.Ready) {
+            <div class="page-content">
+                <div class="page-header">
+                    <div class="header-row">
+                        <div class="header-content">
+                            <h2>LLM Providers</h2>
+                        </div>
+
+                        <div class="header-actions">
+                            <div class="action-row">
+                                <div class="form-field-has-icon">
+                                    <span class="field-icon ph ph-magnifying-glass"></span>
+                                    <input
+                                        pInputText
+                                        type="text"
+                                        (input)="applyGlobalFilter($event)"
+                                        placeholder="Search LLM providers..."
+                                        class="form-control"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="action-row">
+                                <span class="ph ph-database"></span>|
+                                <span>TOTAL PROVIDERS: {{ llmProviders().length }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-effect card table-container">
+                    <p-table [value]="llmProviders()" dataKey="label">
+                        <ng-template #header>
+                            <tr>
+                                <th class="col-toggle"></th>
+                                <th>Name</th>
+                                <th>baseUrl</th>
+                                <th>models</th>
+                                <th></th>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template #body let-provider let-expanded="expanded">
+                            <tr>
+                                <td class="col-toggle">
+                                    <p-button
+                                        type="button"
+                                        size="small"
+                                        [pRowToggler]="provider"
+                                        text
+                                        rounded
+                                        plain
+                                        [icon]="expanded ? 'ph ph-caret-down' : 'ph ph-caret-right'"
+                                    ></p-button>
+                                </td>
+                                <td>{{ provider.label }}</td>
+                                <td>{{ provider.baseUrl }}</td>
+                                <td>{{ provider.models.length }}</td>
+                                <td>
+                                    <div class="action-cell">
+                                        <p-button size="small" icon="ph ph-pencil" text></p-button>
+                                        <p-button size="small" icon="ph ph-trash" text severity="danger"></p-button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template #expandedrow let-provider>
+                            <tr>
+                                <td colspan="5" class="expanded-cell">
+                                    <p-table [value]="provider.models">
+                                        <ng-template #header>
+                                            <tr>
+                                                <th class="col-toggle"></th>
+                                                <th>KEY</th>
+                                                <th>LABEL</th>
+                                                <th>ACTIVE</th>
+                                                <th>SORT ORDER</th>
+                                                <th></th>
+                                            </tr>
+                                        </ng-template>
+                                        <ng-template #body let-model>
+                                            <tr>
+                                                <td class="col-toggle"></td>
+                                                <td>{{ model.key }}</td>
+                                                <td>{{ model.label }}</td>
+                                                <td>{{ model.active }}</td>
+                                                <td>{{ model.sortOrder }}</td>
+                                                <td>
+                                                    <div class="action-cell">
+                                                        <p-button size="small" icon="ph ph-pencil" text></p-button>
+                                                        <p-button size="small" icon="ph ph-trash" text severity="danger"></p-button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </ng-template>
+                                    </p-table>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
+            </div>
+        }
+    }
+</div>

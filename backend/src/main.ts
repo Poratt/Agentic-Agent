@@ -6,6 +6,8 @@ import { AppModule } from './app.module';
 import { seedAdmin } from './core/seeds/user.seed';
 import { DataSource } from 'typeorm';
 import * as fs from 'fs';
+import { LlmModelEntity } from './modules/llm-provider/entities/llm-model.entity';
+import { LlmProviderEntity } from './modules/llm-provider/entities/llm-provider.entity';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -28,6 +30,7 @@ async function bootstrap() {
 
   const dataSource = app.get(DataSource);
   await seedAdmin(dataSource);
+
 
   const port = process.env.PORT || 3000;
   await app.listen(port);

@@ -10,6 +10,10 @@ import { ExplorerModule } from './modules/explorer/explorer.module';
 import { LlmModule } from './modules/llm/llm.module';
 import { SystemModule } from './modules/system/system.module';
 import { WeatherModule } from './modules/weather/weather.module';
+import { DataSource } from 'typeorm';
+import { LlmModelEntity } from './modules/llm-provider/entities/llm-model.entity';
+import { LlmProviderEntity } from './modules/llm-provider/entities/llm-provider.entity';
+import { LlmProviderModule } from './modules/llm-provider/llm-provider.module';
 
 @Module({
   imports: [
@@ -37,6 +41,10 @@ import { WeatherModule } from './modules/weather/weather.module';
     LlmModule,
     SystemModule,
     WeatherModule,
+    LlmProviderModule
   ],
 })
-export class AppModule {}
+export class AppModule {
+
+
+}

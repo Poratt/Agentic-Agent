@@ -54,3 +54,27 @@
     background: transparent !important;
   }
 }
+
+
+/* centered  */
+th:not(:first-child),
+td:not(:first-child) {
+  text-align: center;
+}
+
+td,
+th {
+  white-space: nowrap;
+}
+
+td {
+  max-width: var(--search-width);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+p-table p-table {
+  background-color: var(--grey-30) !important;
+}
