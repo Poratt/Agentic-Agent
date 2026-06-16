@@ -50,7 +50,7 @@
                 </div>
 
                 <div class="glass-effect card table-container">
-                    <p-table [value]="llmProviders()" dataKey="label">
+                    <p-table [value]="llmProviders()" dataKey="id">
                         <ng-template #header>
                             <tr>
                                 <th class="col-toggle"></th>
@@ -76,7 +76,7 @@
                                 </td>
                                 <td>{{ provider.label }}</td>
                                 <td>{{ provider.baseUrl }}</td>
-                                <td>{{ provider.models.length }}</td>
+                                <td>{{ provider.models?.length || 0 }}</td>
                                 <td>
                                     <div class="action-cell">
                                         <p-button size="small" icon="ph ph-pencil" text></p-button>
@@ -86,36 +86,163 @@
                             </tr>
                         </ng-template>
 
+                        <!-- טבלה פנימית 1: רשימת מודלים -->
                         <ng-template #expandedrow let-provider>
                             <tr>
-                                <td colspan="5" class="expanded-cell">
-                                    <p-table [value]="provider.models">
-                                        <ng-template #header>
-                                            <tr>
-                                                <th class="col-toggle"></th>
-                                                <th>KEY</th>
-                                                <th>LABEL</th>
-                                                <th>ACTIVE</th>
-                                                <th>SORT ORDER</th>
-                                                <th></th>
-                                            </tr>
-                                        </ng-template>
-                                        <ng-template #body let-model>
-                                            <tr>
-                                                <td class="col-toggle"></td>
-                                                <td>{{ model.key }}</td>
-                                                <td>{{ model.label }}</td>
-                                                <td>{{ model.active }}</td>
-                                                <td>{{ model.sortOrder }}</td>
-                                                <td>
-                                                    <div class="action-cell">
-                                                        <p-button size="small" icon="ph ph-pencil" text></p-button>
-                                                        <p-button size="small" icon="ph ph-trash" text severity="danger"></p-button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </ng-template>
-                                    </p-table>
+                                <td colspan="5" class="expanded-cell" style="padding: 0; background: var(--color-surface-hover)">
+                                    <div style="padding: var(--space-4)">
+                                        <p-table [value]="provider.models" dataKey="id">
+                                            <ng-template #header>
+                                                <tr>
+                                                    <th class="col-toggle"></th>
+                                                    <th>KEY</th>
+                                                    <th>LABEL</th>
+                                                    <th>ACTIVE</th>
+                                                    <!-- הסרנו את ה-Sort Order! -->
+                                                    <th>PERFORMANCE</th>
+                                                    <th></th>
+                                                </tr>
+                                            </ng-template>
+                                            <ng-template #body let-model let-expanded="expanded">
+                                                <tr>
+                                                    <td class="col-toggle">
+                                                        <p-button
+                                                            type="button"
+                                                            size="small"
+                                                            [pRowToggler]="model"
+                                                            text
+                                                            rounded
+                                                            plain
+                                                            [icon]="expanded ? 'ph ph-caret-down' : 'ph ph-caret-right'"
+                                                        ></p-button>
+                                                    </td>
+                                                    <td>
+                                                        <code style="color: var(--color-primary); font-size: 12px">{{ model.key }}</code>
+                                                    </td>
+                                                    <td>{{ model.label }}</td>
+                                                    <td>
+                                                        <span class="badge" [badgeColor]="model.active ? '#10B981' : '#64748B'">
+                                                            {{ model.active ? 'Active' : 'Inactive' }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        @if (model.hasTests) {
+                                                            <div class="performance-cell">
+                                                                <span
+                                                                    class="badge"
+                                                                    [badgeColor]="
+                                                                        model.successPercentage === 100
+                                                                            ? '#10B981'
+                                                                            : model.successPercentage >= 70
+                                                                              ? '#FBBF24'
+                                                                              : '#F87171'
+                                                                    "
+                                                                >
+                                                                    <span class="ph ph-target"></span>
+                                                                    {{ model.successPercentage }}%
+                                                                </span>
+
+                                                                <span
+                                                                    class="badge"
+                                                                    [badgeColor]="
+                                                                        model.latencyAverage < 2000
+                                                                            ? '#10B981'
+                                                                            : model.latencyAverage < 5000
+                                                                              ? '#FBBF24'
+                                                                              : '#F87171'
+                                                                    "
+                                                                >
+                                                                    <span class="ph ph-clock"></span>
+                                                                    {{ formatLatency(model.latencyAverage) }}
+                                                                </span>
+                                                            </div>
+                                                        } @else {
+                                                            <span class="subtitle" style="font-size: 11px">No data</span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <div class="action-cell">
+                                                            <p-button
+                                                                size="small"
+                                                                icon="ph ph-shield-check"
+                                                                text
+                                                                [loading]="testingModelId() === model.id"
+                                                                (click)="testModel(model.id)"
+                                                                title="Test model connectivity"
+                                                            ></p-button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </ng-template>
+
+                                            <!-- טבלה פנימית 2: יומן בדיקות (Log) -->
+                                            <ng-template #expandedrow let-model>
+                                                <tr>
+                                                    <td
+                                                        colspan="6"
+                                                        class="expanded-cell"
+                                                        style="padding: var(--space-4); background: var(--color-bg)"
+                                                    >
+                                                        @if (model.hasTests) {
+                                                            <!-- 🚀 הוספת Paginator, הגבלת שורות, והקטנת הטבלה 🚀 -->
+                                                            <p-table
+                                                                [value]="model.testResults"
+                                                                styleClass="p-datatable-sm"
+                                                                [paginator]="model.testResults.length > 5"
+                                                                [rows]="5"
+                                                            >
+                                                                <ng-template #header>
+                                                                    <tr>
+                                                                        <th>Date & Time</th>
+                                                                        <th>Latency</th>
+                                                                        <th>Status</th>
+                                                                        <th>Log Output</th>
+                                                                    </tr>
+                                                                </ng-template>
+                                                                <ng-template #body let-result>
+                                                                    <tr style="font-size: 13px">
+                                                                        <td style="color: var(--color-text-secondary)">
+                                                                            {{ result.createdAt | date: 'dd/MM/yy, HH:mm' }}
+                                                                        </td>
+                                                                        <td style="font-family: monospace">
+                                                                            <!-- 🚀 שימוש בפונקציית העיצוב החדשה 🚀 -->
+                                                                            {{ formatLatency(result.responseTimeMs) }}
+                                                                        </td>
+                                                                        <td>
+                                                                            <span
+                                                                                class="badge"
+                                                                                [badgeColor]="
+                                                                                    result.status === 'success'
+                                                                                        ? '#10B981'
+                                                                                        : result.status === 'timeout'
+                                                                                          ? '#FBBF24'
+                                                                                          : '#F87171'
+                                                                                "
+                                                                            >
+                                                                                {{ result.status | uppercase }}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td
+                                                                            class="error-text"
+                                                                            [style.color]="
+                                                                                result.errorMessage
+                                                                                    ? 'var(--color-danger)'
+                                                                                    : 'var(--color-text-muted)'
+                                                                            "
+                                                                        >
+                                                                            {{ result.errorMessage || 'OK' }}
+                                                                        </td>
+                                                                    </tr>
+                                                                </ng-template>
+                                                            </p-table>
+                                                        } @else {
+                                                            <div class="subtitle text-center">No test results recorded yet.</div>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            </ng-template>
+                                        </p-table>
+                                    </div>
                                 </td>
                             </tr>
                         </ng-template>

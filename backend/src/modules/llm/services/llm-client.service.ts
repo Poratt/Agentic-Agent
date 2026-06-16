@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
-import { LlmRequest, LlmResponse, LlmToolCall, LlmProvider } from '../types/llm.types';
+import { LlmRequest, LlmResponse, LlmToolCall } from '../types/llm.types';
 import { LlmProviderConfigService } from './llm-provider-config.service';
+import { LlmProviderService } from '../../llm-provider/llm-provider.service';
 
 const MAX_RETRIES = 4;
 const BASE_DELAY_MS = 1500;
@@ -9,30 +10,25 @@ const BASE_DELAY_MS = 1500;
 @Injectable()
 export class LlmClientService {
   private readonly logger = new Logger(LlmClientService.name);
-  private readonly openai: OpenAI;
 
-  constructor(private readonly providerConfig: LlmProviderConfigService) {
-    const activeProvider = this.providerConfig.getActiveProvider();
-    const config = this.providerConfig.getProviderConfig(activeProvider);
-
-    this.openai = new OpenAI({
-      baseURL: config.baseUrl,
-      apiKey: config.apiKey,
-      defaultHeaders: this.providerConfig.getDefaultHeaders(activeProvider),
-    });
-  }
+  constructor(
+    private readonly providerConfig: LlmProviderConfigService,
+    private readonly dbProviderService: LlmProviderService,
+  ) { }
 
   async generateResponse(llmRequest: LlmRequest): Promise<LlmResponse> {
     const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools } = llmRequest;
-    const client = this.getClient(providerOverride);
-    const activeProvider = this.providerConfig.getActiveProvider();
+
+    // 🚀 הבאת הקליינט בצורה אסינכרונית מה-DB 🚀
+    const client = await this.getClient(providerOverride);
+    const activeProvider = providerOverride || this.providerConfig.getActiveProvider();
     const activeModel = modelOverride || this.providerConfig.getActiveModel();
 
     if (!activeModel) {
       throw new Error('Missing active model configuration');
     }
 
-    this.logger.log(`Generating response via ${providerOverride || activeProvider} (model: ${activeModel})`);
+    this.logger.log(`Generating response via ${activeProvider} (model: ${activeModel})`);
 
     const completion = await this.withRetry(async () => {
       const result = await client.chat.completions.create({
@@ -64,15 +60,17 @@ export class LlmClientService {
 
   async *generateStream(llmRequest: LlmRequest): AsyncIterable<string> {
     const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools } = llmRequest;
-    const client = this.getClient(providerOverride);
-    const activeProvider = this.providerConfig.getActiveProvider();
+
+    // 🚀 הבאת הקליינט בצורה אסינכרונית מה-DB 🚀
+    const client = await this.getClient(providerOverride);
+    const activeProvider = providerOverride || this.providerConfig.getActiveProvider();
     const activeModel = modelOverride || this.providerConfig.getActiveModel();
 
     if (!activeModel) {
       throw new Error('Missing active model configuration');
     }
 
-    this.logger.log(`Streaming response via ${providerOverride || activeProvider} (model: ${activeModel})`);
+    this.logger.log(`Streaming response via ${activeProvider} (model: ${activeModel})`);
 
     try {
       const stream = await this.withRetry(() => {
@@ -101,17 +99,24 @@ export class LlmClientService {
     }
   }
 
-  private getClient(providerOverride?: LlmProvider): OpenAI {
-    if (!providerOverride) {
-      return this.openai;
+  private async getClient(providerOverride?: string): Promise<OpenAI> {
+    const providerKey = providerOverride || this.providerConfig.getActiveProvider();
+
+    const dbProvider = await this.dbProviderService.findProviderByKey(providerKey);
+
+    if (!dbProvider) {
+      throw new Error(`LLM Provider with key '${providerKey}' was not found in the database.`);
     }
 
-    const config = this.providerConfig.getProviderConfig(providerOverride);
+    this.logger.log(`Initializing OpenAI client for ${dbProvider.label} using DB credentials.`);
+
+    console.log(dbProvider);
+
 
     return new OpenAI({
-      baseURL: config.baseUrl,
-      apiKey: config.apiKey,
-      defaultHeaders: this.providerConfig.getDefaultHeaders(providerOverride),
+      baseURL: dbProvider.baseUrl,
+      apiKey: dbProvider.apiKey ? dbProvider.apiKey.trim() : undefined,
+      defaultHeaders: this.providerConfig.getDefaultHeaders(dbProvider.key as any),
     });
   }
 

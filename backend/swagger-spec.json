@@ -788,162 +788,22 @@
         "toolIcon": "ph-robot"
       }
     },
-    "/llm/providers": {
-      "get": {
-        "description": "Returns safe provider metadata without exposing API keys, base URLs, or secret headers.",
-        "operationId": "LlmController_getProviders",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "LLM providers retrieved successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LlmProviderResultResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or expired JWT token."
-          },
-          "500": {
-            "description": "Unexpected server error."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get available LLM providers",
-        "summaryHe": "שולף את ספקי ה-LLM הזמינים בשרת",
-        "tags": [
-          "llm"
-        ],
-        "toolIcon": "ph-brain"
-      }
-    },
-    "/llm/model-options": {
-      "get": {
-        "description": "Returns grouped by provider model options for the chat model selector, including static provider catalogs and local Ollama models.",
-        "operationId": "LlmController_getModelOptions",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "LLM model options retrieved successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LlmModelGroupResultResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or expired JWT token."
-          },
-          "500": {
-            "description": "Unexpected server error."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get grouped LLM model options",
-        "summaryHe": "שולף רשימת מודלים מקובצת לבחירה בצאט",
-        "tags": [
-          "llm"
-        ],
-        "toolIcon": "ph-brain"
-      }
-    },
-    "/llm/status": {
-      "get": {
-        "description": "Returns the active provider and model plus safe provider availability metadata.",
-        "operationId": "LlmController_getStatus",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "LLM status retrieved successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LlmStatusResultResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or expired JWT token."
-          },
-          "500": {
-            "description": "Unexpected server error."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get active LLM runtime status",
-        "summaryHe": "שולף את סטטוס ספק ומודל ה-LLM הפעילים",
-        "tags": [
-          "llm"
-        ],
-        "toolIcon": "ph-brain"
-      }
-    },
-    "/llm/llm-test": {
-      "get": {
-        "description": "Sends a minimal health prompt to Selected LLM provider and returns whether the model responded.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nRender a gorgeous summary dashboard of tested LLM models.\n        - Include a header card with a summary statistic (e.g. \"X out of Y models active\") with ph-activity and pulsing dot.\n        - Render a clean grid of models. For each model show its full name, its provider badge, and its dynamic online status.\n        - Verified models: show a green active badge with the text 'תקין ופעיל' and a checkmark.\n        - Failed models: show a red badge with the text 'לא עונה (500)' and a warning circle.\n        \n\nCRITICAL VISUAL STANDARD (ULTRA-PREMIUM):\nDo NOT render basic tables or flat cards. Every component MUST feel like a high-end modern dashboard.\n1. VISUAL DEPTH: Use Glassmorphism (backdrop-filter: blur), semi-transparent borders, and multi-layered box-shadows to create a 3D floating effect.\n2. DYNAMIC BACKGROUNDS: Use sophisticated linear or radial gradients. For specific contexts (like weather), implement ambient background scenes using CSS/SVG (e.g., moving waves, glowing suns, drifting clouds).\n3. MOTION DESIGN: \n   - Mandatory entry animations: combine fade-in with a slight scale or slide-up.\n   - Ambient loops: add subtle, non-distracting animations (float, pulse, shimmer) to hero elements.\n   - Staggered reveals: child elements must enter with a sequential delay (0ms, 40ms, 80ms...).\n4. TYPOGRAPHY: Use strong visual hierarchy. Main metrics must be bold, oversized, and potentially use gradient text.\n5. INTERACTIVE FEEL: Hover effects must be tactile (slight lift, glow increase, or color shift) with a smooth 'transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'.\nDESIGN SYSTEM:\n\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-2)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nLANGUAGE AND DIRECTION:\n- The application UI is Hebrew and RTL by default.\n- Use dir=\"rtl\" on Hebrew/root content containers.\n- Any English-only technical value, model id, provider name, email, URL, code, API path, currency code, date token, or mixed identifier MUST be wrapped in an element with dir=\"ltr\".\n- For long English identifiers, add style=\"direction:ltr;text-align:left;unicode-bidi:plaintext;overflow-wrap:anywhere;\" so text does not break visually inside RTL cards.\n- Never split English model ids, emails, URLs, or API paths across visual RTL order. Keep them readable left-to-right.\n\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects, Instead apply animations only on child elements inside the card.\n- Duration: 150-300ms for micro, max 400ms for complex\n- Use transform/opacity only — never animate width/height/top/left  \n- Easing: ease-out for enter, ease-in for exit\n- Stagger list items: 30-50ms per item (not 80-160ms like now)\n- Exit animations: 60-70% of enter duration\n- Scale feedback on buttons: 0.95 on press, restore on release\n- Never block user input during animation\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 300ms ease-out\n- Stagger each child element: 40ms per item (0ms, 40ms, 80ms, 120ms...)\n- Numbers/temperatures: animate scale 0.8→1, duration 200ms ease-out\n\nNo explanations. No plain text.",
-        "operationId": "LlmController_testLlm",
+    "/llm/models/{id}/test": {
+      "post": {
+        "operationId": "LlmController_testModel",
         "parameters": [
           {
-            "name": "provider",
+            "name": "id",
             "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "model",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "prompt",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "systemContext",
-            "required": true,
-            "in": "query",
+            "in": "path",
             "schema": {
               "type": "string"
             }
           }
         ],
         "responses": {
-          "200": {
-            "description": "LLM check completed successfully."
-          },
-          "401": {
-            "description": "Missing or expired JWT token."
-          },
-          "500": {
-            "description": "Unexpected server error."
+          "201": {
+            "description": ""
           }
         },
         "security": [
@@ -951,29 +811,55 @@
             "bearer": []
           }
         ],
-        "summary": "Test if single model available and working",
-        "summaryHe": "בודק שמודל LLM בודד פעיל וזמין",
+        "summary": "Test a single model connectivity and save the result",
         "tags": [
           "llm"
-        ],
-        "toolIcon": "ph-brain"
+        ]
       }
     },
-    "/llm/test-all": {
+    "/llm-provider": {
+      "post": {
+        "description": "Adds a new LLM provider to the system configuration.",
+        "operationId": "LlmProviderController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLlmProviderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Provider created successfully"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create new provider",
+        "tags": [
+          "LLM Provider"
+        ]
+      },
       "get": {
-        "description": "Runs parallel connectivity tests across all configured LLM models and aggregates their statuses.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nRender a gorgeous summary dashboard of tested LLM models.\n        - Include a header card with a summary statistic (e.g. \"X out of Y models active\") with ph-activity and pulsing dot.\n        - Render a clean grid of models. For each model show its full name, its provider badge, and its dynamic online status.\n        - Verified models: show a green active badge with the text 'תקין ופעיל' and a checkmark.\n        - Failed models: show a red badge with the text 'לא עונה (500)' and a warning circle.\n        \n\nCRITICAL VISUAL STANDARD (ULTRA-PREMIUM):\nDo NOT render basic tables or flat cards. Every component MUST feel like a high-end modern dashboard.\n1. VISUAL DEPTH: Use Glassmorphism (backdrop-filter: blur), semi-transparent borders, and multi-layered box-shadows to create a 3D floating effect.\n2. DYNAMIC BACKGROUNDS: Use sophisticated linear or radial gradients. For specific contexts (like weather), implement ambient background scenes using CSS/SVG (e.g., moving waves, glowing suns, drifting clouds).\n3. MOTION DESIGN: \n   - Mandatory entry animations: combine fade-in with a slight scale or slide-up.\n   - Ambient loops: add subtle, non-distracting animations (float, pulse, shimmer) to hero elements.\n   - Staggered reveals: child elements must enter with a sequential delay (0ms, 40ms, 80ms...).\n4. TYPOGRAPHY: Use strong visual hierarchy. Main metrics must be bold, oversized, and potentially use gradient text.\n5. INTERACTIVE FEEL: Hover effects must be tactile (slight lift, glow increase, or color shift) with a smooth 'transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'.\nDESIGN SYSTEM:\n\nUse this design system with CSS variables (already defined in the page):\n- Background: var(--color-surface)\n- Text primary: var(--color-text-primary)\n- Text secondary: var(--color-text-secondary)\n- Border: 1px solid var(--color-border)\n- Primary color: var(--color-primary)\n- Border radius: var(--radius-md)\n- Font: var(--font-main)\n- Padding: var(--space-2)\n- Shadow: var(--shadow-soft)\n- ICONS: Use Phosphor Icons with this syntax: <span class=\"ph ph-ICON_NAME\"></span>\n  Common icons: ph-user, ph-users, ph-shield, ph-trash, ph-pencil-simple, \n  ph-cloud-sun, ph-thermometer, ph-drop, ph-wind, ph-gauge, \n  ph-check-circle, ph-warning-circle, ph-info, ph-gear,\n  ph-calendar, ph-clock, ph-envelope, ph-lock, ph-key\n  Use icons next to labels and titles for visual clarity.\n\nLANGUAGE AND DIRECTION:\n- The application UI is Hebrew and RTL by default.\n- Use dir=\"rtl\" on Hebrew/root content containers.\n- Any English-only technical value, model id, provider name, email, URL, code, API path, currency code, date token, or mixed identifier MUST be wrapped in an element with dir=\"ltr\".\n- For long English identifiers, add style=\"direction:ltr;text-align:left;unicode-bidi:plaintext;overflow-wrap:anywhere;\" so text does not break visually inside RTL cards.\n- Never split English model ids, emails, URLs, or API paths across visual RTL order. Keep them readable left-to-right.\n\n\nHOVER: Add hover effects using inline onmouseover/onmouseout handlers.\nCRITICAL: Always add transition to the element's style: \"transition: all 0.2s ease\"\n- Cards: onmouseover=\"this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)';this.style.borderColor='var(--color-primary)'\"\n- Cards Out: onmouseout=\"this.style.boxShadow='var(--shadow-soft)';this.style.borderColor='var(--color-border)'\"\n- Buttons: onmouseover=\"this.style.opacity='0.8'\" onmouseout=\"this.style.opacity='1'\"\n- Table rows: onmouseover=\"this.style.background='var(--color-surface-hover)'\" onmouseout=\"this.style.background=''\"\n\n\nANIMATIONS:\nCRITICAL: Always place the <style> tag BEFORE the root <div>, never inside it.\nCRITICAL: Never apply fadeInUp animation directly on cards that have hover transform effects, Instead apply animations only on child elements inside the card.\n- Duration: 150-300ms for micro, max 400ms for complex\n- Use transform/opacity only — never animate width/height/top/left  \n- Easing: ease-out for enter, ease-in for exit\n- Stagger list items: 30-50ms per item (not 80-160ms like now)\n- Exit animations: 60-70% of enter duration\n- Scale feedback on buttons: 0.95 on press, restore on release\n- Never block user input during animation\n\nAdd CSS keyframe animations using a <style> tag before the HTML block:\n- Fade + slide up on entry: opacity 0→1, translateY 12px→0, duration 300ms ease-out\n- Stagger each child element: 40ms per item (0ms, 40ms, 80ms, 120ms...)\n- Numbers/temperatures: animate scale 0.8→1, duration 200ms ease-out\n\nNo explanations. No plain text.",
-        "operationId": "LlmController_testAll",
+        "description": "Retrieves a list of all configured LLM providers.",
+        "operationId": "LlmProviderController_findAll",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "All LLM models tested successfully."
+            "description": "List of providers retrieved"
           },
           "401": {
-            "description": "Missing or expired JWT token."
-          },
-          "500": {
-            "description": "Unexpected server error."
+            "description": "JWT token missing or invalid"
           }
         },
         "security": [
@@ -981,12 +867,173 @@
             "bearer": []
           }
         ],
-        "summary": "Test all configured LLM models in parallel",
-        "summaryHe": "בודק את כל מודלי ה-LLM המוגדרים במקביל ומחזיר סטטוס ריצה",
+        "summary": "Get all providers",
         "tags": [
-          "llm"
+          "LLM Provider"
+        ]
+      }
+    },
+    "/llm-provider/{id}": {
+      "patch": {
+        "description": "Updates an existing LLM provider configuration.",
+        "operationId": "LlmProviderController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "toolIcon": "ph-cpu"
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLlmProviderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Provider updated successfully"
+          },
+          "400": {
+            "description": "Invalid provider ID"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update provider",
+        "tags": [
+          "LLM Provider"
+        ]
+      }
+    },
+    "/llm-provider/{id}/models": {
+      "post": {
+        "description": "Creates a new model associated with the specified provider.",
+        "operationId": "LlmProviderController_createModel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLlmModelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Model created successfully"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add model to provider",
+        "tags": [
+          "LLM Provider"
+        ]
+      },
+      "get": {
+        "description": "Retrieves all models associated with the given provider.",
+        "operationId": "LlmProviderController_findModels",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of models retrieved"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get models for provider",
+        "tags": [
+          "LLM Provider"
+        ]
+      }
+    },
+    "/llm-provider/models/{id}": {
+      "patch": {
+        "description": "Updates an existing LLM model configuration.",
+        "operationId": "LlmProviderController_updateModel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLlmModelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Model updated successfully"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update model",
+        "tags": [
+          "LLM Provider"
+        ]
       }
     },
     "/analytics/query": {
@@ -1322,225 +1369,6 @@
           "weather"
         ],
         "toolIcon": "ph-calendar-days"
-      }
-    },
-    "/llm-provider": {
-      "post": {
-        "description": "Adds a new LLM provider to the system configuration.",
-        "operationId": "LlmProviderController_create",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateLlmProviderDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Provider created successfully"
-          },
-          "401": {
-            "description": "JWT token missing or invalid"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create new provider",
-        "tags": [
-          "LLM Provider"
-        ]
-      },
-      "get": {
-        "description": "Retrieves a list of all configured LLM providers.",
-        "operationId": "LlmProviderController_findAll",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of providers retrieved"
-          },
-          "401": {
-            "description": "JWT token missing or invalid"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get all providers",
-        "tags": [
-          "LLM Provider"
-        ]
-      }
-    },
-    "/llm-provider/{id}": {
-      "patch": {
-        "description": "Updates an existing LLM provider configuration.",
-        "operationId": "LlmProviderController_update",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateLlmProviderDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Provider updated successfully"
-          },
-          "400": {
-            "description": "Invalid provider ID"
-          },
-          "401": {
-            "description": "JWT token missing or invalid"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update provider",
-        "tags": [
-          "LLM Provider"
-        ]
-      }
-    },
-    "/llm-provider/{id}/models": {
-      "post": {
-        "description": "Creates a new model associated with the specified provider.",
-        "operationId": "LlmProviderController_createModel",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateLlmModelDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Model created successfully"
-          },
-          "401": {
-            "description": "JWT token missing or invalid"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Add model to provider",
-        "tags": [
-          "LLM Provider"
-        ]
-      },
-      "get": {
-        "description": "Retrieves all models associated with the given provider.",
-        "operationId": "LlmProviderController_findModels",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of models retrieved"
-          },
-          "401": {
-            "description": "JWT token missing or invalid"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get models for provider",
-        "tags": [
-          "LLM Provider"
-        ]
-      }
-    },
-    "/llm-provider/models/{id}": {
-      "patch": {
-        "description": "Updates an existing LLM model configuration.",
-        "operationId": "LlmProviderController_updateModel",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateLlmModelDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Model updated successfully"
-          },
-          "401": {
-            "description": "JWT token missing or invalid"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update model",
-        "tags": [
-          "LLM Provider"
-        ]
       }
     }
   },
@@ -2067,205 +1895,124 @@
           "prompt"
         ]
       },
-      "LlmProviderDto": {
+      "CreateLlmProviderDto": {
         "type": "object",
         "properties": {
-          "id": {
+          "key": {
             "type": "string",
-            "description": "Provider identifier.",
-            "example": "ollama"
+            "description": "Unique identifier key for the provider",
+            "example": "openai"
+          },
+          "label": {
+            "type": "string",
+            "description": "Display label of the provider",
+            "example": "OpenAI"
+          },
+          "baseUrl": {
+            "type": "string",
+            "description": "API base URL for LLM requests",
+            "example": "https://api.openai.com/v1"
+          },
+          "apiKey": {
+            "type": "string",
+            "description": "Optional secret API key",
+            "example": "sk-proj-exampleKey123"
           },
           "active": {
             "type": "boolean",
-            "description": "Whether this provider is the active provider.",
-            "example": true
-          },
-          "configured": {
-            "type": "boolean",
-            "description": "Whether the provider has the required local configuration.",
-            "example": true
-          },
-          "available": {
-            "type": "boolean",
-            "description": "Whether the provider can currently be queried for local availability.",
-            "example": true
-          },
-          "configuredModel": {
-            "type": "string",
-            "description": "Configured model for this provider when available.",
-            "example": "llama3"
-          },
-          "models": {
-            "description": "Available model names reported by the provider when the provider supports local listing.",
-            "example": [
-              "llama3",
-              "mistral"
-            ],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "description": "Status indicating if provider is active",
+            "default": true
           }
         },
         "required": [
-          "id",
-          "active",
-          "configured",
-          "available"
+          "key",
+          "label",
+          "baseUrl"
         ]
       },
-      "LlmProviderResultResponseDto": {
+      "UpdateLlmProviderDto": {
         "type": "object",
         "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "Whether the provider metadata request succeeded.",
-            "example": true
-          },
-          "message": {
+          "key": {
             "type": "string",
-            "description": "Human-readable result message.",
-            "example": "LLM providers retrieved successfully."
-          },
-          "result": {
-            "description": "Safe provider metadata.",
-            "nullable": true,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LlmProviderDto"
-            }
-          }
-        },
-        "required": [
-          "success",
-          "message",
-          "result"
-        ]
-      },
-      "LlmModelOptionDto": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string",
-            "description": "Model value sent to the LLM provider.",
-            "example": "google/gemma-4-31b-it:free"
+            "description": "Unique identifier key for the provider",
+            "example": "openai"
           },
           "label": {
             "type": "string",
-            "description": "Human-readable model label for client display.",
-            "example": "gemma-4-31b-it"
+            "description": "Display label of the provider",
+            "example": "OpenAI"
+          },
+          "baseUrl": {
+            "type": "string",
+            "description": "API base URL for LLM requests",
+            "example": "https://api.openai.com/v1"
+          },
+          "apiKey": {
+            "type": "string",
+            "description": "Optional secret API key",
+            "example": "sk-proj-exampleKey123"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Status indicating if provider is active",
+            "default": true
+          }
+        }
+      },
+      "CreateLlmModelDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Unique identifier key for the model",
+            "example": "gpt-4o"
+          },
+          "label": {
+            "type": "string",
+            "description": "Display name of the model",
+            "example": "GPT-4o"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Status indicating if the model is active",
+            "default": true
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Sort hierarchy order",
+            "default": 0
           }
         },
         "required": [
-          "value",
+          "key",
           "label"
         ]
       },
-      "LlmModelGroupDto": {
+      "UpdateLlmModelDto": {
         "type": "object",
         "properties": {
+          "key": {
+            "type": "string",
+            "description": "Unique identifier key for the model",
+            "example": "gpt-4o"
+          },
           "label": {
             "type": "string",
-            "description": "LLM provider label.",
-            "example": "openrouter"
+            "description": "Display name of the model",
+            "example": "GPT-4o"
           },
-          "items": {
-            "description": "Model options for this provider.",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LlmModelOptionDto"
-            }
-          }
-        },
-        "required": [
-          "label",
-          "items"
-        ]
-      },
-      "LlmModelGroupResultResponseDto": {
-        "type": "object",
-        "properties": {
-          "success": {
+          "active": {
             "type": "boolean",
-            "description": "Whether the model options request succeeded.",
-            "example": true
+            "description": "Status indicating if the model is active",
+            "default": true
           },
-          "message": {
-            "type": "string",
-            "description": "Human-readable result message.",
-            "example": "LLM model options retrieved successfully."
-          },
-          "result": {
-            "description": "Grouped model options for client selectors.",
-            "nullable": true,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LlmModelGroupDto"
-            }
+          "sortOrder": {
+            "type": "number",
+            "description": "Sort hierarchy order",
+            "default": 0
           }
-        },
-        "required": [
-          "success",
-          "message",
-          "result"
-        ]
-      },
-      "LlmStatusDto": {
-        "type": "object",
-        "properties": {
-          "activeProvider": {
-            "type": "string",
-            "description": "Currently active provider id.",
-            "example": "ollama"
-          },
-          "activeModel": {
-            "type": "string",
-            "description": "Currently active model id.",
-            "example": "llama3"
-          },
-          "providers": {
-            "description": "Safe provider status list.",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LlmProviderDto"
-            }
-          }
-        },
-        "required": [
-          "activeProvider",
-          "activeModel",
-          "providers"
-        ]
-      },
-      "LlmStatusResultResponseDto": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "Whether the status request succeeded.",
-            "example": true
-          },
-          "message": {
-            "type": "string",
-            "description": "Human-readable result message.",
-            "example": "LLM status retrieved successfully."
-          },
-          "result": {
-            "description": "Safe LLM runtime status.",
-            "nullable": true,
-            "type": "object",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LlmStatusDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "success",
-          "message",
-          "result"
-        ]
+        }
       },
       "AnalyticsMetric": {
         "type": "number",
@@ -2706,125 +2453,6 @@
         "required": [
           "items"
         ]
-      },
-      "CreateLlmProviderDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "description": "Unique identifier key for the provider",
-            "example": "openai"
-          },
-          "label": {
-            "type": "string",
-            "description": "Display label of the provider",
-            "example": "OpenAI"
-          },
-          "baseUrl": {
-            "type": "string",
-            "description": "API base URL for LLM requests",
-            "example": "https://api.openai.com/v1"
-          },
-          "apiKey": {
-            "type": "string",
-            "description": "Optional secret API key",
-            "example": "sk-proj-exampleKey123"
-          },
-          "active": {
-            "type": "boolean",
-            "description": "Status indicating if provider is active",
-            "default": true
-          }
-        },
-        "required": [
-          "key",
-          "label",
-          "baseUrl"
-        ]
-      },
-      "UpdateLlmProviderDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "description": "Unique identifier key for the provider",
-            "example": "openai"
-          },
-          "label": {
-            "type": "string",
-            "description": "Display label of the provider",
-            "example": "OpenAI"
-          },
-          "baseUrl": {
-            "type": "string",
-            "description": "API base URL for LLM requests",
-            "example": "https://api.openai.com/v1"
-          },
-          "apiKey": {
-            "type": "string",
-            "description": "Optional secret API key",
-            "example": "sk-proj-exampleKey123"
-          },
-          "active": {
-            "type": "boolean",
-            "description": "Status indicating if provider is active",
-            "default": true
-          }
-        }
-      },
-      "CreateLlmModelDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "description": "Unique identifier key for the model",
-            "example": "gpt-4o"
-          },
-          "label": {
-            "type": "string",
-            "description": "Display name of the model",
-            "example": "GPT-4o"
-          },
-          "active": {
-            "type": "boolean",
-            "description": "Status indicating if the model is active",
-            "default": true
-          },
-          "sortOrder": {
-            "type": "number",
-            "description": "Sort hierarchy order",
-            "default": 0
-          }
-        },
-        "required": [
-          "key",
-          "label"
-        ]
-      },
-      "UpdateLlmModelDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "description": "Unique identifier key for the model",
-            "example": "gpt-4o"
-          },
-          "label": {
-            "type": "string",
-            "description": "Display name of the model",
-            "example": "GPT-4o"
-          },
-          "active": {
-            "type": "boolean",
-            "description": "Status indicating if the model is active",
-            "default": true
-          },
-          "sortOrder": {
-            "type": "number",
-            "description": "Sort hierarchy order",
-            "default": 0
-          }
-        }
       }
     }
   }

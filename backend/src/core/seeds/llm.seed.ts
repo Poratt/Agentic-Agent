@@ -1,6 +1,9 @@
 import { DataSource } from "typeorm";
 import { LlmModelEntity } from "../../modules/llm-provider/entities/llm-model.entity";
 import { LlmProviderEntity } from "../../modules/llm-provider/entities/llm-provider.entity";
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 
 const AppDataSource = new DataSource({
@@ -83,42 +86,63 @@ async function seedDatabase() {
         console.log('Database connection initialized.');
 
         const providerRepository = AppDataSource.getRepository(LlmProviderEntity);
+        const modelRepository = AppDataSource.getRepository(LlmModelEntity);
 
-        const openrouter = new LlmProviderEntity();
-        openrouter.key = 'openrouter';
-        openrouter.label = 'OpenRouter';
-        openrouter.baseUrl = 'https://openrouter.ai/api/v1';
-        openrouter.apiKey = '';
-        openrouter.active = true;
-        openrouter.models = OPENROUTER_MODELS.map((item) => {
-            const model = new LlmModelEntity();
-            model.key = item.value;
-            model.label = item.label;
-            model.active = true;
-            model.provider = openrouter;
-            return model;
-        });
+        // Check if providers already exist
+        const existingOpenrouter = await providerRepository.findOneBy({ key: 'openrouter' });
+        const existingNvidia = await providerRepository.findOneBy({ key: 'nvidia' });
 
-        const nvidia = new LlmProviderEntity();
-        nvidia.key = 'nvidia';
-        nvidia.label = 'NVIDIA NIM';
-        nvidia.baseUrl = 'https://integrate.api.nvidia.com/v1';
-        nvidia.apiKey = '';
-        nvidia.active = true;
-        nvidia.models = NVIDIA_MODELS.map((item) => {
-            const model = new LlmModelEntity();
-            model.key = item.value;
-            model.label = item.label;
-            model.active = true;
-            model.provider = nvidia;
-            return model;
-        });
+        if (existingOpenrouter) {
+            console.log('Updating existing OpenRouter provider...');
+            existingOpenrouter.baseUrl = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
+            existingOpenrouter.apiKey = process.env.OPENROUTER_API_KEY || '';
+            await providerRepository.save(existingOpenrouter);
+            console.log('OpenRouter provider updated successfully.');
+        } else {
+            console.log('Creating new OpenRouter provider...');
+            const openrouter = new LlmProviderEntity();
+            openrouter.key = 'openrouter';
+            openrouter.label = 'OpenRouter';
+            openrouter.baseUrl = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
+            openrouter.apiKey = process.env.OPENROUTER_API_KEY || '';
+            openrouter.active = true;
+            openrouter.models = OPENROUTER_MODELS.map((item) => {
+                const model = new LlmModelEntity();
+                model.key = item.value;
+                model.label = item.label;
+                model.active = true;
+                model.provider = openrouter;
+                return model;
+            });
+            await providerRepository.save(openrouter);
+            console.log('OpenRouter provider and models successfully saved.');
+        }
 
-        await providerRepository.save(openrouter);
-        console.log('OpenRouter provider and models successfully saved.');
-
-        await providerRepository.save(nvidia);
-        console.log('NVIDIA provider and models successfully saved.');
+        if (existingNvidia) {
+            console.log('Updating existing NVIDIA provider...');
+            existingNvidia.baseUrl = process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1';
+            existingNvidia.apiKey = process.env.NVIDIA_API_KEY || '';
+            await providerRepository.save(existingNvidia);
+            console.log('NVIDIA provider updated successfully.');
+        } else {
+            console.log('Creating new NVIDIA provider...');
+            const nvidia = new LlmProviderEntity();
+            nvidia.key = 'nvidia';
+            nvidia.label = 'NVIDIA NIM';
+            nvidia.baseUrl = process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1';
+            nvidia.apiKey = process.env.NVIDIA_API_KEY || '';
+            nvidia.active = true;
+            nvidia.models = NVIDIA_MODELS.map((item) => {
+                const model = new LlmModelEntity();
+                model.key = item.value;
+                model.label = item.label;
+                model.active = true;
+                model.provider = nvidia;
+                return model;
+            });
+            await providerRepository.save(nvidia);
+            console.log('NVIDIA provider and models successfully saved.');
+        }
     } catch (error) {
         console.error('Error during database seeding:', error);
     } finally {

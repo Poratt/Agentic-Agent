@@ -13,6 +13,7 @@ export interface LlmModel {
     providerId: number;
     createdAt: string;
     updatedAt: string;
+    testResults?: any[];
 }
 
 export interface LlmProvider {
@@ -56,5 +57,9 @@ export class LlmProviderService {
 
     findModels(providerId: number): Observable<ServiceResultContainer<LlmModel[]>> {
         return this.http.get<ServiceResultContainer<LlmModel[]>>(`${this.base}/${providerId}/models`);
+    }
+
+    testModel(modelId: number): Observable<ServiceResultContainer<any>> {
+        return this.http.post<ServiceResultContainer<any>>(`${environment.apiUrl}/llm/models/${modelId}/test`, {});
     }
 }

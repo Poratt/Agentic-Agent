@@ -1,8 +1,12 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { LlmProviderService, LlmProvider, LlmModel } from '../services/llm-provider.service';
-import { LlmModelGroup, LlmModelOption, LlmService, LlmStatus } from '../../core/services/llm.service';
 import { PageStates } from '../enums/page-states.enum';
 import { finalize } from 'rxjs';
+
+export interface GroupedLlmProvider {
+    label: string;
+    items: LlmModel[];
+}
 
 @Injectable({
     providedIn: 'root'
@@ -16,33 +20,16 @@ export class LlmProviderStore {
     private _error = signal<string | null>(null);
 
     // Selectors
-    providers = computed(() => {
-        return this._providers();
-    });
+    providers = computed(() => this._providers());
+    loading = computed(() => this._loading());
+    error = computed(() => this._error());
 
-    loading = computed(() => {
-        return this._loading();
-    });
-
-    error = computed(() => {
-        return this._error();
-    });
-
-
-    groupedProviders = computed<LlmModelGroup[]>(() => {
-        return this._providers().map(provider => {
-            return {
-                label: provider.key,
-                items: provider.models?.map(model => {
-                    return {
-                        id: `${provider.key}::${model.key}`,
-                        provider: provider.key,
-                        value: model.key,
-                        label: model.label
-                    };
-                }) ?? []
-            };
-        });
+    // 🚀 כאן השינוי הגדול: מיפוי נקי ללא המרות מיותרות 🚀
+    groupedProviders = computed<GroupedLlmProvider[]>(() => {
+        return this._providers().map(provider => ({
+            label: provider.label, // כותרת הקבוצה (למשל: OpenRouter)
+            items: provider.models ?? [] // הפריטים (המודלים עצמם)
+        }));
     });
 
     pageState = computed<PageStates>(() => {
@@ -87,17 +74,10 @@ export class LlmProviderStore {
         this._loading.set(true);
         this.llmProviderService
             .create(providerData)
-            .pipe(
-                finalize(() => {
-                    this._loading.set(false);
-                })
-            )
+            .pipe(finalize(() => this._loading.set(false)))
             .subscribe({
                 next: (res) => {
-                    const newProvider = res.result;
-                    this._providers.update((providers) => {
-                        return [...providers, newProvider];
-                    });
+                    this._providers.update(providers => [...providers, res.result]);
                 },
                 error: (err) => {
                     this._error.set(err?.error?.message ?? 'Failed to create provider');
@@ -109,19 +89,12 @@ export class LlmProviderStore {
         this._loading.set(true);
         this.llmProviderService
             .update(providerId, providerData)
-            .pipe(
-                finalize(() => {
-                    this._loading.set(false);
-                })
-            )
+            .pipe(finalize(() => this._loading.set(false)))
             .subscribe({
                 next: (res) => {
-                    const updatedProvider = res.result;
-                    this._providers.update((providers) => {
-                        return providers.map((p) => {
-                            return p.id === updatedProvider.id ? updatedProvider : p;
-                        });
-                    });
+                    this._providers.update(providers =>
+                        providers.map(p => p.id === res.result.id ? res.result : p)
+                    );
                 },
                 error: (err) => {
                     this._error.set(err?.error?.message ?? 'Failed to update provider');
@@ -131,21 +104,12 @@ export class LlmProviderStore {
 
     deleteProvider(providerId: number) {
         this._loading.set(true);
-        // בהנחה שקיים מימוש מחיקה תואם ב-Service
         this.llmProviderService
             .update(providerId, { active: false })
-            .pipe(
-                finalize(() => {
-                    this._loading.set(false);
-                })
-            )
+            .pipe(finalize(() => this._loading.set(false)))
             .subscribe({
                 next: () => {
-                    this._providers.update((providers) => {
-                        return providers.filter((p) => {
-                            return p.id !== providerId;
-                        });
-                    });
+                    this._providers.update(providers => providers.filter(p => p.id !== providerId));
                 },
                 error: (err) => {
                     this._error.set(err?.error?.message ?? 'Failed to delete provider');
@@ -157,26 +121,15 @@ export class LlmProviderStore {
         this._loading.set(true);
         this.llmProviderService
             .createModel(providerId, modelData)
-            .pipe(
-                finalize(() => {
-                    this._loading.set(false);
-                })
-            )
+            .pipe(finalize(() => this._loading.set(false)))
             .subscribe({
                 next: (res) => {
-                    const newModel = res.result;
-                    this._providers.update((providers) => {
-                        return providers.map((p) => {
-                            if (p.id === providerId) {
-                                const currentModels = p.models ?? [];
-                                return {
-                                    ...p,
-                                    models: [...currentModels, newModel]
-                                };
-                            }
-                            return p;
-                        });
-                    });
+                    this._providers.update(providers => providers.map(p => {
+                        if (p.id === providerId) {
+                            return { ...p, models: [...(p.models ?? []), res.result] };
+                        }
+                        return p;
+                    }));
                 },
                 error: (err) => {
                     this._error.set(err?.error?.message ?? 'Failed to create model');
@@ -188,28 +141,18 @@ export class LlmProviderStore {
         this._loading.set(true);
         this.llmProviderService
             .updateModel(modelId, modelData)
-            .pipe(
-                finalize(() => {
-                    this._loading.set(false);
-                })
-            )
+            .pipe(finalize(() => this._loading.set(false)))
             .subscribe({
                 next: (res) => {
-                    const updatedModel = res.result;
-                    this._providers.update((providers) => {
-                        return providers.map((p) => {
-                            if (p.id === providerId) {
-                                const currentModels = p.models ?? [];
-                                return {
-                                    ...p,
-                                    models: currentModels.map((m) => {
-                                        return m.id === modelId ? updatedModel : m;
-                                    })
-                                };
-                            }
-                            return p;
-                        });
-                    });
+                    this._providers.update(providers => providers.map(p => {
+                        if (p.id === providerId) {
+                            return {
+                                ...p,
+                                models: (p.models ?? []).map(m => m.id === modelId ? res.result : m)
+                            };
+                        }
+                        return p;
+                    }));
                 },
                 error: (err) => {
                     this._error.set(err?.error?.message ?? 'Failed to update model');

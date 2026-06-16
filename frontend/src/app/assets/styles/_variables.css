@@ -139,7 +139,7 @@
   --shadow-glow-primary: 0 0 18px rgba(34, 211, 238, 0.28);
 
   /* Misc */
-  --grey-30: rgba(255, 255, 255, 0.06);
+  --grey-30: rgba(255, 255, 255, 0.02);
 }
 
 [data-theme="light"] {

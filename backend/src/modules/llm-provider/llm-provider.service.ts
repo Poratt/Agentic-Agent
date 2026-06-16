@@ -9,6 +9,7 @@ import { UpdateLlmModelDto } from './dto/update-llm-model.dto';
 import { UpdateLlmProviderDto } from './dto/update-llm-provider.dto';
 import { LlmModelEntity } from './entities/llm-model.entity';
 import { LlmProviderEntity } from './entities/llm-provider.entity';
+import { LlmModelTestResultEntity } from './entities/llm-model-test-results.entity';
 
 @Injectable()
 export class LlmProviderService {
@@ -17,6 +18,8 @@ export class LlmProviderService {
     private readonly providerRepo: Repository<LlmProviderEntity>,
     @InjectRepository(LlmModelEntity)
     private readonly modelRepo: Repository<LlmModelEntity>,
+    @InjectRepository(LlmModelTestResultEntity)
+    private readonly testResultRepo: Repository<LlmModelTestResultEntity>,
   ) { }
 
   async createProvider(dto: CreateLlmProviderDto): Promise<ServiceResultContainer<LlmProviderEntity>> {
@@ -35,8 +38,24 @@ export class LlmProviderService {
   }
 
   async findProviders(): Promise<ServiceResultContainer<LlmProviderEntity[]>> {
-    const providers = await this.providerRepo.find({ relations: ['models'] });
+    // 🚀 אנחנו מנחים את TypeORM לטעון באופן אקטיבי גם את הבדיקות של המודלים, ולסדר אותן מהחדשה לישנה 🚀
+    const providers = await this.providerRepo.find({
+      relations: ['models', 'models.testResults'],
+      order: {
+        models: {
+          sortOrder: 'ASC',
+          testResults: {
+            createdAt: 'DESC' // הבדיקה הכי חדשה תופיע ראשונה ב-UI!
+          }
+        }
+      }
+    });
+
     return { success: true, message: 'Providers retrieved', result: providers };
+  }
+
+  async findProviderByKey(key: string): Promise<LlmProviderEntity | null> {
+    return this.providerRepo.findOne({ where: { key }, relations: ['models'] });
   }
 
   async createModel(providerId: number, dto: CreateLlmModelDto): Promise<ServiceResultContainer<LlmModelEntity>> {
@@ -58,6 +77,32 @@ export class LlmProviderService {
     const models = await this.modelRepo.find({ where: { providerId }, order: { sortOrder: 'ASC' } });
     return { success: true, message: 'Models retrieved', result: models };
   }
+
+  // 🚀 שולף מודל ספציפי לפי מפתח (Key) 🚀
+  async findModelByKey(key: string): Promise<LlmModelEntity | null> {
+    return this.modelRepo.findOne({ where: { key } });
+  }
+
+  // 🚀 שולף מודל ספציפי לפי ID כולל פרטי הספק שלו 🚀
+  async findModelById(id: number): Promise<LlmModelEntity | null> {
+    return this.modelRepo.findOne({
+      where: { id },
+      relations: ['provider'],
+    });
+  }
+  // 🚀 שומר את תוצאת הבדיקה במסד הנתונים 🚀
+  async saveTestResult(
+    modelId: number,
+    responseTimeMs: number,
+    status: 'success' | 'error' | 'timeout',
+    errorMessage: string | null,
+  ): Promise<LlmModelTestResultEntity> {
+    const testResult = this.testResultRepo.create({
+      modelId,
+      responseTimeMs,
+      status,
+      errorMessage,
+    });
+    return this.testResultRepo.save(testResult);
+  }
 }
-
-

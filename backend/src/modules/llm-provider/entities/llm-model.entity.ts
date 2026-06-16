@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { LlmProviderEntity } from './llm-provider.entity';
+import { LlmModelTestResultEntity } from './llm-model-test-results.entity';
 
 @Entity('llm_models')
 export class LlmModelEntity {
@@ -24,6 +25,9 @@ export class LlmModelEntity {
   @ManyToOne(() => LlmProviderEntity, (provider) => provider.models, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'provider_id' })
   provider!: LlmProviderEntity;
+
+  @OneToMany(() => LlmModelTestResultEntity, (testResult) => testResult.model, { cascade: true })
+  testResults!: LlmModelTestResultEntity[];
 
   @CreateDateColumn()
   createdAt!: Date;

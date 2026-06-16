@@ -1,14 +1,22 @@
 import { Module } from '@nestjs/common';
-import { LlmController } from './llm.controller';
 import { LlmService } from './llm.service';
+import { LlmController } from './llm.controller';
 import { LlmClientService } from './services/llm-client.service';
 import { LlmHealthService } from './services/llm-health.service';
-import { LlmModelCatalogService } from './services/llm-model-catalog.service';
 import { LlmProviderConfigService } from './services/llm-provider-config.service';
+import { LlmTasksService } from './services/llm-tasks.service';
+import { LlmProviderModule } from '../llm-provider/llm-provider.module';
 
 @Module({
+  imports: [LlmProviderModule],
   controllers: [LlmController],
-  providers: [LlmService, LlmProviderConfigService, LlmClientService, LlmModelCatalogService, LlmHealthService],
+  providers: [
+    LlmService,
+    LlmProviderConfigService,
+    LlmClientService,
+    LlmHealthService,
+    LlmTasksService // 🚀 רישום שירות הקרון כאן
+  ],
   exports: [LlmService],
 })
-export class LlmModule {}
+export class LlmModule { }

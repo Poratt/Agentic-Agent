@@ -1,18 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { ServiceResultContainer } from '../../../core/models/service-result-container.model';
-import { LLM_STATIC_MODEL_GROUPS } from '../constants/llm-model-catalog.constant';
 import { LlmModelCheckTarget, LlmModelTestResult, LlmProvider } from '../types/llm.types';
 import { LlmClientService } from './llm-client.service';
-import { LlmModelCatalogService } from './llm-model-catalog.service';
 import { LlmProviderConfigService } from './llm-provider-config.service';
+import { LlmProviderService } from '../../llm-provider/llm-provider.service';
 
 @Injectable()
 export class LlmHealthService {
   constructor(
     private readonly client: LlmClientService,
     private readonly providerConfig: LlmProviderConfigService,
-    private readonly modelCatalog: LlmModelCatalogService,
-  ) {}
+    private readonly dbProviderService: LlmProviderService,
+  ) { }
 
   async testLlm(
     provider: LlmProvider,
@@ -21,20 +20,64 @@ export class LlmHealthService {
     systemContext: string,
   ): Promise<ServiceResultContainer<{ provider: LlmProvider; model: string; available: boolean }>> {
     const runtimeSelection = this.providerConfig.getRuntimeSelection(provider, model);
-    const response = await this.client.generateResponse({
-      prompt: prompt || 'Hello',
-      systemContext: systemContext || 'You are a helpful assistant.',
-      providerOverride: provider,
-      modelOverride: model,
-    });
+
+    const startTime = performance.now();
+
+    let status: 'success' | 'error' | 'timeout' = 'success';
+    let errorMessage: string | null = null;
+    let available = false;
+
+    try {
+      const response = await this.client.generateResponse({
+        prompt: prompt || 'Hello',
+        systemContext: systemContext || 'You are a helpful assistant.',
+        providerOverride: provider,
+        modelOverride: model,
+      });
+
+      available = Boolean(response.content || response.toolCalls?.length);
+
+      if (!available) {
+        status = 'error';
+        errorMessage = 'Model returned empty response';
+      }
+    } catch (error: unknown) {
+      available = false;
+      errorMessage = error instanceof Error ? error.message : 'Unknown connection error';
+
+      // זיהוי שגיאות Timeout לפי תוכן השגיאה
+      if (errorMessage.toLowerCase().includes('timeout') || errorMessage.toLowerCase().includes('aborted')) {
+        status = 'timeout';
+      } else {
+        status = 'error';
+      }
+    }
+
+    const endTime = performance.now();
+    const responseTimeMs = Math.round(endTime - startTime);
+
+    // 🚀 שמירת התוצאה ב-DB 🚀
+    try {
+      const dbModel = await this.dbProviderService.findModelByKey(model);
+      if (dbModel) {
+        await this.dbProviderService.saveTestResult(
+          dbModel.id,
+          responseTimeMs,
+          status,
+          errorMessage,
+        );
+      }
+    } catch (dbError) {
+      console.error('Failed to save LLM test result to database:', dbError);
+    }
 
     return {
-      success: true,
-      message: 'LLM check completed successfully.',
+      success: status === 'success',
+      message: status === 'success' ? 'LLM check completed successfully.' : `LLM check failed: ${errorMessage}`,
       result: {
         provider: runtimeSelection.provider,
         model: runtimeSelection.model,
-        available: Boolean(response.content || response.toolCalls?.length),
+        available,
       },
     };
   }
@@ -78,41 +121,21 @@ export class LlmHealthService {
     const activeProvider = this.providerConfig.getActiveProvider();
     const activeModel = this.providerConfig.getActiveModel();
 
-    for (const provider of this.providerConfig.getProviders()) {
-      const config = this.providerConfig.getProviderConfig(provider);
-      if (!this.providerConfig.isProviderConfigured(config)) {
-        continue;
-      }
+    const dbProvidersResult = await this.dbProviderService.findProviders();
 
-      if (provider !== 'ollama') {
-        const staticGroup = LLM_STATIC_MODEL_GROUPS.find((group) => {
-          return group.label === provider;
-        });
+    if (dbProvidersResult.success && dbProvidersResult.result) {
+      for (const provider of dbProvidersResult.result) {
+        if (!provider.active) continue;
 
-        staticGroup?.items.forEach((model) => {
+        for (const model of provider.models || []) {
+          if (!model.active) continue;
+
           models.push({
-            provider,
-            name: model.value,
-            active: provider === activeProvider && model.value === activeModel,
+            provider: provider.key as any,
+            name: model.key,
+            active: provider.key === activeProvider && model.key === activeModel,
           });
-        });
-
-        continue;
-      }
-      if (provider === 'ollama') {
-        const ollamaModels = await this.modelCatalog.getSafeLocalOllamaModels();
-
-        ollamaModels.forEach((model) => {
-          models.push({
-            provider,
-            name: model.name,
-            active: provider === activeProvider && model.name === activeModel,
-            sizeGb: typeof model.size === 'number' ? Number((model.size / (1024 * 1024 * 1024)).toFixed(2)) : undefined,
-            family: model.details?.family,
-          });
-        });
-
-        continue;
+        }
       }
     }
 

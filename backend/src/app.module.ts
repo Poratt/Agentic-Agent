@@ -10,13 +10,12 @@ import { ExplorerModule } from './modules/explorer/explorer.module';
 import { LlmModule } from './modules/llm/llm.module';
 import { SystemModule } from './modules/system/system.module';
 import { WeatherModule } from './modules/weather/weather.module';
-import { DataSource } from 'typeorm';
-import { LlmModelEntity } from './modules/llm-provider/entities/llm-model.entity';
-import { LlmProviderEntity } from './modules/llm-provider/entities/llm-provider.entity';
 import { LlmProviderModule } from './modules/llm-provider/llm-provider.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
