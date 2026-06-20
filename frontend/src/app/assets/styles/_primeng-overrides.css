@@ -8,13 +8,12 @@
     height: var(--space-3);
   }
 
-
-
   .p-datatable-thead {
     background: transparent !important;
 
     p-sortIcon {
-      margin: 0 var(--space-2) 0 0;
+      margin: 0;
+      margin-inline-start: var(--space-2);
       color: var(--color-text-secondary);
     }
 
@@ -23,15 +22,15 @@
       position: absolute;
       inset: 0;
       border-radius: inherit;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
       z-index: -1;
     }
 
     >tr {
       >th {
         background-color: transparent;
-        padding-block: 24px;
+        padding-block: var(--space-6);
 
         &.p-datatable-column-sorted:not(:hover) {
           background-color: transparent;
@@ -43,10 +42,8 @@
           .p-datatable-sort-icon {
             color: var(--color-primary);
           }
-
         }
       }
-
     }
   }
 
@@ -55,21 +52,28 @@
   }
 }
 
-
 /* centered  */
 th:not(:first-child),
+.p-datatable-thead>tr>th:not(:first-child),
+.p-datatable-tbody>tr>td:not(:first-child),
 td:not(:first-child) {
-  text-align: center;
+  /* text-align: center;
+
+  &.text-start {
+    text-align: start;
+  } */
 }
 
 td,
 th {
   white-space: nowrap;
+
+  &.col-toggle {
+    width: 40px;
+  }
 }
 
 td {
-  max-width: var(--search-width);
-  overflow: hidden;
   text-overflow: ellipsis;
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
@@ -77,4 +81,8 @@ td {
 
 p-table p-table {
   background-color: var(--grey-30) !important;
+
+  .p-paginator {
+    background: transparent;
+  }
 }

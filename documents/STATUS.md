@@ -184,3 +184,4 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: added global `.icon-tile` padded icon styling and applied it to Dashboard metric-card icons.
 - Completed: Design System section-heading icons now reuse `.icon-tile` instead of local duplicated icon CSS.
 - Verified: `npm.cmd run build` passes after the global icon-tile update with existing unrelated warnings only.
+- Planned: `documents/features/todo/llm-model-test-results-retention-plan.md` documents weekly cleanup of `llm_model_test_results` rows older than 30 days.

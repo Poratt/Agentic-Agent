@@ -10,16 +10,17 @@ import { PageStates } from '../../core/enums/page-states.enum';
 import { BadgeColor } from '../../core/directives/badge-color.directive';
 import { LlmProvider, LlmProviderService, LlmModel } from '../../core/services/llm-provider.service';
 
-// 🚀 הרחבת הטיפוסים כדי שיכילו את הציונים המחושבים עבור התצוגה 🚀
 export interface LlmModelView extends LlmModel {
     testResults?: any[];
     hasTests: boolean;
     latencyAverage: number;
     successPercentage: number;
+    performanceScore: number;
 }
 
 export interface LlmProviderView extends Omit<LlmProvider, 'models'> {
     models: LlmModelView[];
+    modelsCount: number;
 }
 
 @Component({
@@ -35,13 +36,7 @@ export interface LlmProviderView extends Omit<LlmProvider, 'models'> {
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './llm-providers-management.html',
-    styles: [`
-        .performance-cell {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-    `] // 🚀 תוספת קטנה לעיצוב השורה של הציונים
+    styleUrl: './llm-providers-management.css'
 })
 export class LlmProvidersManagement implements OnInit {
     private table = viewChild<Table>('table');
@@ -54,6 +49,11 @@ export class LlmProvidersManagement implements OnInit {
 
     testingModelId = signal<number>(0);
 
+    // Keyed by provider.id — drives the outer p-table row expansion
+    expandedProviders = signal<Record<number, boolean>>({});
+    // Keyed by model.id — drives the inner p-table row expansion (shared across all provider sub-tables)
+    expandedModels = signal<Record<number, boolean>>({});
+
     pageState = computed(() => this.llmProviderStore.pageState());
 
     llmProviders = computed<LlmProviderView[]>(() => {
@@ -61,12 +61,13 @@ export class LlmProvidersManagement implements OnInit {
 
         return providers.map(provider => ({
             ...provider,
+            modelsCount: (provider.models || []).length,
             models: (provider.models || []).map(model => {
                 const results = model.testResults || [];
                 const totalTests = results.length;
 
                 if (totalTests === 0) {
-                    return { ...model, hasTests: false, latencyAverage: 0, successPercentage: 0 };
+                    return { ...model, hasTests: false, latencyAverage: 0, successPercentage: 0, performanceScore: -1 };
                 }
 
                 const successfulTests = results.filter(r => r.status === 'success').length;
@@ -80,11 +81,14 @@ export class LlmProvidersManagement implements OnInit {
                     latencyAverage = Math.round(totalLatency / successfulResults.length);
                 }
 
+                const performanceScore = (successPercentage * 100000) - latencyAverage;
+
                 return {
                     ...model,
                     hasTests: true,
                     latencyAverage,
-                    successPercentage
+                    successPercentage,
+                    performanceScore
                 };
             })
         }));
@@ -103,7 +107,7 @@ export class LlmProvidersManagement implements OnInit {
     }
 
     deleteProvider(providerId: number) {
-        if (confirm('האם אתה בטוח שברצונך למחוק ספק זה?')) {
+        if (confirm('Are you sure you want to delete this provider?')) {
             this.llmProviderStore.deleteProvider(providerId);
         }
     }
@@ -117,15 +121,37 @@ export class LlmProvidersManagement implements OnInit {
             },
             error: (err) => {
                 this.testingModelId.set(0);
-                alert('הבדיקה נכשלה: ' + (err?.error?.message || 'שגיאה לא ידועה'));
+                alert('Test failed: ' + (err?.error?.message || 'Unknown error'));
                 this.llmProviderStore.loadProviders();
             }
         });
+    }
+
+    toggleProvider(providerId: number) {
+        this.expandedProviders.update(state => ({ ...state, [providerId]: !state[providerId] }));
+    }
+
+    isProviderExpanded(providerId: number): boolean {
+        return !!this.expandedProviders()[providerId];
+    }
+
+    toggleModel(modelId: number) {
+        this.expandedModels.update(state => ({ ...state, [modelId]: !state[modelId] }));
+    }
+
+    isModelExpanded(modelId: number): boolean {
+        return !!this.expandedModels()[modelId];
     }
 
     formatLatency(ms: number): string {
         if (!ms) return '0ms';
         if (ms < 1000) return `${ms}ms`;
         return `${(ms / 1000).toFixed(1)}s`;
+    }
+
+    performanceClass(percentage: number): string {
+        if (percentage >= 90) return 'good';
+        if (percentage >= 60) return 'mid';
+        return 'bad';
     }
 }

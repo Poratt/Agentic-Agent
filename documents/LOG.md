@@ -1,5 +1,12 @@
 # Documentation Change Log
 
+## 2026-06-20 LLM Test Results Retention Plan
+
+- Added `documents/features/todo/llm-model-test-results-retention-plan.md`.
+- Planning decision: keep the retention cleanup in the existing LLM/provider scheduled maintenance path instead of introducing a new module for a single table cleanup.
+- Planning decision: default retention is 30 days and the proposed cleanup cadence is weekly at 02:00 server time.
+- No architecture diagram update was needed because this session created a plan only and did not change runtime architecture.
+
 ## 2026-06-11 Global Icon Tile
 
 - Added global `.icon-tile` as the shared padded-background icon treatment for dashboard metrics and design-system headings.

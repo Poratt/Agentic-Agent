@@ -492,3 +492,9 @@ documents/
 - Files touched this session: `frontend/src/app/assets/styles/_utilities.css`, `frontend/src/app/assets/styles/_layout.css`, `frontend/src/app/features/dashboard/dashboard.html`, `frontend/src/app/features/design-system/design-system.html`, `frontend/src/app/features/design-system/design-system.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: keep the padded icon treatment global instead of duplicating it in feature CSS. No architecture diagram update was needed because this was styling only.
 - Open questions for the user: none.
+- Added `documents/features/todo/llm-model-test-results-retention-plan.md` for weekly cleanup of old `llm_model_test_results` rows.
+- The plan targets the existing `LlmModelTestResultEntity`, `LlmProviderService`, and `LlmTasksService` scheduling path.
+- Next exact step: implement `LlmProviderService.deleteOldTestResults(...)`, add the weekly `@Cron('0 0 2 * * 0')` trigger in `backend/src/modules/llm/services/llm-tasks.service.ts`, then run backend tests/build.
+- Files touched this session: `documents/features/todo/llm-model-test-results-retention-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: keep retention at 30 days by default and plan a weekly 02:00 server-time cleanup; no architecture diagram update was needed because this session created a plan only.
+- Open questions for the user: confirm whether Sunday 02:00 server time is acceptable and whether retention should remain hardcoded at 30 days for version 1.
