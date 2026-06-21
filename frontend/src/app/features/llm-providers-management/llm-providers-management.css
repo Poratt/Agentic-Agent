@@ -247,12 +247,20 @@
     font-family: var(--font-code);
     font-size: var(--font-size-xs);
     color: var(--color-text-muted);
+    max-width: 100%;
+
+    white-space: normal;
+    word-break: break-word;
 }
 
 .cell-log-err {
     font-family: var(--font-code);
     font-size: var(--font-size-xs);
     color: var(--color-danger);
+    max-width: 100%;
+
+    white-space: normal;
+    word-break: break-word;
 }
 
 .status-text {
@@ -261,11 +269,165 @@
     padding-left: var(--space-2);
     border-left: 2px solid currentColor;
 
+
     &.ok {
         color: var(--color-success);
     }
 
     &.err {
         color: var(--color-danger);
+    }
+}
+
+/* ── Dialogs ───────────────────────────────────────────────────────────────── */
+
+:host ::ng-deep .p-dialog {
+    font-family: inherit;
+    direction: ltr;
+    text-align: left;
+}
+
+.dialog-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-2) 0;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+
+    label {
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        color: var(--color-text-primary);
+    }
+
+    input {
+        width: 100%;
+    }
+
+    .field-hint {
+        font-size: var(--font-size-xs);
+        color: var(--color-text-muted);
+    }
+
+    .required {
+        color: var(--color-danger);
+    }
+}
+
+.form-field-switch {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.action-row-split {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+}
+
+.action-stats {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.models-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.models-panel-title {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.add-model-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-primary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+
+    &:hover {
+        background: var(--color-surface-hover);
+    }
+
+    i {
+        font-size: 14px;
+    }
+}
+
+.col-actions-sm {
+    width: 64px;
+}
+
+.icon-btn.sm {
+    padding: var(--space-1);
+
+    i {
+        font-size: 14px;
+    }
+}
+
+.primary-btn.filled {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    background: var(--color-primary);
+    color: var(--color-bg);
+    transition: background var(--transition-fast);
+
+    i {
+        font-size: 16px;
+    }
+
+    &:hover {
+        background: var(--color-primary-hover);
+    }
+}
+
+.secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    background: transparent;
+    color: var(--color-text-primary);
+    transition: background var(--transition-fast);
+
+    &:hover {
+        background: var(--color-surface-hover);
     }
 }

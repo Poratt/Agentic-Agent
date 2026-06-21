@@ -25,8 +25,8 @@ export class LlmTasksService {
         }
     }
 
-    // 💡 בונוס לפיתוח: בדיקה קטנה שרצה פעם אחת, חצי דקה אחרי שהשרת עולה, כדי לוודא שהכל עובד 💡
-    @Cron('30 */60 * * * *') // רץ פעם בשעה בשנייה ה-30
+    // 💡 בונוס לפיתוח: בדיקה קטנה שרצה כל שעה בדקה 30 (לא בדקה 0 כדי לא להתנגש עם nightly check בשעות 0, 3, 6, 9) 💡
+    @Cron('0 30 * * * *') // runs every hour at minute 30
     async runIntermittentCheck() {
         this.logger.log('Intermittent LLM health validation is active.');
     }

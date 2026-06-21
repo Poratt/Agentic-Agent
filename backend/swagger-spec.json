@@ -817,6 +817,35 @@
         ]
       }
     },
+    "/llm/test-results/{id}": {
+      "delete": {
+        "operationId": "LlmController_deleteTestResult",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a test result",
+        "tags": [
+          "llm"
+        ]
+      }
+    },
     "/llm-provider": {
       "post": {
         "description": "Adds a new LLM provider to the system configuration.",

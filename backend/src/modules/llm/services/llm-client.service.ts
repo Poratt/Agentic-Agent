@@ -110,7 +110,7 @@ export class LlmClientService {
 
     this.logger.log(`Initializing OpenAI client for ${dbProvider.label} using DB credentials.`);
 
-    console.log(dbProvider);
+    // console.log(dbProvider);
 
 
     return new OpenAI({

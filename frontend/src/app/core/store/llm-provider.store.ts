@@ -93,7 +93,7 @@ export class LlmProviderStore {
             .subscribe({
                 next: (res) => {
                     this._providers.update(providers =>
-                        providers.map(p => p.id === res.result.id ? res.result : p)
+                        providers.map(p => p.id === res.result.id ? { ...p, ...res.result } : p)
                     );
                 },
                 error: (err) => {
@@ -137,6 +137,53 @@ export class LlmProviderStore {
             });
     }
 
+    deleteModel(providerId: number, modelId: number) {
+        this._loading.set(true);
+        this.llmProviderService
+            .deleteModel(modelId)
+            .pipe(finalize(() => this._loading.set(false)))
+            .subscribe({
+                next: () => {
+                    this._providers.update(providers => providers.map(p => {
+                        if (p.id === providerId) {
+                            return { ...p, models: (p.models ?? []).filter(m => m.id !== modelId) };
+                        }
+                        return p;
+                    }));
+                },
+                error: (err) => {
+                    this._error.set(err?.error?.message ?? 'Failed to delete model');
+                }
+            });
+    }
+
+    deleteTestResult(providerId: number, modelId: number, testResultId: number) {
+        this.llmProviderService.deleteTestResult(testResultId).subscribe({
+            next: () => {
+                this._providers.update(providers => providers.map(p => {
+                    if (p.id === providerId) {
+                        return {
+                            ...p,
+                            models: (p.models ?? []).map(m => {
+                                if (m.id === modelId) {
+                                    return {
+                                        ...m,
+                                        testResults: (m.testResults ?? []).filter((t: any) => t.id !== testResultId)
+                                    };
+                                }
+                                return m;
+                            })
+                        };
+                    }
+                    return p;
+                }));
+            },
+            error: (err) => {
+                this._error.set(err?.error?.message ?? 'Failed to delete test result');
+            }
+        });
+    }
+
     updateModel(providerId: number, modelId: number, modelData: Partial<LlmModel>) {
         this._loading.set(true);
         this.llmProviderService
@@ -148,7 +195,7 @@ export class LlmProviderStore {
                         if (p.id === providerId) {
                             return {
                                 ...p,
-                                models: (p.models ?? []).map(m => m.id === modelId ? res.result : m)
+                                models: (p.models ?? []).map(m => m.id === modelId ? { ...m, ...res.result } : m)
                             };
                         }
                         return p;

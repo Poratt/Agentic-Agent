@@ -82,10 +82,31 @@ export class LlmHealthService {
     };
   }
 
+  /**
+   * Rate-limit aware model testing with batching.
+   *
+   * OpenRouter free-models-per-min limit ≈ 10 req/min.
+   * Strategy: batch models into small groups, wait ~8s between batches
+   * (leaving headroom), and add 3s intra-batch delay for free models.
+   * Paid models (no "free" in key) only need 1s intra-batch delay.
+   */
   async testAllModels(): Promise<ServiceResultContainer<LlmModelTestResult[]>> {
     const models = await this.getModelCheckTargets();
+    const results: LlmModelTestResult[] = [];
 
-    const promises = models.map(async (model) => {
+    // Batch size tuned to stay well under the ~10 req/min OpenRouter free limit.
+    // 3 free models per batch → 3 batches × ~8s pause = ~24s total, comfortably
+    // within a 1-minute window. Leave 1 slot of headroom.
+    const BATCH_SIZE = 3;
+    const BATCH_PAUSE_MS = 8_000;   // pause between batches
+    const FREE_MODEL_DELAY_MS = 3_000;
+    const PAID_MODEL_DELAY_MS = 1_000;
+
+    for (let i = 0; i < models.length; i++) {
+      const model = models[i];
+      const isFreeModel = model.name.toLowerCase().includes('free');
+      const intraDelay = isFreeModel ? FREE_MODEL_DELAY_MS : PAID_MODEL_DELAY_MS;
+
       try {
         const check = await this.testLlm(
           model.provider,
@@ -93,21 +114,30 @@ export class LlmHealthService {
           'Hello! This is a connectivity test. Please respond with "OK"',
           'You are a helpful assistant.',
         );
-        return {
+
+        results.push({
           name: model.name,
           provider: model.provider,
           available: check.result.available,
-        };
+        });
       } catch (e) {
-        return {
+        results.push({
           name: model.name,
           provider: model.provider,
           available: false,
-        };
+        });
       }
-    });
 
-    const results = await Promise.all(promises);
+      // Delay after each model within a batch
+      await new Promise((resolve) => setTimeout(resolve, intraDelay));
+
+      // Pause between batches (but not after the very last model)
+      const isEndOfBatch = (i + 1) % BATCH_SIZE === 0;
+      const isLastModel = i === models.length - 1;
+      if (isEndOfBatch && !isLastModel) {
+        await new Promise((resolve) => setTimeout(resolve, BATCH_PAUSE_MS));
+      }
+    }
 
     return {
       success: true,

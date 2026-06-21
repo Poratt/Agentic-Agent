@@ -1,4 +1,4 @@
-import { Controller, Post, Param, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Delete, Param, UseGuards, NotFoundException } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { LlmHealthService } from './services/llm-health.service';
@@ -28,5 +28,12 @@ export class LlmController {
       'Hello! This is an interactive connection test.',
       'You are a helpful assistant.',
     );
+  }
+
+  @Delete('test-results/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Delete a test result' })
+  async deleteTestResult(@Param('id') id: string) {
+    return this.dbProviderService.deleteTestResult(+id);
   }
 }

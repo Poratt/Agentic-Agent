@@ -1,13 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany, Index } from 'typeorm';
 import { LlmProviderEntity } from './llm-provider.entity';
 import { LlmModelTestResultEntity } from './llm-model-test-results.entity';
 
 @Entity('llm_models')
+@Index(['providerId', 'key'], { unique: true })
 export class LlmModelEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ unique: true })
+  @Column()
   key!: string;
 
   @Column()

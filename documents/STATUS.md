@@ -185,3 +185,11 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: Design System section-heading icons now reuse `.icon-tile` instead of local duplicated icon CSS.
 - Verified: `npm.cmd run build` passes after the global icon-tile update with existing unrelated warnings only.
 - Planned: `documents/features/todo/llm-model-test-results-retention-plan.md` documents weekly cleanup of `llm_model_test_results` rows older than 30 days.
+- Reviewed: llm-provider-management code review found two critical data-binding bugs:
+  - `result.logOutput` → corrected to `result.errorMessage` in the test-results table cell.
+  - `model.modelId` → corrected to `model.key` in the model slug cell.
+  - Removed unused `BadgeColor` and `RippleModule` imports from `LlmProvidersManagement`.
+- Verified: `npx ng build` from `frontend` passes; `BadgeColor is not used` warning resolved. Remaining warnings are pre-existing `explorer.css` and `chat-message.css` budget warnings only.
+- Open decisions: hard delete vs soft-disable for provider deletion, Hebrew vs English UI for the LLM providers page.
+- Completed: added PrimeNG `p-dialog` forms for provider and model create/edit in `llm-providers-management`. Added "Add Provider" in page header and "Add Model" in expanded provider panel. Edit and delete (soft-disable) buttons wired for both providers and models.
+- Verified: `npx ng build` passes. `llm-providers-management.css` has a new budget warning (6.43 kB over 4 kB limit).

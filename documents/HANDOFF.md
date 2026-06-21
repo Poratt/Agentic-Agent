@@ -27,6 +27,19 @@ documents/
 
 ## Notes For Next Agent
 
+**Completed Fixes**
+- Updated `LlmProviderStore.updateProvider` to merge patched fields into existing provider object.
+- Updated `LlmProviderStore.updateModel` to merge patched fields into existing model object.
+- Ensures `testResults` and `models` arrays are preserved on partial PATCH responses.
+- Ran `ng test` – all tests pass.
+- Ran `ng build` – builds succeed with existing warnings.
+
+**Next Steps**
+- No further action required for this fix unless additional PATCH endpoints return unexpected fields.
+- Monitor for any UI flicker issues related to provider/model updates.
+- Consider adding unit tests for store merge behavior if test coverage is needed.
+
+
 - `documents/todo/` and `documents/incomplete/` remain as compatibility folders, but new work should prefer `documents/features/`.
 - Do not move `documents/done/` or `documents/audit/` unless explicitly asked.
 - For code architecture changes, update `documents/architecture-diagram.md` or explicitly state that no diagram update was needed.
@@ -498,3 +511,22 @@ documents/
 - Files touched this session: `documents/features/todo/llm-model-test-results-retention-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: keep retention at 30 days by default and plan a weekly 02:00 server-time cleanup; no architecture diagram update was needed because this session created a plan only.
 - Open questions for the user: confirm whether Sunday 02:00 server time is acceptable and whether retention should remain hardcoded at 30 days for version 1.
+- Code review of llm-provider-management (backend `llm-provider` module + frontend `llm-providers-management` feature):
+  - Bug 1: `result.logOutput` doesn't exist in `LlmModelTestResultEntity` — should be `result.errorMessage`. The table cell was showing "OK" even on errors.
+  - Bug 2: `model.modelId` doesn't exist in `LlmModel` — should be `model.key`. The model slug cell was rendering `undefined`.
+  - Cleanup: removed unused `BadgeColor` and `RippleModule` imports from the component.
+- Verification: `npx ng build` from `frontend` passes; the `BadgeColor is not used` warning is gone. Remaining warnings are existing `explorer.css` and `chat-message.css` budget warnings only.
+- Next exact step: decide on delete behavior (soft-disable vs hard delete), Hebrew UI for the LLM providers page, and whether to proceed with `documents/features/todo/database-storage-monitor-plan.md`.
+- Files touched this session: `frontend/src/app/features/llm-providers-management/llm-providers-management.html`, `frontend/src/app/features/llm-providers-management/llm-providers-management.ts`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: fixed the two data binding bugs to match the actual entity/service interfaces; no architecture diagram update was needed because this was data-binding correction only.
+- Open questions for the user: whether delete should be hard delete or remain soft-disable, and whether the LLM providers page should be Hebrew or English.
+- Added PrimeNG `p-dialog` for provider and model create/edit forms in `llm-providers-management`.
+  - Provider dialog: key, label, baseUrl, apiKey, and active toggle.
+  - Model dialog: key, label, and active toggle.
+  - "Add Provider" button in the page header.
+  - "Add Model" button in the expanded provider panel header.
+  - Edit buttons on provider rows and model rows now open the respective dialogs pre-filled.
+  - Delete model button added to model rows (soft-disable via PATCH `{ active: false }`).
+  - `LlmProviderService` now has `deleteModel()`, and `LlmProviderStore` now has `deleteModel(providerId, modelId)`.
+- Verification: `npx ng build` from `frontend` passes. New budget warning: `llm-providers-management.css` at 6.43 kB (limit 4 kB). Remaining warnings are `explorer.css` and `chat-message.css` budget warnings.
+- Files touched this session: `frontend/src/app/features/llm-providers-management/llm-providers-management.html`, `frontend/src/app/features/llm-providers-management/llm-providers-management.ts`, `frontend/src/app/features/llm-providers-management/llm-providers-management.css`, `frontend/src/app/core/services/llm-provider.service.ts`, `frontend/src/app/core/store/llm-provider.store.ts`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.

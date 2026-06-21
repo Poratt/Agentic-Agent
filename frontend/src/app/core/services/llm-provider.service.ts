@@ -55,11 +55,19 @@ export class LlmProviderService {
         return this.http.patch<ServiceResultContainer<LlmModel>>(`${this.base}/models/${modelId}`, model);
     }
 
+    deleteModel(modelId: number): Observable<ServiceResultContainer<void>> {
+        return this.http.patch<ServiceResultContainer<void>>(`${this.base}/models/${modelId}`, { active: false } as Partial<LlmModel>);
+    }
+
     findModels(providerId: number): Observable<ServiceResultContainer<LlmModel[]>> {
         return this.http.get<ServiceResultContainer<LlmModel[]>>(`${this.base}/${providerId}/models`);
     }
 
     testModel(modelId: number): Observable<ServiceResultContainer<any>> {
         return this.http.post<ServiceResultContainer<any>>(`${environment.apiUrl}/llm/models/${modelId}/test`, {});
+    }
+
+    deleteTestResult(testResultId: number): Observable<ServiceResultContainer<void>> {
+        return this.http.delete<ServiceResultContainer<void>>(`${environment.apiUrl}/llm/test-results/${testResultId}`);
     }
 }

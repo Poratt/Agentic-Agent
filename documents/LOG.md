@@ -1,5 +1,29 @@
 # Documentation Change Log
 
+## 2026-06-20 LLM Providers Management — PrimeNG Dialogs
+
+- Added PrimeNG `p-dialog` for provider and model create/edit in `frontend/src/app/features/llm-providers-management/`.
+- Provider dialog fields: key, label, baseUrl, apiKey (password input), active toggle (`p-toggleSwitch`).
+- Model dialog fields: key, label, active toggle.
+- "Add Provider" button added to page header action row.
+- "Add Model" button added to expanded provider panel header bar.
+- Edit provider button (`openEditProviderDialog`) and edit model button (`openEditModelDialog`) wired with pre-filled forms.
+- Added model delete (`deleteModel`) via soft-disable PATCH `{ active: false }`.
+  - `LlmProviderService` now exposes `deleteModel(modelId)`.
+  - `LlmProviderStore` now exposes `deleteModel(providerId, modelId)`.
+  - Model delete row button added next to the edit button in the model sub-table.
+- Verification: `npx ng build` passes. New budget warning: `llm-providers-management.css` 6.43 kB over 4 kB limit (same pattern as `explorer.css` and `chat-message.css`).
+- No architecture diagram update was needed because this was frontend UI addition only.
+
+## 2026-06-20 LLM Providers Management Code Review
+
+- Reviewed llm-provider-management backend (`llm-provider` module) and frontend (`llm-providers-management` feature).
+- Fixed: `result.logOutput` → `result.errorMessage` in the test-results log-output table cell (`llm-providers-management.html:208`). Error messages now display instead of always showing "OK".
+- Fixed: `model.modelId` → `model.key` in the model slug cell (`llm-providers-management.html:128`). Model slugs now render correctly instead of `undefined`.
+- Cleanup: removed unused `BadgeColor` and `RippleModule` from `LlmProvidersManagement` component imports; the `BadgeColor is not used` Angular warning is resolved.
+- Verification: `npx ng build` from `frontend` passes. Remaining warnings are pre-existing `explorer.css` and `chat-message.css` budget warnings only.
+- No architecture diagram update was needed because this was data-binding and import cleanup only.
+
 ## 2026-06-20 LLM Test Results Retention Plan
 
 - Added `documents/features/todo/llm-model-test-results-retention-plan.md`.

@@ -59,6 +59,9 @@ export class LlmProviderService {
   }
 
   async createModel(providerId: number, dto: CreateLlmModelDto): Promise<ServiceResultContainer<LlmModelEntity>> {
+    const provider = await this.providerRepo.findOneBy({ id: providerId });
+    if (!provider) throw new NotFoundException(`Provider with ID ${providerId} not found`);
+
     const model = this.modelRepo.create({ ...dto, providerId });
     const saved = await this.modelRepo.save(model);
     return { success: true, message: 'Model created', result: saved };
@@ -104,5 +107,13 @@ export class LlmProviderService {
       errorMessage,
     });
     return this.testResultRepo.save(testResult);
+  }
+
+  async deleteTestResult(testResultId: number): Promise<ServiceResultContainer<void>> {
+    const testResult = await this.testResultRepo.findOneBy({ id: testResultId });
+    if (!testResult) throw new NotFoundException('Test result not found');
+
+    await this.testResultRepo.remove(testResult);
+    return { success: true, message: 'Test result deleted', result: undefined };
   }
 }

@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { seedAdmin } from './core/seeds/user.seed';
+import { seedLlmProviders } from './core/seeds/llm-providers.seed';
 import { DataSource } from 'typeorm';
 import * as fs from 'fs';
 import { LlmModelEntity } from './modules/llm-provider/entities/llm-model.entity';
@@ -30,6 +31,7 @@ async function bootstrap() {
 
   const dataSource = app.get(DataSource);
   await seedAdmin(dataSource);
+  await seedLlmProviders(dataSource);
 
 
   const port = process.env.PORT || 3000;
