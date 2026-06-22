@@ -261,7 +261,9 @@
                                                                                     type="button"
                                                                                     class="icon-btn danger sm"
                                                                                     aria-label="Delete test result"
-                                                                                    (click)="deleteTestResult(provider.id, model.id, result.id)"
+                                                                                    (click)="
+                                                                                        deleteTestResult(provider.id, model.id, result.id)
+                                                                                    "
                                                                                 >
                                                                                     <i class="ph ph-trash"></i>
                                                                                 </button>
@@ -294,47 +296,61 @@
     [closable]="true"
     [draggable]="false"
     [resizable]="false"
-    [style]="{ width: '480px', direction: 'ltr' }"
+    [style]="{ width: '480px' }"
     header="Provider"
     (onHide)="closeProviderDialog()"
 >
-    <div class="dialog-form">
+    <form [formGroup]="providerForm" class="dialog-form">
         <div class="form-field">
             <label for="provider-key">Key <span class="required">*</span></label>
-            <input id="provider-key" pInputText type="text" [(ngModel)]="providerForm.key" placeholder="e.g. openai" />
-            <span class="field-hint">Unique identifier used in API configuration.</span>
+            <input id="provider-key" pInputText type="text" formControlName="key" placeholder="e.g. openai" />
+            @if (providerForm.get('key')?.invalid && (providerForm.get('key')?.dirty || providerForm.get('key')?.touched)) {
+                @if (providerForm.get('key')?.errors?.['required']) {
+                    <small class="error-text">Key is required.</small>
+                }
+                @if (providerForm.get('key')?.errors?.['pattern']) {
+                    <small class="error-text">Key cannot contain spaces.</small>
+                }
+            } @else {
+                <span class="field-hint">Unique identifier used in API configuration.</span>
+            }
         </div>
 
         <div class="form-field">
             <label for="provider-label">Label <span class="required">*</span></label>
-            <input id="provider-label" pInputText type="text" [(ngModel)]="providerForm.label" placeholder="e.g. OpenAI" />
+            <input id="provider-label" pInputText type="text" formControlName="label" placeholder="e.g. OpenAI" />
+            @if (providerForm.get('label')?.invalid && (providerForm.get('label')?.dirty || providerForm.get('label')?.touched)) {
+                <small class="error-text">Label is required.</small>
+            }
         </div>
 
         <div class="form-field">
             <label for="provider-url">Base URL <span class="required">*</span></label>
-            <input
-                id="provider-url"
-                pInputText
-                type="text"
-                [(ngModel)]="providerForm.baseUrl"
-                placeholder="e.g. https://api.openai.com/v1"
-            />
+            <input id="provider-url" pInputText type="text" formControlName="baseUrl" placeholder="e.g. https://api.openai.com/v1" />
+            @if (providerForm.get('baseUrl')?.invalid && (providerForm.get('baseUrl')?.dirty || providerForm.get('baseUrl')?.touched)) {
+                @if (providerForm.get('baseUrl')?.errors?.['required']) {
+                    <small class="error-text">Base URL is required.</small>
+                }
+                @if (providerForm.get('baseUrl')?.errors?.['pattern']) {
+                    <small class="error-text">URL must start with http:// or https://</small>
+                }
+            }
         </div>
 
         <div class="form-field">
             <label for="provider-apikey">API Key</label>
-            <input id="provider-apikey" pInputText type="password" [(ngModel)]="providerForm.apiKey" placeholder="sk-proj-..." />
+            <input id="provider-apikey" pInputText type="password" formControlName="apiKey" placeholder="sk-proj-..." />
         </div>
 
         <div class="form-field form-field-switch">
             <label for="provider-active">Active</label>
-            <p-toggleSwitch [(ngModel)]="providerForm.active" inputId="provider-active" />
+            <p-toggleSwitch formControlName="active" inputId="provider-active" />
         </div>
-    </div>
+    </form>
 
     <ng-template pTemplate="footer">
         <button type="button" class="secondary-btn" (click)="closeProviderDialog()">Cancel</button>
-        <button type="button" class="primary-btn filled" (click)="saveProvider()">Save</button>
+        <button type="button" class="primary-btn filled" [disabled]="providerForm.invalid" (click)="saveProvider()">Save</button>
     </ng-template>
 </p-dialog>
 
@@ -346,30 +362,42 @@
     [closable]="true"
     [draggable]="false"
     [resizable]="false"
-    [style]="{ width: '480px', direction: 'ltr' }"
+    [style]="{ width: '480px' }"
     [header]="modelDialogTitle()"
     (onHide)="closeModelDialog()"
 >
-    <div class="dialog-form">
+    <form [formGroup]="modelForm" class="dialog-form">
         <div class="form-field">
             <label for="model-key">Key <span class="required">*</span></label>
-            <input id="model-key" pInputText type="text" [(ngModel)]="modelForm.key" placeholder="e.g. gpt-4o" />
-            <span class="field-hint">Model identifier used in API requests.</span>
+            <input id="model-key" pInputText type="text" formControlName="key" placeholder="e.g. gpt-4o" />
+            @if (modelForm.get('key')?.invalid && (modelForm.get('key')?.dirty || modelForm.get('key')?.touched)) {
+                @if (modelForm.get('key')?.errors?.['required']) {
+                    <small class="error-text">Key is required.</small>
+                }
+                @if (modelForm.get('key')?.errors?.['pattern']) {
+                    <small class="error-text">Key cannot contain spaces.</small>
+                }
+            } @else {
+                <span class="field-hint">Model identifier used in API requests.</span>
+            }
         </div>
 
         <div class="form-field">
             <label for="model-label">Label <span class="required">*</span></label>
-            <input id="model-label" pInputText type="text" [(ngModel)]="modelForm.label" placeholder="e.g. GPT-4o" />
+            <input id="model-label" pInputText type="text" formControlName="label" placeholder="e.g. GPT-4o" />
+            @if (modelForm.get('label')?.invalid && (modelForm.get('label')?.dirty || modelForm.get('label')?.touched)) {
+                <small class="error-text">Label is required.</small>
+            }
         </div>
 
         <div class="form-field form-field-switch">
             <label for="model-active">Active</label>
-            <p-toggleSwitch [(ngModel)]="modelForm.active" inputId="model-active" />
+            <p-toggleSwitch formControlName="active" inputId="model-active" />
         </div>
-    </div>
+    </form>
 
     <ng-template pTemplate="footer">
         <button type="button" class="secondary-btn" (click)="closeModelDialog()">Cancel</button>
-        <button type="button" class="primary-btn filled" (click)="saveModel()">Save</button>
+        <button type="button" class="primary-btn filled" [disabled]="modelForm.invalid" (click)="saveModel()">Save</button>
     </ng-template>
 </p-dialog>

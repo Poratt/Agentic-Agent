@@ -10,7 +10,7 @@ export class LlmTasksService {
 
     // 🚀 הרצה כל לילה בין 00:00 ל-10:00 כל 3 שעות (00:00, 03:00, 06:00, 09:00) 🚀
     // @Cron('0 0 0,3,6,9 * * *')
-    @Cron('0 44 * * * *')
+    @Cron('0 0 * * * *')
     async handleNightlyLlmHealthCheck() {
         this.logger.log('--- Starting Nightly LLM Auto-Health Check Cron Job ---');
 

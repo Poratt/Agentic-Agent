@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, computed, viewChild, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { InputTextModule } from 'primeng/inputtext';
 import { Table, TableModule } from 'primeng/table';
@@ -8,7 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { DialogModule } from 'primeng/dialog';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { AuthStore } from '../../core/store/auth.store';
 import { LlmProviderStore } from '../../core/store/llm-provider.store';
 import { PageStates } from '../../core/enums/page-states.enum';
@@ -29,33 +29,18 @@ export interface LlmProviderView extends Omit<LlmProvider, 'models'> {
     modelsCount: number;
 }
 
-interface ProviderFormValue {
-    key: string;
-    label: string;
-    baseUrl: string;
-    apiKey: string;
-    active: boolean;
-}
-
-interface ModelFormValue {
-    key: string;
-    label: string;
-    active: boolean;
-}
-
 @Component({
     selector: 'app-llm-providers-management',
     standalone: true,
     imports: [
         CommonModule,
-        FormsModule,
+        ReactiveFormsModule,
         InputTextModule,
         TableModule,
         ButtonModule,
         RippleModule,
         DialogModule,
         ToggleSwitchModule,
-        BadgeColor
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './llm-providers-management.html',
@@ -63,11 +48,13 @@ interface ModelFormValue {
 })
 export class LlmProvidersManagement implements OnInit {
     private table = viewChild<Table>('table');
+    private fb = inject(FormBuilder);
 
     protected authStore = inject(AuthStore);
     protected llmProviderService = inject(LlmProviderService);
     protected llmProviderStore = inject(LlmProviderStore);
     protected confirmService = inject(ConfirmationService);
+    protected messageService = inject(MessageService);
     protected readonly PageStates = PageStates;
     protected readonly globalFilterFields = ['id', 'key', 'label', 'baseUrl', 'createdAt'];
 
@@ -77,11 +64,21 @@ export class LlmProvidersManagement implements OnInit {
     providerDialogVisible = signal(false);
     modelDialogVisible = signal(false);
 
-    // Dialog form values — plain mutable objects so [(ngModel)]="providerForm.key" works directly.
-    // (A signal's properties aren't individually bindable with ngModel; only signal() itself can be
-    // targeted by Angular's new [(model)] syntax, not dot-paths into it.)
-    providerForm: ProviderFormValue = { key: '', label: '', baseUrl: '', apiKey: '', active: true };
-    modelForm: ModelFormValue = { key: '', label: '', active: true };
+    // Reactive Forms for Provider dialog
+    providerForm: FormGroup = this.fb.group({
+        key: ['', [Validators.required, Validators.pattern(/^\S+$/)]],
+        label: ['', [Validators.required]],
+        baseUrl: ['', [Validators.required, Validators.pattern(/^https?:\/\/.*/)]],
+        apiKey: [''],
+        active: [true]
+    });
+
+    // Reactive Forms for Model dialog
+    modelForm: FormGroup = this.fb.group({
+        key: ['', [Validators.required, Validators.pattern(/^\S+$/)]],
+        label: ['', [Validators.required]],
+        active: [true]
+    });
 
     editingProviderId = signal<number | null>(null);
     editingModelProviderId = signal<number | null>(null);
@@ -167,6 +164,11 @@ export class LlmProvidersManagement implements OnInit {
             acceptButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.llmProviderStore.deleteProvider(providerId);
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Deleted',
+                    detail: 'Provider has been deleted successfully.'
+                });
             }
         });
     }
@@ -177,10 +179,19 @@ export class LlmProvidersManagement implements OnInit {
             next: () => {
                 this.testingModelId.set(0);
                 this.llmProviderStore.loadProviders();
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Test Complete',
+                    detail: 'Model test completed successfully.'
+                });
             },
             error: (err) => {
                 this.testingModelId.set(0);
-                alert('Test failed: ' + (err?.error?.message || 'Unknown error'));
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Test Failed',
+                    detail: err?.error?.message || 'Unknown error'
+                });
                 this.llmProviderStore.loadProviders();
             }
         });
@@ -217,32 +228,38 @@ export class LlmProvidersManagement implements OnInit {
     // ── Provider dialog ──────────────────────────────────────────────
 
     openAddProviderDialog() {
-        this.providerForm = { key: '', label: '', baseUrl: '', apiKey: '', active: true };
+        this.providerForm.reset({ key: '', label: '', baseUrl: '', apiKey: '', active: true });
         this.editingProviderId.set(null);
         this.providerDialogVisible.set(true);
     }
 
     openEditProviderDialog(provider: LlmProviderView) {
-        this.providerForm = {
+        this.providerForm.patchValue({
             key: provider.key,
             label: provider.label,
             baseUrl: provider.baseUrl,
             apiKey: '',
             active: provider.active
-        };
+        });
         this.editingProviderId.set(provider.id);
         this.providerDialogVisible.set(true);
     }
 
     closeProviderDialog() {
         this.providerDialogVisible.set(false);
-        this.providerForm = { key: '', label: '', baseUrl: '', apiKey: '', active: true };
+        this.providerForm.reset();
         this.editingProviderId.set(null);
     }
 
     saveProvider() {
+        if (this.providerForm.invalid) {
+            this.providerForm.markAllAsTouched();
+            return;
+        }
+
         const id = this.editingProviderId();
-        const payload: Partial<LlmProvider> = { ...this.providerForm };
+        const formValue = this.providerForm.getRawValue();
+        const payload: Partial<LlmProvider> = { ...formValue };
 
         if (!payload.apiKey) {
             delete payload.apiKey;
@@ -250,8 +267,18 @@ export class LlmProvidersManagement implements OnInit {
 
         if (id === null) {
             this.llmProviderStore.createProvider(payload);
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Created',
+                detail: 'Provider has been created successfully.'
+            });
         } else {
             this.llmProviderStore.updateProvider(id, payload);
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Updated',
+                detail: 'Provider has been updated successfully.'
+            });
         }
 
         this.closeProviderDialog();
@@ -260,14 +287,18 @@ export class LlmProvidersManagement implements OnInit {
     // ── Model dialog ─────────────────────────────────────────────────
 
     openAddModelDialog(providerId: number) {
-        this.modelForm = { key: '', label: '', active: true };
+        this.modelForm.reset({ key: '', label: '', active: true });
         this.editingModelProviderId.set(providerId);
         this.editingModelId.set(null);
         this.modelDialogVisible.set(true);
     }
 
     openEditModelDialog(providerId: number, model: LlmModel) {
-        this.modelForm = { key: model.key, label: model.label, active: model.active };
+        this.modelForm.patchValue({
+            key: model.key,
+            label: model.label,
+            active: model.active
+        });
         this.editingModelProviderId.set(providerId);
         this.editingModelId.set(model.id);
         this.modelDialogVisible.set(true);
@@ -275,22 +306,37 @@ export class LlmProvidersManagement implements OnInit {
 
     closeModelDialog() {
         this.modelDialogVisible.set(false);
-        this.modelForm = { key: '', label: '', active: true };
+        this.modelForm.reset();
         this.editingModelProviderId.set(null);
         this.editingModelId.set(null);
     }
 
     saveModel() {
+        if (this.modelForm.invalid) {
+            this.modelForm.markAllAsTouched();
+            return;
+        }
+
         const providerId = this.editingModelProviderId();
         if (providerId === null) return;
 
         const modelId = this.editingModelId();
-        const payload: Partial<LlmModel> = { ...this.modelForm };
+        const payload: Partial<LlmModel> = { ...this.modelForm.getRawValue() };
 
         if (modelId === null) {
             this.llmProviderStore.createModel(providerId, payload);
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Created',
+                detail: 'Model has been created successfully.'
+            });
         } else {
             this.llmProviderStore.updateModel(providerId, modelId, payload);
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Updated',
+                detail: 'Model has been updated successfully.'
+            });
         }
 
         this.closeModelDialog();
@@ -306,6 +352,11 @@ export class LlmProvidersManagement implements OnInit {
             acceptButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.llmProviderStore.deleteModel(providerId, modelId);
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Deactivated',
+                    detail: 'Model has been deactivated successfully.'
+                });
             }
         });
     }
@@ -320,6 +371,11 @@ export class LlmProvidersManagement implements OnInit {
             acceptButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.llmProviderStore.deleteTestResult(providerId, modelId, testResultId);
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Deleted',
+                    detail: 'Test result has been deleted successfully.'
+                });
             }
         });
     }
@@ -331,7 +387,7 @@ export class LlmProvidersManagement implements OnInit {
 // Nemotron 3 Nano 30B A3B - nvidia/nemotron-3-nano-30b-a3b:free
 // Nemotron 3 Nano Omni - nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
 // Nemotron Nano 9B V2 - nvidia/nemotron-nano-9b-v2:free
-// Nemotron Nano 12B 2 VL - nvidia/nemotron-nano-12b-v2-vl:free
+// Nemotron Nano 12B 2 VL - nvidia/nemotron-nano-12b-v2:free
 // North Mini Code - cohere/north-mini-code:free
 // Llama Nemotron Embed VL 1B V2 - nvidia/llama-nemotron-embed-vl-1b-v2:free
 // Llama Nemotron Rerank VL 1B V2 - nvidia/llama-nemotron-rerank-vl-1b-v2:free
