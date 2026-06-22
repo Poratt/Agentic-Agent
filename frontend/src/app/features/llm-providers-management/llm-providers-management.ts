@@ -8,6 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { DialogModule } from 'primeng/dialog';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { ConfirmationService } from 'primeng/api';
 import { AuthStore } from '../../core/store/auth.store';
 import { LlmProviderStore } from '../../core/store/llm-provider.store';
 import { PageStates } from '../../core/enums/page-states.enum';
@@ -66,6 +67,7 @@ export class LlmProvidersManagement implements OnInit {
     protected authStore = inject(AuthStore);
     protected llmProviderService = inject(LlmProviderService);
     protected llmProviderStore = inject(LlmProviderStore);
+    protected confirmService = inject(ConfirmationService);
     protected readonly PageStates = PageStates;
     protected readonly globalFilterFields = ['id', 'key', 'label', 'baseUrl', 'createdAt'];
 
@@ -156,9 +158,17 @@ export class LlmProvidersManagement implements OnInit {
     }
 
     deleteProvider(providerId: number) {
-        if (confirm('Are you sure you want to delete this provider?')) {
-            this.llmProviderStore.deleteProvider(providerId);
-        }
+        this.confirmService.confirm({
+            message: 'Are you sure you want to delete this provider?',
+            header: 'Delete Provider',
+            icon: 'pi pi-exclamation-triangle',
+            acceptLabel: 'Delete',
+            rejectLabel: 'Cancel',
+            acceptButtonStyleClass: 'p-button-danger',
+            accept: () => {
+                this.llmProviderStore.deleteProvider(providerId);
+            }
+        });
     }
 
     testModel(modelId: number) {
@@ -287,15 +297,31 @@ export class LlmProvidersManagement implements OnInit {
     }
 
     deleteModel(providerId: number, modelId: number) {
-        if (confirm('Are you sure you want to deactivate this model?')) {
-            this.llmProviderStore.deleteModel(providerId, modelId);
-        }
+        this.confirmService.confirm({
+            message: 'Are you sure you want to deactivate this model?',
+            header: 'Deactivate Model',
+            icon: 'pi pi-exclamation-triangle',
+            acceptLabel: 'Deactivate',
+            rejectLabel: 'Cancel',
+            acceptButtonStyleClass: 'p-button-danger',
+            accept: () => {
+                this.llmProviderStore.deleteModel(providerId, modelId);
+            }
+        });
     }
 
     deleteTestResult(providerId: number, modelId: number, testResultId: number) {
-        if (confirm('Are you sure you want to delete this test result?')) {
-            this.llmProviderStore.deleteTestResult(providerId, modelId, testResultId);
-        }
+        this.confirmService.confirm({
+            message: 'Are you sure you want to delete this test result?',
+            header: 'Delete Test Result',
+            icon: 'pi pi-exclamation-triangle',
+            acceptLabel: 'Delete',
+            rejectLabel: 'Cancel',
+            acceptButtonStyleClass: 'p-button-danger',
+            accept: () => {
+                this.llmProviderStore.deleteTestResult(providerId, modelId, testResultId);
+            }
+        });
     }
 }
 

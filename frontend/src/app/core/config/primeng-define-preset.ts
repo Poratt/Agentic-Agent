@@ -1,7 +1,7 @@
 import Aura from '@primeuix/themes/aura';
 import { definePreset } from '@primeuix/themes';
 import { PrimeNGConfigType, providePrimeNG } from 'primeng/config';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
 
 export const DARK_MODE_SELECTOR = '[data-theme="dark"]';
@@ -67,7 +67,10 @@ export const AppPrimeConfig: PrimeNGConfigType = {
       separator: { class: '' },
       submenuLabel: { class: '!' },
     },
+    confirmdialog: {
+      root: { dir: 'ltr' },
+    },
   },
 };
 
-export const PRIME_NG_PROVIDERS = [providePrimeNG(AppPrimeConfig), MessageService, DialogService];
+export const PRIME_NG_PROVIDERS = [providePrimeNG(AppPrimeConfig), MessageService, DialogService, ConfirmationService];

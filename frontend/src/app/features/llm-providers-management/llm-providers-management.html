@@ -80,7 +80,7 @@
                                         <i class="ph ph-caret-right"></i>
                                     </button>
                                 </td>
-                                <td class="provider-name">{{ provider.label }}</td>
+                                <td class="provider-name clickable" (click)="toggleProvider(provider.id)">{{ provider.label }}</td>
                                 <td class="provider-url">{{ provider.baseUrl }}</td>
                                 <td class="col-count model-count">{{ provider.modelsCount }}</td>
                                 <td class="col-actions">
@@ -155,7 +155,7 @@
                                                             </button>
                                                         }
                                                     </td>
-                                                    <td>
+                                                    <td class="model-name clickable" (click)="toggleModel(model.id)">
                                                         <span class="model-name">{{ model.label }}</span>
                                                         <span class="model-slug">{{ model.key }}</span>
                                                     </td>
