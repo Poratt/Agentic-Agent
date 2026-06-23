@@ -155,9 +155,11 @@
                                                             </button>
                                                         }
                                                     </td>
-                                                    <td class="model-name clickable" (click)="toggleModel(model.id)">
-                                                        <span class="model-name">{{ model.label }}</span>
-                                                        <span class="model-slug">{{ model.key }}</span>
+                                                    <td class="clickable" (click)="toggleModel(model.id)">
+                                                        <div class="model-name">
+                                                            <span class="model-name">{{ model.label }}</span>
+                                                            <span class="model-slug">{{ model.key }}</span>
+                                                        </div>
                                                     </td>
                                                     <td class="col-status">
                                                         <span
@@ -297,7 +299,7 @@
     [draggable]="false"
     [resizable]="false"
     [style]="{ width: '480px' }"
-    header="Provider"
+    [header]="providerDialogTitle()"
     (onHide)="closeProviderDialog()"
 >
     <form [formGroup]="providerForm" class="dialog-form">

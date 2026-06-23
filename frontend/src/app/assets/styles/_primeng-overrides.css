@@ -2,6 +2,7 @@
 /* PrimeNG Overrides              */
 /* ------------------------------ */
 
+/* ── Tables ─────────────────────────────────────────────────────────────── */
 .p-datatable {
   .p-datatable-sort-icon {
     width: var(--space-3);
@@ -85,4 +86,54 @@ p-table p-table {
   .p-paginator {
     background: transparent;
   }
+}
+
+/* ── Dialogs ───────────────────────────────────────────────────────────────── */
+
+.p-dialog {
+  font-family: inherit;
+  direction: ltr;
+  text-align: left;
+}
+
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+
+  label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+  }
+
+
+  .field-hint {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+  }
+
+  .required {
+    color: var(--color-danger);
+  }
+
+  .error-text {
+    font-size: var(--font-size-xs);
+    color: var(--color-danger);
+    margin-top: var(--space-1);
+  }
+}
+
+.form-field-switch {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }

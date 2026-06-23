@@ -136,7 +136,16 @@ export class LlmProvidersManagement implements OnInit {
         return this.llmProviders().find(p => p.id === providerId)?.label ?? '';
     });
 
-    // Header for the model dialog — "Edit Model | {provider}" or "New Model | {provider}"
+    // modelDialogTitle defined later
+
+    // Provider dialog title computed property (replaces hardcoded header="Provider")
+    providerDialogTitle = computed(() => {
+        const mode = this.editingProviderId() !== null ? 'Edit' : 'New';
+        const label = this.editingProviderId() !== null ? this.llmProviders().find(p => p.id === this.editingProviderId())?.label ?? '' : '';
+        return `${mode} Provider${label ? ' | ' + label : ''}`;
+    });
+
+    // Existing modelDialogTitle remains unchanged
     modelDialogTitle = computed(() => {
         const mode = this.editingModelId() !== null ? 'Edit' : 'New';
         return `${mode} Model | ${this.modelDialogProviderLabel()}`;

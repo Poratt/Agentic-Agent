@@ -23,8 +23,12 @@
         border-bottom: 1px solid var(--color-border);
     }
 
-    tbody tr:hover {
-        background: var(--color-surface-hover);
+    tbody {
+        tr {
+            &:hover {
+                background: var(--color-surface-hover);
+            }
+        }
     }
 }
 
@@ -59,13 +63,17 @@
         color: var(--color-text-muted);
     }
 
-    &.open i {
-        transform: rotate(90deg);
-        color: var(--color-primary);
+    &.open {
+        i {
+            transform: rotate(90deg);
+            color: var(--color-primary);
+        }
     }
 
-    &.sm i {
-        font-size: 14px;
+    &.sm {
+        i {
+            font-size: 14px;
+        }
     }
 }
 
@@ -90,8 +98,10 @@
         color: var(--color-primary);
     }
 
-    &.danger:hover {
-        color: var(--color-danger);
+    &.danger {
+        &:hover {
+            color: var(--color-danger);
+        }
     }
 
     &.testing {
@@ -102,6 +112,14 @@
 
     &:disabled {
         cursor: default;
+    }
+
+    &.sm {
+        padding: var(--space-1);
+
+        i {
+            font-size: 14px;
+        }
     }
 }
 
@@ -134,7 +152,8 @@
 }
 
 .model-name {
-    display: block;
+    display: flex;
+    flex-direction: column;
     font-weight: var(--font-weight-medium);
     font-size: var(--font-size-sm);
 }
@@ -144,7 +163,10 @@
     font-family: var(--font-code);
     font-size: var(--font-size-xs);
     color: var(--color-text-muted);
-    margin-top: 2px;
+    width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
 }
 
 .status-indicator {
@@ -229,8 +251,12 @@
         border-bottom: 1px solid var(--color-border);
     }
 
-    tr:last-child td {
-        border-bottom: none;
+    tr {
+        &:last-child {
+            td {
+                border-bottom: none;
+            }
+        }
     }
 }
 
@@ -248,7 +274,6 @@
     font-size: var(--font-size-xs);
     color: var(--color-text-muted);
     max-width: 100%;
-
     white-space: normal;
     word-break: break-word;
 }
@@ -258,7 +283,6 @@
     font-size: var(--font-size-xs);
     color: var(--color-danger);
     max-width: 100%;
-
     white-space: normal;
     word-break: break-word;
 }
@@ -269,7 +293,6 @@
     padding-left: var(--space-2);
     border-left: 2px solid currentColor;
 
-
     &.ok {
         color: var(--color-success);
     }
@@ -279,56 +302,18 @@
     }
 }
 
-/* ── Dialogs ───────────────────────────────────────────────────────────────── */
-
-:host ::ng-deep .p-dialog {
-    font-family: inherit;
-    direction: ltr;
-    text-align: left;
+.col-actions-sm {
+    width: 64px;
 }
 
-.dialog-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-    padding: var(--space-2) 0;
-}
+.clickable {
+    cursor: pointer;
+    color: var(--color-primary);
+    transition: color var(--transition-fast), background var(--transition-fast);
 
-.form-field {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-
-    label {
-        font-size: var(--font-size-sm);
-        font-weight: var(--font-weight-medium);
-        color: var(--color-text-primary);
+    &:hover {
+        color: var(--primary-400);
     }
-
-    input {
-        width: 100%;
-    }
-
-    .field-hint {
-        font-size: var(--font-size-xs);
-        color: var(--color-text-muted);
-    }
-
-    .required {
-        color: var(--color-danger);
-    }
-
-    .error-text {
-        font-size: var(--font-size-xs);
-        color: var(--color-danger);
-        margin-top: var(--space-1);
-    }
-}
-
-.form-field-switch {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
 }
 
 .action-row-split {
@@ -382,26 +367,4 @@
     i {
         font-size: 14px;
     }
-}
-
-.col-actions-sm {
-    width: 64px;
-}
-
-.icon-btn.sm {
-    padding: var(--space-1);
-
-    i {
-        font-size: 14px;
-    }
-}
-
-.clickable {
-    cursor: pointer;
-    color: var(--color-primary);
-    transition: color var(--transition-fast), background var(--transition-fast);
-}
-
-.clickable:hover {
-    color: var(--primary-400);
 }
