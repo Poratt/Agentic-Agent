@@ -72,7 +72,7 @@
                                 <td class="col-expand">
                                     <button
                                         type="button"
-                                        class="icon-btn chevron-btn"
+                                        class="icon-only transparent-btn chevron-btn"
                                         [class.open]="isProviderExpanded(provider.id)"
                                         [attr.aria-label]="isProviderExpanded(provider.id) ? 'Collapse' : 'Expand'"
                                         (click)="toggleProvider(provider.id)"
@@ -85,12 +85,17 @@
                                 <td class="col-count model-count">{{ provider.modelsCount }}</td>
                                 <td class="col-actions">
                                     <div class="row-actions">
-                                        <button type="button" class="icon-btn" aria-label="Edit" (click)="openEditProviderDialog(provider)">
+                                        <button
+                                            type="button"
+                                            class="icon-only transparent-btn"
+                                            aria-label="Edit"
+                                            (click)="openEditProviderDialog(provider)"
+                                        >
                                             <i class="ph ph-pencil-simple"></i>
                                         </button>
                                         <button
                                             type="button"
-                                            class="icon-btn danger"
+                                            class="icon-only danger-btn"
                                             aria-label="Delete"
                                             (click)="deleteProvider(provider.id)"
                                         >
@@ -107,7 +112,7 @@
                                             <span class="models-panel-title">Models</span>
                                             <button
                                                 type="button"
-                                                class="icon-btn add-model-btn"
+                                                class="transparent-btn sm"
                                                 (click)="openAddModelDialog(provider.id)"
                                                 aria-label="Add model"
                                             >
@@ -146,7 +151,7 @@
                                                         @if (model.hasTests) {
                                                             <button
                                                                 type="button"
-                                                                class="icon-btn chevron-btn sm"
+                                                                class="icon-only transparent-btn chevron-btn sm"
                                                                 [class.open]="isModelExpanded(model.id)"
                                                                 [attr.aria-label]="isModelExpanded(model.id) ? 'Collapse' : 'Expand'"
                                                                 (click)="toggleModel(model.id)"
@@ -190,7 +195,7 @@
                                                     <td class="col-test">
                                                         <button
                                                             type="button"
-                                                            class="icon-btn"
+                                                            class="icon-only transparent-btn"
                                                             [class.testing]="testingModelId() === model.id"
                                                             [disabled]="testingModelId() === model.id"
                                                             aria-label="Run test"
@@ -203,7 +208,7 @@
                                                         <div class="row-actions">
                                                             <button
                                                                 type="button"
-                                                                class="icon-btn sm"
+                                                                class="icon-only transparent-btn sm"
                                                                 aria-label="Edit model"
                                                                 (click)="openEditModelDialog(provider.id, model)"
                                                             >
@@ -211,7 +216,7 @@
                                                             </button>
                                                             <button
                                                                 type="button"
-                                                                class="icon-btn danger sm"
+                                                                class="icon-only danger-btn sm"
                                                                 aria-label="Delete model"
                                                                 (click)="deleteModel(provider.id, model.id)"
                                                             >
@@ -261,7 +266,7 @@
                                                                             <td class="col-actions-sm">
                                                                                 <button
                                                                                     type="button"
-                                                                                    class="icon-btn danger sm"
+                                                                                    class="icon-only danger-btn sm"
                                                                                     aria-label="Delete test result"
                                                                                     (click)="
                                                                                         deleteTestResult(provider.id, model.id, result.id)

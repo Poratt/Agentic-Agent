@@ -24,6 +24,7 @@ button {
     filter var(--transition-fast);
 
   svg,
+  i,
   .ph,
   app-icon {
     width: 16px;
@@ -56,6 +57,7 @@ button {
     font-size: var(--font-size-xs);
 
     svg,
+    i,
     .ph,
     app-icon {
       width: var(--space-3);
@@ -69,6 +71,7 @@ button {
     font-size: var(--font-size-xs);
 
     svg,
+    i,
     .ph,
     app-icon {
       width: 14px;
@@ -82,6 +85,7 @@ button {
     font-size: var(--font-size-md);
 
     svg,
+    i,
     .ph,
     app-icon {
       width: 22px;
@@ -95,6 +99,7 @@ button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    line-height: 1;
 
     &.xs {
       flex: 0 0 28px;
@@ -104,10 +109,21 @@ button {
       box-sizing: border-box;
     }
 
+    &.sm {
+      padding: var(--space-1);
+    }
+
     &.rounded {
       border-radius: 50%;
     }
 
+    &.testing {
+      color: var(--color-primary);
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    i,
     .ph {
       display: flex;
       align-items: center;
