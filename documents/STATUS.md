@@ -193,3 +193,6 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Open decisions: hard delete vs soft-disable for provider deletion, Hebrew vs English UI for the LLM providers page.
 - Completed: added PrimeNG `p-dialog` forms for provider and model create/edit in `llm-providers-management`. Added "Add Provider" in page header and "Add Model" in expanded provider panel. Edit and delete (soft-disable) buttons wired for both providers and models.
 - Verified: `npx ng build` passes. `llm-providers-management.css` has a new budget warning (6.43 kB over 4 kB limit).
+- Completed: merged the LLM providers local `.icon-btn` styling into the global `icon-only` button pattern in `_buttons.css`.
+- Completed: LLM providers action buttons now use `icon-only transparent-btn` / `icon-only danger-btn`, the local `.icon-btn` CSS block was removed, and the unnecessary `add-model-btn` class was replaced with `transparent-btn sm`.
+- Verified: `npm.cmd run build` from `frontend` passes. `llm-providers-management.css` budget warning remains but is reduced to 4.36 kB over the 4 kB limit.

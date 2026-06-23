@@ -530,3 +530,13 @@ documents/
   - `LlmProviderService` now has `deleteModel()`, and `LlmProviderStore` now has `deleteModel(providerId, modelId)`.
 - Verification: `npx ng build` from `frontend` passes. New budget warning: `llm-providers-management.css` at 6.43 kB (limit 4 kB). Remaining warnings are `explorer.css` and `chat-message.css` budget warnings.
 - Files touched this session: `frontend/src/app/features/llm-providers-management/llm-providers-management.html`, `frontend/src/app/features/llm-providers-management/llm-providers-management.ts`, `frontend/src/app/features/llm-providers-management/llm-providers-management.css`, `frontend/src/app/core/services/llm-provider.service.ts`, `frontend/src/app/core/store/llm-provider.store.ts`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Merged the local LLM providers `.icon-btn` styling into the global button system.
+  - `frontend/src/app/assets/styles/_buttons.css` now supports `i` icons inside global button sizing rules and adds `icon-only.testing`.
+  - LLM provider icon buttons now use global `icon-only transparent-btn` or `icon-only danger-btn` classes.
+  - Removed the duplicated `.icon-btn` block from `llm-providers-management.css`.
+  - Removed the unnecessary local `add-model-btn`; the Add Model action now uses `transparent-btn sm`.
+- Verification: `npm.cmd run build` from `frontend` passed. Warnings remain: initial bundle budget, `llm-providers-management.css` budget now reduced to 4.36 kB, plus existing `chat-message.css` and `explorer.css` budgets.
+- Next exact step: if CSS budget cleanup is desired, continue reducing `frontend/src/app/features/llm-providers-management/llm-providers-management.css` by moving reusable table/panel patterns to global styles.
+- Files touched this session: `frontend/src/app/assets/styles/_buttons.css`, `frontend/src/app/features/llm-providers-management/llm-providers-management.html`, `frontend/src/app/features/llm-providers-management/llm-providers-management.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
+- Decisions made: use the existing global `icon-only` button convention instead of keeping a component-specific `.icon-btn`; no architecture diagram update was needed because this was CSS/HTML styling only.
+- Open questions for the user: none.

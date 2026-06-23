@@ -244,3 +244,5 @@
 - Fixed the Explorer network-capture path so `isNew` no longer depends only on a missing Jane `is_new` JSON field; it now also maps visible `חדש!` DOM markers back to captured JSON products by Hebrew/English name.
 - Completed the light-mode character upgrade by replacing only the `[data-theme="light"]` token block in `_variables.css`.
 - No architecture diagram update was needed because this was global design-token styling only.
+- Styling decision: LLM providers icon actions now reuse the global `icon-only` button convention instead of maintaining a component-local `.icon-btn`; the Add Model action uses the existing `transparent-btn sm` button pattern instead of a local `add-model-btn`.
+- No architecture diagram update was needed because this was CSS/HTML styling only.
