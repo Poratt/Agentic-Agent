@@ -55,4 +55,7 @@ export class Strain {
 
     @Column({ type: 'varchar', length: 255, default: '' })
     packageType!: string;
+
+    @Column({ type: 'simple-json', nullable: true })
+    symbols!: string[];
 }

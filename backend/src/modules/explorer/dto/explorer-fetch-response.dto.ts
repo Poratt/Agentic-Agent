@@ -51,6 +51,9 @@ export class ExplorerStrainItemDto {
 
   @ApiProperty({ description: 'Package type extracted from the expanded row.', example: 'שקית' })
   packageType!: string;
+
+  @ApiProperty({ description: 'List of symbol IDs associated with the strain.', example: ['pest-free'] })
+  symbols!: string[];
 }
 
 export class ExplorerFetchResponseDto {

@@ -92,6 +92,7 @@ export class Explorer implements OnInit {
         'parent2',
         'manufacturer',
         'brand',
+        'symbols',
     ];
 
     rawItems = signal<any[]>([]);
@@ -303,6 +304,42 @@ export class Explorer implements OnInit {
 
         const code = flags[country];
         return code ? `/flags/${code}.svg` : '';
+    }
+
+    getSymbolUrls(symbols: unknown): string[] {
+        let parsedSymbols = symbols;
+
+        if (typeof symbols === 'string') {
+            try {
+                parsedSymbols = JSON.parse(symbols);
+            } catch {
+                return [];
+            }
+        }
+
+        if (!Array.isArray(parsedSymbols)) {
+            return [];
+        }
+
+        return parsedSymbols
+            .map((url) => {
+                if (typeof url !== 'string') {
+                    return undefined;
+                }
+
+                const lowerUrl = url.toLowerCase();
+                if (lowerUrl.includes('pest-free')) {
+                    return 'assets/images/pest-free.png';
+                }
+                if (lowerUrl.includes('beta-radiation')) {
+                    return 'assets/images/beta-radiation.png';
+                }
+
+                return url;
+            })
+            .filter((url): url is string => {
+                return url !== undefined && url !== '';
+            });
     }
 
     private toTerpeneFilter(value: string): TerpeneFilter | null {

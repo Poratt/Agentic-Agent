@@ -2446,6 +2446,16 @@
             "type": "string",
             "description": "Package type extracted from the expanded row.",
             "example": "שקית"
+          },
+          "symbols": {
+            "description": "List of symbol IDs associated with the strain.",
+            "example": [
+              "pest-free"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -2465,7 +2475,8 @@
           "originStrain",
           "countryOfOrigin",
           "terpenes",
-          "packageType"
+          "packageType",
+          "symbols"
         ]
       },
       "ExplorerFetchResponseDto": {

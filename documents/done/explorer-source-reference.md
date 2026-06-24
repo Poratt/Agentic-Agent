@@ -1384,3 +1384,7 @@ Expanded row details structure :
   </div>
 </div>
 ```
+
+## Symbols img_url
+- https://cdn.jane.co.il/symbols/pest-free.png
+- https://cdn.jane.co.il/symbols/Beta-Radiation.png

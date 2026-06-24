@@ -22,6 +22,7 @@ export type StrainItem = {
     countryOfOrigin: string;
     terpenes: string;
     packageType: string;
+    symbols: string[];
 };
 
 type BrowserExtractedItem = StrainItem | null;
@@ -77,6 +78,7 @@ export class ExplorerService {
                 countryOfOrigin: item.countryOfOrigin,
                 terpenes: item.terpenes,
                 packageType: item.packageType,
+                symbols: item.symbols,
             });
         });
 
@@ -358,7 +360,26 @@ export class ExplorerService {
             countryOfOrigin: this.formatCountry(product.origin_country),
             terpenes: this.formatTerpenes(product.terpenes),
             packageType: this.formatPackageType(product.packaging_options),
+            symbols: this.extractSymbols(product.symbols),
         };
+    }
+
+    private extractSymbols(value: unknown): string[] {
+        if (!Array.isArray(value)) {
+            return [];
+        }
+
+        return value
+            .map((item) => {
+                const record = this.asRecord(item);
+                if (record && typeof record.img_url === 'string') {
+                    return record.img_url;
+                }
+                return '';
+            })
+            .filter((url) => {
+                return url !== '';
+            });
     }
 
     private isJaneProductNew(
@@ -724,6 +745,20 @@ export class ExplorerService {
                     return normalize(match?.[0]);
                 };
 
+                const extractSymbolsFromDom = (root: Element | null) => {
+                    if (!root) {
+                        return [];
+                    }
+                    const imgs = Array.from(root.querySelectorAll('img'));
+                    return imgs
+                        .map((img) => {
+                            return img.src;
+                        })
+                        .filter((src) => {
+                            return src.includes('/symbols/');
+                        });
+                };
+
                 const productRows = Array.from(document.querySelectorAll(selector)).filter(isProductRow);
                 const row = productRows[rowIndex];
                 if (!row) {
@@ -831,6 +866,7 @@ export class ExplorerService {
                     countryOfOrigin,
                     terpenes,
                     packageType,
+                    symbols: extractSymbolsFromDom(row),
                 };
             },
             { rowIndex: index, selector: PRODUCT_ROW_SELECTOR, defaultValue: DEFAULT_VALUE },

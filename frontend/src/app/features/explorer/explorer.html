@@ -125,6 +125,14 @@
                                                         <span>{{ formatValue(item.deal) }}</span>
                                                     </span>
                                                 }
+
+                                                @if (getSymbolUrls(item.symbols).length > 0) {
+                                                    <div class="strain-symbols">
+                                                        @for (url of getSymbolUrls(item.symbols); track url) {
+                                                            <img class="strain-symbol" [src]="url" alt="" aria-hidden="true" />
+                                                        }
+                                                    </div>
+                                                }
                                             </div>
                                             <div class="left-side">
                                                 @if (item.isNew === true) {
