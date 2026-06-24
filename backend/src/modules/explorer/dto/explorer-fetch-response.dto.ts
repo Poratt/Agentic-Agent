@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+export class ExplorerSymbolDto {
+  @ApiProperty({ description: 'Image URL of the symbol.', example: 'https://...' })
+  url!: string;
+
+  @ApiProperty({ description: 'Tooltip or alt text for the symbol.', example: 'פסטור קר' })
+  alt!: string;
+}
+
 export class ExplorerStrainItemDto {
   @ApiProperty({ description: 'Hebrew product or strain name.', example: 'גורילה גלו' })
   name!: string;
@@ -52,8 +60,8 @@ export class ExplorerStrainItemDto {
   @ApiProperty({ description: 'Package type extracted from the expanded row.', example: 'שקית' })
   packageType!: string;
 
-  @ApiProperty({ description: 'List of symbol IDs associated with the strain.', example: ['pest-free'] })
-  symbols!: string[];
+  @ApiProperty({ description: 'List of symbols associated with the strain.', type: [ExplorerSymbolDto] })
+  symbols!: ExplorerSymbolDto[];
 }
 
 export class ExplorerFetchResponseDto {

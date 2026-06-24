@@ -126,10 +126,17 @@
                                                     </span>
                                                 }
 
-                                                @if (getSymbolUrls(item.symbols).length > 0) {
+                                                @if (getSymbols(item.symbols).length > 0) {
                                                     <div class="strain-symbols">
-                                                        @for (url of getSymbolUrls(item.symbols); track url) {
-                                                            <img class="strain-symbol" [src]="url" alt="" aria-hidden="true" />
+                                                        @for (symbol of getSymbols(item.symbols); track symbol.url) {
+                                                            <img
+                                                                class="strain-symbol"
+                                                                [src]="symbol.url"
+                                                                [alt]="symbol.alt"
+                                                                [pTooltip]="symbol.alt"
+                                                                tooltipPosition="top"
+                                                                appendTo="body"
+                                                            />
                                                         }
                                                     </div>
                                                 }

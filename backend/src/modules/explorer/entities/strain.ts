@@ -57,5 +57,5 @@ export class Strain {
     packageType!: string;
 
     @Column({ type: 'simple-json', nullable: true })
-    symbols!: string[];
+    symbols!: { url: string; alt: string }[];
 }

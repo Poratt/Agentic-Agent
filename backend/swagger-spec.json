@@ -2359,6 +2359,25 @@
           "result"
         ]
       },
+      "ExplorerSymbolDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Image URL of the symbol.",
+            "example": "https://..."
+          },
+          "alt": {
+            "type": "string",
+            "description": "Tooltip or alt text for the symbol.",
+            "example": "פסטור קר"
+          }
+        },
+        "required": [
+          "url",
+          "alt"
+        ]
+      },
       "ExplorerStrainItemDto": {
         "type": "object",
         "properties": {
@@ -2448,13 +2467,10 @@
             "example": "שקית"
           },
           "symbols": {
-            "description": "List of symbol IDs associated with the strain.",
-            "example": [
-              "pest-free"
-            ],
+            "description": "List of symbols associated with the strain.",
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/ExplorerSymbolDto"
             }
           }
         },

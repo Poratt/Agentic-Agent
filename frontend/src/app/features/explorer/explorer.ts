@@ -4,6 +4,7 @@ import { Component, OnInit, computed, inject, signal, viewChild, ChangeDetection
 import type { SortEvent } from 'primeng/api';
 import { InputTextModule } from 'primeng/inputtext';
 import { Table, TableModule } from 'primeng/table';
+import { TooltipModule } from 'primeng/tooltip';
 import { Subscription, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { PageStates } from '../../core/enums/page-states.enum';
@@ -39,7 +40,7 @@ type TerpeneFilter = {
 @Component({
     selector: 'app-explorer',
     standalone: true,
-    imports: [CommonModule, TableModule, InputTextModule],
+    imports: [CommonModule, TableModule, InputTextModule, TooltipModule],
     templateUrl: './explorer.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./explorer.css'],
@@ -306,7 +307,7 @@ export class Explorer implements OnInit {
         return code ? `/flags/${code}.svg` : '';
     }
 
-    getSymbolUrls(symbols: unknown): string[] {
+    getSymbols(symbols: unknown): { url: string; alt: string }[] {
         let parsedSymbols = symbols;
 
         if (typeof symbols === 'string') {
@@ -322,23 +323,31 @@ export class Explorer implements OnInit {
         }
 
         return parsedSymbols
-            .map((url) => {
-                if (typeof url !== 'string') {
+            .map((sym) => {
+                if (!sym || typeof sym !== 'object') {
                     return undefined;
                 }
 
-                const lowerUrl = url.toLowerCase();
-                if (lowerUrl.includes('pest-free')) {
-                    return 'assets/images/pest-free.png';
-                }
-                if (lowerUrl.includes('beta-radiation')) {
-                    return 'assets/images/beta-radiation.png';
+                const rawUrl = typeof sym.url === 'string' ? sym.url : '';
+                const alt = typeof sym.alt === 'string' ? sym.alt : '';
+
+                if (!rawUrl) {
+                    return undefined;
                 }
 
-                return url;
+                const lowerUrl = rawUrl.toLowerCase();
+                let finalUrl = rawUrl;
+
+                if (lowerUrl.includes('pest-free')) {
+                    finalUrl = 'assets/images/pest-free.png';
+                } else if (lowerUrl.includes('beta-radiation')) {
+                    finalUrl = 'assets/images/beta-radiation.png';
+                }
+
+                return { url: finalUrl, alt };
             })
-            .filter((url): url is string => {
-                return url !== undefined && url !== '';
+            .filter((sym): sym is { url: string; alt: string } => {
+                return sym !== undefined;
             });
     }
 

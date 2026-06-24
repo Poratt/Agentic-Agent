@@ -22,7 +22,7 @@ export type StrainItem = {
     countryOfOrigin: string;
     terpenes: string;
     packageType: string;
-    symbols: string[];
+    symbols: { url: string; alt: string }[];
 };
 
 type BrowserExtractedItem = StrainItem | null;
@@ -364,7 +364,7 @@ export class ExplorerService {
         };
     }
 
-    private extractSymbols(value: unknown): string[] {
+    private extractSymbols(value: unknown): { url: string; alt: string }[] {
         if (!Array.isArray(value)) {
             return [];
         }
@@ -373,12 +373,15 @@ export class ExplorerService {
             .map((item) => {
                 const record = this.asRecord(item);
                 if (record && typeof record.img_url === 'string') {
-                    return record.img_url;
+                    return {
+                        url: record.img_url,
+                        alt: typeof record.description === 'string' ? record.description : '',
+                    };
                 }
-                return '';
+                return null;
             })
-            .filter((url) => {
-                return url !== '';
+            .filter((obj): obj is { url: string; alt: string } => {
+                return obj !== null;
             });
     }
 
@@ -751,11 +754,14 @@ export class ExplorerService {
                     }
                     const imgs = Array.from(root.querySelectorAll('img'));
                     return imgs
-                        .map((img) => {
-                            return img.src;
+                        .filter((img) => {
+                            return img.src.includes('/symbols/');
                         })
-                        .filter((src) => {
-                            return src.includes('/symbols/');
+                        .map((img) => {
+                            return {
+                                url: img.src,
+                                alt: img.alt || '',
+                            };
                         });
                 };
 
