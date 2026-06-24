@@ -2472,6 +2472,41 @@
             "items": {
               "$ref": "#/components/schemas/ExplorerSymbolDto"
             }
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "Thumbnail URL of the product image.",
+            "example": "https://..."
+          },
+          "productUrl": {
+            "type": "string",
+            "description": "Redirect URL of the product page.",
+            "example": "https://..."
+          },
+          "category": {
+            "type": "string",
+            "description": "MOH Cannabis category.",
+            "example": "T22/C4"
+          },
+          "family": {
+            "type": "string",
+            "description": "Cannabis family.",
+            "example": "indica"
+          },
+          "growType": {
+            "type": "string",
+            "description": "Method of growing.",
+            "example": "אינדור (נורות)"
+          },
+          "thc": {
+            "type": "string",
+            "description": "THC Percentage.",
+            "example": "24.2%-19.9%"
+          },
+          "cbd": {
+            "type": "string",
+            "description": "CBD Percentage.",
+            "example": "4%-0%"
           }
         },
         "required": [
@@ -2492,7 +2527,14 @@
           "countryOfOrigin",
           "terpenes",
           "packageType",
-          "symbols"
+          "symbols",
+          "imageUrl",
+          "productUrl",
+          "category",
+          "family",
+          "growType",
+          "thc",
+          "cbd"
         ]
       },
       "ExplorerFetchResponseDto": {

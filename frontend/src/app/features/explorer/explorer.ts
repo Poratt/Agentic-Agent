@@ -23,7 +23,10 @@ type ExplorerFilterField =
     | 'packageType'
     | 'countryOfOrigin'
     | 'terpenes'
-    | 'isNew';
+    | 'isNew'
+    | 'category'
+    | 'family'
+    | 'growType';
 
 type ExplorerFilter = {
     key: string;
@@ -56,6 +59,7 @@ export class Explorer implements OnInit {
     protected readonly PageStates = PageStates;
     protected readonly columnLabels: Record<string, string> = {
         name: 'שם',
+        characterization: 'אפיון',
         enName: 'שם באנגלית',
         isNew: 'חדש',
         deal: 'מבצע',
@@ -71,9 +75,13 @@ export class Explorer implements OnInit {
         countryOfOrigin: 'מקור',
         terpenes: 'טרפנים',
         packageType: 'אריזה',
+        growType: 'גידול',
+        thc: 'THC',
+        cbd: 'CBD',
     };
     private readonly preferredColumns = [
         'name',
+        'characterization',
         'price',
         'originStrain',
         'marketer',
@@ -94,6 +102,13 @@ export class Explorer implements OnInit {
         'manufacturer',
         'brand',
         'symbols',
+        'imageUrl',
+        'productUrl',
+        'category',
+        'family',
+        'growType',
+        'thc',
+        'cbd',
     ];
 
     rawItems = signal<any[]>([]);
@@ -349,6 +364,34 @@ export class Explorer implements OnInit {
             .filter((sym): sym is { url: string; alt: string } => {
                 return sym !== undefined;
             });
+    }
+
+    formatFamilyHebrew(family: string): string {
+        const lower = family.toLowerCase();
+        if (lower.includes('indica')) {
+            return 'אינדיקה';
+        }
+        if (lower.includes('sativa')) {
+            return 'סאטיבה';
+        }
+        if (lower.includes('hybrid') || lower.includes('היבריד') || lower.includes('הייבריד')) {
+            return 'היבריד';
+        }
+        return family;
+    }
+
+    getFamilyClass(family: string): string {
+        const lower = family.toLowerCase();
+        if (lower.includes('indica')) {
+            return 'family-indica';
+        }
+        if (lower.includes('sativa')) {
+            return 'family-sativa';
+        }
+        if (lower.includes('hybrid')) {
+            return 'family-hybrid';
+        }
+        return '';
     }
 
     private toTerpeneFilter(value: string): TerpeneFilter | null {

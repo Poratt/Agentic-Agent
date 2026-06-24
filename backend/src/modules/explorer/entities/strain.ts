@@ -58,4 +58,25 @@ export class Strain {
 
     @Column({ type: 'simple-json', nullable: true })
     symbols!: { url: string; alt: string }[];
+
+    @Column({ type: 'varchar', length: 500, default: '' })
+    imageUrl!: string;
+
+    @Column({ type: 'varchar', length: 500, default: '' })
+    productUrl!: string;
+
+    @Column({ type: 'varchar', length: 255, default: '' })
+    category!: string;
+
+    @Column({ type: 'varchar', length: 255, default: '' })
+    family!: string;
+
+    @Column({ type: 'varchar', length: 255, default: '' })
+    growType!: string;
+
+    @Column({ type: 'varchar', length: 100, default: '' })
+    thc!: string;
+
+    @Column({ type: 'varchar', length: 100, default: '' })
+    cbd!: string;
 }

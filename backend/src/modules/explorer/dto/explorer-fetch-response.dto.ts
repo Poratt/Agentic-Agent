@@ -62,6 +62,27 @@ export class ExplorerStrainItemDto {
 
   @ApiProperty({ description: 'List of symbols associated with the strain.', type: [ExplorerSymbolDto] })
   symbols!: ExplorerSymbolDto[];
+
+  @ApiProperty({ description: 'Thumbnail URL of the product image.', example: 'https://...' })
+  imageUrl!: string;
+
+  @ApiProperty({ description: 'Redirect URL of the product page.', example: 'https://...' })
+  productUrl!: string;
+
+  @ApiProperty({ description: 'MOH Cannabis category.', example: 'T22/C4' })
+  category!: string;
+
+  @ApiProperty({ description: 'Cannabis family.', example: 'indica' })
+  family!: string;
+
+  @ApiProperty({ description: 'Method of growing.', example: 'אינדור (נורות)' })
+  growType!: string;
+
+  @ApiProperty({ description: 'THC Percentage.', example: '24.2%-19.9%' })
+  thc!: string;
+
+  @ApiProperty({ description: 'CBD Percentage.', example: '4%-0%' })
+  cbd!: string;
 }
 
 export class ExplorerFetchResponseDto {

@@ -23,6 +23,13 @@ export type StrainItem = {
     terpenes: string;
     packageType: string;
     symbols: { url: string; alt: string }[];
+    imageUrl: string;
+    productUrl: string;
+    category: string;
+    family: string;
+    growType: string;
+    thc: string;
+    cbd: string;
 };
 
 type BrowserExtractedItem = StrainItem | null;
@@ -79,6 +86,13 @@ export class ExplorerService {
                 terpenes: item.terpenes,
                 packageType: item.packageType,
                 symbols: item.symbols,
+                imageUrl: item.imageUrl,
+                productUrl: item.productUrl,
+                category: item.category,
+                family: item.family,
+                growType: item.growType,
+                thc: item.thc,
+                cbd: item.cbd,
             });
         });
 
@@ -361,6 +375,18 @@ export class ExplorerService {
             terpenes: this.formatTerpenes(product.terpenes),
             packageType: this.formatPackageType(product.packaging_options),
             symbols: this.extractSymbols(product.symbols),
+            imageUrl: this.pickText(
+                product.main_img_thumbnail_url,
+                product.main_img_200_url,
+                nestedProduct?.main_img_thumbnail_url,
+                nestedProduct?.main_img_200_url,
+            ),
+            productUrl: this.pickText(product.biz_url, nestedProduct?.biz_url),
+            category: this.pickText(product.category, nestedProduct?.category),
+            family: this.pickText(product.family, nestedProduct?.family),
+            growType: this.pickText(product.grow_type_name, nestedProduct?.grow_type_name),
+            thc: this.pickText(batch?.percent_thc, product.percent_thc),
+            cbd: this.pickText(batch?.percent_cbd, product.percent_cbd),
         };
     }
 
@@ -846,6 +872,14 @@ export class ExplorerService {
                 const price = getCellSelectorText(row, 9, '.text-green-600');
                 const catalogPrice = getCellSelectorText(row, 9, '.line-through');
 
+                const thc = readGridValue(expandedRoot, ['THC', 'thc']);
+                const cbd = readGridValue(expandedRoot, ['CBD', 'cbd']);
+                const growType = readGridValue(expandedRoot, ['מתקן גידול', 'סוג גידול', 'גידול']);
+                const category = readGridValue(expandedRoot, ['קטגוריה', 'Category']);
+                const family = readGridValue(expandedRoot, ['משפחה', 'Family']);
+                const imageUrl = firstCell?.querySelector('img')?.src ?? '';
+                const productUrl = firstCell?.querySelector('a')?.href ?? '';
+
                 return {
                     name,
                     enName,
@@ -873,6 +907,13 @@ export class ExplorerService {
                     terpenes,
                     packageType,
                     symbols: extractSymbolsFromDom(row),
+                    imageUrl,
+                    productUrl,
+                    category,
+                    family,
+                    growType,
+                    thc,
+                    cbd,
                 };
             },
             { rowIndex: index, selector: PRODUCT_ROW_SELECTOR, defaultValue: DEFAULT_VALUE },

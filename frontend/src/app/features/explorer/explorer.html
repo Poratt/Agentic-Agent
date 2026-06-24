@@ -107,9 +107,41 @@
                                     @if (column === 'name') {
                                         <div class="strain-main-details">
                                             <div class="right-side">
-                                                <span class="strain-heb-name">{{ formatValue(item.name) }}</span>
+                                                @if (item.isNew === true) {
+                                                    <button
+                                                        class="strain-new-tag"
+                                                        type="button"
+                                                        (click)="applyDataFilter('isNew', item.isNew, 'חדש')"
+                                                    >
+                                                        NEW
+                                                    </button>
+                                                }
+                                                @if (hasDisplayValue(item.imageUrl)) {
+                                                    <img class="strain-thumbnail" [src]="item.imageUrl" alt="" aria-hidden="true" />
+                                                }
+                                            </div>
+                                            <div class="left-side">
+                                                @if (hasDisplayValue(item.productUrl)) {
+                                                    <a [href]="item.productUrl" target="_blank" class="strain-heb-name link">
+                                                        {{ formatValue(item.name) }}
+                                                    </a>
+                                                } @else {
+                                                    <span class="strain-heb-name">{{ formatValue(item.name) }}</span>
+                                                }
                                                 @if (hasDisplayValue(item.enName)) {
                                                     <span class="strain-en-name" dir="ltr">{{ formatValue(item.enName) }}</span>
+                                                }
+
+                                                @if (hasDisplayValue(item.thc) || hasDisplayValue(item.cbd)) {
+                                                    <span class="strain-cannabinoids">
+                                                        @if (hasDisplayValue(item.thc)) {
+                                                            <span>THC: {{ item.thc }}</span>
+                                                        }
+                                                        @if (hasDisplayValue(item.cbd)) {
+                                                            <span class="divider">|</span>
+                                                            <span>CBD: {{ item.cbd }}</span>
+                                                        }
+                                                    </span>
                                                 }
 
                                                 @if (hasDisplayValue(item.rating)) {
@@ -141,17 +173,46 @@
                                                     </div>
                                                 }
                                             </div>
-                                            <div class="left-side">
-                                                @if (item.isNew === true) {
-                                                    <button
-                                                        class="strain-new-tag"
-                                                        type="button"
-                                                        (click)="applyDataFilter('isNew', item.isNew, 'חדש')"
-                                                    >
-                                                        NEW
-                                                    </button>
-                                                }
-                                            </div>
+                                        </div>
+                                    } @else if (column === 'characterization') {
+                                        <div class="characterization-cell">
+                                            @if (hasDisplayValue(item.packageType)) {
+                                                <button
+                                                    class="badge package-badge"
+                                                    type="button"
+                                                    (click)="applyDataFilter('packageType', item.packageType)"
+                                                >
+                                                    {{ formatValue(item.packageType) }}
+                                                </button>
+                                            }
+                                            @if (hasDisplayValue(item.category)) {
+                                                <button
+                                                    class="badge category-badge"
+                                                    type="button"
+                                                    (click)="applyDataFilter('category', item.category)"
+                                                >
+                                                    {{ formatValue(item.category) }}
+                                                </button>
+                                            }
+                                            @if (hasDisplayValue(item.family)) {
+                                                <button
+                                                    class="badge family-badge"
+                                                    type="button"
+                                                    [ngClass]="getFamilyClass(item.family)"
+                                                    (click)="applyDataFilter('family', item.family)"
+                                                >
+                                                    {{ formatFamilyHebrew(item.family) }}
+                                                </button>
+                                            }
+                                            @if (hasDisplayValue(item.growType)) {
+                                                <button
+                                                    class="badge grow-badge"
+                                                    type="button"
+                                                    (click)="applyDataFilter('growType', item.growType)"
+                                                >
+                                                    {{ formatValue(item.growType) }}
+                                                </button>
+                                            }
                                         </div>
                                     } @else if (column === 'price') {
                                         <div class="strain-price-cell">

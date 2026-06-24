@@ -90,15 +90,22 @@
 
   .strain-main-details {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-4);
+    align-items: center;
+    gap: var(--space-3);
+
+    .strain-thumbnail {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      border-radius: var(--radius-sm);
+      flex-shrink: 0;
+      margin-top: auto;
+    }
 
     .left-side,
     .right-side {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
       gap: var(--space-1);
       text-align: right;
 
@@ -106,11 +113,31 @@
         color: var(--color-text-primary);
         font-size: var(--font-size-sm);
         font-weight: var(--font-weight-semibold);
+        text-decoration: none;
+
+        &.link:hover {
+          color: var(--color-primary);
+          text-decoration: underline;
+        }
       }
+
 
       .strain-en-name {
         color: var(--color-text-secondary);
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-xs);
+      }
+
+      .strain-cannabinoids {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        font-size: 11px;
+        color: var(--color-text-secondary);
+        font-weight: var(--font-weight-semibold);
+
+        .divider {
+          color: var(--color-border);
+        }
       }
 
       .strain-rating,
@@ -149,23 +176,86 @@
       }
     }
 
-    .strain-new-tag {
-      display: inline-flex;
+    .right-side {
+      justify-content: space-between;
       align-items: center;
-      padding: var(--space-1) var(--space-2);
-      background-color: var(--color-success-glow);
-      border: thin solid var(--color-success-glow);
-      border-radius: var(--radius-sm);
+      gap: var(--space-1);
+      align-self: stretch;
+
+    }
+
+    .strain-new-tag {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2px var(--space-1) 0px var(--space-1);
+      background-color: var(--color-success-bg);
+      border-radius: var(--radius-xs);
       color: var(--color-success);
       cursor: pointer;
       font: inherit;
-      font-size: var(--font-size-xs);
+      font-size: 10px;
+      width: fit-content;
       font-weight: var(--font-weight-semibold);
       line-height: 1;
       transition: background-color var(--transition-fast), border-color var(--transition-fast);
 
       &:hover {
         border-color: var(--color-success);
+      }
+    }
+  }
+
+  .characterization-cell {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-1);
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: var(--space-1) var(--space-2);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: var(--font-weight-semibold);
+      cursor: pointer;
+      line-height: 1.1;
+
+      &.package-badge {
+        background-color: var(--primary-30);
+        color: var(--color-primary);
+      }
+
+      &.category-badge {
+        background-color: var(--color-danger-glow);
+        color: var(--color-danger);
+      }
+
+      &.grow-badge {
+        background-color: var(--color-surface-hover);
+        color: var(--color-text-secondary);
+        border: thin solid var(--color-border);
+      }
+
+      &.family-badge {
+        color: var(--color-white, #ffffff);
+
+        &.family-indica {
+          background-color: #1e3a8a;
+          /* Indica Blue */
+        }
+
+        &.family-sativa {
+          background-color: #d97706;
+          /* Sativa Orange */
+        }
+
+        &.family-hybrid {
+          background-color: #15803d;
+          /* Hybrid Green */
+        }
       }
     }
   }
