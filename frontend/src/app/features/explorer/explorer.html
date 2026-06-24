@@ -117,7 +117,15 @@
                                                     </button>
                                                 }
                                                 @if (hasDisplayValue(item.imageUrl)) {
-                                                    <img class="strain-thumbnail" [src]="item.imageUrl" alt="" aria-hidden="true" />
+                                                    <img
+                                                        class="strain-thumbnail"
+                                                        [src]="item.imageUrl"
+                                                        alt=""
+                                                        role="button"
+                                                        tabindex="0"
+                                                        (click)="openImageDialog(item.imageUrl)"
+                                                        (keydown.enter)="openImageDialog(item.imageUrl)"
+                                                    />
                                                 }
                                             </div>
                                             <div class="left-side">
@@ -350,3 +358,21 @@
         }
     }
 </div>
+
+<p-dialog
+    [(visible)]="imageDialogVisible"
+    [modal]="true"
+    [closable]="true"
+    [showHeader]="false"
+    [modal]="true"
+    [dismissableMask]="true"
+    [closable]="true"
+    [draggable]="true"
+    [resizable]="true"
+    [style]="{ width: '480px' }"
+    (onHide)="closeImageDialog()"
+>
+    <div class="image-dialog-content">
+        <img [src]="selectedImageUrl()!" alt="" class="full-image" />
+    </div>
+</p-dialog>

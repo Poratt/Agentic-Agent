@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import type { SortEvent } from 'primeng/api';
+import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { Table, TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
@@ -43,7 +44,7 @@ type TerpeneFilter = {
 @Component({
     selector: 'app-explorer',
     standalone: true,
-    imports: [CommonModule, TableModule, InputTextModule, TooltipModule],
+    imports: [CommonModule, TableModule, InputTextModule, TooltipModule, DialogModule],
     templateUrl: './explorer.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./explorer.css'],
@@ -114,6 +115,8 @@ export class Explorer implements OnInit {
     rawItems = signal<any[]>([]);
     loading = signal(true);
     error = signal<string | null>(null);
+    selectedImageUrl = signal<string | null>(null);
+    imageDialogVisible = signal(false);
 
     activeFilters = signal<ExplorerFilter[]>([]);
 
@@ -233,6 +236,16 @@ export class Explorer implements OnInit {
 
     clearAllFilters() {
         this.activeFilters.set([]);
+    }
+
+    openImageDialog(imageUrl: string) {
+        this.selectedImageUrl.set(imageUrl);
+        this.imageDialogVisible.set(true);
+    }
+
+    closeImageDialog() {
+        this.imageDialogVisible.set(false);
+        this.selectedImageUrl.set(null);
     }
 
     applyGlobalFilter(event: Event) {
