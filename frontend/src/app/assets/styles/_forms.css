@@ -1,23 +1,6 @@
-.form-group {
-  display: flex;
-  flex-direction: column;
-  text-align: right;
-  gap: var(--space-2);
-}
+/* forms.css */
 
-.form-field-has-icon {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: min(var(--search-width), 100%);
-
-  .field-icon {
-    position: absolute;
-    right: var(--space-3);
-    color: var(--color-text-secondary);
-    pointer-events: none;
-  }
-}
+/* ── Base Elements ───────────────────────────────────────────────────────── */
 
 input,
 textarea,
@@ -39,7 +22,6 @@ select {
     color: var(--color-text-muted);
   }
 
-
   &:focus {
     background: var(--color-input-bg);
     border-color: var(--color-primary);
@@ -57,56 +39,74 @@ select {
 
   &.form-control {
     padding: var(--space-2) var(--field-icon-padding) var(--space-2) var(--space-4);
-
   }
 }
 
 input[type='range'] {
   accent-color: var(--color-primary);
-
-  /* &::-webkit-slider-runnable-track {
-    background: var(--color-input-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-  }
-
-  &::-moz-range-track {
-    background: var(--color-input-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-  } */
 }
 
+/* ── Utilities ───────────────────────────────────────────────────────────── */
 
-p-select.custom-select.p-select {
-  width: 240px;
+.form-group {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  gap: var(--space-2);
+}
 
-  .p-select-label {
-    font-size: var(--font-size-xs);
-    padding: 0 12px;
-    display: flex;
+.form-field-has-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: min(var(--search-width), 100%);
+
+  .field-icon {
+    position: absolute;
+    right: var(--space-3);
+    color: var(--color-text-secondary);
+    pointer-events: none;
+  }
+}
+
+/* ── Form Patterns ───────────────────────────────────────────────────────── */
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+
+  &.form-field-switch {
+    flex-direction: row;
     align-items: center;
+    justify-content: space-between;
   }
 
-}
+  label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+  }
 
-.p-select-option-group {
-  direction: ltr;
-  background-color: var(--color-surface) !important;
-  padding: 2px 4px !important;
-  border-radius: 2px;
-  font-variant: small-caps;
-
-
-}
-
-li.p-select-option {
-  direction: ltr;
-
-
-
-  .select-option {
+  .field-hint {
     font-size: var(--font-size-xs);
-    direction: ltr;
+    color: var(--color-text-muted);
+  }
+
+  .required {
+    color: var(--color-danger);
+  }
+
+  .error-text {
+    font-size: var(--font-size-xs);
+    color: var(--color-danger);
+    margin-top: var(--space-1);
   }
 }

@@ -41,8 +41,8 @@
                                 </div>
                             </div>
 
-                            <div class="action-row action-row-split">
-                                <div class="action-stats">
+                            <div class="action-row toolbar-split">
+                                <div class="toolbar-stats">
                                     <span class="ph ph-database"></span>
                                     <span>TOTAL PROVIDERS: {{ llmProviders().length }}</span>
                                 </div>
@@ -80,9 +80,9 @@
                                         <i class="ph ph-caret-right"></i>
                                     </button>
                                 </td>
-                                <td class="provider-name clickable" (click)="toggleProvider(provider.id)">{{ provider.label }}</td>
-                                <td class="provider-url">{{ provider.baseUrl }}</td>
-                                <td class="col-count model-count">{{ provider.modelsCount }}</td>
+                                <td class="row-label clickable" (click)="toggleProvider(provider.id)">{{ provider.label }}</td>
+                                <td class="row-meta">{{ provider.baseUrl }}</td>
+                                <td class="col-count count-badge">{{ provider.modelsCount }}</td>
                                 <td class="col-actions">
                                     <div class="row-actions">
                                         <button
@@ -106,10 +106,10 @@
                             </tr>
 
                             @if (isProviderExpanded(provider.id)) {
-                                <tr class="models-panel-row">
-                                    <td colspan="5" class="models-panel-cell">
-                                        <div class="models-panel-header">
-                                            <span class="models-panel-title">Models</span>
+                                <tr class="expand-panel-row">
+                                    <td colspan="5" class="expand-panel-cell">
+                                        <div class="panel-header">
+                                            <span class="panel-title">Models</span>
                                             <button
                                                 type="button"
                                                 class="transparent-btn sm"
@@ -125,14 +125,14 @@
                                             [value]="provider.models"
                                             dataKey="id"
                                             [rowHover]="true"
-                                            class="models-subtable-wrapper"
+                                            class="subtable-wrapper"
                                             sortField="performanceScore"
                                             [sortOrder]="-1"
                                             sortMode="single"
                                         >
                                             <ng-template pTemplate="header">
                                                 <tr>
-                                                    <th class="col-expand-sm"></th>
+                                                    <th class="col-expand-xs"></th>
                                                     <th pSortableColumn="label">Model <p-sortIcon field="label" /></th>
                                                     <th class="col-status" pSortableColumn="active">
                                                         Active <p-sortIcon field="active" />
@@ -141,13 +141,13 @@
                                                         Performance <p-sortIcon field="performanceScore" />
                                                     </th>
                                                     <th class="col-test"></th>
-                                                    <th class="col-actions-sm"></th>
+                                                    <th class="col-actions-xs"></th>
                                                 </tr>
                                             </ng-template>
 
                                             <ng-template pTemplate="body" let-model>
                                                 <tr>
-                                                    <td class="col-expand-sm">
+                                                    <td class="col-expand-xs">
                                                         @if (model.hasTests) {
                                                             <button
                                                                 type="button"
@@ -161,9 +161,9 @@
                                                         }
                                                     </td>
                                                     <td class="clickable" (click)="toggleModel(model.id)">
-                                                        <div class="model-name">
-                                                            <span class="model-name">{{ model.label }}</span>
-                                                            <span class="model-slug">{{ model.key }}</span>
+                                                        <div class="row-title">
+                                                            <span class="row-label">{{ model.label }}</span>
+                                                            <span class="row-subtitle">{{ model.key }}</span>
                                                         </div>
                                                     </td>
                                                     <td class="col-status">
@@ -177,19 +177,19 @@
                                                     </td>
                                                     <td class="col-perf">
                                                         @if (model.hasTests) {
-                                                            <div class="perf-cell">
+                                                            <div class="metric-cell">
                                                                 <span
-                                                                    class="perf-success"
+                                                                    class="metric-primary"
                                                                     [class]="performanceClass(model.successPercentage)"
                                                                 >
                                                                     {{ model.successPercentage }}%
                                                                 </span>
-                                                                <span class="perf-latency">
+                                                                <span class="metric-secondary">
                                                                     {{ formatLatency(model.latencyAverage) }}
                                                                 </span>
                                                             </div>
                                                         } @else {
-                                                            <span class="perf-empty">No tests yet</span>
+                                                            <span class="metric-empty">No tests yet</span>
                                                         }
                                                     </td>
                                                     <td class="col-test">
@@ -204,7 +204,7 @@
                                                             <i class="ph ph-lightning"></i>
                                                         </button>
                                                     </td>
-                                                    <td class="col-actions-sm">
+                                                    <td class="col-actions-xs">
                                                         <div class="row-actions">
                                                             <button
                                                                 type="button"
@@ -227,25 +227,25 @@
                                                 </tr>
 
                                                 @if (model.hasTests && isModelExpanded(model.id)) {
-                                                    <tr class="tests-panel-row">
-                                                        <td colspan="6" class="tests-panel-cell">
-                                                            <table class="tests-table">
+                                                    <tr class="nested-panel-row">
+                                                        <td colspan="6" class="nested-panel-cell">
+                                                            <table class="inner-table">
                                                                 <thead>
                                                                     <tr>
                                                                         <th>Date &amp; time</th>
                                                                         <th>Legal/Latency</th>
                                                                         <th>Status</th>
                                                                         <th>Log output</th>
-                                                                        <th class="col-actions-sm"></th>
+                                                                        <th class="col-actions-xs"></th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
                                                                     @for (result of model.testResults; track result.id) {
                                                                         <tr>
-                                                                            <td class="cell-time">
+                                                                            <td class="col-datetime">
                                                                                 {{ result.createdAt | date: 'dd/MM/yy HH:mm' }}
                                                                             </td>
-                                                                            <td class="cell-latency">
+                                                                            <td class="col-code">
                                                                                 {{ formatLatency(result.responseTimeMs) }}
                                                                             </td>
                                                                             <td>
@@ -258,12 +258,12 @@
                                                                                 </span>
                                                                             </td>
                                                                             <td
-                                                                                [class.cell-log-ok]="result.status === 'success'"
-                                                                                [class.cell-log-err]="result.status !== 'success'"
+                                                                                [class.log-ok]="result.status === 'success'"
+                                                                                [class.log-err]="result.status !== 'success'"
                                                                             >
                                                                                 {{ result.errorMessage || 'OK' }}
                                                                             </td>
-                                                                            <td class="col-actions-sm">
+                                                                            <td class="col-actions-xs">
                                                                                 <button
                                                                                     type="button"
                                                                                     class="icon-only danger-btn sm"
