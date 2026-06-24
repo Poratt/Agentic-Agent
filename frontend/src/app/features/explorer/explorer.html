@@ -306,7 +306,7 @@
                                             class="package-type-cell filter-node"
                                             type="button"
                                             [attr.aria-label]="formatValue(item.packageType)"
-                                            [attr.title]="formatValue(item.packageType)"
+                                            [pTooltip]="formatValue(item.packageType)"
                                             (click)="applyDataFilter('packageType', item.packageType)"
                                         >
                                             <span class="ph package-type-icon" [ngClass]="packageTypeIconClass(item.packageType)"></span>
