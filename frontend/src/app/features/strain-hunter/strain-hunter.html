@@ -28,6 +28,16 @@
                         <span class="ph ph-arrows-clockwise" [class.spin-animation]="loading()"></span>
                         <span>רענן נתונים</span>
                     </button>
+                    <button
+                        class="primary-btn md match-btn"
+                        type="button"
+                        [disabled]="loading()"
+                        (click)="openMatchDrawer()"
+                        aria-label="פתח התאמה אישית"
+                    >
+                        <span class="ph ph-sliders"></span>
+                        <span>התאמה אישית</span>
+                    </button>
                 </div>
 
                 <div class="action-row">
@@ -140,6 +150,13 @@
                                                     <span class="strain-en-name" dir="ltr">{{ formatValue(item.enName) }}</span>
                                                 }
 
+                                                @if (item.penalty === true && hasDisplayValue(item.penaltyIngredient)) {
+                                                    <span class="strain-penalty-badge">
+                                                        <span class="ph ph-prohibit"></span>
+                                                        <span>{{ formatValue(item.penaltyIngredient) }}</span>
+                                                    </span>
+                                                }
+
                                                 @if (hasDisplayValue(item.thc) || hasDisplayValue(item.cbd)) {
                                                     <span class="strain-cannabinoids">
                                                         @if (hasDisplayValue(item.thc)) {
@@ -181,6 +198,28 @@
                                                     </div>
                                                 }
                                             </div>
+                                        </div>
+                                    } @else if (column === 'matchScore') {
+                                        <div class="score-ring-wrapper">
+                                            <svg
+                                                class="match-ring"
+                                                [class]="ringColorClass(item.score)"
+                                                viewBox="0 0 40 40"
+                                                width="40"
+                                                height="40"
+                                                aria-hidden="true"
+                                            >
+                                                <circle class="ring-track" cx="20" cy="20" r="18" />
+                                                <circle
+                                                    class="ring-fill"
+                                                    cx="20"
+                                                    cy="20"
+                                                    r="18"
+                                                    [attr.stroke-dasharray]="ringCircumference"
+                                                    [attr.stroke-dashoffset]="ringDashOffset(item.score)"
+                                                />
+                                            </svg>
+                                            <span class="score-ring-text">{{ item.score }}</span>
                                         </div>
                                     } @else if (column === 'characterization') {
                                         <div class="characterization-cell">
@@ -376,3 +415,8 @@
         <img [src]="selectedImageUrl()!" alt="" class="full-image" />
     </div>
 </p-dialog>
+
+<app-matching-preferences-drawer
+    [(visible)]="matchDrawerVisible"
+    [items]="rawItems()"
+/>

@@ -9,6 +9,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { Subscription, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { PageStates } from '../../core/enums/page-states.enum';
+import { MatchingEngineStore, ScoredStrain } from '../../core/store/matching-engine.store';
+import { MatchingPreferencesDrawer } from './matching-preferences-drawer/matching-preferences-drawer';
 
 type StrainHunterResponse = {
     items: Record<string, unknown>[];
@@ -41,25 +43,29 @@ type TerpeneFilter = {
     label: string;
 };
 
+type StrainRow = ScoredStrain<Record<string, unknown>>;
+
 @Component({
     selector: 'app-strain-hunter',
     standalone: true,
-    imports: [CommonModule, TableModule, InputTextModule, TooltipModule, DialogModule],
+    imports: [CommonModule, TableModule, InputTextModule, TooltipModule, DialogModule, MatchingPreferencesDrawer],
     templateUrl: './strain-hunter.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./strain-hunter.css'],
 })
 export class StrainHunter implements OnInit {
     private http = inject(HttpClient);
+    private matchingEngine = inject(MatchingEngineStore);
     private base = `${environment.apiUrl}/strain-hunter`;
     private table = viewChild<Table>('table');
     private requestSubscription: Subscription | null = null;
-    private readonly numericSortColumns = new Set(['price', 'catalogPrice']);
+    private readonly numericSortColumns = new Set(['price', 'catalogPrice', 'matchScore']);
     private readonly textCollator = new Intl.Collator('he', { numeric: true, sensitivity: 'base' });
 
     protected readonly PageStates = PageStates;
     protected readonly columnLabels: Record<string, string> = {
         name: 'שם',
+        matchScore: 'התאמה',
         characterization: 'אפיון',
         enName: 'שם באנגלית',
         isNew: 'חדש',
@@ -82,6 +88,7 @@ export class StrainHunter implements OnInit {
     };
     private readonly preferredColumns = [
         'name',
+        'matchScore',
         'characterization',
         'price',
         'originStrain',
@@ -110,6 +117,9 @@ export class StrainHunter implements OnInit {
         'growType',
         'thc',
         'cbd',
+        'score',
+        'penalty',
+        'penaltyIngredient',
     ];
 
     rawItems = signal<any[]>([]);
@@ -117,26 +127,26 @@ export class StrainHunter implements OnInit {
     error = signal<string | null>(null);
     selectedImageUrl = signal<string | null>(null);
     imageDialogVisible = signal(false);
+    matchDrawerVisible = signal(false);
 
     activeFilters = signal<StrainHunterFilter[]>([]);
 
-    items = computed(() => {
+    items = computed<StrainRow[]>(() => {
         const raw = this.rawItems();
         const filters = this.activeFilters();
 
-        if (filters.length === 0) {
-            return raw;
-        }
-
-        return raw.filter((item) => {
-            return filters.every((filter) => {
-                const val = filter.value.toLowerCase();
-
-                return filter.fields.some((field) => {
-                    return this.formatValue(item[field]).toLowerCase().includes(val);
+        const filtered = filters.length === 0
+            ? raw
+            : raw.filter((item) => {
+                return filters.every((filter) => {
+                    const val = filter.value.toLowerCase();
+                    return filter.fields.some((field) => {
+                        return this.formatValue(item[field]).toLowerCase().includes(val);
+                    });
                 });
             });
-        });
+
+        return filtered.map((item) => this.matchingEngine.calculateScore(item));
     });
 
     pageState = computed<PageStates>(() => {
@@ -150,7 +160,12 @@ export class StrainHunter implements OnInit {
     });
 
     columns = computed(() => {
-        const keys = new Set<string>();
+        const knownAlways = ['name'];
+        if (this.matchingEngine.hasAnyPreference()) {
+            knownAlways.push('matchScore');
+        }
+
+        const keys = new Set<string>(knownAlways);
         this.rawItems().forEach((item) => {
             Object.keys(item).forEach((key) => {
                 keys.add(key);
@@ -158,10 +173,10 @@ export class StrainHunter implements OnInit {
         });
 
         const knownColumns = this.preferredColumns.filter((key) => {
-            return keys.has(key);
+            return key === 'matchScore' || keys.has(key);
         });
         const extraColumns = Array.from(keys).filter((key) => {
-            return !this.preferredColumns.includes(key) && !this.embeddedColumns.includes(key) && key !== 'id';
+            return !this.preferredColumns.includes(key) && !this.embeddedColumns.includes(key) && key !== 'id' && key !== 'name';
         });
 
         return [...knownColumns, ...extraColumns];
@@ -201,6 +216,27 @@ export class StrainHunter implements OnInit {
 
     refresh() {
         this.load(true);
+    }
+
+    openMatchDrawer() {
+        this.matchDrawerVisible.set(true);
+    }
+
+    closeMatchDrawer() {
+        this.matchDrawerVisible.set(false);
+    }
+
+    ringCircumference = 2 * Math.PI * 18;
+
+    ringDashOffset(score: number): number {
+        return (1 - Math.max(0, Math.min(100, score)) / 100) * this.ringCircumference;
+    }
+
+    ringColorClass(score: number): string {
+        if (score >= 75) return 'ring-success';
+        if (score >= 50) return 'ring-primary';
+        if (score >= 25) return 'ring-warning';
+        return 'ring-danger';
     }
 
     applyDataFilter(fields: StrainHunterFilterField | StrainHunterFilterField[], value: unknown, label?: string) {
@@ -257,7 +293,7 @@ export class StrainHunter implements OnInit {
             return;
         }
 
-        const field = event.field;
+        const field = this.resolveSortField(event.field);
         const order = event.order ?? 1;
 
         event.data.sort((first, second) => {
@@ -453,6 +489,10 @@ export class StrainHunter implements OnInit {
         }
 
         return formattedValue;
+    }
+
+    private resolveSortField(columnField: string): string {
+        return columnField === 'matchScore' ? 'score' : columnField;
     }
 
     private toNumber(value: string): number | null {

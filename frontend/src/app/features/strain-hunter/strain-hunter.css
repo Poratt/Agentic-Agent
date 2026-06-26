@@ -390,6 +390,86 @@
     }
   }
 
+  .match-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .score-ring-wrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+
+    .match-ring {
+      flex: 0 0 auto;
+      transform: rotate(-90deg);
+
+      .ring-track {
+        fill: none;
+        stroke: var(--color-border);
+        stroke-width: 4;
+      }
+
+      .ring-fill {
+        fill: none;
+        stroke-width: 4;
+        stroke-linecap: round;
+        transition: stroke-dashoffset var(--transition-standard);
+      }
+    }
+
+    .match-ring.ring-success .ring-fill {
+      stroke: var(--color-success);
+    }
+
+    .match-ring.ring-primary .ring-fill {
+      stroke: var(--color-primary);
+    }
+
+    .match-ring.ring-warning .ring-fill {
+      stroke: var(--color-warning);
+    }
+
+    .match-ring.ring-danger .ring-fill {
+      stroke: var(--color-danger);
+    }
+
+    .score-ring-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-primary);
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+  }
+
+  .strain-penalty-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 2px var(--space-2);
+    background-color: var(--color-danger-bg);
+    border: thin solid var(--color-danger-border);
+    border-radius: var(--radius-xs);
+    color: var(--color-danger);
+    font-size: 10px;
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+    width: fit-content;
+
+    .ph {
+      font-size: var(--font-size-sm);
+    }
+  }
+
   @media (max-width: var(--sm)) {
     .page-content {
       .page-header {

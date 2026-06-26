@@ -1,0 +1,114 @@
+<p-drawer
+    [(visible)]="visible"
+    position="left"
+    [modal]="true"
+    [closable]="true"
+    [showCloseIcon]="true"
+    [dismissible]="true"
+    [style]="{ width: '420px' }"
+    styleClass="matching-drawer"
+>
+    <ng-template pTemplate="header">
+        <div class="drawer-header">
+            <span class="ph ph-sliders"></span>
+            <h3>התאמה אישית</h3>
+        </div>
+    </ng-template>
+
+    <div class="drawer-body">
+        @for (group of categories(); track group.category) {
+            @if (group.items.length > 0) {
+                <section class="group" [class.grow]="group.category === 'genetics'">
+                    <header class="group-header">
+                        <h4>{{ group.title }}</h4>
+                        <span class="hint">לחץ למעבר בין מצבים</span>
+                    </header>
+
+                    <div class="chip-grid">
+                        @for (name of group.items; track name) {
+                            <button
+                                type="button"
+                                [class]="chipClass(group.category, name)"
+                                (click)="cycle(group.category, name)"
+                                [attr.aria-label]="group.title + ': ' + name"
+                            >
+                                @if (chipLabel(group.category, name); as iconClass) {
+                                    <span class="ph chip-state" [class]="iconClass"></span>
+                                }
+                                <span class="chip-name">{{ name }}</span>
+                            </button>
+                        }
+                    </div>
+                </section>
+            }
+        }
+
+        <section class="group">
+            <header class="group-header">
+                <h4>משקולות</h4>
+                <span class="hint">טרפנים {{ weights().terpene }}% · גנטיקה {{ weights().genetics }}%</span>
+            </header>
+
+            <div class="slider-row">
+                <label for="weight-terpene">טרפנים</label>
+                <input
+                    id="weight-terpene"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    [value]="weights().terpene"
+                    (input)="onWeightChange('terpene', $event)"
+                />
+                <span class="slider-value">{{ weights().terpene }}</span>
+            </div>
+
+            <div class="slider-row">
+                <label for="weight-genetics">גנטיקה</label>
+                <input
+                    id="weight-genetics"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    [value]="weights().genetics"
+                    (input)="onWeightChange('genetics', $event)"
+                />
+                <span class="slider-value">{{ weights().genetics }}</span>
+            </div>
+        </section>
+
+        <section class="group preview-group">
+            <header class="group-header">
+                <h4>5 מובילים</h4>
+                @if (hasPreferences()) {
+                    <button class="reset-btn" type="button" (click)="reset()">
+                        <span class="ph ph-arrow-counter-clockwise"></span>
+                        איפוס
+                    </button>
+                }
+            </header>
+
+            @if (hasPreview()) {
+                <ul class="preview-list">
+                    @for (entry of preview(); track entry.name) {
+                        <li class="preview-item">
+                            <div class="preview-row">
+                                <span class="preview-name">{{ entry.name }}</span>
+                                <span class="preview-score">{{ entry.score }}</span>
+                            </div>
+                            <div class="preview-bar">
+                                <span class="preview-bar-fill" [style.width.%]="entry.score"></span>
+                            </div>
+                            @if (entry.penalty && entry.penaltyIngredient) {
+                                <span class="preview-penalty">⛔ {{ entry.penaltyIngredient }}</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            } @else {
+                <p class="subtitle preview-empty">סמן טרפנים או גנטיקה כדי לראות את ההתאמות המובילות.</p>
+            }
+        </section>
+    </div>
+</p-drawer>
