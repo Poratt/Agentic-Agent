@@ -11,19 +11,19 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
-import { ExplorerFetchResponseDto } from './dto/explorer-fetch-response.dto';
-import { ExplorerService } from './explorer.service';
+import { StrainHunterFetchResponseDto } from './dto/strain-hunter-fetch-response.dto';
+import { StrainHunterService } from './strain-hunter.service';
 
-@ApiTags('explorer')
+@ApiTags('strain-hunter')
 @ApiBearerAuth()
-@Controller('explorer')
-export class ExplorerController {
-  constructor(private readonly explorerService: ExplorerService) { }
+@Controller('strain-hunter')
+export class StrainHunterController {
+  constructor(private readonly strainHunterService: StrainHunterService) { }
 
   @Get('fetch')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
-    summary: 'Fetch configured explorer strain data',
+    summary: 'Fetch configured strain hunter strain data',
     summaryHe: 'בודק זנים..',
     toolIcon: 'ph-compass',
     description:
@@ -36,14 +36,14 @@ export class ExplorerController {
     description: 'Whether to force refresh and scrape new data, overwriting local database records.',
   })
   @ApiOkResponse({
-    description: 'Explorer items fetched and normalized successfully.',
-    type: ExplorerFetchResponseDto,
+    description: 'Strain hunter items fetched and normalized successfully.',
+    type: StrainHunterFetchResponseDto,
   })
   @ApiBadRequestResponse({ description: 'The configured Jane source could not be fetched.' })
   @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
   @ApiInternalServerErrorResponse({ description: 'Unexpected server error.' })
   fetchData(@Query('forceRefresh') forceRefresh?: string) {
     const isForce = forceRefresh === 'true';
-    return this.explorerService.fetchData(isForce);
+    return this.strainHunterService.fetchData(isForce);
   }
 }

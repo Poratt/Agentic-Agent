@@ -88,6 +88,8 @@
     }
   }
 
+  .favorite-strain {}
+
   .strain-main-details {
     display: flex;
     align-items: center;

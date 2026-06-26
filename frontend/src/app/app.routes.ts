@@ -14,7 +14,7 @@ export const routes: Routes = [
     children: [
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard').then(m => m.Dashboard) },
       { path: 'users', loadComponent: () => import('./features/users/users-management').then(m => m.UsersManagement) },
-      { path: 'explorer', loadComponent: () => import('./features/explorer/explorer').then(m => m.Explorer) },
+      { path: 'strain-hunter', loadComponent: () => import('./features/strain-hunter/strain-hunter').then(m => m.StrainHunter) },
       { path: 'chat', loadComponent: () => import('./features/chat/chat/chat').then(m => m.Chat) },
       { path: 'chat/history', loadComponent: () => import('./features/chat/chat-history/chat-history').then(m => m.ChatHistory) },
       { path: 'design-system', loadComponent: () => import('./features/design-system/design-system').then(m => m.DesignSystem) },

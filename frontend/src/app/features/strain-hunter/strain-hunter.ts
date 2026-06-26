@@ -10,11 +10,11 @@ import { Subscription, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { PageStates } from '../../core/enums/page-states.enum';
 
-type ExplorerResponse = {
+type StrainHunterResponse = {
     items: Record<string, unknown>[];
 };
 
-type ExplorerFilterField =
+type StrainHunterFilterField =
     | 'originStrain'
     | 'parent1'
     | 'parent2'
@@ -29,9 +29,9 @@ type ExplorerFilterField =
     | 'family'
     | 'growType';
 
-type ExplorerFilter = {
+type StrainHunterFilter = {
     key: string;
-    fields: ExplorerFilterField[];
+    fields: StrainHunterFilterField[];
     label: string;
     value: string;
 };
@@ -42,16 +42,16 @@ type TerpeneFilter = {
 };
 
 @Component({
-    selector: 'app-explorer',
+    selector: 'app-strain-hunter',
     standalone: true,
     imports: [CommonModule, TableModule, InputTextModule, TooltipModule, DialogModule],
-    templateUrl: './explorer.html',
+    templateUrl: './strain-hunter.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    styleUrls: ['./explorer.css'],
+    styleUrls: ['./strain-hunter.css'],
 })
-export class Explorer implements OnInit {
+export class StrainHunter implements OnInit {
     private http = inject(HttpClient);
-    private base = `${environment.apiUrl}/explorer`;
+    private base = `${environment.apiUrl}/strain-hunter`;
     private table = viewChild<Table>('table');
     private requestSubscription: Subscription | null = null;
     private readonly numericSortColumns = new Set(['price', 'catalogPrice']);
@@ -118,7 +118,7 @@ export class Explorer implements OnInit {
     selectedImageUrl = signal<string | null>(null);
     imageDialogVisible = signal(false);
 
-    activeFilters = signal<ExplorerFilter[]>([]);
+    activeFilters = signal<StrainHunterFilter[]>([]);
 
     items = computed(() => {
         const raw = this.rawItems();
@@ -184,7 +184,7 @@ export class Explorer implements OnInit {
         const url = forceRefresh ? `${this.base}/fetch?forceRefresh=true` : `${this.base}/fetch`;
 
         this.requestSubscription = this.http
-            .get<ExplorerResponse>(url)
+            .get<StrainHunterResponse>(url)
             .pipe(timeout(45000))
             .subscribe({
                 next: (response) => {
@@ -203,7 +203,7 @@ export class Explorer implements OnInit {
         this.load(true);
     }
 
-    applyDataFilter(fields: ExplorerFilterField | ExplorerFilterField[], value: unknown, label?: string) {
+    applyDataFilter(fields: StrainHunterFilterField | StrainHunterFilterField[], value: unknown, label?: string) {
         const filterValue = this.formatValue(value);
         if (!filterValue) {
             return;

@@ -41,13 +41,13 @@ const MAX_SCROLL_ATTEMPTS = 18;
 const PRODUCT_ROW_SELECTOR =
     'table[role="table"] tbody[role="rowgroup"] > tr[role="row"], table[role="table"] tbody tr';
 
-const EXPLORER_SOURCE_URL =
+const SOURCE_URL =
     'https://jane.co.il/store/tiltan/?filters=productProductType%5Ein%5Eflower%3B' +
     'productCategory%5Ein%5ET22%2FC4%3BproductGrowType%5Ein%5Eindoor%3B' +
     'productFamily%5Ein%5Eindica&sortBy=store_price';
 
 @Injectable()
-export class ExplorerService {
+export class StrainHunterService {
     constructor(
         @InjectRepository(Strain)
         private readonly strainRepository: Repository<Strain>,
@@ -62,7 +62,7 @@ export class ExplorerService {
             }
         }
 
-        const scraped = await this.fetchDataFromUrl(EXPLORER_SOURCE_URL);
+        const scraped = await this.fetchDataFromUrl(SOURCE_URL);
 
         await this.strainRepository.clear();
 

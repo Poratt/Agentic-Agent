@@ -1239,55 +1239,6 @@
         "toolIcon": "ph-currency-circle-dollar"
       }
     },
-    "/explorer/fetch": {
-      "get": {
-        "description": "Uses the configured Jane store page scraper or local database cache to load and return normalized strain item data.",
-        "operationId": "ExplorerController_fetchData",
-        "parameters": [
-          {
-            "name": "forceRefresh",
-            "required": false,
-            "in": "query",
-            "description": "Whether to force refresh and scrape new data, overwriting local database records.",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Explorer items fetched and normalized successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExplorerFetchResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The configured Jane source could not be fetched."
-          },
-          "401": {
-            "description": "Missing or expired JWT token."
-          },
-          "500": {
-            "description": "Unexpected server error."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Fetch configured explorer strain data",
-        "summaryHe": "בודק זנים..",
-        "tags": [
-          "explorer"
-        ],
-        "toolIcon": "ph-compass"
-      }
-    },
     "/system/status": {
       "get": {
         "description": "Returns activity metrics and current runtime status parameters.",
@@ -1398,6 +1349,55 @@
           "weather"
         ],
         "toolIcon": "ph-calendar-days"
+      }
+    },
+    "/strain-hunter/fetch": {
+      "get": {
+        "description": "Uses the configured Jane store page scraper or local database cache to load and return normalized strain item data.",
+        "operationId": "StrainHunterController_fetchData",
+        "parameters": [
+          {
+            "name": "forceRefresh",
+            "required": false,
+            "in": "query",
+            "description": "Whether to force refresh and scrape new data, overwriting local database records.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Strain hunter items fetched and normalized successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrainHunterFetchResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The configured Jane source could not be fetched."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Fetch configured strain hunter strain data",
+        "summaryHe": "בודק זנים..",
+        "tags": [
+          "strain-hunter"
+        ],
+        "toolIcon": "ph-compass"
       }
     }
   },
@@ -2359,7 +2359,7 @@
           "result"
         ]
       },
-      "ExplorerSymbolDto": {
+      "StrainSymbolDto": {
         "type": "object",
         "properties": {
           "url": {
@@ -2378,7 +2378,7 @@
           "alt"
         ]
       },
-      "ExplorerStrainItemDto": {
+      "StrainDto": {
         "type": "object",
         "properties": {
           "name": {
@@ -2470,7 +2470,7 @@
             "description": "List of symbols associated with the strain.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ExplorerSymbolDto"
+              "$ref": "#/components/schemas/StrainSymbolDto"
             }
           },
           "imageUrl": {
@@ -2537,14 +2537,14 @@
           "cbd"
         ]
       },
-      "ExplorerFetchResponseDto": {
+      "StrainHunterFetchResponseDto": {
         "type": "object",
         "properties": {
           "items": {
             "description": "Fetched and normalized strain items extracted from the configured Jane API source.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ExplorerStrainItemDto"
+              "$ref": "#/components/schemas/StrainDto"
             }
           }
         },

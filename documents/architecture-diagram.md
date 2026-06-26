@@ -19,7 +19,7 @@ flowchart TD
     Shell[Main Layout / Sidebar]
     AuthUI[Auth Feature]
     ChatUI[Chat Feature]
-    ExplorerUI[Explorer Feature]
+    StrainHunterUI[StrainHunter Feature]
     ChatMessage[Chat Message Renderer]
     AiFormat[AiFormat Directive]
     FrontendServices[Core HTTP Services]
@@ -36,7 +36,7 @@ flowchart TD
     WeatherModule[WeatherModule]
     AnalyticsModule[AnalyticsModule]
     CurrencyModule[CurrencyModule]
-    ExplorerModule[ExplorerModule]
+    StrainHunterModule[StrainHunterModule]
   end
 
   subgraph AgentCore["Admin Agent Core"]
@@ -74,19 +74,19 @@ flowchart TD
   end
 
   User --> Shell
-  Shell --> AuthUI & ChatUI & ExplorerUI
+  Shell --> AuthUI & ChatUI & StrainHunterUI
   ChatUI --> ChatMessage & FrontendServices
-  ExplorerUI --> ExplorerModule
+  StrainHunterUI --> StrainHunterModule
   ChatMessage --> AiFormat
   AuthUI --> FrontendServices
   FrontendServices --> AuthModule & UsersModule & AdminAgentController & LlmController
 
-  AppModule --> AuthModule & UsersModule & AdminAgentModule & LlmModule & SystemModule & WeatherModule & AnalyticsModule & CurrencyModule & ExplorerModule
+  AppModule --> AuthModule & UsersModule & AdminAgentModule & LlmModule & SystemModule & WeatherModule & AnalyticsModule & CurrencyModule & StrainHunterModule
 
   AdminAgentModule --> AdminAgentController
   AdminAgentController --> AdminAgentService
   AdminAgentService --> AgentSessionService & AgentToolExecutor & SwaggerParser & SystemContext & LlmService
-  AgentToolExecutor --> SwaggerParser & AuthModule & UsersModule & SystemModule & WeatherModule & AnalyticsModule & CurrencyModule & ExplorerModule
+  AgentToolExecutor --> SwaggerParser & AuthModule & UsersModule & SystemModule & WeatherModule & AnalyticsModule & CurrencyModule & StrainHunterModule
   SwaggerParser --> SwaggerSpec[swagger-spec.json]
   SwaggerSpec --> GenUiSpec
 
@@ -104,7 +104,7 @@ flowchart TD
 
   WeatherModule --> WeatherApi
   CurrencyModule --> CurrencyApi
-  ExplorerModule --> JaneApi
+  StrainHunterModule --> JaneApi
 ```
 
 ## Chat And Tool Execution Flow
@@ -222,7 +222,7 @@ flowchart TB
     Weather["WeatherModule"]
     Analytics["AnalyticsModule"]
     Currency["CurrencyModule"]
-    Explorer["ExplorerModule\nJane API fetch and normalized items"]
+    StrainHunter["StrainHunterModule\nJane API fetch and normalized items"]
   end
 
   Auth & Users --> UsersDb[(users)]
@@ -231,7 +231,7 @@ flowchart TB
   System --> UsersDb & ChatDb
   Weather --> WeatherApi[Weather API]
   Currency --> CurrencyApi[Currency API]
-  Explorer --> JaneApi[Jane API / Store Page]
+  StrainHunter --> JaneApi[Jane API / Store Page]
   LLM --> Providers[LLM Providers]
 ```
 
@@ -288,5 +288,5 @@ sequenceDiagram
 - Active chat streams can be cancelled from the Angular UI by unsubscribing from the stream request, which aborts the underlying fetch.
 - `LlmService` is the public facade used by controllers and `AdminAgentService`.
 - Internal LLM responsibilities are split into provider config, provider client, model catalog, and health-check services.
-- `ExplorerModule` fetches Jane store data from the configured Jane API source and exposes normalized items through a protected backend endpoint.
-- `ExplorerUI` calls the explorer endpoint directly from the component for the first version; no dedicated Angular service exists yet.
+- `StrainHunterModule` fetches Jane store data from the configured Jane API source and exposes normalized items through a protected backend endpoint.
+- `StrainHunterUI` calls the StrainHunter endpoint directly from the component for the first version; no dedicated Angular service exists yet.

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class ExplorerSymbolDto {
+export class StrainSymbolDto {
   @ApiProperty({ description: 'Image URL of the symbol.', example: 'https://...' })
   url!: string;
 
@@ -8,7 +8,7 @@ export class ExplorerSymbolDto {
   alt!: string;
 }
 
-export class ExplorerStrainItemDto {
+export class StrainDto {
   @ApiProperty({ description: 'Hebrew product or strain name.', example: 'גורילה גלו' })
   name!: string;
 
@@ -60,8 +60,8 @@ export class ExplorerStrainItemDto {
   @ApiProperty({ description: 'Package type extracted from the expanded row.', example: 'שקית' })
   packageType!: string;
 
-  @ApiProperty({ description: 'List of symbols associated with the strain.', type: [ExplorerSymbolDto] })
-  symbols!: ExplorerSymbolDto[];
+  @ApiProperty({ description: 'List of symbols associated with the strain.', type: [StrainSymbolDto] })
+  symbols!: StrainSymbolDto[];
 
   @ApiProperty({ description: 'Thumbnail URL of the product image.', example: 'https://...' })
   imageUrl!: string;
@@ -85,10 +85,10 @@ export class ExplorerStrainItemDto {
   cbd!: string;
 }
 
-export class ExplorerFetchResponseDto {
+export class StrainHunterFetchResponseDto {
   @ApiProperty({
     description: 'Fetched and normalized strain items extracted from the configured Jane API source.',
-    type: [ExplorerStrainItemDto],
+    type: [StrainDto],
   })
-  items!: ExplorerStrainItemDto[];
+  items!: StrainDto[];
 }

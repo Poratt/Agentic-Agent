@@ -6,12 +6,12 @@ import { UsersModule } from './modules/users/users.module';
 import { AdminAgentModule } from './modules/admin-agent/admin-agent.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { CurrencyModule } from './modules/currency/currency.module';
-import { ExplorerModule } from './modules/explorer/explorer.module';
 import { LlmModule } from './modules/llm/llm.module';
 import { SystemModule } from './modules/system/system.module';
 import { WeatherModule } from './modules/weather/weather.module';
 import { LlmProviderModule } from './modules/llm-provider/llm-provider.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { StrainHunterModule } from './modules/strain-hunter/strain-hunter.module';
 
 @Module({
   imports: [
@@ -36,11 +36,11 @@ import { ScheduleModule } from '@nestjs/schedule';
     AdminAgentModule,
     AnalyticsModule,
     CurrencyModule,
-    ExplorerModule,
     LlmModule,
     SystemModule,
     WeatherModule,
-    LlmProviderModule
+    LlmProviderModule,
+    StrainHunterModule
   ],
 })
 export class AppModule {
