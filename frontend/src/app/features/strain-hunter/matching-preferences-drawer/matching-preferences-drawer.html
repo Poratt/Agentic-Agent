@@ -17,28 +17,67 @@
 
     <div class="drawer-body">
         @for (group of categories(); track group.category) {
-            @if (group.items.length > 0) {
+            @if (group.category === 'genetics' ? hasGenetics() : group.items.length > 0) {
                 <section class="group" [class.grow]="group.category === 'genetics'">
                     <header class="group-header">
                         <h4>{{ group.title }}</h4>
-                        <span class="hint">לחץ למעבר בין מצבים</span>
+                        <div class="group-header-actions">
+                            <span class="hint">לחץ למעבר בין מצבים</span>
+                            @if (hasCategoryPreferences(group.category)) {
+                                <button
+                                    type="button"
+                                    class="category-reset-btn"
+                                    (click)="resetCategory(group.category)"
+                                    [attr.aria-label]="'איפוס ' + group.title"
+                                    [title]="'איפוס ' + group.title"
+                                >
+                                    <span class="ph ph-arrow-counter-clockwise"></span>
+                                </button>
+                            }
+                        </div>
                     </header>
 
-                    <div class="chip-grid">
-                        @for (name of group.items; track name) {
-                            <button
-                                type="button"
-                                [class]="chipClass(group.category, name)"
-                                (click)="cycle(group.category, name)"
-                                [attr.aria-label]="group.title + ': ' + name"
-                            >
-                                @if (chipLabel(group.category, name); as iconClass) {
-                                    <span class="ph chip-state" [class]="iconClass"></span>
-                                }
-                                <span class="chip-name">{{ name }}</span>
+                    @if (group.category === 'genetics') {
+                        <div class="form-field-has-icon sm genetics-search">
+                            <span class="field-icon ph ph-magnifying-glass"></span>
+                            <input
+                                class="form-control"
+                                type="search"
+                                placeholder="חיפוש גנטיקה…"
+                                aria-label="חיפוש גנטיקה"
+                                [value]="geneticsFilter()"
+                                (input)="onGeneticsSearch($event)"
+                            />
+                        </div>
+                    }
+
+                    @if (group.items.length > 0) {
+                        <div class="chip-grid">
+                            @for (name of group.items; track name) {
+                                <button
+                                    type="button"
+                                    [class]="chipClass(group.category, name)"
+                                    (click)="cycle(group.category, name)"
+                                    [attr.aria-label]="group.title + ': ' + name"
+                                >
+                                    @if (chipLabel(group.category, name); as iconClass) {
+                                        <span class="ph chip-state" [class]="iconClass"></span>
+                                    }
+                                    <span class="chip-name">{{ name }}</span>
+                                </button>
+                            }
+                        </div>
+                    } @else {
+                        <div class="genetics-empty">
+                            <span class="ph ph-magnifying-glass-minus genetics-empty-icon"></span>
+                            <p class="genetics-empty-title">לא נמצאו גנטיקות תואמות</p>
+                            <p class="genetics-empty-hint">נסה מילת חיפוש אחרת או אפס את הסינון.</p>
+                            <button type="button" class="genetics-empty-clear" (click)="clearGeneticsSearch()">
+                                <span class="ph ph-arrow-counter-clockwise"></span>
+                                איפוס חיפוש
                             </button>
-                        }
-                    </div>
+                        </div>
+                    }
                 </section>
             }
         }
@@ -46,35 +85,28 @@
         <section class="group">
             <header class="group-header">
                 <h4>משקולות</h4>
-                <span class="hint">טרפנים {{ weights().terpene }}% · גנטיקה {{ weights().genetics }}%</span>
             </header>
 
-            <div class="slider-row">
-                <label for="weight-terpene">טרפנים</label>
+            <div class="crossfader" role="group" aria-label="איזון טרפנים מול גנטיקה">
+                <div class="crossfader-end crossfader-end-terpene">
+                    <span class="crossfader-end-value">{{ weights().terpene }}%</span>
+                    <span class="crossfader-end-name">טרפנים</span>
+                </div>
                 <input
-                    id="weight-terpene"
+                    id="weight-crossfader"
+                    class="crossfader-input"
                     type="range"
                     min="0"
                     max="100"
                     step="5"
-                    [value]="weights().terpene"
+                    [value]="crossfaderValue()"
                     (input)="onWeightChange('terpene', $event)"
+                    aria-label="איזון בין טרפנים לגנטיקה"
                 />
-                <span class="slider-value">{{ weights().terpene }}</span>
-            </div>
-
-            <div class="slider-row">
-                <label for="weight-genetics">גנטיקה</label>
-                <input
-                    id="weight-genetics"
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="5"
-                    [value]="weights().genetics"
-                    (input)="onWeightChange('genetics', $event)"
-                />
-                <span class="slider-value">{{ weights().genetics }}</span>
+                <div class="crossfader-end crossfader-end-genetics">
+                    <span class="crossfader-end-value">{{ weights().genetics }}%</span>
+                    <span class="crossfader-end-name">גנטיקה</span>
+                </div>
             </div>
         </section>
 

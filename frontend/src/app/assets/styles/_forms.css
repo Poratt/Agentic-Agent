@@ -66,6 +66,21 @@ input[type='range'] {
     right: var(--space-3);
     color: var(--color-text-secondary);
     pointer-events: none;
+    z-index: 1;
+  }
+
+  &.sm {
+    width: min(calc(var(--search-width) / 2), 100%);
+
+    .field-icon {
+      right: var(--space-2);
+      font-size: var(--font-size-xs);
+    }
+
+    input {
+      padding: var(--space-1) var(--space-8) var(--space-1) var(--space-2);
+      font-size: var(--font-size-xs);
+    }
   }
 }
 
