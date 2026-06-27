@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
-import { MatchingEngineStore, PrefState, ScoredStrain } from '../../../core/store/matching-engine.store';
+import { MatchingEngineStore, ScoredStrain } from '../../../core/store/matching-engine.store';
+import { TerpeneStore } from '../../../core/store/terpene.store';
+import { TerpeneTooltip } from '../terpene-tooltip/terpene-tooltip';
 
 type PreviewItem = {
     name: string;
@@ -18,25 +20,35 @@ type CategoryGroup = {
     items: string[];
 };
 
+type TooltipPos = {
+    name: string;
+    top: number;
+    left: number;
+    openUp: boolean;
+};
+
+const TOOLTIP_W = 240;
+const TOOLTIP_H = 140;
+const GAP = 8;
+
 @Component({
     selector: 'app-matching-preferences-drawer',
     standalone: true,
-    imports: [CommonModule, FormsModule, DrawerModule, ButtonModule],
+    imports: [CommonModule, FormsModule, DrawerModule, ButtonModule, TerpeneTooltip],
     templateUrl: './matching-preferences-drawer.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./matching-preferences-drawer.css'],
 })
 export class MatchingPreferencesDrawer {
     private readonly engine = inject(MatchingEngineStore);
+    private readonly terpeneStore = inject(TerpeneStore);
 
-    /** Two-way bound visibility for the drawer. */
     readonly visible = model<boolean>(false);
-
-    /** Raw items to score for the top-5 preview. */
     readonly items = input<Record<string, unknown>[]>([]);
-
-    /** Free-text filter for the genetics chip grid. */
     readonly geneticsFilter = signal('');
+
+    /** Fixed-position tooltip state — null = hidden */
+    readonly tooltip = signal<TooltipPos | null>(null);
 
     readonly categories = computed<CategoryGroup[]>(() => {
         const items = this.items();
@@ -47,20 +59,11 @@ export class MatchingPreferencesDrawer {
             : geneticsItems.filter((name) => name.toLowerCase().includes(filter));
 
         return [
-            {
-                category: 'terpene',
-                title: 'טרפנים',
-                items: this.collectTerpenes(items),
-            },
-            {
-                category: 'genetics',
-                title: 'גנטיקה',
-                items: filteredGenetics,
-            },
+            { category: 'terpene', title: 'טרפנים', items: this.collectTerpenes(items) },
+            { category: 'genetics', title: 'גנטיקה', items: filteredGenetics },
         ];
     });
 
-    /** Whether the genetics section should render at all (driven by raw data, not the current filter). */
     readonly hasGenetics = computed(() => this.collectGenetics(this.items()).length > 0);
 
     readonly preview = computed<PreviewItem[]>(() => {
@@ -69,10 +72,11 @@ export class MatchingPreferencesDrawer {
     });
 
     readonly hasPreview = computed(() => this.preview().length > 0);
-
     readonly hasPreferences = this.engine.hasAnyPreference;
-
     readonly weights = this.engine.weights;
+    readonly crossfaderValue = computed(() => 100 - this.weights().terpene);
+
+    readonly PrefState = { Neutral: 'neutral', Like: 'like', Love: 'love', Avoid: 'avoid' } as const;
 
     constructor() {
         effect(() => {
@@ -81,16 +85,13 @@ export class MatchingPreferencesDrawer {
             console.log('All Terpenes:', this.collectTerpenes(items));
             console.log('All Genetics:', this.collectGenetics(items));
         });
-    }
 
-    /** Slider DOM value — inverted so the right end (terpene) reads as the high end of terpene weight. */
-    readonly crossfaderValue = computed(() => 100 - this.weights().terpene);
-    readonly PrefState = {
-        Neutral: 'neutral',
-        Like: 'like',
-        Love: 'love',
-        Avoid: 'avoid',
-    } as const;
+        effect(() => {
+            if (this.visible()) {
+                this.terpeneStore.loadAll();
+            }
+        });
+    }
 
     chipClass(category: 'terpene' | 'genetics', name: string): string {
         const state = this.engine.prefState(`${category}:${name}`);
@@ -100,49 +101,57 @@ export class MatchingPreferencesDrawer {
     chipLabel(category: 'terpene' | 'genetics', name: string): string {
         const state = this.engine.prefState(`${category}:${name}`);
         switch (state) {
-            case 'love':
-                return 'ph-heart ph-fill';
-            case 'like':
-                return 'ph-bookmark-simple ph-fill';
-            case 'avoid':
-                return 'ph-prohibit';
-            default:
-                return '';
+            case 'love': return 'ph-heart ph-fill';
+            case 'like': return 'ph-bookmark-simple ph-fill';
+            case 'avoid': return 'ph-prohibit';
+            default: return '';
         }
     }
 
     cycle(category: 'terpene' | 'genetics', name: string): void {
-        const key = `${category}:${name}`;
-        this.engine.cyclePref(key);
+        this.engine.cyclePref(`${category}:${name}`);
+    }
+
+    onChipEnter(category: 'terpene' | 'genetics', name: string, event: MouseEvent): void {
+        if (category !== 'terpene') return;
+        const el = event.currentTarget as HTMLElement;
+        const rect = el.getBoundingClientRect();
+
+        // Vertical: prefer above, flip below if not enough room
+        const openUp = rect.top >= TOOLTIP_H + GAP;
+        const top = openUp ? rect.top - TOOLTIP_H - GAP : rect.bottom + GAP;
+
+        // Horizontal: center on chip, clamp inside viewport
+        const chipCenter = rect.left + rect.width / 2;
+        const left = Math.max(GAP, Math.min(chipCenter - TOOLTIP_W / 2, window.innerWidth - TOOLTIP_W - GAP));
+
+        this.tooltip.set({ name, top, left, openUp });
+    }
+
+    onChipLeave(category: 'terpene' | 'genetics'): void {
+        if (category !== 'terpene') return;
+        this.tooltip.set(null);
     }
 
     onWeightChange(category: 'terpene' | 'genetics', event: Event): void {
-        const target = event.target as HTMLInputElement;
-        const raw = Number(target.value);
-        // Slider is RTL: right end (terpene side) = value 0, left end (genetics side) = value 100.
-        // Invert so dragging toward a label visually increases that category's weight.
-        const value = 100 - raw;
-        this.engine.setWeight(category, value);
+        const raw = Number((event.target as HTMLInputElement).value);
+        this.engine.setWeight(category, 100 - raw);
     }
 
     onGeneticsSearch(event: Event): void {
-        const target = event.target as HTMLInputElement;
-        this.geneticsFilter.set(target.value);
+        this.geneticsFilter.set((event.target as HTMLInputElement).value);
     }
 
     clearGeneticsSearch(): void {
         this.geneticsFilter.set('');
     }
 
-    /** Number of set preferences for a category (used to decide whether to show its reset button). */
     categoryPreferenceCount(category: 'terpene' | 'genetics'): number {
         const prefix = `${category}:`;
         const prefs = this.engine.prefs();
         let count = 0;
         for (const key of Object.keys(prefs)) {
-            if (key.startsWith(prefix)) {
-                count += 1;
-            }
+            if (key.startsWith(prefix)) count += 1;
         }
         return count;
     }
@@ -169,16 +178,13 @@ export class MatchingPreferencesDrawer {
         const set = new Set<string>();
         for (const item of items) {
             const raw = item['terpenes'];
-            if (typeof raw !== 'string' || !raw || raw === 'לא ידוע') {
-                continue;
-            }
+            if (typeof raw !== 'string' || !raw || raw === 'לא ידוע') continue;
             for (const part of raw.split(',')) {
-                const trimmed = part.replace(/\s*\(?\d+(?:[.,]\d+)?\s*%\)?\s*$/u, '')
+                const trimmed = part
+                    .replace(/\s*\(?\d+(?:[.,]\d+)?\s*%\)?\s*$/u, '')
                     .replace(/\s*\(?%\s*\d+(?:[.,]\d+)?\)?\s*$/u, '')
                     .trim();
-                if (trimmed) {
-                    set.add(trimmed);
-                }
+                if (trimmed) set.add(trimmed);
             }
         }
         return [...set].sort((a, b) => a.localeCompare(b, 'he'));
@@ -191,9 +197,7 @@ export class MatchingPreferencesDrawer {
                 const value = item[key];
                 if (typeof value === 'string') {
                     const trimmed = value.trim();
-                    if (trimmed) {
-                        set.add(trimmed);
-                    }
+                    if (trimmed) set.add(trimmed);
                 }
             }
         }
@@ -201,9 +205,8 @@ export class MatchingPreferencesDrawer {
     }
 
     private toPreview(item: ScoredStrain): PreviewItem {
-        const name = this.formatName(item['name']);
         return {
-            name,
+            name: this.formatName(item['name']),
             score: item.score,
             penalty: item.penalty,
             penaltyIngredient: item.penaltyIngredient,
@@ -211,9 +214,6 @@ export class MatchingPreferencesDrawer {
     }
 
     private formatName(value: unknown): string {
-        if (typeof value === 'string' && value.trim().length > 0) {
-            return value.trim();
-        }
-        return 'ללא שם';
+        return typeof value === 'string' && value.trim().length > 0 ? value.trim() : 'ללא שם';
     }
 }

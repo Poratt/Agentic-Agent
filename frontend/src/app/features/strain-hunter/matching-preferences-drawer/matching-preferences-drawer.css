@@ -246,33 +246,6 @@
       }
     }
 
-    .slider-row {
-      display: grid;
-      grid-template-columns: var(--space-16) 1fr var(--space-8);
-      align-items: center;
-      gap: var(--space-3);
-
-      label {
-        font-size: var(--font-size-sm);
-        color: var(--color-text-secondary);
-      }
-
-      input[type='range'] {
-        width: 100%;
-        accent-color: var(--color-primary);
-        background: transparent;
-        cursor: pointer;
-      }
-
-      .slider-value {
-        text-align: center;
-        font-size: var(--font-size-sm);
-        color: var(--color-text-primary);
-        font-weight: var(--font-weight-semibold);
-        font-variant-numeric: tabular-nums;
-      }
-    }
-
     .crossfader {
       display: grid;
       grid-template-columns: auto 1fr auto;
@@ -323,7 +296,6 @@
         margin: 0;
         padding: 0;
         outline: none;
-        /* Fully custom track + thumb — no UA accent-color fill. */
 
         &::-webkit-slider-runnable-track {
           height: var(--space-2);
@@ -463,4 +435,13 @@
       padding: var(--space-4);
     }
   }
+}
+
+/* Fixed tooltip — escapes overflow:auto of .chip-grid */
+.terpene-tooltip-fixed {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  width: 240px;
+  white-space: normal;
 }

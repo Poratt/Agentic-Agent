@@ -540,3 +540,10 @@ documents/
 - Files touched this session: `frontend/src/app/assets/styles/_buttons.css`, `frontend/src/app/features/llm-providers-management/llm-providers-management.html`, `frontend/src/app/features/llm-providers-management/llm-providers-management.css`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: use the existing global `icon-only` button convention instead of keeping a component-specific `.icon-btn`; no architecture diagram update was needed because this was CSS/HTML styling only.
 - Open questions for the user: none.
+- Closed the terpenes details plan by moving `documents/features/todo/terpenes-details-plan.md` to `documents/done/terpenes-details-plan.md`.
+- Verified the implementation matches the plan: NestJS `Terpene` entity + service + controller + module + seed (17 Hebrew-named terpenes), Angular `ITerpene` + `TerpeneService` + `TerpeneStore` + `TerpeneTooltip` component, and the `MatchingPreferencesDrawer` injects `TerpeneStore`, imports `TerpeneTooltip`, and calls `terpeneStore.loadAll()` when the drawer opens.
+- `TerpeneModule` is registered in `AppModule`; the earlier 404-on-`/terpenes` bug from STATUS.md 2026-06-27 audit is resolved by that registration.
+- Next exact step: pick the next active plan from `documents/features/todo/` (e.g. `database-storage-monitor-plan.md` or `provider-and-llm-db-plan.md` Phases 4–9) or address the existing frontend warnings (`llm-providers-management.css` budget, `chat-message.css`, `explorer.css`).
+- Files touched this session: `documents/done/terpenes-details-plan.md`, `documents/STATUS.md`, and `documents/HANDOFF.md`.
+- Decisions made: mark the terpenes plan done based on file/git evidence rather than rerunning a build, since builds were already verified after the `TerpeneModule` registration fix recorded in STATUS.md; no architecture diagram update was needed because the module boundary and request flow are unchanged from what was already documented.
+- Open questions for the user: none.

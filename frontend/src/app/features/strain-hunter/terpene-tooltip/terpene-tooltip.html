@@ -1,0 +1,31 @@
+@if (terpene(); as t) {
+    <div class="terpene-card" [style.--terpene-color]="t.color">
+        <header class="terpene-card-header">
+            <span class="terpene-card-dot"></span>
+            <h4 class="terpene-card-name">{{ t.name }}</h4>
+        </header>
+
+        @if (t.description) {
+            <p class="terpene-card-desc">{{ t.description }}</p>
+        }
+
+        @if (t.scent) {
+            <div class="terpene-card-row">
+                <span class="ph ph-flower-lotus terpene-card-icon"></span>
+                <span>{{ t.scent }}</span>
+            </div>
+        }
+
+        @if (t.effects?.length) {
+            <div class="terpene-card-effects">
+                @for (effect of t.effects; track effect) {
+                    <span class="terpene-card-effect-tag">{{ effect }}</span>
+                }
+            </div>
+        }
+    </div>
+} @else {
+    <div class="terpene-card terpene-card-empty">
+        <span>אין מידע זמין</span>
+    </div>
+}

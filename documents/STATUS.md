@@ -196,3 +196,19 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: merged the LLM providers local `.icon-btn` styling into the global `icon-only` button pattern in `_buttons.css`.
 - Completed: LLM providers action buttons now use `icon-only transparent-btn` / `icon-only danger-btn`, the local `.icon-btn` CSS block was removed, and the unnecessary `add-model-btn` class was replaced with `transparent-btn sm`.
 - Verified: `npm.cmd run build` from `frontend` passes. `llm-providers-management.css` budget warning remains but is reduced to 4.36 kB over the 4 kB limit.
+
+
+## 2026-06-27 Plan Audit
+
+- Fixed: `favorite-strain-plan.md` was still in `todo/` but the feature was fully implemented:
+  - `strain-hunter/`, `matching-engine.store.ts` with `calculateScore()`/`topScored()`, `matching-preferences-drawer.ts`, `matchScore` column with SVG rings, penalty badges.
+  - Moved to `documents/done/favorite-strain-plan.md`.
+- Fixed: `REVERT_TASK.md` was still in `todo/` but the light mode revert was already applied.
+  - Moved to `documents/done/REVERT_TASK.md`.
+- Bug fixed: `TerpeneModule` was not registered in `app.module.ts`, causing `/terpenes` to return 404 in an infinite loop.
+  - Added `TerpeneModule` import to `AppModule`.
+  - Backend and frontend builds pass after the fix.
+- Completed: `documents/done/terpenes-details-plan.md`. Terpene reference catalog is fully implemented: NestJS `Terpene` entity + `TerpeneService` + `TerpeneController` + `TerpeneModule` + seed of 17 Hebrew-named terpenes, and Angular `ITerpene` interface + `TerpeneService` + `TerpeneStore` + `TerpeneTooltip` hover-popover component consumed by `MatchingPreferencesDrawer`. `TerpeneModule` is registered in `AppModule`.
+- Remaining active plans: `llm-model-test-results-retention-plan.md`, `provider-and-llm-db-plan.md` (partial — Phases 1-3 done, 4-9 remain), `database-storage-monitor-plan.md`.
+- Remaining incomplete: `thinking-ux-cleanup.md`.
+- Note: `llm-model-test-results.entity.ts` schema does not match `provider-and-llm-db-plan.md` — current entity only has `modelId`, `responseTimeMs`, `status`, `errorMessage`; plan specifies `runId`, `providerKey`, `modelName`, `modelLabel`, `available`, `success`, `latencyMs`, `timeToFirstTokenMs`, `tokensPerSecond`, `inputTokens`, `outputTokens`, `qualityScore`, `qualityReason`, `testedAt`.

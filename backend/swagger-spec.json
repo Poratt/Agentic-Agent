@@ -1399,6 +1399,107 @@
         ],
         "toolIcon": "ph-compass"
       }
+    },
+    "/terpenes": {
+      "get": {
+        "description": "Returns the full terpene reference catalog ordered alphabetically by Hebrew name. The list is small (~17 rows) and intended to be cached client-side.",
+        "operationId": "TerpeneController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Catalog fetched successfully. `result` is an array of TerpeneDto ordered alphabetically by name.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerpeneListResultResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not applicable for this endpoint."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "403": {
+            "description": "Not applicable for this endpoint."
+          },
+          "404": {
+            "description": "Not applicable for this endpoint."
+          },
+          "500": {
+            "description": "Unexpected database or server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all terpenes",
+        "summaryHe": "שליפת כל הטרפנים בקטלוג",
+        "tags": [
+          "terpenes"
+        ],
+        "toolIcon": "ph-flower-lotus"
+      }
+    },
+    "/terpenes/{name}": {
+      "get": {
+        "description": "Returns the terpene whose `name` column exactly matches the supplied `:name` path parameter. Result is `null` when no record matches — this is not treated as a 404 so the frontend can render a graceful empty state.",
+        "operationId": "TerpeneController_findOne",
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "in": "path",
+            "description": "Hebrew terpene name. Must exactly match the `terpene.name` column.",
+            "schema": {
+              "example": "מירצן",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lookup succeeded. `result` is the matching terpene or null when no row matches the given name.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerpeneResultResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not applicable for this endpoint."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "403": {
+            "description": "Not applicable for this endpoint."
+          },
+          "404": {
+            "description": "Not applicable for this endpoint. Missing rows return `result: null`."
+          },
+          "500": {
+            "description": "Unexpected database or server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a terpene by name",
+        "summaryHe": "שליפת טרפן בודד לפי שם",
+        "tags": [
+          "terpenes"
+        ],
+        "toolIcon": "ph-flower-lotus"
+      }
     }
   },
   "info": {
@@ -2550,6 +2651,141 @@
         },
         "required": [
           "items"
+        ]
+      },
+      "TerpeneDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Auto-incremented primary key.",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Hebrew display name. Unique — used as the lookup key from the frontend.",
+            "example": "מירצן"
+          },
+          "description": {
+            "type": "string",
+            "description": "Short Hebrew description of the terpene. Omitted when not set.",
+            "example": "הטרפן הנפוץ ביותר בקנאביס"
+          },
+          "scent": {
+            "type": "string",
+            "description": "Aroma profile of the terpene in Hebrew. Omitted when not set.",
+            "example": "אדמה, פירות יער"
+          },
+          "effects": {
+            "description": "Effect tags associated with the terpene (Hebrew short labels).",
+            "example": [
+              "מרגיע",
+              "משכך כאבים"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "color": {
+            "type": "string",
+            "description": "Hex accent color used by the frontend to render per-terpene UI accents (dots, tag borders, etc.).",
+            "example": "#66BB6A"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "color"
+        ]
+      },
+      "TerpeneListResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request succeeded.",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable status message.",
+            "example": "OK"
+          },
+          "result": {
+            "description": "The list of terpenes ordered alphabetically by name.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TerpeneDto"
+            }
+          },
+          "error": {
+            "description": "Optional error details.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "retryAfter": {
+            "type": "string",
+            "description": "Optional retry hint."
+          },
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code echoed from the server.",
+            "example": 200
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "result"
+        ]
+      },
+      "TerpeneResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request succeeded.",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable status message.",
+            "example": "OK"
+          },
+          "result": {
+            "description": "The matching terpene, or null when no record matches the given name.",
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TerpeneDto"
+              }
+            ]
+          },
+          "error": {
+            "description": "Optional error details.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "retryAfter": {
+            "type": "string",
+            "description": "Optional retry hint."
+          },
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code echoed from the server.",
+            "example": 200
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "result"
         ]
       }
     }

@@ -12,6 +12,7 @@ import { WeatherModule } from './modules/weather/weather.module';
 import { LlmProviderModule } from './modules/llm-provider/llm-provider.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { StrainHunterModule } from './modules/strain-hunter/strain-hunter.module';
+import { TerpeneModule } from './modules/terpene/terpene.module';
 
 @Module({
   imports: [
@@ -40,7 +41,8 @@ import { StrainHunterModule } from './modules/strain-hunter/strain-hunter.module
     SystemModule,
     WeatherModule,
     LlmProviderModule,
-    StrainHunterModule
+    StrainHunterModule,
+    TerpeneModule
   ],
 })
 export class AppModule {
