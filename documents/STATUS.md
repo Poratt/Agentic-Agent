@@ -213,4 +213,7 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Runtime wiring note: a backend agent's self-report claimed `GeneticsModule` and `seedGenetics` were wired, but `nest build` is type-check only and never executes `main.ts`. Both wirings were missing on disk and were applied directly before close-out; `npm.cmd run build` from `backend` and `npx ng build` from `frontend` both pass after the fix.
 - Remaining active plans: `llm-model-test-results-retention-plan.md`, `provider-and-llm-db-plan.md` (partial — Phases 1-3 done, 4-9 remain), `database-storage-monitor-plan.md`.
 - Remaining incomplete: `thinking-ux-cleanup.md`.
-- Note: `llm-model-test-results.entity.ts` schema does not match `provider-and-llm-db-plan.md` — current entity only has `modelId`, `responseTimeMs`, `status`, `errorMessage`; plan specifies `runId`, `providerKey`, `modelName`, `modelLabel`, `available`, `success`, `latencyMs`, `timeToFirstTokenMs`, `tokensPerSecond`, `inputTokens`, `outputTokens`, `qualityScore`, `qualityReason`, `testedAt`.
+- Completed: Integrated shared `Tooltip` component into `StrainHunter` table for terpenes and genetics.
+- Fixed: Tooltip "no info" error by ensuring `TerpeneStore` and `GeneticsStore` are initialized in `StrainHunter.ngOnInit`.
+- Fixed: Tooltip lookup failures by implementing normalized Hebrew name matching in `TerpeneStore` and `GeneticsStore` to handle punctuation/whitespace variations.
+- Remaining active plans: `llm-model-test-results-retention-plan.md`, `provider-and-llm-db-plan.md` (partial — Phases 1-3 done, 4-9 remain), `database-storage-monitor-plan.md`.

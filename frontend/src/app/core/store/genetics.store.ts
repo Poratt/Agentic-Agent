@@ -19,23 +19,25 @@ export class GeneticsStore {
     loading = signal(false);
     error = signal<string | null>(null);
 
-    /** Lookup table keyed by Hebrew name. Recomputed only when `genetics` changes. */
+    /** Lookup table keyed by normalized Hebrew name. Recomputed only when `genetics` changes. */
     readonly byName = computed<ReadonlyMap<string, IGenetics>>(() => {
         const map = new Map<string, IGenetics>();
         for (const g of this.genetics()) {
-            map.set(g.name, g);
+            const normalized = g.name.trim().toLowerCase().replace(/[׀-׿]+/g, (m) => m).replace(/[^֐-׿\s]/g, ' ').replace(/\s+/g, ' ').trim();
+            map.set(normalized, g);
         }
         return map;
     });
 
     /**
-     * Look up a genetics row by its exact Hebrew name.
+     * Look up a genetics row by its Hebrew name (normalized).
      *
-     * @param name Hebrew name as stored on `IGenetics.name` (the chip text).
-     * @returns The matching row, or `undefined` if the catalog has not loaded it yet or no record matches.
+     * @param name Hebrew name as stored on `IGenetics.name`.
+     * @returns The matching row, or `undefined` if no record matches.
      */
     getByName(name: string): IGenetics | undefined {
-        return this.byName().get(name);
+        const normalized = name.trim().toLowerCase().replace(/[^֐-׿\s]/g, ' ').replace(/\s+/g, ' ').trim();
+        return this.byName().get(normalized);
     }
 
     /**

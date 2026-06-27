@@ -34,10 +34,10 @@ export class MatchingEngineStore {
   private readonly prefsState = signal<PrefMap>({});
   private readonly weightsState = signal<Weights>({ ...DEFAULT_WEIGHTS });
 
-  readonly prefs = this.prefsState.asReadonly();
-  readonly weights = this.weightsState.asReadonly();
+  public readonly prefs = this.prefsState.asReadonly();
+  public readonly weights = this.weightsState.asReadonly();
 
-  readonly hasAnyPreference = computed(() => {
+  public readonly hasAnyPreference = computed(() => {
     const prefs = this.prefsState();
     return Object.values(prefs).some((state) => state !== 'neutral');
   });
@@ -54,12 +54,12 @@ export class MatchingEngineStore {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
       } catch {
-        // Storage may be unavailable (private mode, SSR, quota). Non-fatal.
+        // Storage may be unavailable
       }
     });
   }
 
-  cyclePref(key: string): void {
+  public cyclePref(key: string): void {
     const trimmed = key.trim();
     if (!trimmed) {
       return;
@@ -69,14 +69,16 @@ export class MatchingEngineStore {
       const current = prev[trimmed] ?? 'neutral';
       const next = PREF_STATES[(PREF_STATES.indexOf(current) + 1) % PREF_STATES.length];
       const updated = { ...prev, [trimmed]: next };
+
       if (next === 'neutral') {
         delete updated[trimmed];
       }
+
       return updated;
     });
   }
 
-  setPref(key: string, state: PrefState): void {
+  public setPref(key: string, state: PrefState): void {
     const trimmed = key.trim();
     if (!trimmed) {
       return;
@@ -84,17 +86,16 @@ export class MatchingEngineStore {
 
     this.prefsState.update((prev) => {
       const updated = { ...prev, [trimmed]: state };
+
       if (state === 'neutral') {
         delete updated[trimmed];
       }
+
       return updated;
     });
   }
 
-  /**
-   * FIX 1: סינכרון המשקולות כך שסכומן יהיה תמיד 100% (חווית נדנדה ב-UI)
-   */
-  setWeight(category: keyof Weights, value: number): void {
+  public setWeight(category: keyof Weights, value: number): void {
     const clamped = Math.max(0, Math.min(100, Math.round(value)));
     const otherCategory = category === 'terpene' ? 'genetics' : 'terpene';
 
@@ -104,42 +105,36 @@ export class MatchingEngineStore {
     } as Weights);
   }
 
-  reset(): void {
+  public reset(): void {
     this.prefsState.set({});
     this.weightsState.set({ ...DEFAULT_WEIGHTS });
   }
 
-  prefState(key: string): PrefState {
+  public prefState(key: string): PrefState {
     return this.prefsState()[key] ?? 'neutral';
   }
 
-  /**
-   * FIX 2: חישוב מנורמל המבוסס על ממוצע משוקלל אמיתי
-   */
-  calculateScore<T extends Record<string, unknown>>(item: T): ScoredStrain<T> {
+  public calculateScore<T extends Record<string, unknown>>(item: T): ScoredStrain<T> {
     const prefs = this.prefsState();
     const weights = this.weightsState();
 
-    const terpeneResult = this.scoreCategory(item, 'terpene', prefs);
-    const geneticsResult = this.scoreCategory(item, 'genetics', prefs);
+    const terpeneData = this.scoreCategory(item, 'terpene', prefs);
+    const geneticsData = this.scoreCategory(item, 'genetics', prefs);
 
-    const terpeneMax = terpeneResult.max || 1;
-    const geneticsMax = geneticsResult.max || 1;
+    const activeTerpWeight = terpeneData.hasPositivePrefs ? weights.terpene : 0;
+    const activeGenWeight = geneticsData.hasPositivePrefs ? weights.genetics : 0;
+    const totalActiveWeight = activeTerpWeight + activeGenWeight;
 
-    // חישוב יחסי הטיב הטהורים של הקטגוריות (ערך בין 0 ל-1)
-    const terpeneRatio = terpeneResult.points / terpeneMax;
-    const geneticsRatio = geneticsResult.points / geneticsMax;
+    let weightedBaseScore = 100;
 
-    // נרמול הציון מול סך המשקולות הקיים (מונע קריסת ציונים בשינוי סליידרים)
-    const totalWeight = weights.terpene + weights.genetics;
+    if (totalActiveWeight > 0) {
+      const terpScore = terpeneData.maxPoints > 0 ? terpeneData.earnedPoints / terpeneData.maxPoints : 0;
+      const genScore = geneticsData.maxPoints > 0 ? geneticsData.earnedPoints / geneticsData.maxPoints : 0;
 
-    let weightedBaseScore = 0;
-    if (totalWeight > 0) {
-      weightedBaseScore = (((terpeneRatio * weights.terpene) + (geneticsRatio * weights.genetics)) / totalWeight) * 100;
+      weightedBaseScore = (((terpScore * activeTerpWeight) + (genScore * activeGenWeight)) / totalActiveWeight) * 100;
     }
 
-    // החלת קנס (Penalty) במידה וקיימת החלטת Avoid
-    const penaltyIngredient = terpeneResult.penaltyIngredient ?? geneticsResult.penaltyIngredient;
+    const penaltyIngredient = terpeneData.penaltyIngredient ?? geneticsData.penaltyIngredient;
     const penaltyDeduction = penaltyIngredient ? 30 : 0;
 
     const score = Math.max(0, Math.min(100, Math.round(weightedBaseScore - penaltyDeduction)));
@@ -152,7 +147,7 @@ export class MatchingEngineStore {
     };
   }
 
-  topScored<T extends Record<string, unknown>>(items: T[], limit = 5): ScoredStrain<T>[] {
+  public topScored<T extends Record<string, unknown>>(items: T[], limit = 5): ScoredStrain<T>[] {
     if (items.length === 0) {
       return [];
     }
@@ -164,40 +159,56 @@ export class MatchingEngineStore {
   }
 
   private scoreCategory(item: Record<string, unknown>, category: keyof Weights, prefs: PrefMap): {
-    points: number;
-    max: number;
+    earnedPoints: number;
+    maxPoints: number;
+    hasPositivePrefs: boolean;
     penaltyIngredient: string | null;
   } {
     const ingredients = this.extractIngredients(item, category);
-    let points = 0;
-    let max = 0;
+
+    let maxPoints = 0;
+    let hasPositivePrefs = false;
+
+    for (const [key, state] of Object.entries(prefs)) {
+      if (key.startsWith(`${category}:`)) {
+        if (state === 'love') {
+          maxPoints += 2;
+          hasPositivePrefs = true;
+        } else if (state === 'like') {
+          maxPoints += 1;
+          hasPositivePrefs = true;
+        }
+      }
+    }
+
+    let earnedPoints = 0;
     let penaltyIngredient: string | null = null;
 
     for (const name of ingredients) {
-      const state = prefs[`${category}:${name}`] ?? 'neutral';
-      max += 2;
+      const state = prefs[`${category}:${name}`];
 
       if (state === 'love') {
-        points += 2;
+        earnedPoints += 2;
       } else if (state === 'like') {
-        points += 1;
+        earnedPoints += 1;
       } else if (state === 'avoid') {
-        points += 0;
         if (penaltyIngredient === null) {
           penaltyIngredient = name;
         }
       }
     }
 
-    return { points, max, penaltyIngredient };
+    return { earnedPoints, maxPoints, hasPositivePrefs, penaltyIngredient };
   }
 
   private extractIngredients(item: Record<string, unknown>, category: keyof Weights): string[] {
     if (category === 'terpene') {
       const raw = this.stringField(item, ['terpenes']);
+
       if (!raw || raw === 'לא ידוע') {
         return [];
       }
+
       return raw
         .split(',')
         .map((part) => this.stripTerpeneParens(part.trim()))
@@ -214,10 +225,12 @@ export class MatchingEngineStore {
   private stringField(item: Record<string, unknown>, keys: string[]): string {
     for (const key of keys) {
       const value = item[key];
+
       if (typeof value === 'string' && value.trim().length > 0) {
         return value.trim();
       }
     }
+
     return '';
   }
 
@@ -228,18 +241,22 @@ export class MatchingEngineStore {
   private hydrate(): void {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
+
       if (!raw) {
         return;
       }
+
       const parsed = JSON.parse(raw) as Partial<PersistedShape>;
+
       if (parsed.prefs && typeof parsed.prefs === 'object') {
         this.prefsState.set(parsed.prefs as PrefMap);
       }
+
       if (parsed.weights && typeof parsed.weights === 'object') {
         this.weightsState.set({ ...DEFAULT_WEIGHTS, ...parsed.weights });
       }
     } catch {
-      // Corrupt or unavailable storage — start fresh.
+      // Storage unavailable
     }
   }
 }

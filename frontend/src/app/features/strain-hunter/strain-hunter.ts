@@ -10,6 +10,9 @@ import { Subscription, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { PageStates } from '../../core/enums/page-states.enum';
 import { MatchingEngineStore, ScoredStrain } from '../../core/store/matching-engine.store';
+import { TerpeneStore } from '../../core/store/terpene.store';
+import { GeneticsStore } from '../../core/store/genetics.store';
+import { Tooltip, TooltipCategory } from '../../components/shared/tooltip/tooltip';
 import { MatchingPreferencesDrawer } from './matching-preferences-drawer/matching-preferences-drawer';
 
 type StrainHunterResponse = {
@@ -43,12 +46,22 @@ type TerpeneFilter = {
     label: string;
 };
 
+type TooltipPos = {
+    name: string;
+    category: TooltipCategory;
+    top: number;
+    left: number;
+};
+
+const TOOLTIP_W = 240;
+const TOOLTIP_GAP = 8;
+
 type StrainRow = ScoredStrain<Record<string, unknown>>;
 
 @Component({
     selector: 'app-strain-hunter',
     standalone: true,
-    imports: [CommonModule, TableModule, InputTextModule, TooltipModule, DialogModule, MatchingPreferencesDrawer],
+    imports: [CommonModule, TableModule, InputTextModule, TooltipModule, DialogModule, MatchingPreferencesDrawer, Tooltip],
     templateUrl: './strain-hunter.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./strain-hunter.css'],
@@ -56,6 +69,8 @@ type StrainRow = ScoredStrain<Record<string, unknown>>;
 export class StrainHunter implements OnInit {
     private http = inject(HttpClient);
     private matchingEngine = inject(MatchingEngineStore);
+    private readonly terpeneStore = inject(TerpeneStore);
+    private readonly geneticsStore = inject(GeneticsStore);
     private base = `${environment.apiUrl}/strain-hunter`;
     private table = viewChild<Table>('table');
     private requestSubscription: Subscription | null = null;
@@ -128,6 +143,7 @@ export class StrainHunter implements OnInit {
     selectedImageUrl = signal<string | null>(null);
     imageDialogVisible = signal(false);
     matchDrawerVisible = signal(false);
+    readonly tooltip = signal<TooltipPos | null>(null);
 
     activeFilters = signal<StrainHunterFilter[]>([]);
 
@@ -188,6 +204,8 @@ export class StrainHunter implements OnInit {
     });
 
     ngOnInit() {
+        this.terpeneStore.loadAll();
+        this.geneticsStore.loadAll();
         this.load(false);
     }
 
@@ -282,6 +300,30 @@ export class StrainHunter implements OnInit {
     closeImageDialog() {
         this.imageDialogVisible.set(false);
         this.selectedImageUrl.set(null);
+    }
+
+    onTerpeneEnter(name: string, event: MouseEvent) {
+        const el = event.currentTarget as HTMLElement;
+        const rect = el.getBoundingClientRect();
+        const top = rect.bottom + TOOLTIP_GAP;
+        const chipCenter = rect.left + rect.width / 2;
+        const left = Math.max(TOOLTIP_GAP, Math.min(chipCenter - TOOLTIP_W / 2, window.innerWidth - TOOLTIP_W - TOOLTIP_GAP));
+
+        this.tooltip.set({ name, category: 'terpene', top, left });
+    }
+
+    onGeneticsEnter(name: string, event: MouseEvent) {
+        const el = event.currentTarget as HTMLElement;
+        const rect = el.getBoundingClientRect();
+        const top = rect.bottom + TOOLTIP_GAP;
+        const chipCenter = rect.left + rect.width / 2;
+        const left = Math.max(TOOLTIP_GAP, Math.min(chipCenter - TOOLTIP_W / 2, window.innerWidth - TOOLTIP_W - TOOLTIP_GAP));
+
+        this.tooltip.set({ name, category: 'genetics', top, left });
+    }
+
+    onTooltipLeave() {
+        this.tooltip.set(null);
     }
 
     applyGlobalFilter(event: Event) {

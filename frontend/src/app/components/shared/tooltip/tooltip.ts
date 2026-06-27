@@ -16,17 +16,20 @@ export class Tooltip {
     private readonly terpeneStore = inject(TerpeneStore);
     private readonly geneticsStore = inject(GeneticsStore);
 
-    /** Category switch — decides which store and which card template renders. */
-    readonly category = input.required<TooltipCategory>();
+    public readonly category = input.required<TooltipCategory>();
+    public readonly name = input.required<string>();
 
-    /** Display name — looked up in the matching store. */
-    readonly name = input.required<string>();
+    public readonly terpene = computed(() => {
+        if (this.category() === 'terpene') {
+            return this.terpeneStore.getByName(this.name());
+        }
+        return undefined;
+    });
 
-    readonly terpene = computed(() =>
-        this.category() === 'terpene' ? this.terpeneStore.getByName(this.name()) : undefined,
-    );
-
-    readonly genetics = computed(() =>
-        this.category() === 'genetics' ? this.geneticsStore.getByName(this.name()) : undefined,
-    );
+    public readonly genetics = computed(() => {
+        if (this.category() === 'genetics') {
+            return this.geneticsStore.getByName(this.name());
+        }
+        return undefined;
+    });
 }

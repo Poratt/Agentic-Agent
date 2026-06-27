@@ -65,6 +65,15 @@
         </div>
     </div>
 
+    @if (tooltip()) {
+        <app-tooltip
+            [category]="tooltip()!.category"
+            [name]="tooltip()!.name"
+            [style.top.px]="tooltip()!.top"
+            [style.left.px]="tooltip()!.left"
+        />
+    }
+
     @switch (pageState()) {
         @case (PageStates.Loading) {
             <div class="page-state loading-state">
@@ -275,6 +284,8 @@
                                                     <button
                                                         class="filter-node origin-strain-node"
                                                         type="button"
+                                                        (mouseenter)="onGeneticsEnter(item.originStrain, $event)"
+                                                        (mouseleave)="onTooltipLeave()"
                                                         (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.originStrain)"
                                                     >
                                                         <span class="ph ph-network"></span>
@@ -286,6 +297,8 @@
                                                         <button
                                                             class="filter-node"
                                                             type="button"
+                                                            (mouseenter)="onGeneticsEnter(item.parent1, $event)"
+                                                            (mouseleave)="onTooltipLeave()"
                                                             (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.parent1)"
                                                         >
                                                             <span class="ph ph-leaf"></span>
@@ -297,6 +310,8 @@
                                                         <button
                                                             class="filter-node"
                                                             type="button"
+                                                            (mouseenter)="onGeneticsEnter(item.parent2, $event)"
+                                                            (mouseleave)="onTooltipLeave()"
                                                             (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.parent2)"
                                                         >
                                                             <span class="ph ph-leaf"></span>
@@ -313,6 +328,8 @@
                                                             <button
                                                                 class="terpene-node filter-node"
                                                                 type="button"
+                                                                (mouseenter)="onTerpeneEnter(terpene.name, $event)"
+                                                                (mouseleave)="onTooltipLeave()"
                                                                 (click)="applyDataFilter('terpenes', terpene.name, terpene.label)"
                                                             >
                                                                 {{ terpene.label }}

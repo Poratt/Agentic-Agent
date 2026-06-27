@@ -19,23 +19,25 @@ export class TerpeneStore {
     loading = signal(false);
     error = signal<string | null>(null);
 
-    /** Lookup table keyed by Hebrew name. Recomputed only when `terpenes` changes. */
+    /** Lookup table keyed by normalized Hebrew name. Recomputed only when `terpenes` changes. */
     readonly byName = computed<ReadonlyMap<string, ITerpene>>(() => {
         const map = new Map<string, ITerpene>();
         for (const t of this.terpenes()) {
-            map.set(t.name, t);
+            const normalized = t.name.trim().toLowerCase().replace(/[^֐-׿\s]/g, ' ').replace(/\s+/g, ' ').trim();
+            map.set(normalized, t);
         }
         return map;
     });
 
     /**
-     * Look up a terpene by its exact Hebrew name.
+     * Look up a terpene by its Hebrew name (normalized).
      *
-     * @param name Hebrew name as stored on `ITerpene.name` (the chip text).
-     * @returns The matching terpene, or `undefined` if the catalog has not loaded it yet or no record matches.
+     * @param name Hebrew name as stored on `ITerpene.name`.
+     * @returns The matching terpene, or `undefined` if no record matches.
      */
     getByName(name: string): ITerpene | undefined {
-        return this.byName().get(name);
+        const normalized = name.trim().toLowerCase().replace(/[^֐-׿\s]/g, ' ').replace(/\s+/g, ' ').trim();
+        return this.byName().get(normalized);
     }
 
     /**

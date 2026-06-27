@@ -28,6 +28,11 @@ documents/
 ## Notes For Next Agent
 
 **Completed Fixes**
+- Integrated shared `Tooltip` component into `StrainHunter` table for both terpenes and genetics.
+- Fixed "no info" tooltip state by:
+  1. Triggering `loadAll()` for reference stores in `StrainHunter.ngOnInit`.
+  2. Implementing normalized Hebrew lookup in `TerpeneStore` and `GeneticsStore` to handle punctuation (e.g. apostrophes in "אוג'י") and whitespace.
+- Updated `StrainHunter` templates with `mouseenter`/`mouseleave` handlers to manage tooltip visibility and positioning.
 - Updated `LlmProviderStore.updateProvider` to merge patched fields into existing provider object.
 - Updated `LlmProviderStore.updateModel` to merge patched fields into existing model object.
 - Ensures `testResults` and `models` arrays are preserved on partial PATCH responses.

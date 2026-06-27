@@ -27,7 +27,9 @@
                 }
             </div>
         } @else {
-            <div class="tooltip-card tooltip-card-empty"><span>אין מידע זמין</span></div>
+            <div class="tooltip-card tooltip-card-empty">
+                <span>אין מידע זמין</span>
+            </div>
         }
     }
     @case ('genetics') {
@@ -46,9 +48,15 @@
                     <div class="tooltip-card-row">
                         <span class="ph ph-tree-evergreen tooltip-card-icon"></span>
                         <span>
-                            @if (g.parent1) { <span>{{ g.parent1 }}</span> }
-                            @if (g.parent1 && g.parent2) { <span> × </span> }
-                            @if (g.parent2) { <span>{{ g.parent2 }}</span> }
+                            @if (g.parent1) {
+                                <span>{{ g.parent1 }}</span>
+                            }
+                            @if (g.parent1 && g.parent2) {
+                                <span> ✕ </span>
+                            }
+                            @if (g.parent2) {
+                                <span>{{ g.parent2 }}</span>
+                            }
                         </span>
                     </div>
                 }
@@ -68,7 +76,9 @@
                 }
             </div>
         } @else {
-            <div class="tooltip-card tooltip-card-empty"><span>אין מידע זמין</span></div>
+            <div class="tooltip-card tooltip-card-empty">
+                <span>אין מידע זמין</span>
+            </div>
         }
     }
 }

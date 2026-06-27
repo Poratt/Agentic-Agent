@@ -127,7 +127,7 @@ function normalizeRows(rawRows: GeneticsSeed[]): GeneticsSeed[] {
     const kept: GeneticsSeed[] = [];
     const warnings: string[] = [];
 
-    for (let i = 0; i < sorted.length; ) {
+    for (let i = 0; i < sorted.length;) {
         let group = [sorted[i]];
         let j = i + 1;
         while (j < sorted.length && sorted[j].name === sorted[i].name) {
