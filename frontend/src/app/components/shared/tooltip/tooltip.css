@@ -7,9 +7,9 @@
        tooltip can escape any clipping ancestor (drawer, app shell). */
 }
 
-.terpene-card {
+.tooltip-card {
     /* Fallback if upstream forgets to set the inline color. */
-    --terpene-color: var(--color-text-muted);
+    --tooltip-color: var(--color-text-muted);
 
     position: relative;
     isolation: isolate;
@@ -36,37 +36,37 @@
     }
 }
 
-.terpene-card-header {
+.tooltip-card-header {
     display: flex;
     align-items: center;
     gap: var(--space-2);
     margin: 0;
 }
 
-.terpene-card-dot {
+.tooltip-card-dot {
     width: var(--space-2);
     height: var(--space-2);
     border-radius: var(--radius-pill);
-    background: var(--terpene-color);
-    box-shadow: 0 0 var(--space-2) var(--terpene-color);
+    background: var(--tooltip-color);
+    box-shadow: 0 0 var(--space-2) var(--tooltip-color);
     flex-shrink: 0;
 }
 
-.terpene-card-name {
+.tooltip-card-name {
     margin: 0;
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
     color: var(--color-text-primary);
 }
 
-.terpene-card-desc {
+.tooltip-card-desc {
     margin: 0;
     font-size: var(--font-size-xs);
     color: var(--color-text-secondary);
     line-height: var(--line-height-normal);
 }
 
-.terpene-card-row {
+.tooltip-card-row {
     display: flex;
     align-items: center;
     gap: var(--space-1);
@@ -74,29 +74,29 @@
     color: var(--color-text-secondary);
 }
 
-.terpene-card-icon {
-    color: var(--terpene-color);
+.tooltip-card-icon {
+    color: var(--tooltip-color);
     font-size: var(--font-size-md);
     flex-shrink: 0;
 }
 
-.terpene-card-effects {
+.tooltip-card-effects {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
 }
 
-.terpene-card-effect-tag {
+.tooltip-card-effect-tag {
     font-size: var(--font-size-xs);
     padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-pill);
     background: var(--color-surface);
-    color: var(--terpene-color);
+    color: var(--tooltip-color);
     border: 1px solid var(--color-border);
     line-height: 1;
 }
 
-.terpene-card-empty {
+.tooltip-card-empty {
     color: var(--color-text-secondary);
     font-size: var(--font-size-xs);
 }

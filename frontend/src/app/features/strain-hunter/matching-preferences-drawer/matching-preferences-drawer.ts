@@ -5,7 +5,8 @@ import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
 import { MatchingEngineStore, ScoredStrain } from '../../../core/store/matching-engine.store';
 import { TerpeneStore } from '../../../core/store/terpene.store';
-import { TerpeneTooltip } from '../terpene-tooltip/terpene-tooltip';
+import { GeneticsStore } from '../../../core/store/genetics.store';
+import { Tooltip, TooltipCategory } from '../../../components/shared/tooltip/tooltip';
 
 type PreviewItem = {
     name: string;
@@ -22,19 +23,18 @@ type CategoryGroup = {
 
 type TooltipPos = {
     name: string;
+    category: TooltipCategory;
     top: number;
     left: number;
-    openUp: boolean;
 };
 
 const TOOLTIP_W = 240;
-const TOOLTIP_H = 140;
 const GAP = 8;
 
 @Component({
     selector: 'app-matching-preferences-drawer',
     standalone: true,
-    imports: [CommonModule, FormsModule, DrawerModule, ButtonModule, TerpeneTooltip],
+    imports: [CommonModule, FormsModule, DrawerModule, ButtonModule, Tooltip],
     templateUrl: './matching-preferences-drawer.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./matching-preferences-drawer.css'],
@@ -42,6 +42,7 @@ const GAP = 8;
 export class MatchingPreferencesDrawer {
     private readonly engine = inject(MatchingEngineStore);
     private readonly terpeneStore = inject(TerpeneStore);
+    private readonly geneticsStore = inject(GeneticsStore);
 
     readonly visible = model<boolean>(false);
     readonly items = input<Record<string, unknown>[]>([]);
@@ -80,15 +81,9 @@ export class MatchingPreferencesDrawer {
 
     constructor() {
         effect(() => {
-            const items = this.items();
-            if (items.length === 0) return;
-            console.log('All Terpenes:', this.collectTerpenes(items));
-            console.log('All Genetics:', this.collectGenetics(items));
-        });
-
-        effect(() => {
             if (this.visible()) {
                 this.terpeneStore.loadAll();
+                this.geneticsStore.loadAll();
             }
         });
     }
@@ -113,23 +108,22 @@ export class MatchingPreferencesDrawer {
     }
 
     onChipEnter(category: 'terpene' | 'genetics', name: string, event: MouseEvent): void {
-        if (category !== 'terpene') return;
         const el = event.currentTarget as HTMLElement;
         const rect = el.getBoundingClientRect();
 
-        // Vertical: prefer above, flip below if not enough room
-        const openUp = rect.top >= TOOLTIP_H + GAP;
-        const top = openUp ? rect.top - TOOLTIP_H - GAP : rect.bottom + GAP;
+        // Always render the tooltip below the chip — never above. Above placement
+        // can cover the chip itself, and a consistent below-anchor keeps the
+        // behavior identical for both terpenes and genetics.
+        const top = rect.bottom + GAP;
 
         // Horizontal: center on chip, clamp inside viewport
         const chipCenter = rect.left + rect.width / 2;
         const left = Math.max(GAP, Math.min(chipCenter - TOOLTIP_W / 2, window.innerWidth - TOOLTIP_W - GAP));
 
-        this.tooltip.set({ name, top, left, openUp });
+        this.tooltip.set({ name, category, top, left });
     }
 
-    onChipLeave(category: 'terpene' | 'genetics'): void {
-        if (category !== 'terpene') return;
+    onChipLeave(): void {
         this.tooltip.set(null);
     }
 

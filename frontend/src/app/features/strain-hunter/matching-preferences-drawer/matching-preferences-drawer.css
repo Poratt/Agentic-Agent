@@ -438,7 +438,7 @@
 }
 
 /* Fixed tooltip — escapes overflow:auto of .chip-grid */
-.terpene-tooltip-fixed {
+.tooltip-fixed {
   position: fixed;
   z-index: 9999;
   pointer-events: none;

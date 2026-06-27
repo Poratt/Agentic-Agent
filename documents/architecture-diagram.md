@@ -20,6 +20,7 @@ flowchart TD
     AuthUI[Auth Feature]
     ChatUI[Chat Feature]
     StrainHunterUI[StrainHunter Feature]
+    SharedTooltip[Shared Tooltip Component]
     ChatMessage[Chat Message Renderer]
     AiFormat[AiFormat Directive]
     FrontendServices[Core HTTP Services]
@@ -37,6 +38,8 @@ flowchart TD
     AnalyticsModule[AnalyticsModule]
     CurrencyModule[CurrencyModule]
     StrainHunterModule[StrainHunterModule]
+    TerpeneModule[TerpeneModule]
+    GeneticsModule[GeneticsModule]
   end
 
   subgraph AgentCore["Admin Agent Core"]
@@ -62,6 +65,8 @@ flowchart TD
     UsersTable[(users)]
     ChatSessionsTable[(chat_sessions)]
     ChatMessagesTable[(chat_messages)]
+    TerpenesTable[(terpenes)]
+    GeneticsTable[(genetics)]
   end
 
   subgraph External["External Providers"]
@@ -76,17 +81,18 @@ flowchart TD
   User --> Shell
   Shell --> AuthUI & ChatUI & StrainHunterUI
   ChatUI --> ChatMessage & FrontendServices
+  StrainHunterUI --> SharedTooltip & FrontendServices
   StrainHunterUI --> StrainHunterModule
   ChatMessage --> AiFormat
   AuthUI --> FrontendServices
-  FrontendServices --> AuthModule & UsersModule & AdminAgentController & LlmController
+  FrontendServices --> AuthModule & UsersModule & AdminAgentController & LlmController & TerpeneModule & GeneticsModule
 
-  AppModule --> AuthModule & UsersModule & AdminAgentModule & LlmModule & SystemModule & WeatherModule & AnalyticsModule & CurrencyModule & StrainHunterModule
+  AppModule --> AuthModule & UsersModule & AdminAgentModule & LlmModule & SystemModule & WeatherModule & AnalyticsModule & CurrencyModule & StrainHunterModule & TerpeneModule & GeneticsModule
 
   AdminAgentModule --> AdminAgentController
   AdminAgentController --> AdminAgentService
   AdminAgentService --> AgentSessionService & AgentToolExecutor & SwaggerParser & SystemContext & LlmService
-  AgentToolExecutor --> SwaggerParser & AuthModule & UsersModule & SystemModule & WeatherModule & AnalyticsModule & CurrencyModule & StrainHunterModule
+  AgentToolExecutor --> SwaggerParser & AuthModule & UsersModule & SystemModule & WeatherModule & AnalyticsModule & CurrencyModule & StrainHunterModule & TerpeneModule & GeneticsModule
   SwaggerParser --> SwaggerSpec[swagger-spec.json]
   SwaggerSpec --> GenUiSpec
 
@@ -223,6 +229,8 @@ flowchart TB
     Analytics["AnalyticsModule"]
     Currency["CurrencyModule"]
     StrainHunter["StrainHunterModule\nJane API fetch and normalized items"]
+    Terpene["TerpeneModule\nterpene catalog with effects, role lookup"]
+    Genetics["GeneticsModule\nstrain lineage catalog with parent1/parent2/origin, role lookup"]
   end
 
   Auth & Users --> UsersDb[(users)]
@@ -232,6 +240,8 @@ flowchart TB
   Weather --> WeatherApi[Weather API]
   Currency --> CurrencyApi[Currency API]
   StrainHunter --> JaneApi[Jane API / Store Page]
+  Terpene --> TerpenesDb[(terpenes)]
+  Genetics --> GeneticsDb[(genetics)]
   LLM --> Providers[LLM Providers]
 ```
 
@@ -290,3 +300,6 @@ sequenceDiagram
 - Internal LLM responsibilities are split into provider config, provider client, model catalog, and health-check services.
 - `StrainHunterModule` fetches Jane store data from the configured Jane API source and exposes normalized items through a protected backend endpoint.
 - `StrainHunterUI` calls the StrainHunter endpoint directly from the component for the first version; no dedicated Angular service exists yet.
+- `TerpeneModule` and `GeneticsModule` expose reference catalogs (terpene effects, strain lineage with parent1/parent2/origin) as protected endpoints. They are surfaced to the admin agent as tools via Swagger metadata and seeded from JSON catalogs on backend boot.
+- The shared `Tooltip` Angular component renders chip hover details for both terpenes and genetics, switching on a `category` input. The matching preferences drawer in `StrainHunterUI` collects genetics role metadata (first-write-wins: `origin > parent1 > parent2`) and passes it to the tooltip.
+- `TerpeneStore` and `GeneticsStore` are signal stores with `byName` map lookups and idempotent `loadAll()` actions; both are populated when the strain-hunter drawer becomes visible.

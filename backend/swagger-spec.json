@@ -1500,6 +1500,107 @@
         ],
         "toolIcon": "ph-flower-lotus"
       }
+    },
+    "/genetics": {
+      "get": {
+        "description": "Returns the full genetics reference catalog ordered alphabetically by Hebrew name. The list is intended to be cached client-side.",
+        "operationId": "GeneticsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Catalog fetched successfully. `result` is an array of GeneticsDto ordered alphabetically by name.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneticsListResultResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not applicable for this endpoint."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "403": {
+            "description": "Not applicable for this endpoint."
+          },
+          "404": {
+            "description": "Not applicable for this endpoint."
+          },
+          "500": {
+            "description": "Unexpected database or server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all genetics rows",
+        "summaryHe": "שליפת כל הזנים בקטלוג",
+        "tags": [
+          "genetics"
+        ],
+        "toolIcon": "ph-tree-evergreen"
+      }
+    },
+    "/genetics/{name}": {
+      "get": {
+        "description": "Returns the genetics row whose `name` column exactly matches the supplied `:name` path parameter. Result is `null` when no record matches — this is not treated as a 404 so the frontend can render a graceful empty state.",
+        "operationId": "GeneticsController_findOne",
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "in": "path",
+            "description": "Hebrew strain name. Must exactly match the `genetics.name` column. URL-encode spaces and non-ASCII characters (e.g. `גורילה%20גלו`).",
+            "schema": {
+              "example": "גורילה גלו",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lookup succeeded. `result` is the matching strain or null when no row matches the given name.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneticsResultResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not applicable for this endpoint."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "403": {
+            "description": "Not applicable for this endpoint."
+          },
+          "404": {
+            "description": "Not applicable for this endpoint. Missing rows return `result: null`."
+          },
+          "500": {
+            "description": "Unexpected database or server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a strain by name",
+        "summaryHe": "שליפת זן בודד לפי שם",
+        "tags": [
+          "genetics"
+        ],
+        "toolIcon": "ph-tree-evergreen"
+      }
     }
   },
   "info": {
@@ -2762,6 +2863,150 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/TerpeneDto"
+              }
+            ]
+          },
+          "error": {
+            "description": "Optional error details.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "retryAfter": {
+            "type": "string",
+            "description": "Optional retry hint."
+          },
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code echoed from the server.",
+            "example": 200
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "result"
+        ]
+      },
+      "GeneticsDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Auto-incremented primary key.",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Hebrew display name. Unique — used as the lookup key from the frontend.",
+            "example": "גורילה גלו"
+          },
+          "description": {
+            "type": "string",
+            "description": "Short Hebrew description of the strain. Omitted when not set.",
+            "example": "זן חזק במיוחד שזכה במקומות ראשונים ב-Cannabis Cup..."
+          },
+          "parent1": {
+            "type": "string",
+            "description": "First genetic parent (parent1) — Hebrew or English name. Omitted when not set.",
+            "example": "Chem Sis"
+          },
+          "parent2": {
+            "type": "string",
+            "description": "Second genetic parent (parent2) — Hebrew or English name. Omitted when not set.",
+            "example": "Sour Dubb"
+          },
+          "origin": {
+            "type": "string",
+            "description": "Country / region of origin (Hebrew text). Omitted when not set.",
+            "example": "ארה\"ב"
+          },
+          "type": {
+            "type": "string",
+            "description": "Cannabis type — היברידי / סאטיבה / אינדיקה. Omitted when not set.",
+            "enum": [
+              "היברידי",
+              "סאטיבה",
+              "אינדיקה"
+            ],
+            "example": "היברידי"
+          },
+          "color": {
+            "type": "string",
+            "description": "Hex accent color used by the frontend to render per-strain UI accents (dots, tag borders, etc.).",
+            "example": "#228B22"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "color"
+        ]
+      },
+      "GeneticsListResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request succeeded.",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable status message.",
+            "example": "OK"
+          },
+          "result": {
+            "description": "The list of genetics rows ordered alphabetically by name.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeneticsDto"
+            }
+          },
+          "error": {
+            "description": "Optional error details.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "retryAfter": {
+            "type": "string",
+            "description": "Optional retry hint."
+          },
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code echoed from the server.",
+            "example": 200
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "result"
+        ]
+      },
+      "GeneticsResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request succeeded.",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable status message.",
+            "example": "OK"
+          },
+          "result": {
+            "description": "The matching genetics row, or null when no record matches the given name.",
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GeneticsDto"
               }
             ]
           },

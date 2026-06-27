@@ -1,0 +1,74 @@
+@switch (category()) {
+    @case ('terpene') {
+        @if (terpene(); as t) {
+            <div class="tooltip-card" [style.--tooltip-color]="t.color">
+                <header class="tooltip-card-header">
+                    <span class="tooltip-card-dot"></span>
+                    <h4 class="tooltip-card-name">{{ t.name }}</h4>
+                </header>
+
+                @if (t.description) {
+                    <p class="tooltip-card-desc">{{ t.description }}</p>
+                }
+
+                @if (t.scent) {
+                    <div class="tooltip-card-row">
+                        <span class="ph ph-flower-lotus tooltip-card-icon"></span>
+                        <span>{{ t.scent }}</span>
+                    </div>
+                }
+
+                @if (t.effects?.length) {
+                    <div class="tooltip-card-effects">
+                        @for (effect of t.effects; track effect) {
+                            <span class="tooltip-card-effect-tag">{{ effect }}</span>
+                        }
+                    </div>
+                }
+            </div>
+        } @else {
+            <div class="tooltip-card tooltip-card-empty"><span>אין מידע זמין</span></div>
+        }
+    }
+    @case ('genetics') {
+        @if (genetics(); as g) {
+            <div class="tooltip-card" [style.--tooltip-color]="g.color">
+                <header class="tooltip-card-header">
+                    <span class="tooltip-card-dot"></span>
+                    <h4 class="tooltip-card-name">{{ g.name }}</h4>
+                </header>
+
+                @if (g.description) {
+                    <p class="tooltip-card-desc">{{ g.description }}</p>
+                }
+
+                @if (g.parent1 || g.parent2) {
+                    <div class="tooltip-card-row">
+                        <span class="ph ph-tree-evergreen tooltip-card-icon"></span>
+                        <span>
+                            @if (g.parent1) { <span>{{ g.parent1 }}</span> }
+                            @if (g.parent1 && g.parent2) { <span> × </span> }
+                            @if (g.parent2) { <span>{{ g.parent2 }}</span> }
+                        </span>
+                    </div>
+                }
+
+                @if (g.origin) {
+                    <div class="tooltip-card-row">
+                        <span class="ph ph-globe-hemisphere-west tooltip-card-icon"></span>
+                        <span>{{ g.origin }}</span>
+                    </div>
+                }
+
+                @if (g.type) {
+                    <div class="tooltip-card-row">
+                        <span class="ph ph-leaf tooltip-card-icon"></span>
+                        <span>{{ g.type }}</span>
+                    </div>
+                }
+            </div>
+        } @else {
+            <div class="tooltip-card tooltip-card-empty"><span>אין מידע זמין</span></div>
+        }
+    }
+}

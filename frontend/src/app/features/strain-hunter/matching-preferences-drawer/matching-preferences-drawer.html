@@ -59,7 +59,7 @@
                                     [class]="chipClass(group.category, name)"
                                     (click)="cycle(group.category, name)"
                                     (mouseenter)="onChipEnter(group.category, name, $event)"
-                                    (mouseleave)="onChipLeave(group.category)"
+                                    (mouseleave)="onChipLeave()"
                                     [attr.aria-label]="group.title + ': ' + name"
                                 >
                                     @if (chipLabel(group.category, name); as iconClass) {
@@ -148,6 +148,12 @@
 
     <!-- Tooltip rendered at drawer root — escapes all overflow:auto ancestors -->
     @if (tooltip(); as t) {
-        <app-terpene-tooltip class="terpene-tooltip-fixed" [name]="t.name" [style.top.px]="t.top" [style.left.px]="t.left" />
+        <app-tooltip
+            class="tooltip-fixed"
+            [category]="t.category"
+            [name]="t.name"
+            [style.top.px]="t.top"
+            [style.left.px]="t.left"
+        />
     }
 </p-drawer>
