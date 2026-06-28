@@ -74,6 +74,14 @@
         />
     }
 
+    @if (activeScoreTooltip()) {
+        <app-score-tooltip
+            [breakdown]="activeScoreTooltip()!.breakdown"
+            [style.top.px]="activeScoreTooltip()!.top"
+            [style.left.px]="activeScoreTooltip()!.left"
+        />
+    }
+
     @switch (pageState()) {
         @case (PageStates.Loading) {
             <div class="page-state loading-state">
@@ -209,7 +217,11 @@
                                             </div>
                                         </div>
                                     } @else if (column === 'matchScore') {
-                                        <div class="score-ring-wrapper">
+                                        <div
+                                            class="score-ring-wrapper"
+                                            (mouseenter)="onScoreRingEnter(item.breakdown, $event)"
+                                            (mouseleave)="onScoreRingLeave()"
+                                        >
                                             <svg
                                                 class="match-ring"
                                                 [class]="ringColorClass(item.score)"
@@ -415,22 +427,24 @@
     }
 </div>
 
+<app-matching-preferences-drawer
+    [(visible)]="matchDrawerVisible"
+    [items]="rawItems()"
+/>
+
 <p-dialog
     [(visible)]="imageDialogVisible"
     [modal]="true"
-    [closable]="true"
-    [showHeader]="false"
-    [modal]="true"
     [dismissableMask]="true"
     [closable]="true"
-    [draggable]="true"
-    [resizable]="true"
+    [draggable]="false"
+    [resizable]="false"
     [style]="{ width: '480px' }"
     (onHide)="closeImageDialog()"
 >
-    <div class="image-dialog-content">
-        <img [src]="selectedImageUrl()!" alt="" class="full-image" />
+    <div style="text-align: center">
+        @if (selectedImageUrl()) {
+            <img [src]="selectedImageUrl()" alt="Strain" style="max-width: 100%; border-radius: var(--radius-md)" />
+        }
     </div>
 </p-dialog>
-
-<app-matching-preferences-drawer [(visible)]="matchDrawerVisible" [items]="rawItems()" />

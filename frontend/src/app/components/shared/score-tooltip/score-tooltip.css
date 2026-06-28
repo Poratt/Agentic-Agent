@@ -1,0 +1,171 @@
+:host {
+    display: block;
+    position: fixed;
+    z-index: 1100;
+    direction: rtl;
+    pointer-events: none;
+}
+
+.score-card {
+    position: relative;
+    isolation: isolate;
+    min-width: calc(var(--space-16) * 3.5);
+    max-width: calc(var(--space-16) * 4.5);
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow, var(--shadow-soft));
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    animation: tooltipReveal var(--transition-fast) ease-out forwards;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        backdrop-filter: blur(var(--glass-blur, 8px));
+        -webkit-backdrop-filter: blur(var(--glass-blur, 8px));
+        z-index: -1;
+    }
+
+    .score-card-header {
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: var(--space-2);
+        margin: 0;
+
+        .score-title {
+            margin: 0;
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-bold);
+            color: var(--color-text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    }
+
+    .penalty-banner {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-2);
+        background: var(--color-danger-bg);
+        border: 1px solid var(--color-danger-border);
+        border-radius: var(--radius-sm);
+        padding: var(--space-2);
+
+        .penalty-icon {
+            color: var(--color-danger);
+            font-size: var(--font-size-md);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .penalty-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: var(--font-size-xs);
+
+            strong {
+                color: var(--color-danger);
+                font-weight: var(--font-weight-bold);
+            }
+
+            span {
+                color: var(--color-text-primary);
+            }
+        }
+    }
+
+    .score-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+
+        .score-group-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: var(--font-size-xs);
+
+            .group-icon {
+                color: var(--color-primary);
+                font-size: var(--font-size-md);
+            }
+
+            .group-title {
+                font-weight: var(--font-weight-semibold);
+                color: var(--color-text-primary);
+            }
+
+            .group-weight {
+                margin-right: auto;
+                color: var(--color-text-secondary);
+                font-size: 10px;
+            }
+        }
+
+        .score-metrics {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-1);
+
+            .tag {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 2px var(--space-2);
+                border-radius: var(--radius-pill);
+                font-size: 10px;
+                font-weight: var(--font-weight-semibold);
+                line-height: 1;
+
+                &.tag-hit {
+                    background: var(--color-success-bg);
+                    color: var(--color-success);
+                    border: 1px solid var(--color-success-border);
+                }
+
+                &.tag-miss {
+                    background: var(--color-surface);
+                    color: var(--color-text-muted);
+                    border: 1px solid var(--color-border);
+                }
+            }
+        }
+    }
+
+    .score-card-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-3);
+        text-align: center;
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-xs);
+
+        .ph {
+            font-size: var(--font-size-lg);
+            color: var(--color-primary);
+        }
+    }
+}
+
+@keyframes tooltipReveal {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

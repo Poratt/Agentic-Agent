@@ -1,0 +1,76 @@
+<div class="score-card">
+    <header class="score-card-header">
+        <h4 class="score-title">ציון התאמה אלגוריתמי</h4>
+    </header>
+
+    @if (hasPenalty()) {
+        <div class="penalty-banner">
+            <span class="ph ph-warning-circle penalty-icon"></span>
+            <div class="penalty-text">
+                <strong>קנס של 30- נקודות הוחל</strong>
+                <span>מכיל רכיב מסומן להמנעות: {{ breakdown().penaltyIngredient }}</span>
+            </div>
+        </div>
+    }
+
+    @if (showTerpenes()) {
+        <section class="score-group">
+            <div class="score-group-header">
+                <span class="ph ph-flower-lotus group-icon"></span>
+                <span class="group-title">טרפנים מבוקשים</span>
+                <span class="group-weight">משקל פעיל: {{ breakdown().terpene.weight }}%</span>
+            </div>
+            <div class="score-metrics">
+                <span class="metric-ratio">{{ terpeneScoreText() }}</span>
+            </div>
+            <div class="tag-list">
+                @for (hit of breakdown().terpene.hits; track $index) {
+                    <span class="tag tag-hit">
+                        <span class="ph ph-check"></span>
+                        {{ hit }}
+                    </span>
+                }
+                @for (miss of breakdown().terpene.misses; track $index) {
+                    <span class="tag tag-miss">
+                        <span class="ph ph-minus"></span>
+                        {{ miss }}
+                    </span>
+                }
+            </div>
+        </section>
+    }
+
+    @if (showGenetics()) {
+        <section class="score-group">
+            <div class="score-group-header">
+                <span class="ph ph-tree-evergreen group-icon"></span>
+                <span class="group-title">גנטיקה ומקורות</span>
+                <span class="group-weight">משקל פעיל: {{ breakdown().genetics.weight }}%</span>
+            </div>
+            <div class="score-metrics">
+                <span class="metric-ratio">{{ geneticsScoreText() }}</span>
+            </div>
+            <div class="tag-list">
+                @for (hit of breakdown().genetics.hits; track $index) {
+                    <span class="tag tag-hit">
+                        <span class="ph ph-check"></span>
+                        {{ hit }}
+                    </span>
+                }
+                @for (miss of geneticsMisses(); track $index) {
+                    <span class="tag tag-miss">
+                        <span class="ph ph-minus"></span>
+                        {{ miss }}
+                    </span>
+                }
+            </div>
+        </section>
+    }
+
+    @if (!showTerpenes() && !showGenetics() && !hasPenalty()) {
+        <div class="score-card-empty">
+            <span class="ph ph-info"></span>
+            <span>סמן העדפות טרפנים או גנטיקה כדי לצפות בניתוח התאמה אישי מפורט.</span>
+        </div>
+    }
+</div>

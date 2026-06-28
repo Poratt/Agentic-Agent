@@ -9,10 +9,32 @@ export type Weights = {
   genetics: number;
 };
 
+export type ScoreBreakdown = {
+  terpene: {
+    weight: number;
+    earnedPoints: number;
+    maxPoints: number;
+    hits: string[];
+    misses: string[];
+  };
+  genetics: {
+    weight: number;
+    /** For genetics (OR logic): true if at least one preferred genetics was found */
+    hasMatch: boolean;
+    /** All preferred genetics (for display) */
+    preferred: string[];
+    /** Genetics found in the strain */
+    hits: string[];
+  };
+  penalty: boolean;
+  penaltyIngredient: string | null;
+};
+
 export type ScoredStrain<T = Record<string, unknown>> = T & {
   score: number;
   penalty: boolean;
   penaltyIngredient: string | null;
+  breakdown: ScoreBreakdown;
 };
 
 const STORAGE_KEY = 'matching-engine:v1';
@@ -54,7 +76,7 @@ export class MatchingEngineStore {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
       } catch {
-        // Storage may be unavailable
+        // Storage unavailable
       }
     });
   }
@@ -118,8 +140,10 @@ export class MatchingEngineStore {
     const prefs = this.prefsState();
     const weights = this.weightsState();
 
-    const terpeneData = this.scoreCategory(item, 'terpene', prefs);
-    const geneticsData = this.scoreCategory(item, 'genetics', prefs);
+    // Terpenes: proportional scoring (more terpenes = better match)
+    const terpeneData = this.scoreCategory(item, 'terpene', prefs, 'proportional');
+    // Genetics: OR logic (at least one preferred genetics = full score)
+    const geneticsData = this.scoreCategory(item, 'genetics', prefs, 'any');
 
     const activeTerpWeight = terpeneData.hasPositivePrefs ? weights.terpene : 0;
     const activeGenWeight = geneticsData.hasPositivePrefs ? weights.genetics : 0;
@@ -128,8 +152,10 @@ export class MatchingEngineStore {
     let weightedBaseScore = 100;
 
     if (totalActiveWeight > 0) {
+      // Terpenes: proportional (0-100% based on how many matched)
       const terpScore = terpeneData.maxPoints > 0 ? terpeneData.earnedPoints / terpeneData.maxPoints : 0;
-      const genScore = geneticsData.maxPoints > 0 ? geneticsData.earnedPoints / geneticsData.maxPoints : 0;
+      // Genetics: binary (0% or 100% based on whether any matched)
+      const genScore = geneticsData.hasMatch ? 1 : 0;
 
       weightedBaseScore = (((terpScore * activeTerpWeight) + (genScore * activeGenWeight)) / totalActiveWeight) * 100;
     }
@@ -139,11 +165,30 @@ export class MatchingEngineStore {
 
     const score = Math.max(0, Math.min(100, Math.round(weightedBaseScore - penaltyDeduction)));
 
+    const breakdown: ScoreBreakdown = {
+      terpene: {
+        weight: activeTerpWeight,
+        earnedPoints: terpeneData.earnedPoints,
+        maxPoints: terpeneData.maxPoints,
+        hits: terpeneData.hits,
+        misses: terpeneData.misses,
+      },
+      genetics: {
+        weight: activeGenWeight,
+        hasMatch: geneticsData.hasMatch,
+        preferred: geneticsData.misses.concat(geneticsData.hits),
+        hits: geneticsData.hits,
+      },
+      penalty: penaltyIngredient !== null,
+      penaltyIngredient: penaltyIngredient,
+    };
+
     return {
       ...item,
       score,
       penalty: penaltyIngredient !== null,
       penaltyIngredient,
+      breakdown,
     };
   }
 
@@ -158,39 +203,54 @@ export class MatchingEngineStore {
       .slice(0, limit);
   }
 
-  private scoreCategory(item: Record<string, unknown>, category: keyof Weights, prefs: PrefMap): {
+  private scoreCategory(
+    item: Record<string, unknown>,
+    category: keyof Weights,
+    prefs: PrefMap,
+    matchMode: 'proportional' | 'any'
+  ): {
     earnedPoints: number;
     maxPoints: number;
     hasPositivePrefs: boolean;
+    hasMatch: boolean; // true if at least one preferred item was found
     penaltyIngredient: string | null;
+    hits: string[];
+    misses: string[];
   } {
     const ingredients = this.extractIngredients(item, category);
 
     let maxPoints = 0;
     let hasPositivePrefs = false;
+    const desired: string[] = [];
 
     for (const [key, state] of Object.entries(prefs)) {
       if (key.startsWith(`${category}:`)) {
+        const name = key.substring(category.length + 1);
         if (state === 'love') {
           maxPoints += 2;
           hasPositivePrefs = true;
+          desired.push(name);
         } else if (state === 'like') {
           maxPoints += 1;
           hasPositivePrefs = true;
+          desired.push(name);
         }
       }
     }
 
     let earnedPoints = 0;
     let penaltyIngredient: string | null = null;
+    const hits: string[] = [];
 
     for (const name of ingredients) {
       const state = prefs[`${category}:${name}`];
 
       if (state === 'love') {
         earnedPoints += 2;
+        hits.push(name);
       } else if (state === 'like') {
         earnedPoints += 1;
+        hits.push(name);
       } else if (state === 'avoid') {
         if (penaltyIngredient === null) {
           penaltyIngredient = name;
@@ -198,7 +258,14 @@ export class MatchingEngineStore {
       }
     }
 
-    return { earnedPoints, maxPoints, hasPositivePrefs, penaltyIngredient };
+    const misses = desired.filter((d) => {
+      return !hits.includes(d);
+    });
+
+    // hasMatch: for 'any' mode, true if at least one hit; for 'proportional', also true if at least one hit
+    const hasMatch = hits.length > 0;
+
+    return { earnedPoints, maxPoints, hasPositivePrefs, hasMatch, penaltyIngredient, hits, misses };
   }
 
   private extractIngredients(item: Record<string, unknown>, category: keyof Weights): string[] {

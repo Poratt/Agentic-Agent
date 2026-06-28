@@ -9,11 +9,27 @@ import { TooltipModule } from 'primeng/tooltip';
 import { Subscription, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { PageStates } from '../../core/enums/page-states.enum';
-import { MatchingEngineStore, ScoredStrain } from '../../core/store/matching-engine.store';
+import { MatchingEngineStore, ScoredStrain, ScoreBreakdown } from '../../core/store/matching-engine.store';
 import { TerpeneStore } from '../../core/store/terpene.store';
 import { GeneticsStore } from '../../core/store/genetics.store';
 import { Tooltip, TooltipCategory } from '../../components/shared/tooltip/tooltip';
+import { ScoreTooltip } from '../../components/shared/score-tooltip/score-tooltip';
 import { MatchingPreferencesDrawer } from './matching-preferences-drawer/matching-preferences-drawer';
+
+type ScoreTooltipPos = {
+    breakdown: ScoreBreakdown;
+    top: number;
+    left: number;
+};
+
+type TooltipPos = {
+    name: string;
+    category: TooltipCategory;
+    top: number;
+    left: number;
+};
+
+type StrainRow = ScoredStrain<Record<string, unknown>>;
 
 type StrainHunterResponse = {
     items: Record<string, unknown>[];
@@ -46,22 +62,22 @@ type TerpeneFilter = {
     label: string;
 };
 
-type TooltipPos = {
-    name: string;
-    category: TooltipCategory;
-    top: number;
-    left: number;
-};
-
 const TOOLTIP_W = 240;
 const TOOLTIP_GAP = 8;
-
-type StrainRow = ScoredStrain<Record<string, unknown>>;
 
 @Component({
     selector: 'app-strain-hunter',
     standalone: true,
-    imports: [CommonModule, TableModule, InputTextModule, TooltipModule, DialogModule, MatchingPreferencesDrawer, Tooltip],
+    imports: [
+        CommonModule,
+        TableModule,
+        InputTextModule,
+        TooltipModule,
+        DialogModule,
+        MatchingPreferencesDrawer,
+        Tooltip,
+        ScoreTooltip
+    ],
     templateUrl: './strain-hunter.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./strain-hunter.css'],
@@ -135,6 +151,7 @@ export class StrainHunter implements OnInit {
         'score',
         'penalty',
         'penaltyIngredient',
+        'breakdown'
     ];
 
     rawItems = signal<any[]>([]);
@@ -144,6 +161,7 @@ export class StrainHunter implements OnInit {
     imageDialogVisible = signal(false);
     matchDrawerVisible = signal(false);
     readonly tooltip = signal<TooltipPos | null>(null);
+    readonly activeScoreTooltip = signal<ScoreTooltipPos | null>(null);
 
     activeFilters = signal<StrainHunterFilter[]>([]);
 
@@ -324,6 +342,22 @@ export class StrainHunter implements OnInit {
 
     onTooltipLeave() {
         this.tooltip.set(null);
+    }
+
+    onScoreRingEnter(breakdown: ScoreBreakdown, event: MouseEvent) {
+        const el = event.currentTarget as HTMLElement;
+        const rect = el.getBoundingClientRect();
+
+        const top = rect.bottom + TOOLTIP_GAP;
+        const targetWidth = 260; // Approx score tooltip max width from layout
+        const chipCenter = rect.left + rect.width / 2;
+        const left = Math.max(TOOLTIP_GAP, Math.min(chipCenter - targetWidth / 2, window.innerWidth - targetWidth - TOOLTIP_GAP));
+
+        this.activeScoreTooltip.set({ breakdown, top, left });
+    }
+
+    onScoreRingLeave() {
+        this.activeScoreTooltip.set(null);
     }
 
     applyGlobalFilter(event: Event) {
