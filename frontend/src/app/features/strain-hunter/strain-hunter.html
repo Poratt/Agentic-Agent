@@ -294,7 +294,7 @@
                                             <div class="root-nodes">
                                                 @if (hasDisplayValue(item.originStrain)) {
                                                     <button
-                                                        class="filter-node origin-strain-node"
+                                                        [class]="geneticsClass(formatValue(item.originStrain)) + ' origin-strain-node'"
                                                         type="button"
                                                         (mouseenter)="onGeneticsEnter(item.originStrain, $event)"
                                                         (mouseleave)="onTooltipLeave()"
@@ -307,7 +307,7 @@
                                                 <div class="parents-cell">
                                                     @if (hasDisplayValue(item.parent1)) {
                                                         <button
-                                                            class="filter-node"
+                                                            [class]="geneticsClass(formatValue(item.parent1))"
                                                             type="button"
                                                             (mouseenter)="onGeneticsEnter(item.parent1, $event)"
                                                             (mouseleave)="onTooltipLeave()"
@@ -320,7 +320,7 @@
                                                     <span></span>
                                                     @if (hasDisplayValue(item.parent2)) {
                                                         <button
-                                                            class="filter-node"
+                                                            [class]="geneticsClass(formatValue(item.parent2))"
                                                             type="button"
                                                             (mouseenter)="onGeneticsEnter(item.parent2, $event)"
                                                             (mouseleave)="onTooltipLeave()"
@@ -338,7 +338,7 @@
                                                     <div class="terpene-list">
                                                         @for (terpene of splitTerpenes(item.terpenes); track terpene.label) {
                                                             <button
-                                                                class="terpene-node filter-node"
+                                                                [class]="terpeneClass(terpene.name)"
                                                                 type="button"
                                                                 (mouseenter)="onTerpeneEnter(terpene.name, $event)"
                                                                 (mouseleave)="onTooltipLeave()"

@@ -64,6 +64,7 @@ type TerpeneFilter = {
 
 const TOOLTIP_W = 240;
 const TOOLTIP_GAP = 8;
+const TOOLTIP_DELAY_MS = 500;
 
 @Component({
     selector: 'app-strain-hunter',
@@ -162,8 +163,11 @@ export class StrainHunter implements OnInit {
     matchDrawerVisible = signal(false);
     readonly tooltip = signal<TooltipPos | null>(null);
     readonly activeScoreTooltip = signal<ScoreTooltipPos | null>(null);
+    private readonly tooltipTimeout = signal<ReturnType<typeof setTimeout> | null>(null);
+    private readonly scoreTooltipTimeout = signal<ReturnType<typeof setTimeout> | null>(null);
 
     activeFilters = signal<StrainHunterFilter[]>([]);
+    activeSortField = signal<string | null>(null);
 
     items = computed<StrainRow[]>(() => {
         const raw = this.rawItems();
@@ -327,7 +331,11 @@ export class StrainHunter implements OnInit {
         const chipCenter = rect.left + rect.width / 2;
         const left = Math.max(TOOLTIP_GAP, Math.min(chipCenter - TOOLTIP_W / 2, window.innerWidth - TOOLTIP_W - TOOLTIP_GAP));
 
-        this.tooltip.set({ name, category: 'terpene', top, left });
+        const timeout = setTimeout(() => {
+            this.tooltip.set({ name, category: 'terpene', top, left });
+            this.tooltipTimeout.set(null);
+        }, TOOLTIP_DELAY_MS);
+        this.tooltipTimeout.set(timeout);
     }
 
     onGeneticsEnter(name: string, event: MouseEvent) {
@@ -337,10 +345,19 @@ export class StrainHunter implements OnInit {
         const chipCenter = rect.left + rect.width / 2;
         const left = Math.max(TOOLTIP_GAP, Math.min(chipCenter - TOOLTIP_W / 2, window.innerWidth - TOOLTIP_W - TOOLTIP_GAP));
 
-        this.tooltip.set({ name, category: 'genetics', top, left });
+        const timeout = setTimeout(() => {
+            this.tooltip.set({ name, category: 'genetics', top, left });
+            this.tooltipTimeout.set(null);
+        }, TOOLTIP_DELAY_MS);
+        this.tooltipTimeout.set(timeout);
     }
 
     onTooltipLeave() {
+        const timeout = this.tooltipTimeout();
+        if (timeout) {
+            clearTimeout(timeout);
+            this.tooltipTimeout.set(null);
+        }
         this.tooltip.set(null);
     }
 
@@ -353,10 +370,19 @@ export class StrainHunter implements OnInit {
         const chipCenter = rect.left + rect.width / 2;
         const left = Math.max(TOOLTIP_GAP, Math.min(chipCenter - targetWidth / 2, window.innerWidth - targetWidth - TOOLTIP_GAP));
 
-        this.activeScoreTooltip.set({ breakdown, top, left });
+        const timeout = setTimeout(() => {
+            this.activeScoreTooltip.set({ breakdown, top, left });
+            this.scoreTooltipTimeout.set(null);
+        }, TOOLTIP_DELAY_MS);
+        this.scoreTooltipTimeout.set(timeout);
     }
 
     onScoreRingLeave() {
+        const timeout = this.scoreTooltipTimeout();
+        if (timeout) {
+            clearTimeout(timeout);
+            this.scoreTooltipTimeout.set(null);
+        }
         this.activeScoreTooltip.set(null);
     }
 
@@ -371,6 +397,8 @@ export class StrainHunter implements OnInit {
 
         const field = this.resolveSortField(event.field);
         const order = event.order ?? 1;
+
+        this.activeSortField.set(field);
 
         event.data.sort((first, second) => {
             return this.compareSortValues(first?.[field], second?.[field], field) * order;
@@ -517,6 +545,28 @@ export class StrainHunter implements OnInit {
             return 'family-hybrid';
         }
         return '';
+    }
+
+    isSortingByScore(): boolean {
+        return this.activeSortField() === 'score';
+    }
+
+    isGeneticsLiked(name: string): boolean {
+        const state = this.matchingEngine.prefState(`genetics:${name.trim()}`);
+        return state === 'like' || state === 'love';
+    }
+
+    isTerpeneLiked(name: string): boolean {
+        const state = this.matchingEngine.prefState(`terpene:${name}`);
+        return state === 'like' || state === 'love';
+    }
+
+    geneticsClass(name: string): string {
+        return this.isSortingByScore() && this.isGeneticsLiked(name) ? 'filter-node liked' : 'filter-node';
+    }
+
+    terpeneClass(name: string): string {
+        return this.isSortingByScore() && this.isTerpeneLiked(name) ? 'terpene-node filter-node liked' : 'terpene-node filter-node';
     }
 
     private toTerpeneFilter(value: string): TerpeneFilter | null {
