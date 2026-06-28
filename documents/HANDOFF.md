@@ -33,6 +33,7 @@ documents/
   1. Triggering `loadAll()` for reference stores in `StrainHunter.ngOnInit`.
   2. Implementing normalized Hebrew lookup in `TerpeneStore` and `GeneticsStore` to handle punctuation (e.g. apostrophes in "אוג'י") and whitespace.
 - Updated `StrainHunter` templates with `mouseenter`/`mouseleave` handlers to manage tooltip visibility and positioning.
+- **Added 500ms mouse hover delay for `Tooltip` and `ScoreTooltip` components in `StrainHunter` to prevent flickering on rapid mouse movement.**
 - Updated `LlmProviderStore.updateProvider` to merge patched fields into existing provider object.
 - Updated `LlmProviderStore.updateModel` to merge patched fields into existing model object.
 - Ensures `testResults` and `models` arrays are preserved on partial PATCH responses.
@@ -563,3 +564,19 @@ documents/
 - Files touched this session: every file under `backend/src/modules/genetics/` (new), `backend/src/app.module.ts`, `backend/src/main.ts`, `backend/swagger-spec.json` (regenerated), `frontend/src/app/core/models/genetics.interface.ts`, `frontend/src/app/core/services/genetics.service.ts`, `frontend/src/app/core/store/genetics.store.ts`, `frontend/src/app/components/shared/tooltip/{tooltip.ts,tooltip.html,tooltip.css}`, `frontend/src/app/features/strain-hunter/matching-preferences-drawer/{matching-preferences-drawer.ts,html,css}`, `frontend/src/app/features/strain-hunter/strain-hunter/{strain-hunter.ts,html,css}`, deletion of `frontend/src/app/features/strain-hunter/terpene-tooltip/{terpene-tooltip.ts,html,css}` + the parent folder, deletion of `scripts/verify-genetics-seed.js`, move of `documents/features/todo/genetic-details-plan.md` to `documents/done/genetic-details-plan.md`, and updates to `documents/STATUS.md` and `documents/HANDOFF.md`.
 - Decisions made: trust file-on-disk evidence over an agent's self-report when verifying wiring changes; `nest build` is not sufficient evidence that runtime seed calls are in place. Kept the plan's "fail loudly on duplicate" rule (no try/catch around `repo.save`) even though a permissive swallow would have been simpler, because silent corruption is much worse than a noisy crash during dev bootstrap.
 - Open questions for the user: confirm whether `documents/architecture-diagram.md` should be updated now or as part of the next plan; confirm whether to run the dev-server smoke test before picking the next plan.
+
+---
+
+## 2026-06-28 Session
+
+- Added 500ms mouse hover delay for `Tooltip` and `ScoreTooltip` components in `StrainHunter` to prevent flickering on rapid mouse movement.
+- Modified `frontend/src/app/features/strain-hunter/strain-hunter.ts`:
+  - Added `TOOLTIP_DELAY_MS = 500` constant.
+  - Added `tooltipTimeout` and `scoreTooltipTimeout` signals to track pending timeouts.
+  - Updated `onTerpeneEnter`, `onGeneticsEnter`, `onScoreRingEnter` to use `setTimeout` with 500ms delay.
+  - Updated `onTooltipLeave`, `onScoreRingLeave` to clear pending timeouts.
+- Verification: `npx ng build` from `frontend` passes with existing warnings only.
+- No architecture diagram update needed (local UI behavior change only).
+- Files touched: `frontend/src/app/features/strain-hunter/strain-hunter.ts`, `documents/STATUS.md`, `documents/HANDOFF.md`.
+- Decisions made: Use `setTimeout`/`clearTimeout` pattern with signals for cleanup; apply same delay to both tooltip types for consistency.
+- Open questions for the user: none.

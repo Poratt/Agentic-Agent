@@ -216,4 +216,5 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: Integrated shared `Tooltip` component into `StrainHunter` table for terpenes and genetics.
 - Fixed: Tooltip "no info" error by ensuring `TerpeneStore` and `GeneticsStore` are initialized in `StrainHunter.ngOnInit`.
 - Fixed: Tooltip lookup failures by implementing normalized Hebrew name matching in `TerpeneStore` and `GeneticsStore` to handle punctuation/whitespace variations.
+- Added: 500ms mouse hover delay for `Tooltip` and `ScoreTooltip` components in `StrainHunter` to prevent flickering on rapid mouse movement.
 - Remaining active plans: `llm-model-test-results-retention-plan.md`, `provider-and-llm-db-plan.md` (partial — Phases 1-3 done, 4-9 remain), `database-storage-monitor-plan.md`.
