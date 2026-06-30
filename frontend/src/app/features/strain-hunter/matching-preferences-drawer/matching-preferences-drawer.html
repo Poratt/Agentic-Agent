@@ -20,7 +20,10 @@
             @if (group.category === 'genetics' ? hasGenetics() : group.items.length > 0) {
                 <section class="group" [class.grow]="group.category === 'genetics'">
                     <header class="group-header">
-                        <h4>{{ group.title }}</h4>
+                        <div class="group-header-title">
+                            <span class="ph group-header-icon" [class]="groupIcon(group.category)"></span>
+                            <h4>{{ group.title }}</h4>
+                        </div>
                         <div class="group-header-actions">
                             <span class="hint">לחץ למעבר בין מצבים</span>
                             @if (hasCategoryPreferences(group.category)) {
@@ -56,7 +59,7 @@
                             @for (name of group.items; track name) {
                                 <button
                                     type="button"
-                                    [class]="chipClass(group.category, name)"
+                                    [class]="chipClass(group.category, name) + ' stagger stagger-up'"
                                     (click)="cycle(group.category, name)"
                                     (mouseenter)="onChipEnter(group.category, name, $event)"
                                     (mouseleave)="onChipLeave()"
@@ -86,7 +89,10 @@
 
         <section class="group">
             <header class="group-header">
-                <h4>משקולות</h4>
+                <div class="group-header-title">
+                    <span class="ph group-header-icon ph-scales"></span>
+                    <h4>משקולות</h4>
+                </div>
             </header>
 
             <div class="crossfader" role="group" aria-label="איזון טרפנים מול גנטיקה">
@@ -114,7 +120,10 @@
 
         <section class="group preview-group">
             <header class="group-header">
-                <h4>5 מובילים</h4>
+                <div class="group-header-title">
+                    <span class="ph group-header-icon ph-trophy"></span>
+                    <h4>5 מובילים</h4>
+                </div>
                 @if (hasPreferences()) {
                     <button class="reset-btn" type="button" (click)="reset()">
                         <span class="ph ph-arrow-counter-clockwise"></span>
@@ -148,12 +157,6 @@
 
     <!-- Tooltip rendered at drawer root — escapes all overflow:auto ancestors -->
     @if (tooltip(); as t) {
-        <app-tooltip
-            class="tooltip-fixed"
-            [category]="t.category"
-            [name]="t.name"
-            [style.top.px]="t.top"
-            [style.left.px]="t.left"
-        />
+        <app-tooltip class="tooltip-fixed" [category]="t.category" [name]="t.name" [style.top.px]="t.top" [style.left.px]="t.left" />
     }
 </p-drawer>

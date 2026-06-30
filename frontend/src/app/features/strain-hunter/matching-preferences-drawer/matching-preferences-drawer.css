@@ -43,6 +43,18 @@
       justify-content: space-between;
       gap: var(--space-2);
 
+      .group-header-title {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+
+      .group-header-icon {
+        font-size: var(--font-size-md);
+        color: var(--color-primary);
+        line-height: 1;
+      }
+
       h4 {
         margin: 0;
         font-size: var(--font-size-md);
@@ -163,6 +175,7 @@
       flex-grow: 1;
       overflow-y: auto;
       align-content: flex-start;
+      padding: var(--space-1);
 
       .terpene-chip,
       .genetics-chip {
@@ -178,6 +191,7 @@
         font-size: var(--font-size-xs);
         line-height: 1;
         cursor: pointer;
+        position: relative;
         transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
       }
 
@@ -186,6 +200,7 @@
         flex: 1 1 auto;
         text-align: left;
         line-height: 1;
+
       }
 
       .terpene-chip .chip-state,
@@ -194,6 +209,11 @@
         font-size: var(--font-size-sm);
         line-height: 1;
         opacity: 0.85;
+        position: absolute;
+        right: -4px;
+        top: -4px;
+
+
       }
 
       .terpene-chip.chip-neutral,
@@ -263,16 +283,19 @@
 
       .crossfader-end-terpene {
         align-items: flex-end;
+        color: var(--color-secondary);
       }
 
+
       .crossfader-end-genetics {
+        color: var(--color-primary);
+
         align-items: flex-start;
       }
 
       .crossfader-end-value {
         font-size: var(--font-size-sm);
         font-weight: var(--font-weight-bold);
-        color: var(--color-primary);
         font-variant-numeric: tabular-nums;
         transition: color var(--transition-fast);
       }
@@ -290,7 +313,7 @@
 
       .crossfader-input {
         width: 100%;
-        height: var(--space-6);
+        height: var(--space-1);
         background: transparent;
         cursor: pointer;
         margin: 0;
@@ -298,15 +321,15 @@
         outline: none;
 
         &::-webkit-slider-runnable-track {
-          height: var(--space-2);
+          height: var(--space-1);
           border-radius: var(--radius-pill);
-          background: var(--color-primary);
+          background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
         }
 
         &::-moz-range-track {
-          height: var(--space-2);
+          height: var(--space-1);
           border-radius: var(--radius-pill);
-          background: var(--color-primary);
+          background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
         }
 
         &::-webkit-slider-thumb {
@@ -317,7 +340,7 @@
           border-radius: 50%;
           background: var(--color-primary);
           cursor: grab;
-          margin-top: calc((var(--space-2) - var(--space-4)) / 2);
+          margin-top: calc((var(--space-1) - var(--space-4)) / 2);
           border: 2px solid var(--color-surface);
           box-shadow: var(--shadow-soft);
         }

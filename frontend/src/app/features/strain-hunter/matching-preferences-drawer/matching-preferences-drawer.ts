@@ -93,6 +93,10 @@ export class MatchingPreferencesDrawer {
         return `${category}-chip chip-${state}`;
     }
 
+    groupIcon(category: 'terpene' | 'genetics'): string {
+        return category === 'genetics' ? 'ph-tree-structure' : 'ph-leaf';
+    }
+
     chipLabel(category: 'terpene' | 'genetics', name: string): string {
         const state = this.engine.prefState(`${category}:${name}`);
         switch (state) {
