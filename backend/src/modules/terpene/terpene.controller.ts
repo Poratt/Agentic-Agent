@@ -33,6 +33,8 @@ import { TerpeneUpdateDto } from './dto/terpene-update.dto';
  * | ------ | ---------------- | ---------------------------------------- | ------------- |
  * | GET    | /terpenes        | Return every terpene in the catalog.     | JwtAuthGuard  |
  * | GET    | /terpenes/:name  | Look up a single terpene by Hebrew name. | JwtAuthGuard  |
+ * | POST   | /terpenes        | Create a new terpene record.            | JwtAuthGuard  |
+ * | PATCH  | /terpenes/:name  | Update an existing terpene by name.     | JwtAuthGuard  |
  */
 @ApiTags('terpenes')
 @ApiBearerAuth()
@@ -129,6 +131,125 @@ export class TerpeneController {
         return {
             success: true,
             message: 'Terpene fetched successfully',
+            result: {
+                id: item.id,
+                name: item.name,
+                description: item.description ?? undefined,
+                scent: item.scent ?? undefined,
+                effects: item.effects ?? undefined,
+                color: item.color,
+            },
+        };
+    }
+
+    /**
+     * Create a new terpene record.
+     *
+     * @param dto Data for the new terpene.
+     * @returns ServiceResultContainer with the created terpene.
+     * @throws 400 if validation fails.
+     * @throws 401 if the caller has no valid JWT.
+     * @throws 409 if a terpene with the same name already exists.
+     * @throws 500 on unexpected database or server failure.
+     */
+    @Post()
+    @ApiOperation({
+        summary: 'Create a new terpene',
+        summaryHe: 'יצירת טרפן חדש',
+        toolIcon: 'ph-flower-lotus',
+        description:
+            'Creates a new terpene entry in the catalog. The `name` field must be unique — attempting to create a duplicate will return a 409 Conflict. The `color` field must be a valid hex color (e.g., #66BB6A).',
+    } as CustomApiOperationOptions)
+    @ApiBody({
+        description:
+            'Terpene creation payload. `name` and `color` are required; `description`, `scent`, and `effects` are optional.',
+        type: TerpeneCreateDto,
+        examples: {
+            example1: {
+                summary: 'Typical terpene creation',
+                value: { name: 'לימונן', description: 'טרפן הדרי עם ניחוח לימון', scent: 'הדרים, לימון', effects: ['מרומם', 'ממריץ'], color: '#FFEB3B' },
+            },
+        },
+    })
+    @ApiCreatedResponse({
+        description: 'Terpene created successfully. `result` is the created terpene.',
+        type: TerpeneResultResponseDto,
+    })
+    @ApiBadRequestResponse({ description: 'Validation failed. Check that `name` is provided, `color` is a valid hex, and `effects` are strings.' })
+    @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
+    @ApiForbiddenResponse({ description: 'Not applicable for this endpoint.' })
+    @ApiConflictResponse({ description: 'A terpene with the same name already exists.' })
+    @ApiInternalServerErrorResponse({ description: 'Unexpected database or server error.' })
+    async create(@Body() dto: TerpeneCreateDto): Promise<TerpeneResultResponseDto> {
+        const item = await this.terpeneService.create(dto);
+        return {
+            success: true,
+            message: 'Terpene created successfully',
+            result: {
+                id: item.id,
+                name: item.name,
+                description: item.description ?? undefined,
+                scent: item.scent ?? undefined,
+                effects: item.effects ?? undefined,
+                color: item.color,
+            },
+        };
+    }
+
+    /**
+     * Update an existing terpene by its unique Hebrew name.
+     *
+     * @param name Hebrew name of the terpene to update.
+     * @param dto Partial data to update. Only provided fields are modified.
+     * @returns ServiceResultContainer with the updated terpene.
+     * @throws 400 if validation fails.
+     * @throws 401 if the caller has no valid JWT.
+     * @throws 404 if no terpene with the given name exists.
+     * @throws 500 on unexpected database or server failure.
+     */
+    @Patch(':name')
+    @ApiOperation({
+        summary: 'Update a terpene by name',
+        summaryHe: 'עדכון טרפן לפי שם',
+        toolIcon: 'ph-flower-lotus',
+        description:
+            'Updates an existing terpene. Only the provided fields are modified — omitted fields retain their current values. The `name` cannot be changed via this endpoint; use POST /terpenes to create a new record with a different name.',
+    } as CustomApiOperationOptions)
+    @ApiParam({
+        name: 'name',
+        type: String,
+        description: 'Hebrew terpene name. Must exactly match the `terpene.name` column.',
+        example: 'מירצן',
+    })
+    @ApiBody({
+        description:
+            'Terpene update payload. All fields are optional; only provided fields will be updated. `color` must be a valid hex color if provided.',
+        type: TerpeneUpdateDto,
+        examples: {
+            example1: {
+                summary: 'Partial update',
+                value: { description: 'Updated description', color: '#4CAF50' },
+            },
+            example2: {
+                summary: 'Clear optional fields',
+                value: { description: null, scent: null, effects: [] },
+            },
+        },
+    })
+    @ApiOkResponse({
+        description: 'Terpene updated successfully. `result` is the updated terpene.',
+        type: TerpeneResultResponseDto,
+    })
+    @ApiBadRequestResponse({ description: 'Validation failed. Check that `color` is a valid hex if provided.' })
+    @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
+    @ApiForbiddenResponse({ description: 'Not applicable for this endpoint.' })
+    @ApiNotFoundResponse({ description: 'No terpene matches the given name.' })
+    @ApiInternalServerErrorResponse({ description: 'Unexpected database or server error.' })
+    async update(@Param('name') name: string, @Body() dto: TerpeneUpdateDto): Promise<TerpeneResultResponseDto> {
+        const item = await this.terpeneService.update(name, dto);
+        return {
+            success: true,
+            message: 'Terpene updated successfully',
             result: {
                 id: item.id,
                 name: item.name,

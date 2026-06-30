@@ -23,7 +23,7 @@
             <div class="score-metrics">
                 <span class="metric-ratio">{{ terpeneScoreText() }}</span>
             </div>
-            <div class="tag-list">
+            <div class="tag-list stagger stagger-scale-up">
                 @for (hit of breakdown().terpene.hits; track $index) {
                     <span class="tag tag-hit">
                         <span class="ph ph-check"></span>
@@ -50,7 +50,7 @@
             <div class="score-metrics">
                 <span class="metric-ratio">{{ geneticsScoreText() }}</span>
             </div>
-            <div class="tag-list">
+            <div class="tag-list stagger stagger-scale-up">
                 @for (hit of breakdown().genetics.hits; track $index) {
                     <span class="tag tag-hit">
                         <span class="ph ph-check"></span>

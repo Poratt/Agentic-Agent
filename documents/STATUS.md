@@ -212,9 +212,31 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: `documents/done/genetic-details-plan.md`. Genetics reference catalog is fully implemented: NestJS `Genetics` entity + `GeneticsService` + `GeneticsController` + `GeneticsModule` + idempotent seed of 209 Hebrew-named strains read from the JSON in the plan file (with parenthetical/`#`/three-parent handling and a loud-fail dedupe pass per §1.7), and Angular `IGenetics` interface + `GeneticsService` + `GeneticsStore` + a generic shared `Tooltip` component (replaces the terpene-only `TerpeneTooltip`) consumed by both `MatchingPreferencesDrawer` and the root `StrainHunter` page. `GeneticsModule` is registered in `AppModule`; `seedGenetics` runs after `seedLlmProviders` in `main.ts`. Tooltip shows an optional Hebrew role label above the strain name (`זן מקור` / `הורה #1` / `הורה #2`) so origin/parent chips are disambiguated on hover.
 - Runtime wiring note: a backend agent's self-report claimed `GeneticsModule` and `seedGenetics` were wired, but `nest build` is type-check only and never executes `main.ts`. Both wirings were missing on disk and were applied directly before close-out; `npm.cmd run build` from `backend` and `npx ng build` from `frontend` both pass after the fix.
 - Remaining active plans: `llm-model-test-results-retention-plan.md`, `provider-and-llm-db-plan.md` (partial — Phases 1-3 done, 4-9 remain), `database-storage-monitor-plan.md`.
+
+## 2026-06-28 Session (continued — Plan Cleanup)
+
+- Moved `documents/features/todo/tooltip-merge-plan.md` to `documents/done/tooltip-merge-plan.md` — the shared `Tooltip` component integration into `StrainHunter` for both terpenes and genetics was already complete (documented in lines 216–219 above). The plan file was outdated ("NOT YET MIGRATED") but the code already used `Tooltip` with `category: 'terpene' | 'genetics'` for all hover popovers.
 - Remaining incomplete: `thinking-ux-cleanup.md`.
 - Completed: Integrated shared `Tooltip` component into `StrainHunter` table for terpenes and genetics.
 - Fixed: Tooltip "no info" error by ensuring `TerpeneStore` and `GeneticsStore` are initialized in `StrainHunter.ngOnInit`.
 - Fixed: Tooltip lookup failures by implementing normalized Hebrew name matching in `TerpeneStore` and `GeneticsStore` to handle punctuation/whitespace variations.
 - Added: 500ms mouse hover delay for `Tooltip` and `ScoreTooltip` components in `StrainHunter` to prevent flickering on rapid mouse movement.
 - Remaining active plans: `llm-model-test-results-retention-plan.md`, `provider-and-llm-db-plan.md` (partial — Phases 1-3 done, 4-9 remain), `database-storage-monitor-plan.md`.
+
+## 2026-06-28 Session (continued — Plan Cleanup)
+
+- Moved `documents/features/todo/tooltip-merge-plan.md` to `documents/done/tooltip-merge-plan.md` — the shared `Tooltip` component integration into `StrainHunter` for both terpenes and genetics was already complete (documented in lines 216–219 above). The plan file was outdated ("NOT YET MIGRATED") but the code already used `Tooltip` with `category: 'terpene' | 'genetics'` for all hover popovers.
+
+## 2026-06-28 Session (continued)
+
+- Fixed p-tooltip opacity issue in PrimeNG overrides: added smooth show/hide transitions for `.p-tooltip` and `.p-tooltip-visible` with proper opacity handling for the glassmorphism `::before` pseudo-element.
+- Added CREATE (POST) and UPDATE (PATCH) endpoints to `TerpeneController` and `GeneticsController` with full Swagger documentation, validation DTOs, and service layer implementations.
+- Completed `documents/features/todo/silent-enrichment-plan.md` (moved to `documents/done/silent-enrichment-plan.md`):
+  - Wired `GeneticsService.enrichBatch()` and `TerpeneService.enrichBatch()` into `StrainHunterService.fetchData()` after saving scraped items.
+  - Enrichment runs silently on every `fetchData(forceRefresh=true)` call — extracts unique genetics names (originStrain, parent1, parent2) and terpene names, filters empties, calls both services in parallel via `Promise.all()`.
+  - Idempotent: `enrichBatch` queries DB first, only calls LLM for truly missing names; TypeORM `save()` upserts (inserts new, updates partial).
+  - Graceful LLM parse handling: try/catch in both services returns empty array on failure — scrape succeeds even if enrichment silently skips.
+  - Removed admin-enrichment TODO comment from `tooltip.html` (line 33).
+  - Frontend tooltip now shows real data on first hover — zero user interaction, zero frontend changes required.
+- Verification: `npm.cmd run build` from `backend` passes. `npx ng build` from `frontend` passes with existing warnings only.
+- No architecture diagram update needed (backend module boundaries unchanged, no new frontend API calls).

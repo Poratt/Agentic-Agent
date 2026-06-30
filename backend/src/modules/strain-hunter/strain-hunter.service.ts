@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as puppeteer from 'puppeteer';
 import { Strain } from './entities/strain';
+import { GeneticsService } from '../genetics/genetics.service';
+import { TerpeneService } from '../terpene/terpene.service';
 
 export type StrainItem = {
     name: string;
@@ -65,6 +67,8 @@ export class StrainHunterService {
     constructor(
         @InjectRepository(Strain)
         private readonly strainRepository: Repository<Strain>,
+        private readonly geneticsService: GeneticsService,
+        private readonly terpeneService: TerpeneService,
     ) { }
 
     async fetchData(forceRefresh = false): Promise<{ items: Strain[] }> {
@@ -111,6 +115,31 @@ export class StrainHunterService {
         });
 
         await this.strainRepository.save(entities);
+
+        // Extract unique genetics and terpene names from scraped items for silent enrichment
+        const allGeneticsNames = [
+            ...new Set(
+                scraped.items
+                    .flatMap((item) => [item.originStrain, item.parent1, item.parent2])
+                    .filter(Boolean)
+                    .filter((n) => n !== 'לא ידוע' && n.trim().length >= 2)
+            ),
+        ];
+
+        const allTerpeneNames = [
+            ...new Set(
+                scraped.items
+                    .flatMap((item) => item.terpenes.split(',').map((t) => t.trim()))
+                    .filter(Boolean)
+                    .filter((n) => n !== 'לא ידוע' && n.trim().length >= 2)
+            ),
+        ];
+
+        // Enrich in parallel — both are independent
+        await Promise.all([
+            this.geneticsService.enrichBatch(allGeneticsNames),
+            this.terpeneService.enrichBatch(allTerpeneNames),
+        ]);
 
         return { items: entities };
     }

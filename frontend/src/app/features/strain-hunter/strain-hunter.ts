@@ -166,6 +166,7 @@ export class StrainHunter implements OnInit {
     private readonly tooltipTimeout = signal<ReturnType<typeof setTimeout> | null>(null);
     private readonly scoreTooltipTimeout = signal<ReturnType<typeof setTimeout> | null>(null);
 
+
     activeFilters = signal<StrainHunterFilter[]>([]);
     activeSortField = signal<string | null>(null);
 

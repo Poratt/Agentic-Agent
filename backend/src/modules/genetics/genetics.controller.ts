@@ -1,7 +1,9 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Patch, Body, UseGuards } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
+    ApiConflictResponse,
+    ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
@@ -10,6 +12,7 @@ import {
     ApiParam,
     ApiTags,
     ApiUnauthorizedResponse,
+    ApiBody,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
@@ -17,6 +20,8 @@ import { GeneticsService } from './genetics.service';
 import { GeneticsListResultResponseDto } from './dto/genetics-list-result-response.dto';
 import { GeneticsResultResponseDto } from './dto/genetics-result-response.dto';
 import { GeneticsDto, toGeneticsDto } from './dto/genetics.dto';
+import { GeneticsCreateDto } from './dto/genetics-create.dto';
+import { GeneticsUpdateDto } from './dto/genetics-update.dto';
 
 /**
  * Controller for the genetics reference catalog.
@@ -29,6 +34,8 @@ import { GeneticsDto, toGeneticsDto } from './dto/genetics.dto';
  * | ------ | ----------------- | -------------------------------------------- | ------------- |
  * | GET    | /genetics         | Return every strain in the catalog.          | JwtAuthGuard  |
  * | GET    | /genetics/:name   | Look up a single strain by Hebrew name.      | JwtAuthGuard  |
+ * | POST   | /genetics         | Create a new genetics record.               | JwtAuthGuard  |
+ * | PATCH  | /genetics/:name   | Update an existing genetics by name.        | JwtAuthGuard  |
  */
 @ApiTags('genetics')
 @ApiBearerAuth()
@@ -112,6 +119,118 @@ export class GeneticsController {
         return {
             success: true,
             message: item ? 'Genetics fetched successfully' : 'No genetics row matches the given name',
+            result: toGeneticsDto(item),
+        };
+    }
+
+    /**
+     * Create a new genetics record.
+     *
+     * @param dto Data for the new genetics record. Name must be unique.
+     * @returns ServiceResultContainer with the created GeneticsDto.
+     * @throws 400 if validation fails (e.g., invalid color format, empty name).
+     * @throws 401 if the caller has no valid JWT.
+     * @throws 409 if a genetics with the same name already exists.
+     * @throws 500 on unexpected database or server failure.
+     */
+    @Post()
+    @ApiOperation({
+        summary: 'Create a new genetics record',
+        summaryHe: 'יצירת זן חדש בקטלוג',
+        toolIcon: 'ph-tree-evergreen',
+        description:
+            'Creates a new genetics entry in the reference catalog. The `name` field must be unique. Returns the created record wrapped in ServiceResultContainer.',
+    } as CustomApiOperationOptions)
+    @ApiBody({
+        description:
+            'Genetics creation payload. `name` and `color` are required. `color` must be a valid hex color (e.g., #228B22). `type` must be one of: היברידי, סאטיבה, אינדיקה.',
+        type: GeneticsCreateDto,
+        examples: {
+            basic: {
+                summary: 'Basic creation',
+                value: {
+                    name: 'גורילה גלו',
+                    description: 'זן חזק במיוחד...',
+                    parent1: 'Chem Sis',
+                    parent2: 'Sour Dubb',
+                    origin: 'ארה"ב',
+                    type: 'היברידי',
+                    color: '#228B22',
+                },
+            },
+        },
+    })
+    @ApiCreatedResponse({
+        description: 'Genetics created successfully. `result` contains the created record.',
+        type: GeneticsResultResponseDto,
+    })
+    @ApiBadRequestResponse({ description: 'Validation failed (e.g., invalid hex color, missing required fields).' })
+    @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
+    @ApiForbiddenResponse({ description: 'Not applicable for this endpoint.' })
+    @ApiConflictResponse({ description: 'A genetics with this name already exists.' })
+    @ApiInternalServerErrorResponse({ description: 'Unexpected database or server error.' })
+    async create(@Body() dto: GeneticsCreateDto): Promise<GeneticsResultResponseDto> {
+        const item = await this.geneticsService.create(dto);
+        return {
+            success: true,
+            message: 'Genetics created successfully',
+            result: toGeneticsDto(item),
+        };
+    }
+
+    /**
+     * Update an existing genetics record by its unique Hebrew name.
+     *
+     * @param name Hebrew name of the genetics to update (path parameter).
+     * @param dto Partial data to update. Only provided fields are modified.
+     * @returns ServiceResultContainer with the updated GeneticsDto.
+     * @throws 400 if validation fails (e.g., invalid hex color).
+     * @throws 401 if the caller has no valid JWT.
+     * @throws 404 if no genetics with the given name exists.
+     * @throws 500 on unexpected database or server failure.
+     */
+    @Patch(':name')
+    @ApiOperation({
+        summary: 'Update a genetics record by name',
+        summaryHe: 'עדכון זן קיים לפי שם',
+        toolIcon: 'ph-tree-evergreen',
+        description:
+            'Updates an existing genetics entry in the reference catalog. All fields are optional — only provided fields are modified. The `name` path parameter identifies the record to update and cannot be changed.',
+    } as CustomApiOperationOptions)
+    @ApiParam({
+        name: 'name',
+        type: String,
+        description: 'Hebrew strain name. Must exactly match the `genetics.name` column. URL-encode spaces and non-ASCII characters.',
+        example: 'גורילה גלו',
+    })
+    @ApiBody({
+        description:
+            'Genetics update payload. All fields are optional. `color` must be a valid hex color if provided. `type` must be one of: היברידי, סאטיבה, אינדיקה. Pass `null` or empty string to clear optional string fields; pass empty array `[]` to clear effects/tags.',
+        type: GeneticsUpdateDto,
+        examples: {
+            partial: {
+                summary: 'Partial update',
+                value: {
+                    description: 'Updated description',
+                    color: '#1A5C1A',
+                },
+            },
+        },
+    })
+    @ApiOkResponse({
+        description: 'Genetics updated successfully. `result` contains the updated record.',
+        type: GeneticsResultResponseDto,
+    })
+    @ApiBadRequestResponse({ description: 'Validation failed (e.g., invalid hex color).' })
+    @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
+    @ApiForbiddenResponse({ description: 'Not applicable for this endpoint.' })
+    @ApiNotFoundResponse({ description: 'No genetics matches the given name.' })
+    @ApiInternalServerErrorResponse({ description: 'Unexpected database or server error.' })
+    async update(@Param('name') name: string, @Body() dto: GeneticsUpdateDto): Promise<GeneticsResultResponseDto> {
+        const item = await this.geneticsService.update(name, dto);
+        return {
+            success: true,
+            message: 'Genetics updated successfully',
             result: toGeneticsDto(item),
         };
     }

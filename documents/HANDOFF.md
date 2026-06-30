@@ -567,7 +567,7 @@ documents/
 
 ---
 
-## 2026-06-28 Session
+## 2026-06-28 Session (continued)
 
 - Added 500ms mouse hover delay for `Tooltip` and `ScoreTooltip` components in `StrainHunter` to prevent flickering on rapid mouse movement.
 - Modified `frontend/src/app/features/strain-hunter/strain-hunter.ts`:
@@ -579,4 +579,57 @@ documents/
 - No architecture diagram update needed (local UI behavior change only).
 - Files touched: `frontend/src/app/features/strain-hunter/strain-hunter.ts`, `documents/STATUS.md`, `documents/HANDOFF.md`.
 - Decisions made: Use `setTimeout`/`clearTimeout` pattern with signals for cleanup; apply same delay to both tooltip types for consistency.
+- Open questions for the user: none.
+
+## 2026-06-28 Session (continued — Silent Enrichment & Tooltip Fixes)
+
+- Fixed p-tooltip opacity issue in `frontend/src/app/assets/styles/_primeng-overrides.css`:
+  - Added smooth opacity transitions for `.p-tooltip` show/hide (`.p-tooltip-visible` class).
+  - Ensured glassmorphism `::before` pseudo-element opacity transitions correctly.
+- Added CREATE (POST) and UPDATE (PATCH) endpoints to both `TerpeneController` and `GeneticsController`:
+  - `backend/src/modules/terpene/dto/terpene-create.dto.ts` (new)
+  - `backend/src/modules/terpene/dto/terpene-update.dto.ts` (new)
+  - `backend/src/modules/terpene/terpene.service.ts` — added `create()` / `update()` methods
+  - `backend/src/modules/terpene/terpene.controller.ts` — added `POST /terpenes` and `PATCH /terpenes/:name`
+  - `backend/src/modules/genetics/dto/genetics-create.dto.ts` (new)
+  - `backend/src/modules/genetics/dto/genetics-update.dto.ts` (new)
+  - `backend/src/modules/genetics/genetics.service.ts` — added `create()` / `update()` methods
+  - `backend/src/modules/genetics/genetics.controller.ts` — added `POST /genetics` and `PATCH /genetics/:name`
+  - All endpoints include full Swagger documentation with examples, validation, and error responses.
+- Completed `documents/features/todo/silent-enrichment-plan.md` (moved to `documents/done/silent-enrichment-plan.md`):
+  - Wired `GeneticsService.enrichBatch()` and `TerpeneService.enrichBatch()` into `StrainHunterService.fetchData()` after `strainRepository.save()`.
+  - Enrichment extracts unique genetics names (originStrain, parent1, parent2) and terpene names from scraped items, filters empty/"לא ידוע" values, and calls both services in `Promise.all()`.
+  - `enrichBatch` is idempotent: queries DB first via `findByNames()`, only calls LLM for missing names; TypeORM `save()` upserts.
+  - Graceful LLM parse failure handling via try/catch — returns empty array, logs warning, `fetchData` continues.
+  - Removed TODO comment from `frontend/src/app/components/shared/tooltip/tooltip.html` (line 33).
+  - Frontend tooltips now show real data on first hover — zero user interaction, zero frontend API changes.
+- Verification: `npm.cmd run build` from `backend` passes. `npx ng build` from `frontend` passes with existing warnings only.
+- No architecture diagram update needed (backend module boundaries unchanged, no new frontend API calls).
+- Files touched:
+  - `frontend/src/app/assets/styles/_primeng-overrides.css`
+  - `backend/src/modules/terpene/` (5 new/modified files)
+  - `backend/src/modules/genetics/` (5 new/modified files)
+  - `backend/src/modules/strain-hunter/strain-hunter.service.ts`
+  - `frontend/src/app/components/shared/tooltip/tooltip.html`
+  - `documents/STATUS.md`, `documents/HANDOFF.md`
+  - `documents/done/silent-enrichment-plan.md` (moved from todo)
+- Decisions made:
+  - Silent enrichment runs on every `forceRefresh=true` (page load defaults to force refresh).
+  - Batch LLM calls per catalog (max 2 LLM calls per `fetchData`).
+  - TypeORM upsert preserves manually-set fields — only fills nulls.
+  - Admin button in tooltip removed — proactive is better.
+- Open questions for the user: none.
+
+## 2026-06-28 Session (continued — Tooltip Merge Plan Closeout)
+
+- The `documents/features/todo/tooltip-merge-plan.md` plan described migrating the StrainHunter table to the shared `Tooltip` component (replacing the old `TerpeneTooltip`).
+- This migration was **already complete** in the codebase:
+  - `frontend/src/app/components/shared/tooltip/` — shared component with `TooltipCategory = 'terpene' | 'genetics'` union, `@switch` template.
+  - `frontend/src/app/features/strain-hunter/strain-hunter.ts` — imports shared `Tooltip`, injects `TerpeneStore` + `GeneticsStore`, uses single `tooltip` signal with `category` + `name`, handlers `onTerpeneEnter` / `onGeneticsEnter` / `onTooltipLeave` with 500ms delay.
+  - `frontend/src/app/features/strain-hunter/strain-hunter.html` — binds hover on `terpene-node` and genetics chips, mounts `<app-tooltip class="tooltip-fixed">` at page root.
+  - `frontend/src/app/features/strain-hunter/matching-preferences-drawer/` — already migrated to shared `Tooltip` (uses same pattern).
+  - Old `features/strain-hunter/terpene-tooltip/` folder — already deleted.
+- Moved `documents/features/todo/tooltip-merge-plan.md` → `documents/done/tooltip-merge-plan.md`.
+- Verification: `npx ng build` passes; no code changes needed.
+- Decisions made: Close completed plan; no architecture diagram update needed.
 - Open questions for the user: none.

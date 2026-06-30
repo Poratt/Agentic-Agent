@@ -242,8 +242,8 @@
 
 
 .stagger {
-  --delay: 55ms;
-  --distance: 300px;
+  --delay: 120ms;
+  --distance: 20px;
 
   >* {
     opacity: 0;
@@ -316,6 +316,10 @@
   --anim-name: stagger-right;
 }
 
+.stagger-scale-up {
+  --anim-name: stagger-scale-up
+}
+
 @keyframes stagger-up {
   0% {
     opacity: 0.1;
@@ -369,6 +373,20 @@
     transform: rotate(360deg);
   }
 }
+
+
+@keyframes stagger-scale-up {
+  0% {
+    opacity: 0.1;
+    transform: scale(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(var(--distance));
+  }
+}
+
 
 @keyframes dropdownScaleReveal {
   0% {
