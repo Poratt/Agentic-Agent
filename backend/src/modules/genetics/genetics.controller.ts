@@ -16,6 +16,7 @@ import { CustomApiOperationOptions } from '../../core/types/custom-api-operation
 import { GeneticsService } from './genetics.service';
 import { GeneticsListResultResponseDto } from './dto/genetics-list-result-response.dto';
 import { GeneticsResultResponseDto } from './dto/genetics-result-response.dto';
+import { GeneticsDto, toGeneticsDto } from './dto/genetics.dto';
 
 /**
  * Controller for the genetics reference catalog.
@@ -69,7 +70,7 @@ export class GeneticsController {
         return {
             success: true,
             message: 'Genetics fetched successfully',
-            result: items,
+            result: items.map((item): GeneticsDto => toGeneticsDto(item)!),
         };
     }
 
@@ -111,7 +112,7 @@ export class GeneticsController {
         return {
             success: true,
             message: item ? 'Genetics fetched successfully' : 'No genetics row matches the given name',
-            result: item,
+            result: toGeneticsDto(item),
         };
     }
 }

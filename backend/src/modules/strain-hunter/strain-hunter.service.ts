@@ -46,6 +46,20 @@ const SOURCE_URL =
     'productCategory%5Ein%5ET22%2FC4%3BproductGrowType%5Ein%5Eindoor%3B' +
     'productFamily%5Ein%5Eindica&sortBy=store_price';
 
+
+const TILTAN_URL =
+    'https://jane.co.il/store/tiltan/?filters=productProductType%5Ein%5Eflower%3B' +
+    'productCategory%5Ein%5ET22%2FC4%3BproductGrowType%5Ein%5Eindoor%3B' +
+    'productFamily%5Ein%5Eindica&sortBy=store_price';
+
+
+const OSISHKIN_URL =
+    'https://jane.co.il/store/sup-osishkin/?filters=productProductType%5Ein%5Eflower%3B' +
+    'productCategory%5Ein%5ET22%2FC4%3BproductGrowType%5Ein%5Eindoor%3B' +
+    'productFamily%5Ein%5Eindica&sortBy=store_price';
+
+
+
 @Injectable()
 export class StrainHunterService {
     constructor(

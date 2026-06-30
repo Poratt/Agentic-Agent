@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Genetics } from '../entities/genetics.entity';
 
 /**
  * Single genetics record exposed by the API.
@@ -58,4 +59,26 @@ export class GeneticsDto {
         example: '#228B22',
     })
     color!: string;
+}
+
+/**
+ * Maps a raw Genetics entity to a GeneticsDto.
+ *
+ * Converts nullable entity fields (`| null`) to optional DTO fields (`| undefined`)
+ * so the entity can satisfy the DTO type contract without TypeScript errors.
+ *
+ * @param entity The source Genetics entity. Pass null to map a null result from findByName.
+ */
+export function toGeneticsDto(entity: Genetics | null): GeneticsDto | null {
+    if (!entity) return null;
+    return {
+        id: entity.id,
+        name: entity.name,
+        description: entity.description ?? undefined,
+        parent1: entity.parent1 ?? undefined,
+        parent2: entity.parent2 ?? undefined,
+        origin: entity.origin ?? undefined,
+        type: entity.type ?? undefined,
+        color: entity.color,
+    };
 }

@@ -21,14 +21,14 @@ export class TerpeneDto {
         example: 'הטרפן הנפוץ ביותר בקנאביס',
         required: false,
     })
-    description?: string;
+    description?: string | null;
 
     @ApiProperty({
         description: 'Aroma profile of the terpene in Hebrew. Omitted when not set.',
         example: 'אדמה, פירות יער',
         required: false,
     })
-    scent?: string;
+    scent?: string | null;
 
     @ApiProperty({
         description: 'Effect tags associated with the terpene (Hebrew short labels).',
@@ -36,7 +36,7 @@ export class TerpeneDto {
         example: ['מרגיע', 'משכך כאבים'],
         required: false,
     })
-    effects?: string[];
+    effects?: string[] | null;
 
     @ApiProperty({
         description:

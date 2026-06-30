@@ -1,7 +1,9 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Patch, Body, UseGuards } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
+    ApiConflictResponse,
+    ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
@@ -10,12 +12,15 @@ import {
     ApiParam,
     ApiTags,
     ApiUnauthorizedResponse,
+    ApiBody,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { TerpeneService } from './terpene.service';
 import { TerpeneListResultResponseDto } from './dto/terpene-list-result-response.dto';
 import { TerpeneResultResponseDto } from './dto/terpene-result-response.dto';
+import { TerpeneCreateDto } from './dto/terpene-create.dto';
+import { TerpeneUpdateDto } from './dto/terpene-update.dto';
 
 /**
  * Controller for the terpene reference catalog.
@@ -69,7 +74,14 @@ export class TerpeneController {
         return {
             success: true,
             message: 'Terpenes fetched successfully',
-            result: items,
+            result: items.map(item => ({
+                id: item.id,
+                name: item.name,
+                description: item.description ?? undefined,
+                scent: item.scent ?? undefined,
+                effects: item.effects ?? undefined,
+                color: item.color,
+            })),
         };
     }
 
@@ -107,10 +119,24 @@ export class TerpeneController {
     @ApiInternalServerErrorResponse({ description: 'Unexpected database or server error.' })
     async findOne(@Param('name') name: string): Promise<TerpeneResultResponseDto> {
         const item = await this.terpeneService.findByName(name);
+        if (!item) {
+            return {
+                success: true,
+                message: 'No terpene matches the given name',
+                result: null,
+            };
+        }
         return {
             success: true,
-            message: item ? 'Terpene fetched successfully' : 'No terpene matches the given name',
-            result: item,
+            message: 'Terpene fetched successfully',
+            result: {
+                id: item.id,
+                name: item.name,
+                description: item.description ?? undefined,
+                scent: item.scent ?? undefined,
+                effects: item.effects ?? undefined,
+                color: item.color,
+            },
         };
     }
 }
