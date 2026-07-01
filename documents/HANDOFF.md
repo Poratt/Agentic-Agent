@@ -633,3 +633,15 @@ documents/
 - Verification: `npx ng build` passes; no code changes needed.
 - Decisions made: Close completed plan; no architecture diagram update needed.
 - Open questions for the user: none.
+
+
+## 2026-07-01 Session
+
+- Completed: refresh button in StrainHunter now shows a spinner on the button only — the table stays visible during refresh, and `pageState` stays Ready instead of briefly flashing to Loading.
+  - Added `refreshing` signal alongside `loading`, so initial page load still triggers the full-page loader while refresh only spins the button.
+  - `load()` now only sets `loading.set(true)` when `forceRefresh=false`; when `forceRefresh=true` it sets `refreshing.set(true)` instead.
+  - Refresh button and match-drawer button now use `refreshing()` instead of `loading()` for disabled/spinner state.
+  - On refresh failure, `error` state replaces the table (same as current behavior).
+- Files touched: `frontend/src/app/features/strain-hunter/strain-hunter.ts`, `frontend/src/app/features/strain-hunter/strain-hunter.html`, `documents/features/todo/refresh-button-loader-plan.md` (edge case clarification per review).
+- Decisions made: keep the error behavior unchanged — refresh failure still replaces the table, not suppressing the error.
+- Open questions for the user: none.

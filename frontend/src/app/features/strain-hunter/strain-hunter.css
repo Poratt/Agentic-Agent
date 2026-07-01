@@ -329,9 +329,10 @@
     }
 
     .terpenes {
-      display: flex;
+      display: grid;
+      grid-template-columns: max-content 1fr;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       gap: var(--space-2);
       width: min(100%, var(--search-width));
       padding: var(--space-1) var(--space-1);
@@ -396,6 +397,10 @@
     }
   }
 
+  .spin-animation {
+    animation: spin 0.8s linear infinite;
+  }
+
   .match-btn {
     display: inline-flex;
     align-items: center;
@@ -429,19 +434,19 @@
     }
 
     .match-ring.ring-success .ring-fill {
-      stroke: var(--color-success);
+      stroke: url(#ringGradientSuccess);
     }
 
     .match-ring.ring-primary .ring-fill {
-      stroke: var(--color-primary);
+      stroke: url(#ringGradientPrimary);
     }
 
     .match-ring.ring-warning .ring-fill {
-      stroke: var(--color-warning);
+      stroke: url(#ringGradientWarning);
     }
 
     .match-ring.ring-danger .ring-fill {
-      stroke: var(--color-danger);
+      stroke: url(#ringGradientDanger);
     }
 
     .score-ring-text {

@@ -240,3 +240,14 @@ New planning documents should go under `documents/features/todo/` unless they ar
   - Frontend tooltip now shows real data on first hover — zero user interaction, zero frontend changes required.
 - Verification: `npm.cmd run build` from `backend` passes. `npx ng build` from `frontend` passes with existing warnings only.
 - No architecture diagram update needed (backend module boundaries unchanged, no new frontend API calls).
+
+
+## 2026-07-01 Session
+
+- Completed: refresh button in StrainHunter now shows a spinner on the button only — the table stays visible during refresh.
+  - Added `refreshing` signal alongside `loading`; initial load still triggers full-page loader, refresh only spins the button.
+  - `load()` only sets `loading.set(true)` when `forceRefresh=false`; on refresh it sets `refreshing.set(true)` instead.
+  - Refresh button and match-drawer button use `refreshing()` for disabled/spinner state.
+  - On refresh failure, `error` state replaces the table (same as current behavior).
+- Verification: `npm.cmd run build` from `backend` passes. `npx ng build` from `frontend` passes with existing warnings only.
+- No architecture diagram update needed (local UI behavior only).

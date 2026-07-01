@@ -1,3 +1,27 @@
+<svg width="0" height="0" style="position: absolute">
+    <defs>
+        <linearGradient id="ringGradientSuccess" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--color-success)" />
+            <stop offset="100%" stop-color="var(--color-success)" stop-opacity="0.55" />
+        </linearGradient>
+
+        <linearGradient id="ringGradientPrimary" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--color-primary)" />
+            <stop offset="100%" stop-color="var(--color-primary)" stop-opacity="0.55" />
+        </linearGradient>
+
+        <linearGradient id="ringGradientWarning" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--color-warning)" />
+            <stop offset="100%" stop-color="var(--color-warning)" stop-opacity="0.55" />
+        </linearGradient>
+
+        <linearGradient id="ringGradientDanger" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--color-danger)" />
+            <stop offset="100%" stop-color="var(--color-danger)" stop-opacity="0.55" />
+        </linearGradient>
+    </defs>
+</svg>
+
 <div class="page-content">
     <div class="page-header">
         <div class="header-row">
@@ -207,7 +231,9 @@
                                                                 class="strain-symbol"
                                                                 [src]="symbol.url"
                                                                 [alt]="symbol.alt"
-                                                                [pTooltip]="symbol.alt"
+                                                                appTooltip
+                                                                [text]="symbol.alt"
+                                                                [imageUrl]="symbol.url"
                                                                 tooltipPosition="top"
                                                                 appendTo="body"
                                                             />
@@ -374,7 +400,8 @@
                                             class="package-type-cell filter-node"
                                             type="button"
                                             [attr.aria-label]="formatValue(item.packageType)"
-                                            [pTooltip]="formatValue(item.packageType)"
+                                            appTooltip
+                                            [text]="formatValue(item.packageType)"
                                             (click)="applyDataFilter('packageType', item.packageType)"
                                         >
                                             <span class="ph package-type-icon" [ngClass]="packageTypeIconClass(item.packageType)"></span>

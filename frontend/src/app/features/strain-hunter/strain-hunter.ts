@@ -15,6 +15,7 @@ import { GeneticsStore } from '../../core/store/genetics.store';
 import { Tooltip, TooltipCategory } from '../../components/shared/tooltip/tooltip';
 import { ScoreTooltip } from '../../components/shared/score-tooltip/score-tooltip';
 import { MatchingPreferencesDrawer } from './matching-preferences-drawer/matching-preferences-drawer';
+import { TooltipDirective } from '../../core/directives/tooltip.directive';
 
 type ScoreTooltipPos = {
     breakdown: ScoreBreakdown;
@@ -77,7 +78,8 @@ const TOOLTIP_DELAY_MS = 500;
         DialogModule,
         MatchingPreferencesDrawer,
         Tooltip,
-        ScoreTooltip
+        ScoreTooltip,
+        TooltipDirective
     ],
     templateUrl: './strain-hunter.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -157,6 +159,7 @@ export class StrainHunter implements OnInit {
 
     rawItems = signal<any[]>([]);
     loading = signal(true);
+    refreshing = signal(false);
     error = signal<string | null>(null);
     selectedImageUrl = signal<string | null>(null);
     imageDialogVisible = signal(false);
@@ -234,8 +237,13 @@ export class StrainHunter implements OnInit {
 
     load(forceRefresh = false) {
         this.requestSubscription?.unsubscribe();
-        this.loading.set(true);
-        this.error.set(null);
+
+        if (!forceRefresh) {
+            this.loading.set(true);
+            this.error.set(null);
+        } else {
+            this.refreshing.set(true);
+        }
 
         const url = forceRefresh ? `${this.base}/fetch?forceRefresh=true` : `${this.base}/fetch`;
 
@@ -246,11 +254,13 @@ export class StrainHunter implements OnInit {
                 next: (response) => {
                     this.rawItems.set(response.items ?? []);
                     this.loading.set(false);
+                    this.refreshing.set(false);
                 },
                 error: (error: unknown) => {
                     this.rawItems.set([]);
                     this.error.set(this.getErrorMessage(error));
                     this.loading.set(false);
+                    this.refreshing.set(false);
                 },
             });
     }

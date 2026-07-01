@@ -124,7 +124,7 @@ li.p-select-option {
   z-index: 1100 !important;
   direction: rtl;
   pointer-events: none;
-  /* opacity: 0; */
+  opacity: 0;
   /* transition: opacity var(--transition-fast) ease-out; */
 
   &.p-tooltip-visible {
@@ -142,9 +142,11 @@ li.p-select-option {
     font-size: var(--font-size-xs);
     color: var(--color-text-primary);
     line-height: 1.4;
+    backdrop-filter: blur(var(--glass-blur, 8px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 8px));
 
     &::before {
-      /* content: '';
+      content: '';
       position: absolute;
       inset: 0;
       border-radius: inherit;
@@ -154,7 +156,7 @@ li.p-select-option {
       -webkit-backdrop-filter: blur(var(--glass-blur, 8px));
       z-index: -1;
       opacity: 1;
-      transition: opacity var(--transition-fast) ease-out; */
+      transition: opacity var(--transition-fast) ease-out;
     }
   }
 
