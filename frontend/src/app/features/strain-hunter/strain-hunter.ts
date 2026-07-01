@@ -311,6 +311,7 @@ export class StrainHunter implements OnInit {
 
             return [...prev, { key, fields: filterFields, label: filterLabel, value: filterValue }];
         });
+        this.clearTooltip();
     }
 
     removeFilter(key: string) {
@@ -319,10 +320,21 @@ export class StrainHunter implements OnInit {
                 return filter.key !== key;
             });
         });
+        this.clearTooltip();
     }
 
     clearAllFilters() {
         this.activeFilters.set([]);
+        this.clearTooltip();
+    }
+
+    private clearTooltip() {
+        const timeout = this.tooltipTimeout();
+        if (timeout) {
+            clearTimeout(timeout);
+            this.tooltipTimeout.set(null);
+        }
+        this.tooltip.set(null);
     }
 
     openImageDialog(imageUrl: string) {
@@ -364,12 +376,7 @@ export class StrainHunter implements OnInit {
     }
 
     onTooltipLeave() {
-        const timeout = this.tooltipTimeout();
-        if (timeout) {
-            clearTimeout(timeout);
-            this.tooltipTimeout.set(null);
-        }
-        this.tooltip.set(null);
+        this.clearTooltip();
     }
 
     onScoreRingEnter(breakdown: ScoreBreakdown, event: MouseEvent) {
