@@ -24,6 +24,7 @@ export type StrainItem = {
     countryOfOrigin: string;
     terpenes: string;
     packageType: string;
+    batch: string;
     symbols: { url: string; alt: string }[];
     imageUrl: string;
     productUrl: string;
@@ -43,22 +44,14 @@ const MAX_SCROLL_ATTEMPTS = 18;
 const PRODUCT_ROW_SELECTOR =
     'table[role="table"] tbody[role="rowgroup"] > tr[role="row"], table[role="table"] tbody tr';
 
-const SOURCE_URL =
-    'https://jane.co.il/store/tiltan/?filters=productProductType%5Ein%5Eflower%3B' +
-    'productCategory%5Ein%5ET22%2FC4%3BproductGrowType%5Ein%5Eindoor%3B' +
-    'productFamily%5Ein%5Eindica&sortBy=store_price';
+const SOURCE_URL_1 =
+    'https://jane.co.il/store/' +
+    'tiltan/' +
+    '?filters=' +
+    'productProductType%5Ein%5Eflower%3B' +
+    'productCategory%5Ein%5ET22%2FC4%3B' +
+    '&sortBy=store_price';
 
-
-const TILTAN_URL =
-    'https://jane.co.il/store/tiltan/?filters=productProductType%5Ein%5Eflower%3B' +
-    'productCategory%5Ein%5ET22%2FC4%3BproductGrowType%5Ein%5Eindoor%3B' +
-    'productFamily%5Ein%5Eindica&sortBy=store_price';
-
-
-const OSISHKIN_URL =
-    'https://jane.co.il/store/sup-osishkin/?filters=productProductType%5Ein%5Eflower%3B' +
-    'productCategory%5Ein%5ET22%2FC4%3BproductGrowType%5Ein%5Eindoor%3B' +
-    'productFamily%5Ein%5Eindica&sortBy=store_price';
 
 
 
@@ -80,7 +73,19 @@ export class StrainHunterService {
             }
         }
 
-        const scraped = await this.fetchDataFromUrl(SOURCE_URL);
+        const [scraped1] = await Promise.all([
+            this.fetchDataFromUrl(SOURCE_URL_1),
+        ]);
+
+        // Merge by product key — dedupes items that appear in both sort orders
+        const mergedMap = new Map<string, StrainItem>();
+        scraped1.items.forEach((item) => mergedMap.set(this.getStrainItemKey(item), item));
+
+        // Debug: log merge stats
+        const keyCount1 = new Set(scraped1.items.map((i) => this.getStrainItemKey(i))).size;
+        console.log(`[StrainHunter] URL1=${scraped1.items.length} (${keyCount1} unique keys), Merged=${mergedMap.size}`);
+
+        const scraped = { items: Array.from(mergedMap.values()) };
 
         await this.strainRepository.clear();
 
@@ -103,6 +108,7 @@ export class StrainHunterService {
                 countryOfOrigin: item.countryOfOrigin,
                 terpenes: item.terpenes,
                 packageType: item.packageType,
+                batch: item.batch,
                 symbols: item.symbols,
                 imageUrl: item.imageUrl,
                 productUrl: item.productUrl,
@@ -388,6 +394,10 @@ export class StrainHunterService {
         ].join(':');
     }
 
+    private getStrainItemKey(item: StrainItem): string {
+        return this.pickText(item.productUrl) || [item.name, item.batch, item.price].join(':');
+    }
+
     private normalizeJaneProduct(product: JaneProductRecord, newProductKeys = new Set<string>()): StrainItem {
         const nestedProduct = this.asRecord(product.product);
         const batch = this.asRecord(product.batch);
@@ -417,6 +427,7 @@ export class StrainHunterService {
             countryOfOrigin: this.formatCountry(product.origin_country),
             terpenes: this.formatTerpenes(product.terpenes),
             packageType: this.formatPackageType(product.packaging_options),
+            batch: this.pickText(batch?.batch_id, product.batch_id),
             symbols: this.extractSymbols(product.symbols),
             imageUrl: this.pickText(
                 product.main_img_thumbnail_url,
@@ -920,6 +931,7 @@ export class StrainHunterService {
                 const growType = readGridValue(expandedRoot, ['מתקן גידול', 'סוג גידול', 'גידול']);
                 const category = readGridValue(expandedRoot, ['קטגוריה', 'Category']);
                 const family = readGridValue(expandedRoot, ['משפחה', 'Family']);
+                const batch = readGridValue(expandedRoot, ['אצווה', 'Batch', 'batch']);
                 const imageUrl = firstCell?.querySelector('img')?.src ?? '';
                 const productUrl = firstCell?.querySelector('a')?.href ?? '';
 
@@ -949,6 +961,7 @@ export class StrainHunterService {
                     countryOfOrigin,
                     terpenes,
                     packageType,
+                    batch,
                     symbols: extractSymbolsFromDom(row),
                     imageUrl,
                     productUrl,

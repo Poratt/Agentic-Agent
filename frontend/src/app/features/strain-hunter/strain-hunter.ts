@@ -119,6 +119,7 @@ export class StrainHunter implements OnInit {
         growType: 'גידול',
         thc: 'THC',
         cbd: 'CBD',
+
     };
     private readonly preferredColumns = [
         'name',
@@ -130,6 +131,7 @@ export class StrainHunter implements OnInit {
         'countryOfOrigin',
         'expiry',
         'packageType',
+
     ];
     private readonly embeddedColumns = [
         'id',
@@ -154,7 +156,8 @@ export class StrainHunter implements OnInit {
         'score',
         'penalty',
         'penaltyIngredient',
-        'breakdown'
+        'breakdown',
+        'batch',
     ];
 
     rawItems = signal<any[]>([]);
@@ -249,7 +252,7 @@ export class StrainHunter implements OnInit {
 
         this.requestSubscription = this.http
             .get<StrainHunterResponse>(url)
-            .pipe(timeout(45000))
+            .pipe(timeout(90000))
             .subscribe({
                 next: (response) => {
                     this.rawItems.set(response.items ?? []);

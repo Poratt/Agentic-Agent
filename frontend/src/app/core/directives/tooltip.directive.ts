@@ -17,17 +17,24 @@ export class TooltipDirective implements OnDestroy {
     private renderer = inject(Renderer2);
     private tooltipEl: HTMLElement | null = null;
 
+    // משותף לכל ה-instances של הדירקטיבה
+    private static activeTooltipEl: HTMLElement | null = null;
+
     onMouseEnter() {
         if (!this.text() && !this.imageUrl()) return;
+
+        TooltipDirective.removeActiveTooltip();
 
         this.tooltipEl = this.renderer.createElement('div');
         this.renderer.addClass(this.tooltipEl, 'app-tooltip');
 
+        let imgEl: HTMLImageElement | null = null;
+
         if (this.imageUrl()) {
-            const img = this.renderer.createElement('img');
-            this.renderer.setAttribute(img, 'src', this.imageUrl());
-            this.renderer.addClass(img, 'app-tooltip-image');
-            this.renderer.appendChild(this.tooltipEl, img);
+            imgEl = this.renderer.createElement('img');
+            this.renderer.setAttribute(imgEl, 'src', this.imageUrl());
+            this.renderer.addClass(imgEl, 'app-tooltip-image');
+            this.renderer.appendChild(this.tooltipEl, imgEl);
         }
 
         if (this.text()) {
@@ -39,8 +46,13 @@ export class TooltipDirective implements OnDestroy {
         }
 
         this.renderer.appendChild(document.body, this.tooltipEl);
+        TooltipDirective.activeTooltipEl = this.tooltipEl;
 
         this.positionTooltip();
+
+        if (imgEl) {
+            imgEl.addEventListener('load', () => this.positionTooltip(), { once: true });
+        }
     }
 
     onMouseLeave() {
@@ -63,7 +75,17 @@ export class TooltipDirective implements OnDestroy {
     private removeTooltip() {
         if (this.tooltipEl) {
             this.renderer.removeChild(document.body, this.tooltipEl);
+            if (TooltipDirective.activeTooltipEl === this.tooltipEl) {
+                TooltipDirective.activeTooltipEl = null;
+            }
             this.tooltipEl = null;
+        }
+    }
+
+    private static removeActiveTooltip() {
+        if (TooltipDirective.activeTooltipEl) {
+            TooltipDirective.activeTooltipEl.remove();
+            TooltipDirective.activeTooltipEl = null;
         }
     }
 

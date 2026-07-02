@@ -45,11 +45,11 @@
                     <button
                         class="primary-btn outlined md"
                         type="button"
-                        [disabled]="loading()"
+                        [disabled]="loading() || refreshing()"
                         (click)="refresh()"
                         aria-label="רענן נתונים"
                     >
-                        <span class="ph ph-arrows-clockwise" [class.spin-animation]="loading()"></span>
+                        <span class="ph ph-arrows-clockwise" [class.spin-animation]="refreshing()"></span>
                         <span>רענן נתונים</span>
                     </button>
                     <button
@@ -177,6 +177,9 @@
                                                         (click)="openImageDialog(item.imageUrl)"
                                                         (keydown.enter)="openImageDialog(item.imageUrl)"
                                                     />
+                                                }
+                                                @if (hasDisplayValue(item.batch)) {
+                                                    <span class="strain-batch">{{ item.batch }}</span>
                                                 }
                                             </div>
                                             <div class="left-side">

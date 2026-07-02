@@ -56,6 +56,9 @@ export class Strain {
     @Column({ type: 'varchar', length: 255, default: '' })
     packageType!: string;
 
+    @Column({ type: 'varchar', length: 100, default: '' })
+    batch!: string;
+
     @Column({ type: 'simple-json', nullable: true })
     symbols!: { url: string; alt: string }[];
 

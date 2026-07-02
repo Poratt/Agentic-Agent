@@ -242,7 +242,7 @@
 
 
 .stagger {
-  --delay: 120ms;
+  --delay: 40ms;
   --distance: 20px;
 
   >* {

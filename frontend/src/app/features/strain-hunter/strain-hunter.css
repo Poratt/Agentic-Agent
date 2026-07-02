@@ -117,6 +117,8 @@
       flex-direction: column;
       gap: var(--space-1);
       text-align: right;
+      min-width: 88px;
+
 
       .strain-heb-name {
         color: var(--color-text-primary);
@@ -212,6 +214,14 @@
       &:hover {
         border-color: var(--color-success);
       }
+    }
+
+    .strain-batch {
+      font-size: 10px;
+      color: var(--color-text-secondary);
+      text-align: center;
+      line-height: 1;
+      white-space: nowrap;
     }
   }
 
