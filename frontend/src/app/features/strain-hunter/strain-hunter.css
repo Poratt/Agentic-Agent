@@ -1,94 +1,8 @@
 :host {
   display: block;
 
-  .filters-row {
-    display: none;
-
-    &.on-filter {
-      display: block;
-      margin-top: var(--space-3);
-    }
-
-    .filters-container {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: var(--space-3);
-      padding: var(--space-2) var(--space-3);
-      background: var(--color-surface);
-      border: thin solid var(--color-border);
-      border-radius: var(--radius-md);
-
-      .filters-label {
-        color: var(--color-text-secondary);
-        font-size: var(--font-size-sm);
-        font-weight: var(--font-weight-semibold);
-        white-space: nowrap;
-      }
-
-      .filters-list {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: var(--space-2);
-
-        .filter-chip {
-          display: flex;
-          align-items: center;
-          gap: var(--space-1);
-          padding: var(--space-1) var(--space-2);
-          border: thin solid var(--color-border);
-          border-radius: var(--radius-xl);
-          color: var(--color-text-primary);
-          font-size: var(--font-size-xs);
-          transition: var(--transition-colors);
-
-          &:hover {
-            background: var(--primary-30);
-            border-color: var(--color-primary);
-          }
-
-          .chip-remove-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: var(--space-1);
-            background: none;
-            border: none;
-            color: var(--color-text-secondary);
-            cursor: pointer;
-            font-size: var(--font-size-xs);
-            transition: var(--transition-colors);
-
-            &:hover {
-              color: var(--color-primary);
-            }
-          }
-        }
-      }
-
-      .clear-all-btn {
-        margin-right: auto;
-        padding: var(--space-1) var(--space-2);
-        background: none;
-        border: none;
-        border-radius: var(--radius-sm);
-        color: var(--color-primary);
-        cursor: pointer;
-        font-size: var(--font-size-xs);
-        font-weight: var(--font-weight-semibold);
-        transition: background-color var(--transition-fast);
-        white-space: nowrap;
-
-        &:hover {
-          background-color: var(--color-surface-hover);
-          text-decoration: underline;
-        }
-      }
-    }
-  }
-
-  .favorite-strain {}
+  /* Active filters row is split into _strain-hunter-filters.css to keep this
+     file under the component-style budget. */
 
   .strain-main-details {
     display: flex;
@@ -107,7 +21,7 @@
 
       &:hover {
         transform: scale(1.05);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
       }
     }
 
@@ -117,8 +31,7 @@
       flex-direction: column;
       gap: var(--space-1);
       text-align: right;
-      min-width: 88px;
-
+      min-width: 120px;
 
       .strain-heb-name {
         color: var(--color-text-primary);
@@ -131,7 +44,6 @@
           text-decoration: underline;
         }
       }
-
 
       .strain-en-name {
         color: var(--color-text-secondary);
@@ -168,6 +80,14 @@
         color: var(--color-danger);
       }
 
+      .strain-rating {
+        color: var(--color-warning);
+      }
+
+      .strain-deal {
+        color: var(--color-danger);
+      }
+
       .strain-symbols {
         display: inline-flex;
         align-items: center;
@@ -179,7 +99,7 @@
           height: 28px;
           object-fit: contain;
           flex: 0 0 auto;
-          background-color: var(--color-surface);
+          background: var(--color-surface);
           border: thin solid var(--color-border);
           border-radius: 50%;
           padding: 2px;
@@ -192,15 +112,14 @@
       align-items: center;
       gap: var(--space-1);
       align-self: stretch;
-
     }
 
     .strain-new-tag {
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 2px var(--space-1) 0px var(--space-1);
-      background-color: var(--color-success-bg);
+      padding: 2px var(--space-1) 0;
+      background: var(--color-success-bg);
       border-radius: var(--radius-xs);
       color: var(--color-success);
       cursor: pointer;
@@ -209,7 +128,7 @@
       width: fit-content;
       font-weight: var(--font-weight-semibold);
       line-height: 1;
-      transition: background-color var(--transition-fast), border-color var(--transition-fast);
+      transition: var(--transition-colors);
 
       &:hover {
         border-color: var(--color-success);
@@ -243,17 +162,17 @@
       line-height: 1.1;
 
       &.package-badge {
-        background-color: var(--primary-30);
+        background: var(--primary-30);
         color: var(--color-primary);
       }
 
       &.category-badge {
-        background-color: var(--color-danger-glow);
+        background: var(--color-danger-glow);
         color: var(--color-danger);
       }
 
       &.grow-badge {
-        background-color: var(--color-surface-hover);
+        background: var(--color-surface-hover);
         color: var(--color-text-secondary);
         border: thin solid var(--color-border);
       }
@@ -263,17 +182,14 @@
 
         &.family-indica {
           background-color: #1e3a8a;
-          /* Indica Blue */
         }
 
         &.family-sativa {
           background-color: #d97706;
-          /* Sativa Orange */
         }
 
         &.family-hybrid {
           background-color: #15803d;
-          /* Hybrid Green */
         }
       }
     }
@@ -305,16 +221,16 @@
     color: inherit;
     cursor: pointer;
     font: inherit;
-    transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), color var(--transition-fast);
+    transition: var(--transition-colors), box-shadow var(--transition-fast);
 
     &:hover {
-      background-color: var(--primary-30);
+      background: var(--primary-30);
       border-color: var(--color-primary);
       color: var(--color-primary);
     }
 
     &.liked {
-      background-color: var(--primary-30);
+      background: var(--primary-30);
       color: var(--color-primary);
     }
   }
@@ -345,13 +261,12 @@
       align-items: flex-start;
       gap: var(--space-2);
       width: min(100%, var(--search-width));
-      padding: var(--space-1) var(--space-1);
+      padding: var(--space-1);
       border-top: thin solid var(--color-border);
       color: var(--color-primary);
       overflow-wrap: anywhere;
       white-space: normal;
       font-size: 10px;
-
 
       .ph {
         font-size: var(--font-size-md);
@@ -492,33 +407,19 @@
   }
 
   @media (max-width: var(--sm)) {
-    .page-content {
-      .page-header {
-        .header-row {
+    .page-content .page-header {
+      .header-row {
+        align-items: stretch;
+        flex-direction: column;
+
+        .header-actions {
           align-items: stretch;
           flex-direction: column;
-
-          .header-actions {
-            align-items: stretch;
-            flex-direction: column;
-          }
-
-          .form-field-has-icon,
-          .primary-btn {
-            width: 100%;
-          }
         }
 
-        .filters-row {
-          .filters-container {
-            flex-direction: column;
-            align-items: stretch;
-
-            .clear-all-btn {
-              margin-right: 0;
-              text-align: center;
-            }
-          }
+        .form-field-has-icon,
+        .primary-btn {
+          width: 100%;
         }
       }
     }

@@ -72,19 +72,36 @@
         </div>
 
         <div class="filters-row" [class.on-filter]="activeFilters().length > 0">
-            <div class="filters-container">
-                <span class="filters-label">מסננים פעילים:</span>
-                <div class="filters-list">
-                    @for (f of activeFilters(); track f.key) {
-                        <span class="filter-chip">
-                            <span class="chip-text">{{ f.label }}</span>
-                            <button class="chip-remove-btn" type="button" (click)="removeFilter(f.key)" title="הסר מסנן">
-                                <span class="ph ph-x"></span>
-                            </button>
-                        </span>
-                    }
+            <div class="filters-inner">
+                <div class="filters-container" role="status" aria-live="polite">
+                    <span class="filters-label">
+                        <span class="ph ph-funnel" aria-hidden="true"></span>
+                        <span>מסננים פעילים</span>
+                        <span class="filters-count">{{ activeFilters().length }}</span>
+                    </span>
+                    <div class="filters-list">
+                        @for (f of activeFilters(); track f.key; let i = $index) {
+                            <span class="filter-chip" [style.--chip-i]="i">
+                                <span class="filter-name">{{ f.name }}</span>
+                                <span class="chip-text">{{ f.label }}</span>
+                                <button
+                                    class="chip-remove-btn"
+                                    type="button"
+                                    (click)="removeFilter(f.key)"
+                                    appTooltip
+                                    text="הסר מסנן"
+                                    [attr.aria-label]="'הסר מסנן ' + f.name + ': ' + f.label"
+                                >
+                                    <span class="ph ph-x" aria-hidden="true"></span>
+                                </button>
+                            </span>
+                        }
+                    </div>
+                    <button class="clear-all-btn" type="button" (click)="clearAllFilters()">
+                        <span class="ph ph-trash" aria-hidden="true"></span>
+                        <span>ניקוי הכל</span>
+                    </button>
                 </div>
-                <button class="clear-all-btn" type="button" (click)="clearAllFilters()">ניקוי הכל</button>
             </div>
         </div>
     </div>
@@ -165,6 +182,16 @@
                                                         (click)="applyDataFilter('isNew', item.isNew, 'חדש')"
                                                     >
                                                         NEW
+                                                    </button>
+                                                }
+                                                @if (hasDisplayValue(item.growType)) {
+                                                    <button
+                                                        class="filter-node grow-filter-node"
+                                                        type="button"
+                                                        (click)="applyDataFilter('growType', item.growType)"
+                                                    >
+                                                        <span [ngClass]="'ph ' + growTypeIconClass(item.growType)"></span>
+                                                        <span>{{ formatValue(item.growType) }}</span>
                                                     </button>
                                                 }
                                                 @if (hasDisplayValue(item.imageUrl)) {
@@ -299,15 +326,6 @@
                                                     (click)="applyDataFilter('family', item.family)"
                                                 >
                                                     {{ formatFamilyHebrew(item.family) }}
-                                                </button>
-                                            }
-                                            @if (hasDisplayValue(item.growType)) {
-                                                <button
-                                                    class="badge grow-badge"
-                                                    type="button"
-                                                    (click)="applyDataFilter('growType', item.growType)"
-                                                >
-                                                    {{ formatValue(item.growType) }}
                                                 </button>
                                             }
                                         </div>

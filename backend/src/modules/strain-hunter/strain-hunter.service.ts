@@ -50,10 +50,17 @@ const SOURCE_URL_1 =
     '?filters=' +
     'productProductType%5Ein%5Eflower%3B' +
     'productCategory%5Ein%5ET22%2FC4%3B' +
+    'productFamily%5Ein%5Eindica' +
     '&sortBy=store_price';
 
-
-
+const SOURCE_URL_2 =
+    'https://jane.co.il/store/' +
+    'tiltan/' +
+    '?filters=' +
+    'productProductType%5Ein%5Eflower%3B' +
+    'productCategory%5Ein%5ET22%2FC4%3B' +
+    'productFamily%5Ein%5Eindica' +
+    '&sortBy=-store_price';
 
 @Injectable()
 export class StrainHunterService {
@@ -73,17 +80,15 @@ export class StrainHunterService {
             }
         }
 
-        const [scraped1] = await Promise.all([
+        const [scraped1, scraped2] = await Promise.all([
             this.fetchDataFromUrl(SOURCE_URL_1),
+            this.fetchDataFromUrl(SOURCE_URL_2),
         ]);
 
         // Merge by product key — dedupes items that appear in both sort orders
         const mergedMap = new Map<string, StrainItem>();
         scraped1.items.forEach((item) => mergedMap.set(this.getStrainItemKey(item), item));
-
-        // Debug: log merge stats
-        const keyCount1 = new Set(scraped1.items.map((i) => this.getStrainItemKey(i))).size;
-        console.log(`[StrainHunter] URL1=${scraped1.items.length} (${keyCount1} unique keys), Merged=${mergedMap.size}`);
+        scraped2.items.forEach((item) => mergedMap.set(this.getStrainItemKey(item), item));
 
         const scraped = { items: Array.from(mergedMap.values()) };
 
@@ -439,6 +444,7 @@ export class StrainHunterService {
             category: this.pickText(product.category, nestedProduct?.category),
             family: this.pickText(product.family, nestedProduct?.family),
             growType: this.pickText(product.grow_type_name, nestedProduct?.grow_type_name),
+
             thc: this.pickText(batch?.percent_thc, product.percent_thc),
             cbd: this.pickText(batch?.percent_cbd, product.percent_cbd),
         };

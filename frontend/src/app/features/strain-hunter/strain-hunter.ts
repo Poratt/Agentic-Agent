@@ -56,6 +56,23 @@ type StrainHunterFilter = {
     fields: StrainHunterFilterField[];
     label: string;
     value: string;
+    name: string;
+};
+
+const FILTER_FIELD_NAMES: Record<string, string> = {
+    originStrain: 'זן מקור',
+    parent1: 'הורה 1',
+    parent2: 'הורה 2',
+    marketer: 'משווק',
+    manufacturer: 'מגדל',
+    brand: 'מותג',
+    packageType: 'אריזה',
+    countryOfOrigin: 'ארץ מקור',
+    terpenes: 'טרפנים',
+    isNew: 'חדש',
+    category: 'קטגוריה',
+    family: 'משפחה',
+    growType: 'גידול',
 };
 
 type TerpeneFilter = {
@@ -83,7 +100,7 @@ const TOOLTIP_DELAY_MS = 500;
     ],
     templateUrl: './strain-hunter.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    styleUrls: ['./strain-hunter.css'],
+    styleUrls: ['./strain-hunter.css', './_strain-hunter-filters.css'],
 })
 export class StrainHunter implements OnInit {
     private http = inject(HttpClient);
@@ -131,7 +148,6 @@ export class StrainHunter implements OnInit {
         'countryOfOrigin',
         'expiry',
         'packageType',
-
     ];
     private readonly embeddedColumns = [
         'id',
@@ -150,7 +166,6 @@ export class StrainHunter implements OnInit {
         'productUrl',
         'category',
         'family',
-        'growType',
         'thc',
         'cbd',
         'score',
@@ -158,6 +173,7 @@ export class StrainHunter implements OnInit {
         'penaltyIngredient',
         'breakdown',
         'batch',
+        'growType'
     ];
 
     rawItems = signal<any[]>([]);
@@ -190,7 +206,7 @@ export class StrainHunter implements OnInit {
                     });
                 });
             });
-
+        console.log('filtered items:', filtered);
         return filtered.map((item) => this.matchingEngine.calculateScore(item));
     });
 
@@ -312,7 +328,7 @@ export class StrainHunter implements OnInit {
                 });
             }
 
-            return [...prev, { key, fields: filterFields, label: filterLabel, value: filterValue }];
+        return [...prev, { key, fields: filterFields, label: filterLabel, value: filterValue, name: FILTER_FIELD_NAMES[filterFields[0]] ?? filterFields[0] }];
         });
         this.clearTooltip();
     }
@@ -457,6 +473,20 @@ export class StrainHunter implements OnInit {
         }
         if (packageType.includes('שקית')) {
             return 'ph-bag-simple';
+        }
+        return 'ph-question-mark';
+    }
+
+    growTypeIconClass(value: unknown): string {
+        const growType = this.formatValue(value).toLowerCase();
+        if (growType.includes('אינדור')) {
+            return 'ph-storefront';
+        }
+        if (growType.includes('חממה')) {
+            return 'ph-sun';
+        }
+        if (growType.includes('משולב')) {
+            return 'ph-tree';
         }
         return 'ph-question-mark';
     }
