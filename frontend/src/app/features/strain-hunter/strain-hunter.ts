@@ -49,7 +49,8 @@ type StrainHunterFilterField =
     | 'isNew'
     | 'category'
     | 'family'
-    | 'growType';
+    | 'growType'
+    | 'symbols';
 
 type StrainHunterFilter = {
     key: string;
@@ -73,6 +74,7 @@ const FILTER_FIELD_NAMES: Record<string, string> = {
     category: 'קטגוריה',
     family: 'משפחה',
     growType: 'גידול',
+    symbols: 'סמלים',
 };
 
 type TerpeneFilter = {
@@ -200,13 +202,15 @@ export class StrainHunter implements OnInit {
             ? raw
             : raw.filter((item) => {
                 return filters.every((filter) => {
-                    const val = filter.value.toLowerCase();
+                    const val = filter.value.toLowerCase().trim();
                     return filter.fields.some((field) => {
-                        return this.formatValue(item[field]).toLowerCase().includes(val);
+                        const valueToCompare = field === "symbols"
+                            ? this.getSymbols(item.symbols).map(s => s.alt).join(", ")
+                            : this.formatValue(item[field]);
+                        return valueToCompare.trim().toLowerCase().includes(val);
                     });
                 });
             });
-        console.log('filtered items:', filtered);
         return filtered.map((item) => this.matchingEngine.calculateScore(item));
     });
 
@@ -272,6 +276,9 @@ export class StrainHunter implements OnInit {
             .subscribe({
                 next: (response) => {
                     this.rawItems.set(response.items ?? []);
+                    if (response.items && response.items.length > 0) {
+                        console.log('First item symbols:', response.items[0]['symbols']);
+                    }
                     this.loading.set(false);
                     this.refreshing.set(false);
                 },
@@ -527,6 +534,7 @@ export class StrainHunter implements OnInit {
     }
 
     getSymbols(symbols: unknown): { url: string; alt: string }[] {
+        console.log('getSymbols received:', symbols);
         let parsedSymbols = symbols;
 
         if (typeof symbols === 'string') {

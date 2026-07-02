@@ -261,6 +261,10 @@
                                                                 class="strain-symbol"
                                                                 [src]="symbol.url"
                                                                 [alt]="symbol.alt"
+                                                                role="button"
+                                                                tabindex="0"
+                                                                (click)="applyDataFilter('symbols', symbol.alt)"
+                                                                (keydown.enter)="applyDataFilter('symbols', symbol.alt)"
                                                                 appTooltip
                                                                 [text]="symbol.alt"
                                                                 [imageUrl]="symbol.url"
