@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 INPUT=$(cat)
 FILE=$(echo "$INPUT" | jq -r '.file_path // .path // empty' 2>/dev/null)
 if [[ -n "$FILE" ]]; then

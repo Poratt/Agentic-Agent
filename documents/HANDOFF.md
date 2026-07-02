@@ -28,17 +28,23 @@ documents/
 ## Notes For Next Agent
 
 **Completed Fixes**
-- Integrated shared `Tooltip` component into `StrainHunter` table for both terpenes and genetics.
-- Fixed "no info" tooltip state by:
-  1. Triggering `loadAll()` for reference stores in `StrainHunter.ngOnInit`.
-  2. Implementing normalized Hebrew lookup in `TerpeneStore` and `GeneticsStore` to handle punctuation (e.g. apostrophes in "אוג'י") and whitespace.
-- Updated `StrainHunter` templates with `mouseenter`/`mouseleave` handlers to manage tooltip visibility and positioning.
+- Implemented clickable strain-symbol filters in `StrainHunter`:
+  - Updated `strain-hunter.html` to make symbols accessible buttons calling `applyDataFilter('symbols', symbol.alt)`.
+  - Updated `strain-hunter.ts` `items` computed property to support `symbols` field by joining symbol `alt` values into a searchable string.
+  - Added `.trim()` to filter comparisons for robustness.
+  - Fixed TS4111 index signature access error in `load()` debug log.
+- Verified with `npx ng build` (build successful).
 - **Added 500ms mouse hover delay for `Tooltip` and `ScoreTooltip` components in `StrainHunter` to prevent flickering on rapid mouse movement.**
 - Updated `LlmProviderStore.updateProvider` to merge patched fields into existing provider object.
 - Updated `LlmProviderStore.updateModel` to merge patched fields into existing model object.
 - Ensures `testResults` and `models` arrays are preserved on partial PATCH responses.
 - Ran `ng test` – all tests pass.
 - Ran `ng build` – builds succeed with existing warnings.
+
+**Next Steps**
+- No further action required for this fix unless additional PATCH endpoints return unexpected fields.
+- Monitor for any UI flicker issues related to provider/model updates.
+- Consider adding unit tests for store merge behavior if test coverage is needed.
 
 **Next Steps**
 - No further action required for this fix unless additional PATCH endpoints return unexpected fields.

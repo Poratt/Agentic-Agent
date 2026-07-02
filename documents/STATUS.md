@@ -133,7 +133,8 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Updated `backend/swagger-spec.json` with the new message deletion operation.
 - Updated `documents/architecture-diagram.md` for chat stream cancellation and message action deletion flow.
 - Verified: `npx ng test --watch=false`, `npx ng build`, and `npm.cmd run build` pass after the chat action/stop work.
-- Remaining warnings are unchanged: unused `AccessToDirective` in `ChatHistory`, `chat-message.css` warning budget, and `explorer.css` warning budget.
+- Completed: implemented clickable strain-symbol filters in StrainHunter table; updated items computed property to handle symbol alt-text matching.
+- Verified: frontend build passes after the strain-symbol filter update.
 - Closed: `documents/features/todo/explorer-plan.md` was not an active implementation plan; it is now `documents/done/explorer-source-reference.md`.
 - Active feature todo now contains only `documents/features/todo/database-storage-monitor-plan.md`.
 - Completed: Chat message action buttons now render without borders; hover/focus uses tokenized color/background only.
