@@ -229,11 +229,6 @@
       border-color: var(--color-primary);
       color: var(--color-primary);
     }
-
-    &.liked {
-      background: var(--primary-30);
-      color: var(--color-primary);
-    }
   }
 
   .strain-origin-cell {
@@ -279,12 +274,25 @@
         flex-wrap: wrap;
         gap: var(--space-1);
 
-        .terpene-node {
-          color: var(--color-primary);
-        }
       }
     }
   }
+
+
+  .terpene-node,
+  .filter-node {
+    &.liked {
+      background: var(--secondary-30);
+      color: var(--color-secondary);
+    }
+
+    &:hover {
+      background: var(--primary-30);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+  }
+
 
   .country-filter {
     display: inline-flex;

@@ -85,10 +85,13 @@ export class StrainHunterService {
             this.fetchDataFromUrl(SOURCE_URL_2),
         ]);
 
-        // Merge by product key — dedupes items that appear in both sort orders
         const mergedMap = new Map<string, StrainItem>();
-        scraped1.items.forEach((item) => mergedMap.set(this.getStrainItemKey(item), item));
-        scraped2.items.forEach((item) => mergedMap.set(this.getStrainItemKey(item), item));
+        scraped1.items.forEach((item) => {
+            mergedMap.set(this.getStrainItemKey(item), item);
+        });
+        scraped2.items.forEach((item) => {
+            mergedMap.set(this.getStrainItemKey(item), item);
+        });
 
         const scraped = { items: Array.from(mergedMap.values()) };
 
@@ -127,26 +130,37 @@ export class StrainHunterService {
 
         await this.strainRepository.save(entities);
 
-        // Extract unique genetics and terpene names from scraped items for silent enrichment
         const allGeneticsNames = [
             ...new Set(
                 scraped.items
-                    .flatMap((item) => [item.originStrain, item.parent1, item.parent2])
+                    .flatMap((item) => {
+                        return [item.originStrain, item.parent1, item.parent2];
+                    })
                     .filter(Boolean)
-                    .filter((n) => n !== 'לא ידוע' && n.trim().length >= 2)
+                    .filter((n) => {
+                        return n !== 'לא ידוע' && n.trim().length >= 2;
+                    }),
             ),
         ];
 
         const allTerpeneNames = [
             ...new Set(
                 scraped.items
-                    .flatMap((item) => item.terpenes.split(',').map((t) => t.trim()))
+                    .flatMap((item) => {
+                        return item.terpenes.split(',').map((t) => {
+                            return t.trim();
+                        });
+                    })
                     .filter(Boolean)
-                    .filter((n) => n !== 'לא ידוע' && n.trim().length >= 2)
+                    .map((t) => {
+                        return t.replace(/\s*\d+(?:[.,]\d+)?%?\s*$/, '').trim();
+                    })
+                    .filter((n) => {
+                        return n !== 'לא ידוע' && n.trim().length >= 2;
+                    }),
             ),
         ];
 
-        // Enrich in parallel — both are independent
         await Promise.all([
             this.geneticsService.enrichBatch(allGeneticsNames),
             this.terpeneService.enrichBatch(allTerpeneNames),
@@ -444,7 +458,6 @@ export class StrainHunterService {
             category: this.pickText(product.category, nestedProduct?.category),
             family: this.pickText(product.family, nestedProduct?.family),
             growType: this.pickText(product.grow_type_name, nestedProduct?.grow_type_name),
-
             thc: this.pickText(batch?.percent_thc, product.percent_thc),
             cbd: this.pickText(batch?.percent_cbd, product.percent_cbd),
         };
@@ -931,7 +944,6 @@ export class StrainHunterService {
                         }) ?? defaultValue;
                 const price = getCellSelectorText(row, 9, '.text-green-600');
                 const catalogPrice = getCellSelectorText(row, 9, '.line-through');
-
                 const thc = readGridValue(expandedRoot, ['THC', 'thc']);
                 const cbd = readGridValue(expandedRoot, ['CBD', 'cbd']);
                 const growType = readGridValue(expandedRoot, ['מתקן גידול', 'סוג גידול', 'גידול']);

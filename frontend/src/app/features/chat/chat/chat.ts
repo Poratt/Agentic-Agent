@@ -52,10 +52,10 @@ export class Chat implements OnInit, OnDestroy {
             const currentSelection = this.chatForm.get('model')?.value;
 
             if (groups.length > 0 && !currentSelection) {
-                // Try to find Gemma 4 26B model
+                // Try to find Gemma 4 31B model
                 let modelToSelect = null;
                 for (const group of groups) {
-                    const gemmaModel = group.items?.find(m => m.key === 'google/gemma-4-26b-a4b-it:free');
+                    const gemmaModel = group.items?.find(m => m.key === 'google/gemma-4-31b-it:free');
                     if (gemmaModel) {
                         modelToSelect = gemmaModel;
                         break;

@@ -118,6 +118,10 @@
   --color-secondary: #A78BFA;
   --color-secondary-glow: rgba(167, 139, 250, 0.18);
   --color-secondary-border: rgba(167, 139, 250, 0.32);
+  --secondary-30: rgba(167, 139, 250, 0.12);
+  --secondary-300: rgba(167, 139, 250, 0.35);
+  --secondary-400: #A78BFA;
+  --secondary-600: #7C3AED;
 
   /* Glow accents */
   --color-primary-glow-bg: rgba(34, 211, 238, 0.10);
@@ -177,6 +181,11 @@
   --color-secondary: #6D28D9;
   --color-secondary-glow: rgba(109, 40, 217, 0.12);
   --color-secondary-border: rgba(109, 40, 217, 0.28);
+  --secondary-30: rgba(109, 40, 217, 0.04);
+  --secondary-300: rgba(109, 40, 217, 0.30);
+  --secondary-400: #7C3AED;
+  --secondary-600: #431890;
+
 
   /* Glow accents */
   --color-primary-glow-bg: rgba(2, 132, 199, 0.06);
