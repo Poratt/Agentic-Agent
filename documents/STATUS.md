@@ -1,6 +1,6 @@
 # Project Documentation Status
 
-Last updated: 2026-06-11
+Last updated: 2026-07-03
 
 ## Document Areas
 
@@ -18,6 +18,8 @@ New planning documents should go under `documents/features/todo/` unless they ar
 
 ## Recent Status
 
+- Planned: `documents/features/todo/genui-progressive-streaming-rendering-plan.md` documents progressive frontend rendering for streamed GenUI `component` blocks in `AiFormat`, replacing skeleton-only streaming with safe partial HTML/CSS previews.
+- No architecture diagram update was needed for this planning-only change; implementation must revisit the diagram only if it changes backend streaming protocol, event shape, or GenUI generation contract.
 - Completed: `documents/done/llm-service-refactor-plan.md`.
 - Rolled back: GenUI builder split and dedicated weather template experiment.
 - Current GenUI source of truth: `backend/src/modules/admin-agent/constants/gen-ui-spec.constant.ts`.

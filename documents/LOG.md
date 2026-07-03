@@ -1,5 +1,13 @@
 # Documentation Change Log
 
+## 2026-07-03 GenUI Progressive Streaming Rendering Plan
+
+- Added `documents/features/todo/genui-progressive-streaming-rendering-plan.md`.
+- Planning decision: keep version 1 frontend-only by adding a progressive parser inside `AiFormat` before changing backend streaming protocol.
+- Planning decision: partial rendering must reuse the existing GenUI sanitizer rules; unsafe tags, unsafe selectors, and CSS custom property overrides remain blocked during streaming.
+- Planning decision: skeleton remains the fallback only while partial GenUI is too incomplete to render safely.
+- No architecture diagram update was needed because this session created a plan only and did not change runtime architecture.
+
 ## 2026-06-20 LLM Providers Management — PrimeNG Dialogs
 
 - Added PrimeNG `p-dialog` for provider and model create/edit in `frontend/src/app/features/llm-providers-management/`.

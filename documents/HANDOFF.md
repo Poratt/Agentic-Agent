@@ -27,6 +27,14 @@ documents/
 
 ## Notes For Next Agent
 
+**2026-07-03 GenUI Progressive Streaming Rendering Plan**
+- Added `documents/features/todo/genui-progressive-streaming-rendering-plan.md`.
+- What was done this session: created a focused implementation plan for progressive GenUI rendering in `AiFormat`, covering partial component extraction, partial CSS/HTML sanitization, skeleton fallback, tests, smoke testing, risks, DoD, and open decisions.
+- Exact next step: implement Step 1 in `frontend/src/app/core/directives/ai-format.directive.ts` by adding `extractProgressiveComponentParts(...)`, then add focused directive tests in `frontend/src/app/core/directives/ai-format.directive.spec.ts`.
+- Files touched: `documents/features/todo/genui-progressive-streaming-rendering-plan.md`, `documents/STATUS.md`, `documents/LOG.md`, and `documents/HANDOFF.md`.
+- Decisions made: keep version 1 frontend-only; reuse existing sanitizer rules for progressive mode; keep skeleton as fallback until partial HTML is safely renderable; no architecture diagram update was needed for this plan-only session.
+- Open questions for the user: whether progressive rendering should support only the active open component in version 1 or multiple sequential open components.
+
 **Completed Fixes**
 - Implemented clickable strain-symbol filters in `StrainHunter`:
   - Updated `strain-hunter.html` to make symbols accessible buttons calling `applyDataFilter('symbols', symbol.alt)`.

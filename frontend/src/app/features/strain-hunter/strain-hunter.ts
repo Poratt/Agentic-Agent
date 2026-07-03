@@ -84,7 +84,7 @@ type TerpeneFilter = {
 
 const TOOLTIP_W = 240;
 const TOOLTIP_GAP = 8;
-const TOOLTIP_DELAY_MS = 500;
+const TOOLTIP_DELAY_MS = 400;
 
 @Component({
     selector: 'app-strain-hunter',
