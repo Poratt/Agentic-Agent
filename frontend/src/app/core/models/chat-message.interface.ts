@@ -10,6 +10,8 @@ export interface IChatMessage {
   content: string;
   createdAt?: Date;
   steps?: IChatStep[];
+  /** Optional in-memory data URL of the image attached to this user turn. Not persisted to the backend; exists only while the message is in the active session view. */
+  imagePreview?: string;
 }
 
 export type ChatStreamEvent =

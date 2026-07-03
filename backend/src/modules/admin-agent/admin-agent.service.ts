@@ -95,9 +95,13 @@ export class AdminAgentService implements OnModuleInit {
     requestedSessionId?: number,
     provider?: LlmProvider,
     model?: string,
+    image?: string,
   ): Promise<string> {
     const session = await this.agentSessionService.getOrCreateSession(userId, requestedSessionId);
-    await this.agentSessionService.updateSessionTitleIfDefault(session, prompt);
+
+    if (prompt && prompt.trim().length > 0) {
+      await this.agentSessionService.updateSessionTitleIfDefault(session, prompt);
+    }
     await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt);
 
     const tools = this.swaggerToolsParser.getTools();
@@ -113,6 +117,7 @@ export class AdminAgentService implements OnModuleInit {
         tools,
         providerOverride: provider,
         modelOverride: model,
+        image,
       });
 
       if (llmResponse.toolCalls && llmResponse.toolCalls.length > 0) {
@@ -149,10 +154,18 @@ export class AdminAgentService implements OnModuleInit {
     requestedSessionId?: number,
     provider?: LlmProvider,
     model?: string,
+    image?: string,
   ): AsyncIterable<string> {
+    if (image && image.length > 15 * 1024 * 1024) {
+      yield JSON.stringify({ type: 'token', content: 'התמונה גדולה מדי. מקסימום 10MB.' }) + '\n';
+      return;
+    }
+
     const session = await this.agentSessionService.getOrCreateSession(userId, requestedSessionId);
 
-    await this.agentSessionService.updateSessionTitleIfDefault(session, prompt);
+    if (prompt && prompt.trim().length > 0) {
+      await this.agentSessionService.updateSessionTitleIfDefault(session, prompt);
+    }
     await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt);
 
     const tools = this.swaggerToolsParser.getTools();
@@ -168,6 +181,7 @@ export class AdminAgentService implements OnModuleInit {
         tools,
         providerOverride: provider,
         modelOverride: model,
+        image,
       });
 
       if (llmResponse.toolCalls && llmResponse.toolCalls.length > 0) {
@@ -217,6 +231,7 @@ export class AdminAgentService implements OnModuleInit {
             tools,
             providerOverride: provider,
             modelOverride: model,
+            image,
           });
 
           for await (const chunk of stream) {

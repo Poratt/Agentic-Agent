@@ -12,6 +12,12 @@
         <strong>{{ roleLabel() }}</strong>
     </div> -->
 
+    @if (isUser() && message().imagePreview) {
+        <div class="message-attachment">
+            <img [src]="message().imagePreview" alt="תמונה מצורפת" />
+        </div>
+    }
+
     @if (isThinkingVisible()) {
         <details class="thinking-process-box">
             <summary class="thinking-summary">

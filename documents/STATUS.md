@@ -254,3 +254,27 @@ New planning documents should go under `documents/features/todo/` unless they ar
   - On refresh failure, `error` state replaces the table (same as current behavior).
 - Verification: `npm.cmd run build` from `backend` passes. `npx ng build` from `frontend` passes with existing warnings only.
 - No architecture diagram update needed (local UI behavior only).
+
+## 2026-07-03 Session
+
+- Completed: chat image upload, drag-and-drop, and clipboard paste for multimodal LLM conversations.
+  - Backend DTO: added optional `image?: string` to `AgentRequestDto`, relaxed `prompt` from `@IsNotEmpty()` to `@IsOptional()`, relaxed `provider` from `@IsIn()` to `@IsString()`, removed `@IsNotEmpty()` from `model`.
+  - Backend types: added `image?: string` to `LlmRequest`, widened `LlmMessage` user content to `string | ChatCompletionContentPart[]`.
+  - Backend `LlmClientService`: added `buildUserMessage(prompt, image?)` helper that returns multimodal content array when image present; removed `as any` casts.
+  - Backend `AdminAgentService`: both `queryDatabase` and `queryDatabaseStream` accept `image` param, pass to `LlmRequest`, skip title update when prompt is empty, added 15MB backend image size guard.
+  - Backend `AdminAgentController`: passes `dto.image` to `queryDatabaseStream`, error response includes actual error message via `error.message`.
+  - Backend `LlmClientService.generateStream`: changed from yielding error as token to **throwing** the error so controller catch block handles it properly.
+  - Backend body-parser: `main.ts` uses `bodyParser: false` + `app.use(json({ limit: '20mb' }))` to override NestJS default 100KB limit.
+  - Frontend `IChatMessage`: added optional `imagePreview?: string` field.
+  - Frontend `ChatService.sendMessageStream`: accepts 4th optional `image?: string` param, includes in JSON body.
+  - Frontend `chat.ts`: added `isDragging`, `selectedImageBase64`, `selectedImagePreview` signals; `canSend` computed; `@ViewChild('fileInput')`; methods: `openFilePicker`, `onFileSelected`, `onDragOver`, `onDragLeave`, `onDrop`, `processFile` (10MB client limit), `clearSelectedImage`, `onPaste`; removed `Validators.required` from prompt; `sendMessage` captures image before reset.
+  - Frontend `chat.html`: drag overlay, hidden file input, upload button, image preview thumbnail with close button, `(paste)` binding on textarea, send button `[disabled]` uses `canSend()`.
+  - Frontend `chat.css`: `position: relative` on `.chat-root-container`, `.chat-drop-overlay` styles, `.chat-file-input` hidden, `.chat-upload-btn` hover, `.chat-image-preview` with close button on hover.
+  - Frontend `chat-message.html`: renders `message().imagePreview` thumbnail for user messages.
+  - Frontend `chat-message.css`: `.message-attachment` styles nested under `.user-message`.
+- Moved plan to `documents/done/chat-image-upload-and-drag-drop-plan.md`.
+- Verified: `npx ng build` from `frontend` passes; `npm.cmd run build` from `backend` passes.
+- Root cause fixes during implementation:
+  - `PayloadTooLargeError`: NestJS default body-parser 100KB limit; resolved with `bodyParser: false` + 20MB limit.
+  - `400 Bad Request` on image-only messages: ValidationPipe rejected `prompt: ""` due to `@IsNotEmpty()`; resolved by relaxing to `@IsOptional()`.
+- No architecture diagram update needed (backend module boundaries unchanged, no new API endpoints).

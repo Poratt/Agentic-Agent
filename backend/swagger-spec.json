@@ -746,7 +746,7 @@
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "Agent prompt payload with optional chat session and per-request LLM model override.",
+          "description": "Agent prompt payload with optional chat session, image, and per-request LLM model override.",
           "content": {
             "application/json": {
               "schema": {
@@ -2405,7 +2405,8 @@
             "enum": [
               "openrouter",
               "nvidia",
-              "ollama"
+              "ollama",
+              "ollama-cloud"
             ],
             "example": "openrouter"
           },
@@ -2413,6 +2414,11 @@
             "type": "string",
             "description": "Optional LLM model override for this request only.",
             "example": "google/gemma-4-31b-it:free"
+          },
+          "image": {
+            "type": "string",
+            "description": "Optional Base64 data URL of an image to attach to this turn. Format: data:image/<mime>;base64,<payload>. If present, the user message is sent to the LLM as a multimodal content array containing this image plus the prompt text. If absent, the user message is sent as plain text.",
+            "example": "data:image/jpeg;base64,/9j/4AAQ..."
           }
         },
         "required": [

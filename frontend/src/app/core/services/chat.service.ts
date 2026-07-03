@@ -38,6 +38,7 @@ export class ChatService {
 		prompt: string,
 		sessionId?: number,
 		modelSelection?: ChatModelSelection,
+		image?: string,
 	): Observable<ChatStreamEvent> {
 		return new Observable((observer) => {
 			const controller = new AbortController();
@@ -48,7 +49,7 @@ export class ChatService {
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({ prompt, sessionId, ...modelSelection }),
+				body: JSON.stringify({ prompt, sessionId, image, ...modelSelection }),
 				credentials: 'include',
 				signal: controller.signal,
 			})

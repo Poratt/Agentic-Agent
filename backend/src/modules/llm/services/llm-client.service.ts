@@ -17,7 +17,7 @@ export class LlmClientService {
   ) { }
 
   async generateResponse(llmRequest: LlmRequest): Promise<LlmResponse> {
-    const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools } = llmRequest;
+    const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools, image } = llmRequest;
 
     // 🚀 הבאת הקליינט בצורה אסינכרונית מה-DB 🚀
     const client = await this.getClient(providerOverride);
@@ -36,7 +36,7 @@ export class LlmClientService {
         messages: [
           { role: 'system', content: systemContext || 'You are a helpful assistant.' },
           ...(messageHistory?.length ? messageHistory : []),
-          { role: 'user', content: prompt },
+          { role: 'user', content: this.buildUserMessage(prompt, image) },
         ],
         tools: tools && tools.length > 0 ? (tools as OpenAI.Chat.Completions.ChatCompletionTool[]) : undefined,
         temperature: 0.2,
@@ -59,7 +59,7 @@ export class LlmClientService {
   }
 
   async *generateStream(llmRequest: LlmRequest): AsyncIterable<string> {
-    const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools } = llmRequest;
+    const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools, image } = llmRequest;
 
     // 🚀 הבאת הקליינט בצורה אסינכרונית מה-DB 🚀
     const client = await this.getClient(providerOverride);
@@ -80,7 +80,7 @@ export class LlmClientService {
           messages: [
             { role: 'system', content: systemContext || 'You are a helpful assistant.' },
             ...(messageHistory?.length ? messageHistory : []),
-            { role: 'user', content: prompt },
+            { role: 'user', content: this.buildUserMessage(prompt, image) },
           ],
           tools: tools && tools.length > 0 ? (tools as OpenAI.Chat.Completions.ChatCompletionTool[]) : undefined,
           temperature: 0.7,
@@ -95,8 +95,27 @@ export class LlmClientService {
       }
     } catch (error: unknown) {
       this.logger.error(`Stream Error (after retries): ${this.getErrorMessage(error)}`);
-      yield `[AI connection error: ${this.getErrorMessage(error)}]`;
+      throw error;
     }
+  }
+
+  private buildUserMessage(
+    prompt: string,
+    image?: string,
+  ): OpenAI.Chat.Completions.ChatCompletionContentPart[] | string {
+    if (!image) {
+      return prompt;
+    }
+
+    return [
+      { type: 'text', text: prompt || '' },
+      {
+        type: 'image_url',
+        image_url: {
+          url: image,
+        },
+      },
+    ];
   }
 
   private async getClient(providerOverride?: string): Promise<OpenAI> {

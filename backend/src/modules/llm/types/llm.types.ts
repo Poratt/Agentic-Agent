@@ -1,3 +1,5 @@
+import type OpenAI from 'openai';
+
 export type LlmProvider = 'openrouter' | 'nvidia' | 'ollama' | 'ollama-cloud';
 
 export type LlmToolSchema = {
@@ -24,7 +26,7 @@ export type LlmResponse = {
 };
 
 export type LlmMessage =
-  | { role: 'user'; content: string }
+  | { role: 'user'; content: string | OpenAI.Chat.Completions.ChatCompletionContentPart[] }
   | { role: 'assistant'; content: string | null; tool_calls?: LlmToolCall[] }
   | { role: 'tool'; tool_call_id: string; content: string };
 
@@ -35,6 +37,8 @@ export interface LlmRequest {
   messageHistory?: LlmMessage[];
   providerOverride?: LlmProvider;
   modelOverride?: string;
+  /** Optional Base64 data URL image attached to the user turn */
+  image?: string;
 }
 
 export type LlmRuntimeSelection = {

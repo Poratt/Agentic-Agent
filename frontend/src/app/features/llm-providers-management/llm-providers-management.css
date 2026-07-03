@@ -4,6 +4,10 @@
 .inner-table {
     width: 100%;
     border-collapse: collapse;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
 
     th {
         text-align: left;
@@ -102,7 +106,7 @@
 
 .expand-panel-row {
     .expand-panel-cell {
-        background: rgba(0, 0, 0, 0.16);
+        background: color-mix(in srgb, var(--color-text-primary) 4%, transparent);
         padding: 0;
     }
 }
@@ -187,7 +191,7 @@
 
 .nested-panel-row {
     .nested-panel-cell {
-        background: rgba(0, 0, 0, 0.28);
+        background: color-mix(in srgb, var(--color-text-primary) 8%, transparent);
         padding: var(--space-3) var(--space-6) var(--space-4) calc(var(--space-6) + 48px);
     }
 }

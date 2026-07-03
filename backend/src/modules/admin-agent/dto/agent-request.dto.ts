@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 import type { LlmProvider } from '../../llm/types/llm.types';
 
-const LLM_PROVIDER_OPTIONS: LlmProvider[] = ['openrouter', 'nvidia', 'ollama'];
+const LLM_PROVIDER_OPTIONS: LlmProvider[] = ['openrouter', 'nvidia', 'ollama', 'ollama-cloud'];
 
 export class AgentRequestDto {
   @ApiProperty({
@@ -10,7 +10,7 @@ export class AgentRequestDto {
     example: 'Write a short summary of the following text...',
   })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   prompt!: string;
 
   @ApiPropertyOptional({
@@ -27,7 +27,7 @@ export class AgentRequestDto {
     example: 'openrouter',
   })
   @IsOptional()
-  @IsIn(LLM_PROVIDER_OPTIONS)
+  @IsString()
   provider?: LlmProvider;
 
   @ApiPropertyOptional({
@@ -36,6 +36,14 @@ export class AgentRequestDto {
   })
   @IsOptional()
   @IsString()
-  @IsNotEmpty()
   model?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Optional Base64 data URL of an image to attach to this turn. Format: data:image/<mime>;base64,<payload>. If present, the user message is sent to the LLM as a multimodal content array containing this image plus the prompt text. If absent, the user message is sent as plain text.',
+    example: 'data:image/jpeg;base64,/9j/4AAQ...',
+  })
+  @IsOptional()
+  @IsString()
+  image?: string;
 }

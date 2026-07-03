@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
+import { json } from 'body-parser';
 import { AppModule } from './app.module';
 import { seedAdmin } from './core/seeds/user.seed';
 import { seedLlmProviders } from './core/seeds/llm-providers.seed';
@@ -12,8 +13,11 @@ import { LlmModelEntity } from './modules/llm-provider/entities/llm-model.entity
 import { LlmProviderEntity } from './modules/llm-provider/entities/llm-provider.entity';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: false,
+  });
 
+  app.use(json({ limit: '20mb' }));
   app.use(cookieParser());
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));

@@ -659,3 +659,33 @@ documents/
 - Files touched: `frontend/src/app/features/strain-hunter/strain-hunter.ts`, `frontend/src/app/features/strain-hunter/strain-hunter.html`, `documents/features/todo/refresh-button-loader-plan.md` (edge case clarification per review).
 - Decisions made: keep the error behavior unchanged — refresh failure still replaces the table, not suppressing the error.
 - Open questions for the user: none.
+
+## 2026-07-03 Session
+
+**Chat Image Upload, Drag-and-Drop, and Clipboard Paste**
+
+- Completed: implemented full multimodal image support for the chat.
+- Backend changes:
+  - `AgentRequestDto` now has optional `image?: string`; `prompt` relaxed from `@IsNotEmpty()` to `@IsOptional()`; `provider` relaxed from `@IsIn()` to `@IsString()`.
+  - `LlmRequest` has `image?: string`; `LlmMessage` user content widened to `string | ChatCompletionContentPart[]`.
+  - `LlmClientService.buildUserMessage(prompt, image?)` returns multimodal content array when image present.
+  - `AdminAgentService` passes `image` through both `queryDatabase` and `queryDatabaseStream`; skips title update when prompt is empty.
+  - `AdminAgentController` passes `dto.image` to stream; error response now includes `error.message`.
+  - `LlmClientService.generateStream` now **throws** on error instead of yielding it as a token.
+  - `main.ts` uses `bodyParser: false` + `app.use(json({ limit: '20mb' }))` to override NestJS default 100KB limit.
+- Frontend changes:
+  - `IChatMessage` has optional `imagePreview?: string`.
+  - `ChatService.sendMessageStream` accepts 4th optional `image` param.
+  - `chat.ts`: added signals (`isDragging`, `selectedImageBase64`, `selectedImagePreview`), `canSend` computed, file picker, drag/drop, paste, 10MB client limit.
+  - `chat.html`: drag overlay, hidden file input, upload button, image preview thumbnail, `(paste)` binding, `canSend()` on send button.
+  - `chat.css`: overlay, upload button, image preview styles, `position: relative` on container.
+  - `chat-message.html` renders `imagePreview` thumbnail for user messages.
+  - `chat-message.css`: `.message-attachment` styles.
+- Moved plan to `documents/done/chat-image-upload-and-drag-drop-plan.md`.
+- Verification: `npx ng build` from `frontend` passes; `npm.cmd run build` from `backend` passes.
+- Root cause fixes:
+  - `PayloadTooLargeError`: NestJS default body-parser 100KB limit; resolved with `bodyParser: false` + 20MB limit.
+  - `400 Bad Request` on image-only messages: ValidationPipe rejected `prompt: ""` due to `@IsNotEmpty()`; resolved by relaxing to `@IsOptional()`.
+- Files touched: `backend/src/main.ts`, `backend/src/modules/admin-agent/admin-agent.controller.ts`, `backend/src/modules/admin-agent/admin-agent.service.ts`, `backend/src/modules/admin-agent/dto/agent-request.dto.ts`, `backend/src/modules/llm/services/llm-client.service.ts`, `backend/src/modules/llm/types/llm.types.ts`, `frontend/src/app/core/models/chat-message.interface.ts`, `frontend/src/app/core/services/chat.service.ts`, `frontend/src/app/features/chat/chat/chat.ts`, `frontend/src/app/features/chat/chat/chat.html`, `frontend/src/app/features/chat/chat/chat.css`, `frontend/src/app/features/chat/chat-message/chat-message.html`, `frontend/src/app/features/chat/chat-message/chat-message.css`.
+- Decisions made: single image per message in v1; no image persistence in MySQL; body-parser override instead of NestJS config; throw on stream error for proper controller catch handling.
+- Open questions for the user: none.

@@ -184,7 +184,7 @@ export class AdminAgentController {
   } as CustomApiOperationOptions)
   @ApiBody({
     type: AgentRequestDto,
-    description: 'Agent prompt payload with optional chat session and per-request LLM model override.',
+    description: 'Agent prompt payload with optional chat session, image, and per-request LLM model override.',
   })
   @ApiResponse({
     status: 200,
@@ -218,6 +218,7 @@ export class AdminAgentController {
         dto.sessionId,
         dto.provider,
         dto.model,
+        dto.image,
       );
 
       for await (const token of stream) {
@@ -227,7 +228,8 @@ export class AdminAgentController {
       this.logger.error(`Error during stream controller: ${error.message}`, error.stack);
 
       if (!res.closed) {
-        res.write('\n\n[שגיאת מערכת: תקשורת הסטרים נותקה במפתיע. נא לנסות שוב.]\n\n');
+        const detail = error?.message ? ` (${error.message})` : '';
+        res.write(`\n\n[שגיאת מערכת: תקשורת הסטרים נותקה במפתיע${detail}. נא לנסות שוב.]\n\n`);
       }
     } finally {
       if (!res.closed) {

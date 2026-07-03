@@ -1,4 +1,11 @@
-<div class="page-content chat-root-container">
+<div class="page-content chat-root-container" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+    @if (isDragging()) {
+        <div class="chat-drop-overlay" aria-hidden="true">
+            <span class="ph ph-cloud-arrow-up xl"></span>
+            <p>שחרר את התמונה כאן</p>
+        </div>
+    }
+
     @if (historyLoading()) {
         <div class="chat-history-loader">
             <span class="custom-loader"></span>
@@ -33,6 +40,14 @@
         }
         <form [formGroup]="chatForm" (ngSubmit)="sendMessage()">
             <div class="chat-prompt-field">
+                @if (selectedImagePreview(); as preview) {
+                    <div class="chat-image-preview">
+                        <img [src]="preview" alt="תצוגה מקדימה של תמונה מצורפת" />
+                        <button type="button" class="transparent-btn icon-only xs chat-image-preview-close" aria-label="Remove image" (click)="clearSelectedImage()">
+                            <i class="ph ph-x"></i>
+                        </button>
+                    </div>
+                }
                 <textarea
                     #promptTextarea
                     formControlName="prompt"
@@ -40,8 +55,13 @@
                     rows="3"
                     autocomplete="off"
                     (keydown)="onPromptKeydown($event)"
+                    (paste)="onPaste($event)"
                 ></textarea>
                 <div class="chat-prompt-actions">
+                    <input #fileInput type="file" accept="image/*" class="chat-file-input" (change)="onFileSelected($event)" />
+                    <button type="button" class="transparent-btn icon-only sm chat-upload-btn" aria-label="Attach image" (click)="openFilePicker()">
+                        <i class="ph ph-image"></i>
+                    </button>
                     <p-select
                         [options]="models()"
                         formControlName="model"
@@ -67,7 +87,7 @@
                         [type]="loading() ? 'button' : 'submit'"
                         class="chat-send-btn"
                         [class.stop]="loading()"
-                        [disabled]="!loading() && (chatForm.invalid || historyLoading())"
+                        [disabled]="!loading() && (!canSend() || historyLoading())"
                         [attr.aria-label]="loading() ? 'Stop response' : 'Send message'"
                         (click)="loading() ? stopStreaming() : null"
                     >

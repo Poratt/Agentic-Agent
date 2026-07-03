@@ -6,6 +6,7 @@ import {
     ViewChild,
     inject,
     signal,
+    computed,
     ChangeDetectionStrategy,
     effect,
 } from '@angular/core';
@@ -34,6 +35,9 @@ import { ChatService } from '../../../core/services/chat.service';
 export class Chat implements OnInit, OnDestroy {
     @ViewChild('promptTextarea', { static: true })
     private promptTextarea?: ElementRef<HTMLTextAreaElement>;
+
+    @ViewChild('fileInput')
+    private fileInput?: ElementRef<HTMLInputElement>;
 
     private chatService = inject(ChatService);
 
@@ -82,14 +86,23 @@ export class Chat implements OnInit, OnDestroy {
     deletingMessageId = signal<number | null>(null);
     activeAssistantIndex = signal<number | null>(null);
     activeStreamState = signal<ChatMessageStreamState>('idle');
+    isDragging = signal<boolean>(false);
+    selectedImageBase64 = signal<string | null>(null);
+    selectedImagePreview = signal<string | null>(null);
 
     currentUserProfile = this.userStore.currentUserProfile;
 
     // 🚀 כאן אנחנו פשוט שואבים את הנתונים המוכנים מה-Store 🚀
     models = this.llmProviderStore.groupedProviders;
 
+    canSend = computed(() => {
+        const hasText = !!this.chatForm.value.prompt?.trim();
+        const hasImage = !!this.selectedImageBase64();
+        return (hasText || hasImage) && !this.loading() && !this.historyLoading();
+    });
+
     chatForm: FormGroup = this.fb.group({
-        prompt: ['', [Validators.required, Validators.minLength(1)]],
+        prompt: ['', []],
         model: ['', []],
     });
 
@@ -131,6 +144,66 @@ export class Chat implements OnInit, OnDestroy {
         }
     }
 
+    openFilePicker(): void {
+        this.fileInput?.nativeElement.click();
+    }
+
+    onFileSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+
+        if (file && file.type.startsWith('image/')) {
+            this.processFile(file);
+        }
+
+        input.value = '';
+    }
+
+    onDragOver(event: DragEvent): void {
+        event.preventDefault();
+        this.isDragging.set(true);
+        if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = 'copy';
+        }
+    }
+
+    onDragLeave(event: DragEvent): void {
+        this.isDragging.set(false);
+    }
+
+    onDrop(event: DragEvent): void {
+        event.preventDefault();
+        this.isDragging.set(false);
+
+        const file = event.dataTransfer?.files[0];
+        if (file && file.type.startsWith('image/')) {
+            this.processFile(file);
+        }
+    }
+
+    processFile(file: File): void {
+        if (file.size > 10 * 1024 * 1024) {
+            this.actionError.set('התמונה גדולה מדי (מקסימום 10MB). נסה קובץ קטן יותר.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = reader.result as string;
+            this.selectedImageBase64.set(result);
+            this.selectedImagePreview.set(result);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    clearSelectedImage(): void {
+        this.selectedImageBase64.set(null);
+        this.selectedImagePreview.set(null);
+        if (this.fileInput) {
+            this.fileInput.nativeElement.value = '';
+        }
+    }
+
     private loadConversationHistory(sessionId: number) {
         this.historyLoading.set(true);
         this.messages.set([]);
@@ -153,12 +226,14 @@ export class Chat implements OnInit, OnDestroy {
     }
 
     sendMessage() {
-        if (this.chatForm.invalid || this.loading()) {
+        if (this.loading()) {
             return;
         }
 
-        const promptValue = this.chatForm.value.prompt?.trim();
-        if (!promptValue) {
+        const promptValue = this.chatForm.value.prompt?.trim() ?? '';
+        const imageValue = this.selectedImageBase64();
+
+        if (!promptValue && !imageValue) {
             return;
         }
 
@@ -167,15 +242,22 @@ export class Chat implements OnInit, OnDestroy {
         const modelSelection = this.getModelSelection(selectedModelId);
         this.chatForm.patchValue({ prompt: '' });
 
+        const capturedImage = imageValue ?? undefined;
+        this.selectedImageBase64.set(null);
+        this.selectedImagePreview.set(null);
+        if (this.fileInput) {
+            this.fileInput.nativeElement.value = '';
+        }
+
         const currentId = this.chatStore.currentSessionId();
         if (currentId) {
-            this.sendPromptToSession(promptValue, currentId, modelSelection);
+            this.sendPromptToSession(promptValue, currentId, modelSelection, capturedImage);
             return;
         }
 
         this.chatStore.createSessionForMessage(false).subscribe({
             next: (session) => {
-                this.sendPromptToSession(promptValue, session.id, modelSelection);
+                this.sendPromptToSession(promptValue, session.id, modelSelection, capturedImage);
             },
             error: () => {
                 this.loading.set(false);
@@ -183,13 +265,14 @@ export class Chat implements OnInit, OnDestroy {
         });
     }
 
-    private sendPromptToSession(promptValue: string, sessionId: number, modelSelection?: ChatModelSelection) {
+    private sendPromptToSession(promptValue: string, sessionId: number, modelSelection?: ChatModelSelection, image?: string) {
         this.cancelActiveStream();
         this.actionError.set(null);
 
         const userMsg: IChatMessage = {
             role: 'user',
             content: promptValue,
+            imagePreview: image || undefined,
         };
 
         const assistantMsg: IChatMessage = {
@@ -208,7 +291,7 @@ export class Chat implements OnInit, OnDestroy {
 
         const isFirstMessage = this.messages().length <= 2;
 
-        this.activeStreamSub = this.chatService.sendMessageStream(promptValue, sessionId, modelSelection).subscribe({
+        this.activeStreamSub = this.chatService.sendMessageStream(promptValue, sessionId, modelSelection, image).subscribe({
             next: (event) => {
                 if (event.type === 'step' && event.message && event.icon) {
                     this.messages.update((prev) => {
@@ -286,6 +369,22 @@ export class Chat implements OnInit, OnDestroy {
 
         event.preventDefault();
         this.sendMessage();
+    }
+
+    onPaste(event: ClipboardEvent): void {
+        const items = event.clipboardData?.items;
+        if (!items) return;
+
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                event.preventDefault();
+                const blob = item.getAsFile();
+                if (blob) {
+                    this.processFile(blob);
+                }
+                return;
+            }
+        }
     }
 
     getStreamState(index: number, message: IChatMessage): ChatMessageStreamState {

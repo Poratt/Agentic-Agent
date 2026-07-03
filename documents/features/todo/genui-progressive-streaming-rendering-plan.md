@@ -443,3 +443,102 @@ documents/architecture-diagram.md
 4. Replace the skeleton-only streaming render path.
 5. Run frontend tests and build.
 6. Smoke-test the chat stream with a long GenUI response.
+
+## Update v.1
+
+Role: Senior Angular Developer & Architectural Assistant
+Task: Implement GenUI Progressive Streaming Rendering
+Context:
+We are upgrading our frontend GenUI rendering mechanism. Currently, `AiFormat` in `ai-format.directive.ts` waits for the full ```component code fence to close before rendering the HTML/CSS component. This causes frozen states during streaming. We want to enable progressive streaming rendering of safe, partial HTML/CSS components while maintaining strict isolation, performance, and security.
+
+Please implement this feature by strictly following the instructions, constraints, and architecture outlined below.
+
+---
+
+### Core Engineering Requirements
+
+#### 1. Robust Partial HTML Extraction & Safety (Tag Guard)
+
+- Implement `extractProgressiveComponentParts(raw: string): ProgressiveComponentParts | null`.
+- Avoid rendering incomplete or malformed HTML that cuts off mid-tag (e.g., `<div class="glass-pa` or `<section class=`).
+- Implement a helper to scan the trailing edge of the partial HTML stream. If the stream ends inside an open tag (between `<` and `>`) or inside an unclosed attribute quote (`"` or `'` after an `=` sign), backtrack the string to the last stable completed element or delay rendering until the token containing the closing tag/quote is received.
+
+#### 2. Strict CSS Scope Isolation & Incomplete Rule Drop
+
+- Ensure that during streaming, style rules inside `<style>` do not leak into the global document scope.
+- Scrape and sanitize the streaming CSS rules dynamically.
+- Render _only_ fully complete CSS rules (rules with matching `{` and `}`). Drop any trailing incomplete CSS rule in the streaming chunk until it is fully formed.
+- Re-use existing sanitization rules to block `:root`, `html`, `body`, global table/button/header overrides, and custom CSS property declarations (`--variable`).
+- Keyframes and animations must only be rendered once their opening and closing braces are balanced.
+
+#### 3. DOM Thrashing & Render Throttling
+
+- Updating the DOM (`.innerHTML` of the preview host) on every incoming token (every ~15-20ms) causes severe layout thrashing and micro-stutters.
+- Throttle the progressive rendering updates to `requestAnimationFrame` or a micro-delay (30ms-50ms) to ensure smooth browser painting and prevent blocking the Main Thread during rapid token reception.
+
+#### 4. Multi-Component and Sequential Support
+
+- If a message contains multiple separate ` ```component ` blocks or a mix of text and tools, render them sequentially and handle state transitions correctly.
+- Ensure that the last-block stability checks (`isLastBlockStable`) correctly distinguish between active, open components and completed ones.
+
+#### 5. Strict Code Quality & Formatting Rules
+
+You must strictly adhere to the following formatting standards in any code you produce. If your generated code violates these rules, it must be rewritten immediately:
+
+- EVERY function/method must be fully structured on separate lines — never collapsed into single-line formats.
+- Opening curly braces `{` for functions, classes, and control flow blocks (`if`, `for`, `while`, `switch`) must be placed on the SAME line as the declaration/condition.
+- Correct spacing after commas and around operators is mandatory.
+- Lines must not exceed 120 characters.
+- Every `if`/`for`/`while` block must be wrapped in curly braces `{}` and structured on new lines.
+- NO placeholders or comments such as `// ... rest of code` or `// existing code` are allowed. All files must be written in full.
+
+---
+
+### Implementation Steps
+
+#### Step 1: Update the Extraction and Parsing logic
+
+Modify `frontend/src/app/core/directives/ai-format.directive.ts`.
+
+- Introduce `ProgressiveComponentParts` interface:
+
+```typescript
+export interface ProgressiveComponentParts {
+  before: string;
+  partialComponentHtml: string;
+  after: string;
+  complete: boolean;
+}
+```
+
+- Implement `extractProgressiveComponentParts(raw: string): ProgressiveComponentParts | null` using safe regex/string indexing.
+
+#### Step 2: Implement Partial CSS/HTML Sanitization
+
+- Implement `sanitizePartialComponentCss(css: string): string` to extract balanced blocks and drop trailing partials.
+- Implement `sanitizeProgressiveComponentHtml(partialHtml: string): string` utilizing the tag guard rules and DOMParser. Require a valid, renderable root candidate (`div`, `section`, `article`) before swapping out the skeleton loader.
+
+#### Step 3: Integrate with Streaming Rendering Path
+
+- Refactor `renderStreamingComponent(...)` in `ai-format.directive.ts` to dynamically swap the skeleton loader with the progressive component preview once safe, renderable elements exist. Ensure the markdown text preceding the component remains completely stable and does not flicker.
+
+#### Step 4: Write Focused Unit Tests
+
+Update `frontend/src/app/core/directives/ai-format.directive.spec.ts`.
+
+- Test that partial components with valid root elements render previews progressively.
+- Test that incomplete tags or missing root elements maintain the skeleton loader state safely.
+- Test that partial, unsafe CSS selectors or dangerous tags (`script`, `iframe`, etc.) are stripped immediately during progressive streams.
+- Ensure generic code fences (e.g. ` ```ts ` or ` ```html `) are never erroneously parsed as GenUI.
+
+---
+
+### Verification and Done Criteria
+
+1. Run `npx ng test --watch=false` from `frontend/` to verify all tests pass.
+2. Run `npx ng build` from `frontend/` to ensure no compilation issues.
+3. No corrupted encoding characters are introduced.
+
+```
+
+```
