@@ -10,6 +10,7 @@ import {
     GENETICS_ENRICH_SYSTEM_PROMPT,
     buildGeneticsEnrichUserPrompt,
 } from './constants/genetics-enrich-prompts.constant';
+import { deriveThemeColors } from '../../core/utils/color-contrast.util';
 
 const VALID_TYPES = new Set(['היברידי', 'סאטיבה', 'אינדיקה']);
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
@@ -157,6 +158,8 @@ export class GeneticsService {
         const rawType = typeof item.type === 'string' ? item.type.trim() : '';
         const type = VALID_TYPES.has(rawType) ? rawType : null;
 
+        const { colorDark, colorLight } = deriveThemeColors(color);
+
         return {
             name,
             description: this.toNullableString(item.description),
@@ -165,6 +168,8 @@ export class GeneticsService {
             origin: this.toNullableString(item.origin),
             type,
             color,
+            colorDark,
+            colorLight,
         };
     }
 

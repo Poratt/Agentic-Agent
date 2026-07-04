@@ -53,4 +53,20 @@ export class Terpene {
     })
     @Column({ type: 'varchar', length: 9 })
     color!: string;
+
+    @ApiProperty({
+        description:
+            'WCAG AA-safe variant of `color` for dark theme backgrounds (#080D1A).',
+        example: '#66BB6A',
+    })
+    @Column({ type: 'varchar', length: 7, default: '#808080' })
+    colorDark!: string;
+
+    @ApiProperty({
+        description:
+            'WCAG AA-safe variant of `color` for light theme backgrounds (#F0F4F8).',
+        example: '#2E7D32',
+    })
+    @Column({ type: 'varchar', length: 7, default: '#808080' })
+    colorLight!: string;
 }

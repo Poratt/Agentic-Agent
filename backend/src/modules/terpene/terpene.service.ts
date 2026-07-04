@@ -10,6 +10,7 @@ import {
     TERPENE_ENRICH_SYSTEM_PROMPT,
     buildTerpeneEnrichUserPrompt,
 } from './constants/terpene-enrich-prompts.constant';
+import { deriveThemeColors } from '../../core/utils/color-contrast.util';
 
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
 const DEFAULT_COLOR = '#808080';
@@ -184,12 +185,16 @@ export class TerpeneService {
             ? item.color.trim()
             : DEFAULT_COLOR;
 
+        const { colorDark, colorLight } = deriveThemeColors(color);
+
         return {
             name,
             description: this.toNullableString(item.description),
             scent: this.toNullableString(item.scent),
             effects: this.parseEffects(item.effects),
             color,
+            colorDark,
+            colorLight,
         };
     }
 

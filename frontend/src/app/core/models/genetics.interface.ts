@@ -5,8 +5,9 @@
  * the seed populates most rows with all fields, but the schema allows partial
  * records (e.g. phenotype-only strains end up with `parent1 = parent2 = null`).
  *
- * `color` is a per-strain accent hex string used by the frontend to tint UI
- * accents (dot, icon). It is data, not a design-system token.
+ * `color` is the raw AI-generated hex accent.
+ * `colorDark` / `colorLight` are WCAG AA-safe variants derived from `color`
+ * for dark and light theme backgrounds respectively.
  */
 export interface IGenetics {
     id: number;
@@ -17,4 +18,6 @@ export interface IGenetics {
     origin?: string;
     type?: string;
     color: string;
+    colorDark: string;
+    colorLight: string;
 }

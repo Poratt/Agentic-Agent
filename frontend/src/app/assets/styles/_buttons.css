@@ -143,7 +143,7 @@ button {
 
 /* 2. Theme: PRIMARY */
 .primary-btn {
-  color: var(--color-primary);
+  color: var(--color-primary-text);
 
   &:hover:not(:disabled) {
     background-color: var(--primary-30);
@@ -152,7 +152,7 @@ button {
 
   &.outlined {
     background-color: transparent;
-    color: var(--color-primary);
+    color: var(--color-primary-text);
     border-color: var(--primary-400);
 
     &:hover:not(:disabled) {
@@ -162,8 +162,8 @@ button {
   }
 
   &.filled {
-    background-color: var(--color-primary);
-    color: var(--color-bg);
+    background-color: var(--color-primary-btn-bg);
+    color: var(--color-primary-btn-text);
     border-color: transparent;
     font-weight: var(--font-weight-semibold);
     box-shadow: 0 0 12px var(--color-primary-glow);
@@ -195,8 +195,8 @@ button {
   }
 
   &.filled {
-    background-color: var(--color-danger);
-    color: var(--color-white);
+    background-color: var(--color-danger-btn-bg);
+    color: var(--color-danger-btn-text);
     border-color: transparent;
 
     &:hover:not(:disabled) {
@@ -230,7 +230,7 @@ button {
 /* 5. Links */
 a {
   text-decoration: none;
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   transition: color var(--transition-fast), outline-offset var(--transition-fast);
   border-radius: var(--radius-sm);
   line-height: 1;

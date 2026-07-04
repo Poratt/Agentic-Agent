@@ -43,24 +43,26 @@
                         />
                     </div>
                     <button
-                        class="primary-btn outlined md"
+                        class="primary-btn icon-only"
                         type="button"
                         [disabled]="loading() || refreshing()"
                         (click)="refresh()"
                         aria-label="רענן נתונים"
+                        appTooltip
+                        text="רענן נתונים"
                     >
                         <span class="ph ph-arrows-clockwise" [class.spin-animation]="refreshing()"></span>
-                        <span>רענן נתונים</span>
                     </button>
                     <button
-                        class="primary-btn md match-btn"
+                        class="primary-btn icon-only"
                         type="button"
                         [disabled]="loading()"
                         (click)="openMatchDrawer()"
                         aria-label="פתח התאמה אישית"
+                        appTooltip
+                        text="פתח התאמה אישית"
                     >
                         <span class="ph ph-sliders"></span>
-                        <span>התאמה אישית</span>
                     </button>
                 </div>
 

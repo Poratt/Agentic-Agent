@@ -4,9 +4,9 @@
  * `description`, `scent`, and `effects` are optional — the seed populates
  * most rows with all three, but the schema allows partial records.
  *
- * `color` is a per-terpene accent hex string used by the frontend to
- * tint UI accents (dot, icon, effect-tag borders). It is data, not a
- * design-system token.
+ * `color` is the raw AI-generated hex accent.
+ * `colorDark` / `colorLight` are WCAG AA-safe variants derived from `color`
+ * for dark and light theme backgrounds respectively.
  */
 export interface ITerpene {
     id: number;
@@ -15,4 +15,6 @@ export interface ITerpene {
     scent?: string;
     effects?: string[];
     color: string;
+    colorDark: string;
+    colorLight: string;
 }

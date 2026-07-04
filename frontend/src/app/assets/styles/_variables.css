@@ -103,7 +103,7 @@
   /* Text */
   --color-text-primary: #F0F4FF;
   --color-text-secondary: #94A3B8;
-  --color-text-muted: #64748B;
+  --color-text-muted: #7C8CA6;
   --color-text-disabled: #475569;
 
   /* Primary */
@@ -126,6 +126,13 @@
   /* Glow accents */
   --color-primary-glow-bg: rgba(34, 211, 238, 0.10);
   --color-secondary-glow-bg: rgba(167, 139, 250, 0.10);
+
+  /* Button contrast */
+  --color-primary-btn-bg: var(--color-primary);
+  --color-primary-btn-text: var(--color-bg);
+  --color-primary-text: var(--color-primary);
+  --color-danger-btn-bg: var(--red-600);
+  --color-danger-btn-text: var(--color-white);
 
   /* Glass */
   --glass-bg: rgba(255, 255, 255, 0.04);
@@ -166,7 +173,7 @@
   /* Text */
   --color-text-primary: #0F172A;
   --color-text-secondary: #475569;
-  --color-text-muted: #94A3B8;
+  --color-text-muted: #5B6B82;
   --color-text-disabled: #CBD5E1;
 
   /* Primary */
@@ -190,6 +197,13 @@
   /* Glow accents */
   --color-primary-glow-bg: rgba(2, 132, 199, 0.06);
   --color-secondary-glow-bg: rgba(109, 40, 217, 0.05);
+
+  /* Button contrast */
+  --color-primary-btn-bg: var(--primary-600);
+  --color-primary-btn-text: var(--color-white);
+  --color-primary-text: var(--primary-600);
+  --color-danger-btn-bg: var(--red-600);
+  --color-danger-btn-text: var(--color-white);
 
   /* Inputs */
   --color-input-bg: #FFFFFF;

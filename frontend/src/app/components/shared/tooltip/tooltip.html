@@ -1,7 +1,7 @@
 @switch (category()) {
     @case ('terpene') {
         @if (terpene(); as t) {
-            <div class="tooltip-card" [style.--tooltip-color]="t.color">
+            <div class="tooltip-card" [style.--tooltip-color]="tooltipColor()">
                 <header class="tooltip-card-header">
                     <span class="tooltip-card-dot"></span>
                     <h4 class="tooltip-card-name">{{ t.name }}</h4>
@@ -34,7 +34,7 @@
     }
     @case ('genetics') {
         @if (genetics(); as g) {
-            <div class="tooltip-card" [style.--tooltip-color]="g.color">
+            <div class="tooltip-card" [style.--tooltip-color]="tooltipColor()">
                 <header class="tooltip-card-header">
                     <span class="tooltip-card-dot"></span>
                     <h4 class="tooltip-card-name">{{ g.name }}</h4>
