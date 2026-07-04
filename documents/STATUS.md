@@ -1,6 +1,6 @@
 # Project Documentation Status
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 ## Document Areas
 
@@ -278,3 +278,19 @@ New planning documents should go under `documents/features/todo/` unless they ar
   - `PayloadTooLargeError`: NestJS default body-parser 100KB limit; resolved with `bodyParser: false` + 20MB limit.
   - `400 Bad Request` on image-only messages: ValidationPipe rejected `prompt: ""` due to `@IsNotEmpty()`; resolved by relaxing to `@IsOptional()`.
 - No architecture diagram update needed (backend module boundaries unchanged, no new API endpoints).
+
+## 2026-07-04 Session
+
+- Completed: `documents/done/chat-message-content-too-long-fix-plan.md`.
+  - Widened `chat_messages.content` from `TEXT` (64KB) to `MEDIUMTEXT` (~1.6M chars) in `chat-message.entity.ts`.
+  - Added `truncateForStorage(content, maxBytes=50_000)` private helper to `admin-agent.service.ts`.
+  - Helper cuts on `Buffer` bytes (not string chars), backtracks to valid UTF-8 char boundary, appends `_truncated` marker with original length.
+  - Applied truncation at all 4 tool-related `saveMessage` call sites: assistant tool-call rows + tool-result rows in both `queryDatabase` and `queryDatabaseStream`.
+  - Added 5 unit tests asserting `Buffer.byteLength(result, 'utf8') <= maxBytes` for Hebrew-heavy, mixed Hebrew+JSON, and ASCII payloads.
+  - Verified: `npm run build` from `backend` passes; `npm run test` passes 19/19 (pre-existing `app.controller.spec.ts` FAIL unrelated).
+- Completed: extracted `private mapToDto(entity: Terpene): TerpeneDto` in `terpene.controller.ts`, replacing 4 inline mapping sites (findAll, findOne, create, update).
+- Completed: added `terpene.controller.spec.ts` (3 tests) and `genetics.dto.spec.ts` (4 tests) — DTO mapping coverage tests that fail at build time if a field is added to the DTO but not mapped from the entity.
+- Completed: added `colorDark` and `colorLight` fields to `TerpeneDto`, `GeneticsDto`, `toGeneticsDto()`, and all 4 terpene controller mapping sites.
+- Completed: backfilled all 18 terpenes and 246 genetics rows with WCAG AA-safe color variants (`colorDark`/`colorLight`) using `deriveThemeColors()`.
+- Verified: frontend tooltip now uses `tooltipColor()` computed (theme-aware) instead of raw `t.color`/`g.color`.
+- Verified: `npx ng build` from `frontend` passes; `npm run build` from `backend` passes; `npm run test` passes 19/19.

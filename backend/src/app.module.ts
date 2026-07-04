@@ -14,6 +14,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { StrainHunterModule } from './modules/strain-hunter/strain-hunter.module';
 import { TerpeneModule } from './modules/terpene/terpene.module';
 import { GeneticsModule } from './modules/genetics/genetics.module';
+import { WebSearchModule } from './modules/web-search/web-search.module';
 
 @Module({
   imports: [
@@ -44,7 +45,8 @@ import { GeneticsModule } from './modules/genetics/genetics.module';
     LlmProviderModule,
     StrainHunterModule,
     TerpeneModule,
-    GeneticsModule
+    GeneticsModule,
+    WebSearchModule
   ],
 })
 export class AppModule {

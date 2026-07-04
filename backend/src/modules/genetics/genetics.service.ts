@@ -11,6 +11,7 @@ import {
     buildGeneticsEnrichUserPrompt,
 } from './constants/genetics-enrich-prompts.constant';
 import { deriveThemeColors } from '../../core/utils/color-contrast.util';
+import { WebSearchService } from '../web-search/web-search.service';
 
 const VALID_TYPES = new Set(['היברידי', 'סאטיבה', 'אינדיקה']);
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
@@ -27,6 +28,7 @@ export class GeneticsService {
         @InjectRepository(Genetics)
         private readonly geneticsRepository: Repository<Genetics>,
         private readonly llmClientService: LlmClientService,
+        private readonly webSearchService: WebSearchService,
     ) { }
 
     async findAll(): Promise<Genetics[]> {
@@ -66,11 +68,15 @@ export class GeneticsService {
             const chunkNumber = Math.floor(i / CHUNK_SIZE) + 1;
             const totalChunks = Math.ceil(missing.length / CHUNK_SIZE);
 
-            this.logger.log(`Sending genetics chunk ${chunkNumber}/${totalChunks} (${chunk.length} items)...`);
+            this.logger.log(`Searching web for genetics chunk ${chunkNumber}/${totalChunks} (${chunk.length} items)...`);
+
+            const searchResults = await this.searchChunk(chunk);
+
+            this.logger.log(`Sending genetics chunk ${chunkNumber}/${totalChunks} to LLM...`);
 
             try {
                 const response = await this.llmClientService.generateResponse({
-                    prompt: buildGeneticsEnrichUserPrompt(chunk),
+                    prompt: buildGeneticsEnrichUserPrompt(chunk, searchResults),
                     systemContext: GENETICS_ENRICH_SYSTEM_PROMPT,
                     providerOverride: 'openrouter',
                     modelOverride: 'google/gemma-4-31b-it:free',
@@ -138,6 +144,31 @@ export class GeneticsService {
         }
 
         return result;
+    }
+
+    private async searchChunk(names: string[]): Promise<Map<string, string>> {
+        const results = new Map<string, string>();
+        for (const name of names) {
+            try {
+                const searchResult = await this.webSearchService.search(`${name} cannabis strain genetics parents origin`);
+                if (searchResult.success && searchResult.result) {
+                    const parts: string[] = [];
+                    if (searchResult.result.answer) {
+                        parts.push(`Answer: ${searchResult.result.answer}`);
+                    }
+                    for (const r of searchResult.result.results.slice(0, 3)) {
+                        parts.push(`${r.title}: ${r.content}`);
+                    }
+                    if (parts.length > 0) {
+                        results.set(name, parts.join('\n'));
+                    }
+                }
+            } catch (error: unknown) {
+                const msg = error instanceof Error ? error.message : 'Unknown error';
+                this.logger.warn(`Web search failed for "${name}": ${msg}`);
+            }
+        }
+        return results;
     }
 
     private mapGeneticsRecord(raw: unknown): Partial<Genetics> | null {

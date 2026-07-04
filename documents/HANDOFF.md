@@ -689,3 +689,17 @@ documents/
 - Files touched: `backend/src/main.ts`, `backend/src/modules/admin-agent/admin-agent.controller.ts`, `backend/src/modules/admin-agent/admin-agent.service.ts`, `backend/src/modules/admin-agent/dto/agent-request.dto.ts`, `backend/src/modules/llm/services/llm-client.service.ts`, `backend/src/modules/llm/types/llm.types.ts`, `frontend/src/app/core/models/chat-message.interface.ts`, `frontend/src/app/core/services/chat.service.ts`, `frontend/src/app/features/chat/chat/chat.ts`, `frontend/src/app/features/chat/chat/chat.html`, `frontend/src/app/features/chat/chat/chat.css`, `frontend/src/app/features/chat/chat-message/chat-message.html`, `frontend/src/app/features/chat/chat-message/chat-message.css`.
 - Decisions made: single image per message in v1; no image persistence in MySQL; body-parser override instead of NestJS config; throw on stream error for proper controller catch handling.
 - Open questions for the user: none.
+
+## 2026-07-04 Session
+
+**Chat Message Content Too Long Fix + Controller DRY Refactor + Color Contrast Backfill**
+
+- Completed: fixed `Data too long for column 'content'` in `chat_messages` by widening the column from `TEXT` to `MEDIUMTEXT` and adding a `truncateForStorage()` helper that caps tool-result persistence at 50KB (cutting on `Buffer` bytes, not string chars, to handle Hebrew/UTF-8 correctly).
+- Completed: extracted `private mapToDto(entity: Terpene): TerpeneDto` in `terpene.controller.ts`, replacing 4 identical inline mapping sites. The genetics controller already used `toGeneticsDto()` and was already DRY.
+- Completed: added DTO mapping coverage tests (`terpene.controller.spec.ts` with 3 tests, `genetics.dto.spec.ts` with 4 tests) that assert `Object.keys(mapToDto(entity))` matches the DTO field list — catches missing mappings at build time.
+- Completed: added `colorDark`/`colorLight` fields to `TerpeneDto`, `GeneticsDto`, `toGeneticsDto()`, and all 4 terpene controller mapping sites.
+- Completed: backfilled all 18 terpenes and 246 genetics rows with WCAG AA-safe color variants via `deriveThemeColors()`.
+- Verified: `npm run build` from `backend` passes; `npm run test` passes 19/19 (pre-existing `app.controller.spec.ts` FAIL unrelated); `npx ng build` from `frontend` passes.
+- Files touched: `backend/src/modules/admin-agent/entities/chat-message.entity.ts`, `backend/src/modules/admin-agent/admin-agent.service.ts`, `backend/src/modules/admin-agent/admin-agent.service.spec.ts` (new), `backend/src/modules/terpene/terpene.controller.ts`, `backend/src/modules/terpene/terpene.controller.spec.ts` (new), `backend/src/modules/terpene/dto/terpene.dto.ts`, `backend/src/modules/genetics/dto/genetics.dto.ts`, `backend/src/modules/genetics/dto/genetics.dto.spec.ts` (new), `documents/done/chat-message-content-too-long-fix-plan.md` (moved from todo), `documents/STATUS.md`, `documents/HANDOFF.md`.
+- Decisions made: `MEDIUMTEXT` over `LONGTEXT` to keep row-size cost bounded; `truncateForStorage` at the orchestrator layer (not executor) so the LLM still gets the full result on the current iteration; coverage tests use hardcoded DTO key lists rather than reflection to keep them explicit.
+- Open questions for the user: none.

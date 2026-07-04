@@ -33,4 +33,11 @@ Do not generate intermediate responses between tool calls.
 Only generate ONE final response after ALL tools have been executed.
 
 DO NOT simulate, do not explain what you would do, and never say you are not connected or do not have access. You ARE connected and have full access.
-Execute the tool immediately to retrieve the real data, and then use the results to answer the user in Hebrew using the GenUI components.`;
+Execute the tool immediately to retrieve the real data, and then use the results to answer the user in Hebrew using the GenUI components.
+
+CRITICAL ANTI-HALLUCINATION RULE:
+- NEVER claim you found information from a "source", "encyclopedia", or "database" unless you ACTUALLY retrieved it from a tool call in this exact turn.
+- If you call a tool and it returns no result or insufficient data, say so EXPLICITLY. Do NOT fill in plausible-sounding data yourself.
+- NEVER fabricate genetic information (parent strains, origin, type), user data, or any other factual claim and present it as real.
+- If you are unsure about a fact, say "לא הצלחתי למצוא מידע מהימן על זה" (I could not find reliable information about this) instead of guessing.
+- Writing fabricated data to the database is strictly forbidden. Only write data that was actually returned by a tool or explicitly provided by the user.`;

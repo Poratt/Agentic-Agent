@@ -11,6 +11,7 @@ import {
     buildTerpeneEnrichUserPrompt,
 } from './constants/terpene-enrich-prompts.constant';
 import { deriveThemeColors } from '../../core/utils/color-contrast.util';
+import { WebSearchService } from '../web-search/web-search.service';
 
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
 const DEFAULT_COLOR = '#808080';
@@ -26,6 +27,7 @@ export class TerpeneService {
         @InjectRepository(Terpene)
         private readonly terpeneRepository: Repository<Terpene>,
         private readonly llmClientService: LlmClientService,
+        private readonly webSearchService: WebSearchService,
     ) { }
 
     async findAll(): Promise<Terpene[]> {
@@ -96,11 +98,15 @@ export class TerpeneService {
             const chunkNumber = Math.floor(i / CHUNK_SIZE) + 1;
             const totalChunks = Math.ceil(missing.length / CHUNK_SIZE);
 
-            this.logger.log(`Sending terpenes chunk ${chunkNumber}/${totalChunks} (${chunk.length} items)...`);
+            this.logger.log(`Searching web for terpenes chunk ${chunkNumber}/${totalChunks} (${chunk.length} items)...`);
+
+            const searchResults = await this.searchChunk(chunk);
+
+            this.logger.log(`Sending terpenes chunk ${chunkNumber}/${totalChunks} to LLM...`);
 
             try {
                 const response = await this.llmClientService.generateResponse({
-                    prompt: buildTerpeneEnrichUserPrompt(chunk),
+                    prompt: buildTerpeneEnrichUserPrompt(chunk, searchResults),
                     systemContext: TERPENE_ENRICH_SYSTEM_PROMPT,
                     providerOverride: 'openrouter',
                     modelOverride: 'google/gemma-4-31b-it:free',
@@ -168,6 +174,31 @@ export class TerpeneService {
         }
 
         return result;
+    }
+
+    private async searchChunk(names: string[]): Promise<Map<string, string>> {
+        const results = new Map<string, string>();
+        for (const name of names) {
+            try {
+                const searchResult = await this.webSearchService.search(`${name} cannabis terpene scent effects`);
+                if (searchResult.success && searchResult.result) {
+                    const parts: string[] = [];
+                    if (searchResult.result.answer) {
+                        parts.push(`Answer: ${searchResult.result.answer}`);
+                    }
+                    for (const r of searchResult.result.results.slice(0, 3)) {
+                        parts.push(`${r.title}: ${r.content}`);
+                    }
+                    if (parts.length > 0) {
+                        results.set(name, parts.join('\n'));
+                    }
+                }
+            } catch (error: unknown) {
+                const msg = error instanceof Error ? error.message : 'Unknown error';
+                this.logger.warn(`Web search failed for "${name}": ${msg}`);
+            }
+        }
+        return results;
     }
 
     private mapTerpeneRecord(raw: unknown): Partial<Terpene> | null {

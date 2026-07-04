@@ -59,6 +59,18 @@ export class GeneticsDto {
         example: '#228B22',
     })
     color!: string;
+
+    @ApiProperty({
+        description: 'WCAG AA-safe variant of `color` for dark theme backgrounds (#080D1A).',
+        example: '#228B22',
+    })
+    colorDark!: string;
+
+    @ApiProperty({
+        description: 'WCAG AA-safe variant of `color` for light theme backgrounds (#F0F4F8).',
+        example: '#1B6B1B',
+    })
+    colorLight!: string;
 }
 
 /**
@@ -80,5 +92,7 @@ export function toGeneticsDto(entity: Genetics | null): GeneticsDto | null {
         origin: entity.origin ?? undefined,
         type: entity.type ?? undefined,
         color: entity.color,
+        colorDark: entity.colorDark,
+        colorLight: entity.colorLight,
     };
 }

@@ -1,0 +1,36 @@
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiInternalServerErrorResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
+import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
+import { WebSearchQueryDto } from './dto/web-search-query.dto';
+import { WebSearchService } from './web-search.service';
+
+@ApiTags('web-search')
+@ApiBearerAuth()
+@Controller('web-search')
+export class WebSearchController {
+  constructor(private readonly webSearchService: WebSearchService) {}
+
+  @Get('search')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Search the web for current information',
+    summaryHe: 'מחפש מידע עדכני באינטרנט — שימושי לאימות עובדות, מציאת מקורות, או בדיקת מידע שלא נמצא במאגר המקומי',
+    toolIcon: 'ph-magnifying-glass',
+    description:
+      'Calls the Tavily API to perform a real-time web search. Returns structured results with titles, URLs, content snippets, and an optional AI-generated answer.',
+  } as CustomApiOperationOptions)
+  @ApiOkResponse({ description: 'Search results retrieved successfully.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
+  @ApiInternalServerErrorResponse({ description: 'Unexpected server error.' })
+  search(@Query() query: WebSearchQueryDto) {
+    return this.webSearchService.search(query.query);
+  }
+}

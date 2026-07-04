@@ -48,8 +48,13 @@ export class ChatMessage {
   @Column({ type: 'enum', enum: ['user', 'assistant', 'tool'] })
   role!: 'user' | 'assistant' | 'tool';
 
-  @ApiProperty({ description: 'Stored message body.', example: 'Here is the answer...' })
-  @Column({ type: 'text' })
+  @ApiProperty({
+    description:
+      'Stored message body. Column is MEDIUMTEXT (~1.6M chars) so that large tool results can be persisted without truncation. ' +
+      'Rows may still be trimmed by the orchestrator before write to keep LLM context bounded — see the `_truncated` marker.',
+    example: 'Here is the answer...',
+  })
+  @Column({ type: 'mediumtext' })
   content!: string;
 
   @ApiProperty({

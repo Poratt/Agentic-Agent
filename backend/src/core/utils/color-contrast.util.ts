@@ -123,16 +123,11 @@ export function adjustLightnessForContrast(
 
     const { h, s } = hexToHsl(hex);
 
-    // Determine search direction: try both darker and lighter
     const darkerResult = searchLightness(h, s, bgHex, minRatio, 0, 50);
     const lighterResult = searchLightness(h, s, bgHex, minRatio, 50, 100);
 
-    // Pick the result closest to original lightness (50 = midpoint)
-    const origL = hexToHsl(hex).l;
     if (darkerResult !== null && lighterResult !== null) {
-        return Math.abs(parseInt(darkerResult, 16) - origL) < Math.abs(parseInt(lighterResult, 16) - origL)
-            ? darkerResult
-            : lighterResult;
+        return darkerResult;
     }
     return darkerResult ?? lighterResult ?? hex;
 }

@@ -44,4 +44,16 @@ export class TerpeneDto {
         example: '#66BB6A',
     })
     color!: string;
+
+    @ApiProperty({
+        description: 'WCAG AA-safe variant of `color` for dark theme backgrounds (#080D1A).',
+        example: '#66BB6A',
+    })
+    colorDark!: string;
+
+    @ApiProperty({
+        description: 'WCAG AA-safe variant of `color` for light theme backgrounds (#F0F4F8).',
+        example: '#2E7D32',
+    })
+    colorLight!: string;
 }

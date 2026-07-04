@@ -125,7 +125,7 @@ export class AdminAgentService implements OnModuleInit {
           userId,
           session.id,
           'assistant',
-          JSON.stringify(llmResponse.toolCalls),
+          this.truncateForStorage(JSON.stringify(llmResponse.toolCalls)),
           'YES_TOOL_CALLS',
         );
 
@@ -135,7 +135,7 @@ export class AdminAgentService implements OnModuleInit {
           const results = await this.executeToolCallGroup(group, userId);
 
           for (const { call, resultData } of results) {
-            await this.agentSessionService.saveMessage(userId, session.id, 'tool', resultData, call.id);
+            await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), call.id);
           }
         }
       } else {
@@ -189,7 +189,7 @@ export class AdminAgentService implements OnModuleInit {
           userId,
           session.id,
           'assistant',
-          JSON.stringify(llmResponse.toolCalls),
+          this.truncateForStorage(JSON.stringify(llmResponse.toolCalls)),
           'YES_TOOL_CALLS',
         );
 
@@ -218,7 +218,7 @@ export class AdminAgentService implements OnModuleInit {
             yield JSON.stringify({ type: 'step', icon: STEP_ICONS.success, message: 'השלב בוצע בהצלחה!' }) + '\n';
           }
 
-          await this.agentSessionService.saveMessage(userId, session.id, 'tool', resultData, call.id);
+          await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), call.id);
         }
         }
       } else {
@@ -341,5 +341,33 @@ export class AdminAgentService implements OnModuleInit {
     } catch {
       return {};
     }
+  }
+
+  private truncateForStorage(content: string, maxBytes = 50_000): string {
+    const fullBuffer = Buffer.from(content, 'utf8');
+    if (fullBuffer.byteLength <= maxBytes) {
+      return content;
+    }
+
+    const originalLength = content.length;
+    const marker = JSON.stringify({
+      _truncated: true,
+      _originalLength: originalLength,
+      _note: 'Tool result was truncated before persistence to stay within message-size limits. Re-call the tool with a narrower filter if the full payload is required.',
+    });
+
+    const previewBudget = maxBytes - Buffer.byteLength(marker, 'utf8');
+
+    // Backtrack from the cut point to find a valid UTF-8 character boundary.
+    // Continuation bytes are 10xxxxxx (0x80–0xBF); we must not end the slice
+    // in the middle of a multi-byte sequence.
+    let boundary = previewBudget;
+    while (boundary > 0 && (fullBuffer[boundary] & 0xC0) === 0x80) {
+      boundary--;
+    }
+
+    const preview = fullBuffer.subarray(0, boundary).toString('utf8');
+
+    return `${preview}${marker}`;
   }
 }

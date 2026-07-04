@@ -1643,6 +1643,48 @@
         "toolIcon": "ph-tree-evergreen"
       }
     },
+    "/web-search/search": {
+      "get": {
+        "description": "Calls the Tavily API to perform a real-time web search. Returns structured results with titles, URLs, content snippets, and an optional AI-generated answer.",
+        "operationId": "WebSearchController_search",
+        "parameters": [
+          {
+            "name": "query",
+            "required": true,
+            "in": "query",
+            "description": "The search query to look up on the web",
+            "schema": {
+              "minLength": 2,
+              "maxLength": 500,
+              "example": "Ice Burn cannabis strain genetics",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results retrieved successfully."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Search the web for current information",
+        "summaryHe": "מחפש מידע עדכני באינטרנט — שימושי לאימות עובדות, מציאת מקורות, או בדיקת מידע שלא נמצא במאגר המקומי",
+        "tags": [
+          "web-search"
+        ],
+        "toolIcon": "ph-magnifying-glass"
+      }
+    },
     "/terpenes": {
       "get": {
         "description": "Returns the full terpene reference catalog ordered alphabetically by Hebrew name. The list is small (~17 rows) and intended to be cached client-side.",
@@ -3100,12 +3142,24 @@
             "type": "string",
             "description": "Hex accent color used by the frontend to render per-strain UI accents (dots, tag borders, etc.).",
             "example": "#228B22"
+          },
+          "colorDark": {
+            "type": "string",
+            "description": "WCAG AA-safe variant of `color` for dark theme backgrounds (#080D1A).",
+            "example": "#228B22"
+          },
+          "colorLight": {
+            "type": "string",
+            "description": "WCAG AA-safe variant of `color` for light theme backgrounds (#F0F4F8).",
+            "example": "#1B6B1B"
           }
         },
         "required": [
           "id",
           "name",
-          "color"
+          "color",
+          "colorDark",
+          "colorLight"
         ]
       },
       "GeneticsListResultResponseDto": {
@@ -3324,12 +3378,24 @@
             "type": "string",
             "description": "Hex accent color used by the frontend to render per-terpene UI accents (dots, tag borders, etc.).",
             "example": "#66BB6A"
+          },
+          "colorDark": {
+            "type": "string",
+            "description": "WCAG AA-safe variant of `color` for dark theme backgrounds (#080D1A).",
+            "example": "#66BB6A"
+          },
+          "colorLight": {
+            "type": "string",
+            "description": "WCAG AA-safe variant of `color` for light theme backgrounds (#F0F4F8).",
+            "example": "#2E7D32"
           }
         },
         "required": [
           "id",
           "name",
-          "color"
+          "color",
+          "colorDark",
+          "colorLight"
         ]
       },
       "TerpeneListResultResponseDto": {

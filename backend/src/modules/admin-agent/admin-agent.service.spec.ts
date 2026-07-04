@@ -1,0 +1,130 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { AdminAgentService } from './admin-agent.service';
+import { LlmService } from '../llm/llm.service';
+import { AgentSessionService } from './services/agent-session.service';
+import { AgentToolExecutorService } from './services/agent-tool-executor.service';
+import { SwaggerToolsParser } from './services/swagger-tools.parser';
+
+function makeService(): AdminAgentService {
+  return new AdminAgentService(
+    {} as LlmService,
+    {} as SwaggerToolsParser,
+    {} as AgentSessionService,
+    {} as AgentToolExecutorService,
+  );
+}
+
+describe('AdminAgentService.truncateForStorage', () => {
+  const hebrewLine =
+    'תיאור זן עם הרבה עברית: יציב, מרגיע, עם ניחוחות הדרים ואדמה. ';
+  const hebrewHeavyContent = hebrewLine.repeat(3000); // ~138 KB of mostly Hebrew
+
+  it('returns the original content when it fits within maxBytes (Hebrew)', () => {
+    const smallContent = hebrewLine.repeat(50); // ~2.3 KB
+    const svc = makeService();
+    const max = 50_000;
+
+    const result = (svc as any).truncateForStorage(smallContent, max);
+
+    expect(Buffer.byteLength(result, 'utf8')).toBeLessThanOrEqual(max);
+    expect(result).toBe(smallContent);
+  });
+
+  it('truncates Hebrew content so the encoded byte length is at or under maxBytes', () => {
+    const svc = makeService();
+    const max = 50_000;
+
+    const result = (svc as any).truncateForStorage(hebrewHeavyContent, max);
+
+    expect(Buffer.byteLength(result, 'utf8')).toBeLessThanOrEqual(max);
+    expect(result).toContain('"_truncated":true');
+    expect(result).toContain(`"_originalLength":${hebrewHeavyContent.length}`);
+  });
+
+  it('truncates mixed Hebrew + JSON payload (realistic genetics response) to <= maxBytes', () => {
+    const realistic = JSON.stringify(
+      Array.from({ length: 200 }, (_, i) => ({
+        id: i,
+        name: `זן מספר ${i}`,
+        description: hebrewLine.repeat(10),
+        effects: ['מרגיע', 'מעורר', 'מרומם'],
+        scent: 'הדרים, אדמה, אורן',
+      })),
+    );
+    const svc = makeService();
+    const max = 50_000;
+
+    const result = (svc as any).truncateForStorage(realistic, max);
+
+    expect(Buffer.byteLength(result, 'utf8')).toBeLessThanOrEqual(max);
+    expect(result).toContain('"_truncated":true');
+  });
+
+  it('preserves ASCII content exactly when under budget', () => {
+    const ascii = 'Hello world! '.repeat(100); // ~1.3 KB
+    const svc = makeService();
+
+    const result = (svc as any).truncateForStorage(ascii, 50_000);
+
+    expect(result).toBe(ascii);
+  });
+
+  it('truncates large ASCII payload and includes marker', () => {
+    const largeAscii = 'x'.repeat(100_000); // 100 KB
+    const svc = makeService();
+    const max = 50_000;
+
+    const result = (svc as any).truncateForStorage(largeAscii, max);
+
+    expect(Buffer.byteLength(result, 'utf8')).toBeLessThanOrEqual(max);
+    expect(result).toContain('"_truncated":true');
+    expect(result).toContain(`"_originalLength":${largeAscii.length}`);
+  });
+
+  it('backtracks to valid UTF-8 boundary when cut lands mid-character', () => {
+    const svc = makeService();
+    const hebrewChar = 'א'; // U+05D0 → 2 bytes in UTF-8: 0xD6 0xB0
+
+    // Build content: 21 ASCII bytes + 1 Hebrew char + 500 ASCII bytes
+    // Byte layout: [0..20] ASCII 'x' | [21] 0xD6 [22] 0xB0 | [23..522] ASCII 'y'
+    // String length = 522, byte length = 21 + 2 + 500 = 523
+    const asciiPrefix = 'x'.repeat(21);
+    const asciiSuffix = 'y'.repeat(500);
+    const content = asciiPrefix + hebrewChar + asciiSuffix;
+
+    // Compute the actual marker size for this content's string length
+    const marker = JSON.stringify({
+      _truncated: true,
+      _originalLength: content.length,
+      _note: 'Tool result was truncated before persistence to stay within message-size limits. Re-call the tool with a narrower filter if the full payload is required.',
+    });
+    const markerBytes = Buffer.byteLength(marker, 'utf8');
+
+    // Set maxBytes so previewBudget = 21.
+    // Byte 21 is the leading byte 0xD6 of 'א' — this is NOT a continuation
+    // byte, so the char is complete at the boundary. But if we had previewBudget=22,
+    // byte 22 is 0xB0 (continuation byte) — the backtrack would fire.
+    //
+    // To test the backtrack path specifically, we want the cut to land ON a
+    // continuation byte. Set previewBudget = 22 so the cut is at byte 22 (0xB0).
+    const previewBudget = 22; // lands on continuation byte 0xB0
+    const maxBytes = previewBudget + markerBytes;
+
+    // Verify setup: content must exceed maxBytes for truncation to trigger
+    expect(Buffer.byteLength(content, 'utf8')).toBeGreaterThan(maxBytes);
+    // Verify byte 22 is a continuation byte (0xB0)
+    expect(Buffer.from(content, 'utf8')[22] & 0xC0).toBe(0x80);
+
+    const result = (svc as any).truncateForStorage(content, maxBytes);
+
+    // 1. Must fit within budget
+    expect(Buffer.byteLength(result, 'utf8')).toBeLessThanOrEqual(maxBytes);
+    // 2. No replacement char — the incomplete Hebrew char was removed by backtrack
+    expect(result).not.toContain('\uFFFD');
+    // 3. Preview ends at byte 21 (21 ASCII 'x' chars), not at byte 22
+    expect(result.startsWith(asciiPrefix.slice(0, 21))).toBe(true);
+    expect(result.length).toBeGreaterThanOrEqual(21);
+    // 4. Marker present
+    expect(result).toContain('"_truncated":true');
+  });
+});

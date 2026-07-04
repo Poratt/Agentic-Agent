@@ -21,6 +21,8 @@ import { TerpeneListResultResponseDto } from './dto/terpene-list-result-response
 import { TerpeneResultResponseDto } from './dto/terpene-result-response.dto';
 import { TerpeneCreateDto } from './dto/terpene-create.dto';
 import { TerpeneUpdateDto } from './dto/terpene-update.dto';
+import { TerpeneDto } from './dto/terpene.dto';
+import { Terpene } from './entities/terpene.entity';
 
 /**
  * Controller for the terpene reference catalog.
@@ -42,6 +44,19 @@ import { TerpeneUpdateDto } from './dto/terpene-update.dto';
 @Controller('terpenes')
 export class TerpeneController {
     constructor(private readonly terpeneService: TerpeneService) {}
+
+    private mapToDto(entity: Terpene): TerpeneDto {
+        return {
+            id: entity.id,
+            name: entity.name,
+            description: entity.description ?? undefined,
+            scent: entity.scent ?? undefined,
+            effects: entity.effects ?? undefined,
+            color: entity.color,
+            colorDark: entity.colorDark,
+            colorLight: entity.colorLight,
+        };
+    }
 
     /**
      * Return every terpene in the catalog.
@@ -76,14 +91,7 @@ export class TerpeneController {
         return {
             success: true,
             message: 'Terpenes fetched successfully',
-            result: items.map(item => ({
-                id: item.id,
-                name: item.name,
-                description: item.description ?? undefined,
-                scent: item.scent ?? undefined,
-                effects: item.effects ?? undefined,
-                color: item.color,
-            })),
+            result: items.map(item => this.mapToDto(item)),
         };
     }
 
@@ -131,14 +139,7 @@ export class TerpeneController {
         return {
             success: true,
             message: 'Terpene fetched successfully',
-            result: {
-                id: item.id,
-                name: item.name,
-                description: item.description ?? undefined,
-                scent: item.scent ?? undefined,
-                effects: item.effects ?? undefined,
-                color: item.color,
-            },
+            result: this.mapToDto(item),
         };
     }
 
@@ -185,14 +186,7 @@ export class TerpeneController {
         return {
             success: true,
             message: 'Terpene created successfully',
-            result: {
-                id: item.id,
-                name: item.name,
-                description: item.description ?? undefined,
-                scent: item.scent ?? undefined,
-                effects: item.effects ?? undefined,
-                color: item.color,
-            },
+            result: this.mapToDto(item),
         };
     }
 
@@ -250,14 +244,7 @@ export class TerpeneController {
         return {
             success: true,
             message: 'Terpene updated successfully',
-            result: {
-                id: item.id,
-                name: item.name,
-                description: item.description ?? undefined,
-                scent: item.scent ?? undefined,
-                effects: item.effects ?? undefined,
-                color: item.color,
-            },
+            result: this.mapToDto(item),
         };
     }
 }
