@@ -69,6 +69,18 @@ input[type='range'] {
     z-index: 1;
   }
 
+  .search-clear-btn {
+    position: absolute;
+    left: var(--space-2);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+  }
+
+  &:has(.search-clear-btn) input.form-control {
+    padding-left: var(--space-8);
+  }
+
   &.sm {
     width: min(calc(var(--search-width) / 2), 100%);
 

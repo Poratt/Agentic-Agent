@@ -17,6 +17,9 @@ export interface IGenetics {
     parent2?: string;
     origin?: string;
     type?: string;
+    thcRange?: string;
+    terpenes?: string;
+    effects?: string;
     color: string;
     colorDark: string;
     colorLight: string;

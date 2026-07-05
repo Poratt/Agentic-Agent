@@ -40,6 +40,7 @@ export class LlmClientService {
         ],
         tools: tools && tools.length > 0 ? (tools as OpenAI.Chat.Completions.ChatCompletionTool[]) : undefined,
         temperature: 0.2,
+        max_tokens: 1024,
       });
 
       const firstChoice = result?.choices?.[0];
@@ -54,7 +55,7 @@ export class LlmClientService {
     const content = typeof message?.content === 'string' ? message.content : null;
     const toolCalls = (message.tool_calls || []) as LlmToolCall[];
 
-    this.logger.log(`Response OK: content=${content?.length ?? 0} chars, toolCalls=${toolCalls.length}`);
+    this.logger.log(`Response OK: content=${content?.length ?? 0} chars: ${content?.slice(0, 200)}... toolCalls=${toolCalls.length}`);
     return { content, toolCalls };
   }
 

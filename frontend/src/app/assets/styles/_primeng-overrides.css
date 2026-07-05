@@ -4,6 +4,11 @@
 
 /* ── Tables ─────────────────────────────────────────────────────────────── */
 
+.catalog-table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
 .p-datatable {
   .p-datatable-sort-icon {
     width: var(--space-3);
@@ -73,10 +78,12 @@ p-table {
   p-table {
     background-color: var(--grey-30) !important;
 
-    .p-paginator {
-      background: transparent;
-    }
   }
+}
+
+p-paginator.p-paginator {
+  background: transparent;
+  flex-direction: row-reverse;
 }
 
 /* ── Select ──────────────────────────────────────────────────────────────── */

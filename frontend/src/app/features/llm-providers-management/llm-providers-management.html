@@ -20,42 +20,33 @@
             </div>
         }
         @case (PageStates.Ready) {
-            <div class="page-content">
-                <div class="page-header">
-                    <div class="header-row">
-                        <div class="header-content">
-                            <h2>LLM Providers</h2>
-                        </div>
-
-                        <div class="header-actions">
-                            <div class="action-row">
-                                <div class="form-field-has-icon">
-                                    <span class="field-icon ph ph-magnifying-glass"></span>
-                                    <input
-                                        pInputText
-                                        type="text"
-                                        (input)="applyGlobalFilter($event)"
-                                        placeholder="Search LLM providers..."
-                                        class="form-control"
-                                    />
-                                </div>
-                            </div>
-
-                            <div class="action-row toolbar-split">
-                                <div class="toolbar-stats">
-                                    <span class="ph ph-database"></span>
-                                    <span>TOTAL PROVIDERS: {{ llmProviders().length }}</span>
-                                </div>
-                                <button type="button" class="primary-btn filled" (click)="openAddProviderDialog()">
-                                    <i class="ph ph-plus"></i>
-                                    Add Provider
-                                </button>
-                            </div>
-                        </div>
+            <div class="settings-toolbar">
+                <div class="toolbar-search">
+                    <div class="form-field-has-icon">
+                        <span class="field-icon ph ph-magnifying-glass"></span>
+                        <input
+                            pInputText
+                            type="text"
+                            (input)="applyGlobalFilter($event)"
+                            placeholder="Search LLM providers..."
+                            class="form-control"
+                        />
                     </div>
                 </div>
 
-                <div class="glass-effect card table-container">
+                <div class="toolbar-actions">
+                    <div class="toolbar-stats">
+                        <span class="ph ph-database"></span>
+                        <span>{{ llmProviders().length }} providers</span>
+                    </div>
+                    <button type="button" class="primary-btn filled sm" (click)="openAddProviderDialog()">
+                        <i class="ph ph-plus"></i>
+                        Add Provider
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass-effect card table-container">
                     <p-table #table [value]="llmProviders()" dataKey="id" [globalFilterFields]="globalFilterFields" [rowHover]="true">
                         <ng-template pTemplate="header">
                             <tr>
@@ -290,7 +281,6 @@
                         </ng-template>
                     </p-table>
                 </div>
-            </div>
         }
     }
 </div>

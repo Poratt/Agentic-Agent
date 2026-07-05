@@ -1,0 +1,527 @@
+<p-tabs value="0">
+    <p-tablist>
+        <p-tab value="0">גנטיקה</p-tab>
+        <p-tab value="1">טרפנים</p-tab>
+    </p-tablist>
+    <p-tabpanels>
+        <!-- ── Genetics Tab ─────────────────────────────────────────────────── -->
+        <p-tabpanel value="0">
+            <div class="catalog-toolbar">
+                <div class="toolbar-search">
+                    <div class="form-field-has-icon">
+                        <span class="field-icon ph ph-magnifying-glass"></span>
+                        <input
+                            type="text"
+                            [ngModel]="geneticsFilter()"
+                            (ngModelChange)="onGeneticsFilter($event)"
+                            placeholder="חיפוש גנטיקה..."
+                            class="form-control"
+                        />
+                        @if (geneticsFilter()) {
+                            <button
+                                type="button"
+                                class="icon-only transparent-btn sm search-clear-btn"
+                                aria-label="נקה חיפוש"
+                                (click)="clearGeneticsFilter()"
+                            >
+                                <i class="ph ph-x"></i>
+                            </button>
+                        }
+                    </div>
+                </div>
+                <div class="toolbar-stats">
+                    <span class="ph ph-dna"></span>
+                    <span>{{ filteredGenetics().length }} זנים</span>
+                    <button
+                        type="button"
+                        class="primary-btn outlined sm"
+                        [disabled]="bulkEnriching() === 'genetics'"
+                        (click)="bulkEnrichGenetics()"
+                    >
+                        @if (bulkEnriching() === 'genetics') {
+                            <i class="ph ph-spinner ph-spin"></i>
+                            מבצע העשרה...
+                        } @else {
+                            <i class="ph ph-magic-wand"></i>
+                            העשרת כל החסרים
+                        }
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass-effect card">
+                <p-table
+                    [value]="filteredGenetics()"
+                    [rowHover]="true"
+                    [paginator]="true"
+                    [rows]="20"
+                    [rowsPerPageOptions]="[10, 20, 50]"
+                    sortField="name"
+                    [sortOrder]="1"
+                    styleClass="catalog-table"
+                >
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th class="col-expand"></th>
+                            <th pSortableColumn="name">שם <p-sortIcon field="name" /></th>
+                            <th pSortableColumn="type">סוג <p-sortIcon field="type" /></th>
+                            <th pSortableColumn="origin">מקור <p-sortIcon field="origin" /></th>
+                            <th>הורה 1</th>
+                            <th>הורה 2</th>
+                            <th class="col-desc">תיאור</th>
+                            <th class="col-color"></th>
+                            <th class="col-regen"></th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-g>
+                        <tr>
+                            <td class="col-expand">
+                                <button
+                                    type="button"
+                                    class="icon-only transparent-btn chevron-btn rtl"
+                                    [class.open]="isGeneticsExpanded(g.id)"
+                                    [attr.aria-label]="isGeneticsExpanded(g.id) ? 'Collapse' : 'Expand'"
+                                    (click)="toggleGenetics(g.id)"
+                                >
+                                    <i class="ph ph-caret-left"></i>
+                                </button>
+                            </td>
+                            <td class="row-label clickable" (click)="toggleGenetics(g.id)">{{ g.name }}</td>
+                            <td>
+                                @if (g.type) {
+                                    <span class="badge badge-strain-type">{{ g.type }}</span>
+                                } @else {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td class="row-meta">{{ g.origin || '—' }}</td>
+                            <td>{{ g.parent1 || '—' }}</td>
+                            <td>{{ g.parent2 || '—' }}</td>
+                            <td class="col-desc row-meta">{{ g.description || '—' }}</td>
+                            <td class="col-color">
+                                <span class="color-dot" [style.background]="getThemeColor(g)"></span>
+                            </td>
+                            <td class="col-regen">
+                                <button
+                                    type="button"
+                                    class="icon-only transparent-btn"
+                                    [disabled]="isEnriching('g-' + g.id)"
+                                    (click)="onRowRegenerateGenetics(g)"
+                                    pTooltip="Regenerate"
+                                >
+                                    @if (isEnriching('g-' + g.id)) {
+                                        <i class="ph ph-spinner ph-spin"></i>
+                                    } @else {
+                                        <i class="ph ph-magic-wand"></i>
+                                    }
+                                </button>
+                            </td>
+                        </tr>
+                        @if (isGeneticsExpanded(g.id)) {
+                            <tr class="expand-panel-row">
+                                <td colspan="9" class="expand-panel-cell">
+                                    <div class="expand-panel">
+                                        <div class="panel-header">
+                                            <span class="panel-title">{{ g.name }}</span>
+
+                                            <div class="panel-actions">
+                                                <button
+                                                    type="button"
+                                                    class="primary-btn outlined sm"
+                                                    [disabled]="isEnriching('g-' + g.id)"
+                                                    (click)="regenerateGenetics(g)"
+                                                >
+                                                    @if (isEnriching('g-' + g.id)) {
+                                                        <i class="ph ph-spinner ph-spin"></i>
+                                                    } @else {
+                                                        <i class="ph ph-magic-wand"></i>
+                                                    }
+                                                    Regenerate
+                                                </button>
+                                                <button type="button" class="danger-btn outlined sm" (click)="deleteGenetics(g)">
+                                                    <i class="ph ph-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="expand-panel-body" [class.has-enrichment]="hasEnrichedGenetics(g.id)">
+                                            <div class="current-details">
+                                                <div class="detail-grid">
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">סוג</span>
+                                                        <span class="detail-value">
+                                                            @if (g.type) {
+                                                                <span class="badge badge-strain-type">{{ g.type }}</span>
+                                                            } @else {
+                                                                <span class="text-muted">—</span>
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">מקור</span>
+                                                        <span class="detail-value">{{ g.origin || '—' }}</span>
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">הורה 1</span>
+                                                        <span class="detail-value">{{ g.parent1 || '—' }}</span>
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">הורה 2</span>
+                                                        <span class="detail-value">{{ g.parent2 || '—' }}</span>
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">THC</span>
+                                                        <span class="detail-value">{{ g.thcRange || '—' }}</span>
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">טרפנים</span>
+                                                        <span class="detail-value">{{ g.terpenes || '—' }}</span>
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">אפקטים</span>
+                                                        <span class="detail-value">{{ g.effects || '—' }}</span>
+                                                    </div>
+                                                    <div class="detail-item detail-full">
+                                                        <span class="detail-label">תיאור נוכחי</span>
+                                                        <span class="detail-value">{{ g.description || '—' }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            @if (hasEnrichedGenetics(g.id)) {
+                                                <div class="enrichment-panel slide-right">
+                                                    <div class="enrichment-header">
+                                                        <span class="detail-label">תוצאות LLM</span>
+                                                        <div class="enrichment-actions">
+                                                            <button
+                                                                type="button"
+                                                                class="primary-btn outlined sm"
+                                                                (click)="discardEnrichedGenetics(g.id)"
+                                                            >
+                                                                <i class="ph ph-x"></i>
+                                                                ביטול
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                class="primary-btn filled sm"
+                                                                (click)="saveEnrichedGenetics(g)"
+                                                            >
+                                                                <i class="ph ph-floppy-disk"></i>
+                                                                שמירה
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    @if (getEnrichedGenetics(g.id); as enriched) {
+                                                        <div class="enrichment-new">
+                                                            <div class="detail-grid">
+                                                                <div class="detail-item">
+                                                                    <span class="detail-label">סוג</span>
+                                                                    <span class="detail-value">
+                                                                        @if (enriched.type) {
+                                                                            <span class="badge badge-strain-type">{{ enriched.type }}</span>
+                                                                        } @else {
+                                                                            <span class="text-muted">—</span>
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                                <div class="detail-item">
+                                                                    <span class="detail-label">מקור</span>
+                                                                    <span class="detail-value">{{ enriched.origin || '—' }}</span>
+                                                                </div>
+                                                                <div class="detail-item">
+                                                                    <span class="detail-label">הורה 1</span>
+                                                                    <span class="detail-value">{{ enriched.parent1 || '—' }}</span>
+                                                                </div>
+                                                                <div class="detail-item">
+                                                                    <span class="detail-label">הורה 2</span>
+                                                                    <span class="detail-value">{{ enriched.parent2 || '—' }}</span>
+                                                                </div>
+                                                                <div class="detail-item">
+                                                                    <span class="detail-label">THC</span>
+                                                                    <span class="detail-value">{{ enriched.thcRange || '—' }}</span>
+                                                                </div>
+                                                                <div class="detail-item">
+                                                                    <span class="detail-label">טרפנים</span>
+                                                                    <span class="detail-value">{{ enriched.terpenes || '—' }}</span>
+                                                                </div>
+                                                                <div class="detail-item">
+                                                                    <span class="detail-label">אפקטים</span>
+                                                                    <span class="detail-value">{{ enriched.effects || '—' }}</span>
+                                                                </div>
+                                                                <div class="detail-item detail-full">
+                                                                    <span class="detail-label">תיאור חדש</span>
+                                                                    <span class="detail-value">{{ enriched.description || '—' }}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="9">
+                                <div class="page-state table-empty-state">
+                                    <span class="icon ph ph-magnifying-glass-minus"></span>
+                                    <h4 class="title">לא נמצאו זנים התואמים לחיפוש.</h4>
+                                    <p class="subtitle">נסה לשנות את מונחי החיפוש או לנקות את הסינון.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </p-tabpanel>
+
+        <!-- ── Terpenes Tab ─────────────────────────────────────────────────── -->
+        <p-tabpanel value="1">
+            <div class="catalog-toolbar">
+                <div class="toolbar-search">
+                    <div class="form-field-has-icon">
+                        <span class="field-icon ph ph-magnifying-glass"></span>
+                        <input
+                            type="text"
+                            [ngModel]="terpeneFilter()"
+                            (ngModelChange)="onTerpeneFilter($event)"
+                            placeholder="חיפוש טרפנים..."
+                            class="form-control"
+                        />
+                        @if (terpeneFilter()) {
+                            <button
+                                type="button"
+                                class="icon-only transparent-btn sm search-clear-btn"
+                                aria-label="נקה חיפוש"
+                                (click)="clearTerpeneFilter()"
+                            >
+                                <i class="ph ph-x"></i>
+                            </button>
+                        }
+                    </div>
+                </div>
+                <div class="toolbar-stats">
+                    <span class="ph ph-leaf"></span>
+                    <span>{{ filteredTerpenes().length }} טרפנים</span>
+                    <button
+                        type="button"
+                        class="primary-btn outlined sm"
+                        [disabled]="bulkEnriching() === 'terpenes'"
+                        (click)="bulkEnrichTerpenes()"
+                    >
+                        @if (bulkEnriching() === 'terpenes') {
+                            <i class="ph ph-spinner ph-spin"></i>
+                            מבצע העשרה...
+                        } @else {
+                            <i class="ph ph-magic-wand"></i>
+                            העשרת כל החסרים
+                        }
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass-effect card">
+                <p-table
+                    [value]="filteredTerpenes()"
+                    [rowHover]="true"
+                    [paginator]="true"
+                    [rows]="20"
+                    [rowsPerPageOptions]="[10, 20, 50]"
+                    sortField="name"
+                    [sortOrder]="1"
+                    breakpoint="1600"
+                    responsiveLayout="stack"
+                    styleClass="catalog-table"
+                >
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th class="col-expand"></th>
+                            <th pSortableColumn="name">שם <p-sortIcon field="name" /></th>
+                            <th>ריח</th>
+                            <th>אפקטים</th>
+                            <th class="col-desc">תיאור</th>
+                            <th class="col-color"></th>
+                            <th class="col-regen"></th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-t>
+                        <tr>
+                            <td class="col-expand">
+                                <button
+                                    type="button"
+                                    class="icon-only transparent-btn chevron-btn rtl"
+                                    [class.open]="isTerpeneExpanded(t.id)"
+                                    [attr.aria-label]="isTerpeneExpanded(t.id) ? 'Collapse' : 'Expand'"
+                                    (click)="toggleTerpene(t.id)"
+                                >
+                                    <i class="ph ph-caret-left"></i>
+                                </button>
+                            </td>
+                            <td class="row-label clickable" (click)="toggleTerpene(t.id)">{{ t.name }}</td>
+                            <td class="row-meta">{{ t.scent || '—' }}</td>
+                            <td>
+                                @if (t.effects?.length) {
+                                    <div class="tag-list">
+                                        @for (effect of t.effects; track effect) {
+                                            <span class="tag tag-muted">{{ effect }}</span>
+                                        }
+                                    </div>
+                                } @else {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td class="col-desc row-meta">{{ t.description || '—' }}</td>
+                            <td class="col-color">
+                                <span class="color-dot" [style.background]="getThemeColor(t)"></span>
+                            </td>
+                            <td class="col-regen">
+                                <button
+                                    type="button"
+                                    class="icon-only transparent-btn"
+                                    [disabled]="isEnriching('t-' + t.id)"
+                                    (click)="onRowRegenerate(t)"
+                                    pTooltip="Regenerate"
+                                >
+                                    @if (isEnriching('t-' + t.id)) {
+                                        <i class="ph ph-spinner ph-spin"></i>
+                                    } @else {
+                                        <i class="ph ph-magic-wand"></i>
+                                    }
+                                </button>
+                            </td>
+                        </tr>
+                        @if (isTerpeneExpanded(t.id)) {
+                            <tr class="expand-panel-row">
+                                <td colspan="7" class="expand-panel-cell">
+                                    <div class="expand-panel">
+                                        <div class="panel-header">
+                                            <span class="panel-title">{{ t.name }}</span>
+
+                                            <div class="panel-actions">
+                                                <button
+                                                    type="button"
+                                                    class="primary-btn outlined sm"
+                                                    [disabled]="isEnriching('t-' + t.id)"
+                                                    (click)="regenerateTerpene(t)"
+                                                >
+                                                    @if (isEnriching('t-' + t.id)) {
+                                                        <i class="ph ph-spinner ph-spin"></i>
+                                                    } @else {
+                                                        <i class="ph ph-magic-wand"></i>
+                                                    }
+                                                    Regenerate
+                                                </button>
+                                                <button type="button" class="danger-btn outlined sm" (click)="deleteTerpene(t)">
+                                                    <i class="ph ph-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="expand-panel-body" [class.has-enrichment]="hasEnrichedTerpene(t.id)">
+                                            <div class="current-details">
+                                                <div class="detail-grid">
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">ריח</span>
+                                                        <span class="detail-value">{{ t.scent || '—' }}</span>
+                                                    </div>
+                                                    <div class="detail-item detail-full">
+                                                        <span class="detail-label">אפקטים</span>
+                                                        <span class="detail-value">
+                                                            @if (t.effects?.length) {
+                                                                <div class="tag-list">
+                                                                    @for (effect of t.effects; track effect) {
+                                                                        <span class="tag tag-muted">{{ effect }}</span>
+                                                                    }
+                                                                </div>
+                                                            } @else {
+                                                                <span class="text-muted">—</span>
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                    <div class="detail-item detail-full">
+                                                        <span class="detail-label">תיאור נוכחי</span>
+                                                        <span class="detail-value">{{ t.description || '—' }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            @if (hasEnrichedTerpene(t.id)) {
+                                                <div class="enrichment-panel slide-right">
+                                                    <div class="enrichment-header">
+                                                        <span class="detail-label">תוצאות LLM</span>
+                                                        <div class="enrichment-actions">
+                                                            <button
+                                                                type="button"
+                                                                class="primary-btn outlined sm"
+                                                                (click)="discardEnrichedTerpene(t.id)"
+                                                            >
+                                                                <i class="ph ph-x"></i>
+                                                                ביטול
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                class="primary-btn filled sm"
+                                                                (click)="saveEnrichedTerpene(t)"
+                                                            >
+                                                                <i class="ph ph-floppy-disk"></i>
+                                                                שמירה
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    @if (getEnrichedTerpene(t.id); as enriched) {
+                                                        <div class="enrichment-new">
+                                                            <div class="detail-grid">
+                                                                <div class="detail-item">
+                                                                    <span class="detail-label">ריח</span>
+                                                                    <span class="detail-value">{{ enriched.scent || '—' }}</span>
+                                                                </div>
+                                                                <div class="detail-item detail-full">
+                                                                    <span class="detail-label">אפקטים</span>
+                                                                    <span class="detail-value">
+                                                                        @if (enriched.effects?.length) {
+                                                                            <div class="tag-list">
+                                                                                @for (effect of enriched.effects; track effect) {
+                                                                                    <span class="tag tag-muted">{{ effect }}</span>
+                                                                                }
+                                                                            </div>
+                                                                        } @else {
+                                                                            <span class="text-muted">—</span>
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                                <div class="detail-item detail-full">
+                                                                    <span class="detail-label">תיאור חדש</span>
+                                                                    <span class="detail-value">{{ enriched.description || '—' }}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="7">
+                                <div class="page-state table-empty-state">
+                                    <span class="icon ph ph-leaf"></span>
+                                    <h4 class="title">לא נמצאו טרפנים התואמים לחיפוש.</h4>
+                                    <p class="subtitle">נסה לשנות את מונחי החיפוש או לנקות את הסינון.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </p-tabpanel>
+    </p-tabpanels>
+</p-tabs>

@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { Terpene } from './entities/terpene.entity';
 import { TerpeneCreateDto } from './dto/terpene-create.dto';
 import { TerpeneUpdateDto } from './dto/terpene-update.dto';
@@ -36,6 +36,13 @@ export class TerpeneService {
 
     async findByName(name: string): Promise<Terpene | null> {
         return this.terpeneRepository.findOne({ where: { name } });
+    }
+
+    async delete(name: string): Promise<void> {
+        const result = await this.terpeneRepository.delete({ name });
+        if (result.affected === 0) {
+            throw new NotFoundException(`Terpene "${name}" not found`);
+        }
     }
 
     async create(dto: TerpeneCreateDto): Promise<Terpene> {
@@ -148,6 +155,85 @@ export class TerpeneService {
         }
     }
 
+    async enrichMissing(): Promise<{ total: number; enriched: number; errors: number }> {
+        const rows = await this.terpeneRepository.find({
+            where: [
+                { description: IsNull() },
+                { scent: IsNull() },
+                { effects: IsNull() },
+            ],
+            order: { name: 'ASC' },
+        });
+
+        if (!rows.length) {
+            this.logger.log('[enrichMissing] All terpenes have complete data — nothing to do.');
+            return { total: 0, enriched: 0, errors: 0 };
+        }
+
+        this.logger.log(`[enrichMissing] Found ${rows.length} terpenes with missing data. Enriching in chunks of ${CHUNK_SIZE}...`);
+
+        let enriched = 0;
+        let errors = 0;
+
+        for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+            const chunk = rows.slice(i, i + CHUNK_SIZE);
+            const names = chunk.map((r) => r.name);
+            const chunkNumber = Math.floor(i / CHUNK_SIZE) + 1;
+            const totalChunks = Math.ceil(rows.length / CHUNK_SIZE);
+
+            this.logger.log(`[enrichMissing] Searching web for chunk ${chunkNumber}/${totalChunks} (${chunk.length} items)...`);
+            const searchResults = await this.searchChunk(names);
+
+            this.logger.log(`[enrichMissing] Sending chunk ${chunkNumber}/${totalChunks} to LLM...`);
+            try {
+                const response = await this.llmClientService.generateResponse({
+                    prompt: buildTerpeneEnrichUserPrompt(names, searchResults),
+                    systemContext: TERPENE_ENRICH_SYSTEM_PROMPT,
+                    providerOverride: 'openrouter',
+                    modelOverride: 'google/gemma-4-31b-it:free',
+                });
+
+                const parsed = parseLlmJson<{ terpenes?: unknown[] }>(response.content, 'terpene-enrich-missing');
+                if (!parsed || !Array.isArray(parsed.terpenes)) {
+                    this.logger.warn(`[enrichMissing] Failed to parse chunk ${chunkNumber}`);
+                    errors += chunk.length;
+                    continue;
+                }
+
+                for (const item of parsed.terpenes) {
+                    const record = this.mapTerpeneRecord(item);
+                    if (!record?.name) {
+                        errors++;
+                        continue;
+                    }
+                    const existing = await this.terpeneRepository.findOne({ where: { name: record.name } });
+                    if (!existing) {
+                        errors++;
+                        continue;
+                    }
+                    await this.terpeneRepository.update(existing.id, {
+                        ...(record.description && { description: record.description }),
+                        ...(record.scent && { scent: record.scent }),
+                        ...(record.effects && { effects: record.effects }),
+                        ...(record.color && { color: record.color }),
+                        ...(record.colorDark && { colorDark: record.colorDark }),
+                        ...(record.colorLight && { colorLight: record.colorLight }),
+                    });
+                    enriched++;
+                }
+
+                this.logger.log(`[enrichMissing] Chunk ${chunkNumber}/${totalChunks} done — ${enriched} enriched so far.`);
+            } catch (error: unknown) {
+                const msg = error instanceof Error ? error.message : 'Unknown error';
+                this.logger.error(`[enrichMissing] Error processing chunk ${chunkNumber}: ${msg}`);
+                errors += chunk.length;
+            }
+        }
+
+        this.logger.log(`[enrichMissing] Finished: ${enriched} enriched, ${errors} errors out of ${rows.length} total.`);
+        return { total: rows.length, enriched, errors };
+    }
+
     private filterNames(names: string[]): string[] {
         const seen = new Set<string>();
         const result: string[] = [];
@@ -250,5 +336,66 @@ export class TerpeneService {
         }
         const trimmed = value.trim();
         return trimmed.length > 0 ? trimmed : null;
+    }
+
+    async enrichSingle(name: string): Promise<{
+        name: string;
+        description: string | null;
+        scent: string | null;
+        effects: string[] | null;
+        color: string;
+        colorDark: string;
+        colorLight: string;
+    } | null> {
+        const searchResult = await this.webSearchService.search(`${name} cannabis terpene scent effects description`);
+
+        let searchContext = '';
+        if (searchResult.success && searchResult.result) {
+            const parts: string[] = [];
+            if (searchResult.result.answer) {
+                parts.push(`Answer: ${searchResult.result.answer}`);
+            }
+            for (const r of searchResult.result.results.slice(0, 3)) {
+                parts.push(`${r.title}: ${r.content}`);
+            }
+            searchContext = parts.join('\n');
+        }
+
+        this.logger.debug(`[enrichSingle] Search context for "${name}":\n${searchContext || '(empty)'}`);
+
+        const prompt = `Enrich cannabis terpene "${name}".
+Web search results: ${searchContext || 'none'}
+
+Use web search results as primary source. If insufficient, use your general knowledge about this terpene.
+Return JSON only:
+{"terpenes":[{"name":"${name}","description":"1-2 sentences in Hebrew","scent":"aroma in Hebrew","effects":"effect1,effect2","color":"#hex"}]}`;
+
+        const response = await this.llmClientService.generateResponse({
+            prompt,
+            systemContext: TERPENE_ENRICH_SYSTEM_PROMPT,
+            providerOverride: 'openrouter',
+            modelOverride: 'google/gemma-4-31b-it:free',
+        });
+
+        this.logger.debug(`[enrichSingle] Raw LLM response (${response.content?.length} chars): ${response.content?.slice(0, 200)}`);
+
+        const parsed = parseLlmJson<{ terpenes?: Record<string, unknown>[] }>(response.content, 'terpene-enrich-single');
+        if (!parsed?.terpenes?.[0]) return null;
+
+        const item = parsed.terpenes[0];
+        const color = typeof item.color === 'string' && HEX_COLOR_REGEX.test(item.color.trim())
+            ? item.color.trim()
+            : DEFAULT_COLOR;
+        const { colorDark, colorLight } = deriveThemeColors(color);
+
+        return {
+            name,
+            description: this.toNullableString(item.description),
+            scent: this.toNullableString(item.scent),
+            effects: this.parseEffects(item.effects),
+            color,
+            colorDark,
+            colorLight,
+        };
     }
 }

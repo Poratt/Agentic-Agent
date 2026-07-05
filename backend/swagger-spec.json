@@ -1641,6 +1641,116 @@
           "genetics"
         ],
         "toolIcon": "ph-tree-evergreen"
+      },
+      "delete": {
+        "operationId": "GeneticsController_delete",
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "in": "path",
+            "description": "Hebrew strain name to delete.",
+            "schema": {
+              "example": "גורילה גלו",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Strain deleted successfully."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "404": {
+            "description": "No genetics matches the given name."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a genetics strain by name.",
+        "tags": [
+          "genetics"
+        ]
+      }
+    },
+    "/genetics/{name}/enrich": {
+      "post": {
+        "description": "Searches the web for the given strain name, sends context to LLM, and returns enriched description with web results. Does not persist — caller decides whether to save.",
+        "operationId": "GeneticsController_enrichSingle",
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "in": "path",
+            "description": "Hebrew strain name to enrich.",
+            "schema": {
+              "example": "גורילה גלו",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Enrichment succeeded. `result` contains the LLM-generated description and web search results."
+          },
+          "400": {
+            "description": "Invalid strain name."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "403": {
+            "description": "Not applicable for this endpoint."
+          },
+          "404": {
+            "description": "No genetics matches the given name."
+          },
+          "500": {
+            "description": "LLM or web search failure."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Enrich a single genetics record",
+        "summaryHe": "העשרת זן בודד באמצעות LLM",
+        "tags": [
+          "genetics"
+        ],
+        "toolIcon": "ph-tree-evergreen"
+      }
+    },
+    "/genetics/enrich-missing": {
+      "post": {
+        "operationId": "GeneticsController_enrichMissing",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Bulk enrichment completed."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "500": {
+            "description": "LLM or web search failure."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Enrich all genetics with missing properties (thcRange, terpenes, effects).",
+        "tags": [
+          "genetics"
+        ]
       }
     },
     "/web-search/search": {
@@ -1935,6 +2045,116 @@
           "terpenes"
         ],
         "toolIcon": "ph-flower-lotus"
+      },
+      "delete": {
+        "operationId": "TerpeneController_delete",
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "in": "path",
+            "description": "Hebrew terpene name to delete.",
+            "schema": {
+              "example": "מירצן",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Terpene deleted successfully."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "404": {
+            "description": "No terpene matches the given name."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a terpene by name.",
+        "tags": [
+          "terpenes"
+        ]
+      }
+    },
+    "/terpenes/{name}/enrich": {
+      "post": {
+        "description": "Searches the web for the given terpene name, sends context to LLM, and returns enriched description with web results. Does not persist — caller decides whether to save.",
+        "operationId": "TerpeneController_enrichSingle",
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "in": "path",
+            "description": "Hebrew terpene name to enrich.",
+            "schema": {
+              "example": "מירצן",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Enrichment succeeded. `result` contains the LLM-generated description and web search results."
+          },
+          "400": {
+            "description": "Invalid terpene name."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "403": {
+            "description": "Not applicable for this endpoint."
+          },
+          "404": {
+            "description": "No terpene matches the given name."
+          },
+          "500": {
+            "description": "LLM or web search failure."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Enrich a single terpene",
+        "summaryHe": "העשרת טרפן בודד באמצעות LLM",
+        "tags": [
+          "terpenes"
+        ],
+        "toolIcon": "ph-flower-lotus"
+      }
+    },
+    "/terpenes/enrich-missing": {
+      "post": {
+        "operationId": "TerpeneController_enrichMissing",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Bulk enrichment completed."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "500": {
+            "description": "LLM or web search failure."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Enrich all terpenes with missing properties (description, scent, effects).",
+        "tags": [
+          "terpenes"
+        ]
       }
     }
   },
@@ -3138,6 +3358,21 @@
             ],
             "example": "היברידי"
           },
+          "thcRange": {
+            "type": "string",
+            "description": "THC percentage range (e.g. \"15-21%\"). Omitted when not set.",
+            "example": "15-21%"
+          },
+          "terpenes": {
+            "type": "string",
+            "description": "Comma-separated list of dominant terpenes. Omitted when not set.",
+            "example": "Caryophyllene, Limonene, Myrcene"
+          },
+          "effects": {
+            "type": "string",
+            "description": "Comma-separated list of effect labels in Hebrew. Omitted when not set.",
+            "example": "מרגיעה, מרדימה, משככת כאבים"
+          },
           "color": {
             "type": "string",
             "description": "Hex accent color used by the frontend to render per-strain UI accents (dots, tag borders, etc.).",
@@ -3332,6 +3567,21 @@
               "אינדיקה"
             ],
             "example": "היברידי"
+          },
+          "thcRange": {
+            "type": "string",
+            "description": "THC percentage range (e.g. \"15-21%\").",
+            "example": "15-21%"
+          },
+          "terpenes": {
+            "type": "string",
+            "description": "Comma-separated list of dominant terpenes.",
+            "example": "Caryophyllene, Limonene, Myrcene"
+          },
+          "effects": {
+            "type": "string",
+            "description": "Comma-separated list of effect labels in Hebrew.",
+            "example": "מרגיעה, מרדימה, משככת כאבים"
           },
           "color": {
             "type": "string",

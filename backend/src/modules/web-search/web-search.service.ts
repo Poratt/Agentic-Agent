@@ -64,6 +64,13 @@ export class WebSearchService {
         content: r.content,
       }));
 
+      this.logger.debug(`[Tavily] Query: "${query}"`);
+      this.logger.debug(`[Tavily] Answer: ${data.answer || '(none)'}`);
+      this.logger.debug(`[Tavily] Results: ${results.length}`);
+      for (const r of results) {
+        this.logger.debug(`  - ${r.title}: ${r.content.slice(0, 150)}...`);
+      }
+
       return {
         success: true,
         message: `נמצאו ${results.length} תוצאות עבור "${query}"`,

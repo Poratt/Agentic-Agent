@@ -17,12 +17,23 @@ export class GeneticsService {
     private http = inject(HttpClient);
     private base = `${environment.apiUrl}/genetics`;
 
-    /**
-     * Fetch every genetics row in the catalog, ordered alphabetically by Hebrew name.
-     *
-     * @returns Observable of the project-standard `ServiceResultContainer` envelope.
-     */
     list(): Observable<ServiceResultContainer<IGenetics[]>> {
         return this.http.get<ServiceResultContainer<IGenetics[]>>(this.base);
+    }
+
+    update(name: string, data: Partial<IGenetics>): Observable<ServiceResultContainer<IGenetics>> {
+        return this.http.patch<ServiceResultContainer<IGenetics>>(`${this.base}/${encodeURIComponent(name)}`, data);
+    }
+
+    enrich(name: string): Observable<ServiceResultContainer<IGenetics>> {
+        return this.http.post<ServiceResultContainer<IGenetics>>(`${this.base}/${encodeURIComponent(name)}/enrich`, {});
+    }
+
+    enrichMissing(): Observable<ServiceResultContainer<{ total: number; enriched: number; errors: number }>> {
+        return this.http.post<ServiceResultContainer<{ total: number; enriched: number; errors: number }>>(`${this.base}/enrich-missing`, {});
+    }
+
+    delete(name: string): Observable<ServiceResultContainer<void>> {
+        return this.http.delete<ServiceResultContainer<void>>(`${this.base}/${encodeURIComponent(name)}`);
     }
 }

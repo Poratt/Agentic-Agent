@@ -62,14 +62,36 @@ export class TooltipDirective implements OnDestroy {
     private positionTooltip() {
         if (!this.tooltipEl) return;
 
+        const GAP = 8;
         const hostRect = this.el.nativeElement.getBoundingClientRect();
         const tooltipRect = this.tooltipEl.getBoundingClientRect();
+        const viewportW = window.innerWidth;
+        const viewportH = window.innerHeight;
 
-        const top = hostRect.top - tooltipRect.height - 8;
-        const left = hostRect.left + (hostRect.width / 2) - (tooltipRect.width / 2);
+        // Try above first; if not enough space, flip below
+        let top = hostRect.top - tooltipRect.height - GAP;
+        let flipped = false;
+        if (top < 0) {
+            top = hostRect.bottom + GAP;
+            flipped = true;
+        }
+
+        // Clamp vertically if it still overflows
+        if (top + tooltipRect.height > viewportH) {
+            top = Math.max(0, viewportH - tooltipRect.height - GAP);
+        }
+
+        // Center horizontally, then clamp to viewport edges
+        let left = hostRect.left + (hostRect.width / 2) - (tooltipRect.width / 2);
+        left = Math.max(GAP, Math.min(left, viewportW - tooltipRect.width - GAP));
 
         this.renderer.setStyle(this.tooltipEl, 'top', `${top}px`);
         this.renderer.setStyle(this.tooltipEl, 'left', `${left}px`);
+
+        // Flip arrow to point opposite direction
+        if (flipped) {
+            this.renderer.addClass(this.tooltipEl, 'app-tooltip--bottom');
+        }
     }
 
     private removeTooltip() {

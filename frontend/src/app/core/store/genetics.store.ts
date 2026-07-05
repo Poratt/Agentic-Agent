@@ -59,6 +59,51 @@ export class GeneticsStore {
         this.error.set(null);
     }
 
+    update(name: string, data: Partial<IGenetics>): void {
+        this.service.update(name, data).subscribe({
+            next: (res) => {
+                const updated = res.result;
+                if (updated) {
+                    this.genetics.update(items =>
+                        items.map(g => g.name === name ? updated : g)
+                    );
+                }
+            },
+            error: (err: unknown) => {
+                this.error.set(this.extractMessage(err, 'עדכון גנטיקה נכשל'));
+            },
+        });
+    }
+
+    enrich(name: string): Promise<IGenetics | null> {
+        return new Promise((resolve, reject) => {
+            this.service.enrich(name).subscribe({
+                next: (res) => {
+                    resolve(res.result ?? null);
+                },
+                error: (err: unknown) => {
+                    this.error.set(this.extractMessage(err, 'העשרת גנטיקה נכשלה'));
+                    reject(err);
+                },
+            });
+        });
+    }
+
+    delete(name: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.service.delete(name).subscribe({
+                next: () => {
+                    this.genetics.update(items => items.filter(g => g.name !== name));
+                    resolve();
+                },
+                error: (err: unknown) => {
+                    this.error.set(this.extractMessage(err, 'מחיקת גנטיקה נכשלה'));
+                    reject(err);
+                },
+            });
+        });
+    }
+
     private extractMessage(error: unknown, fallback: string): string {
         if (error instanceof HttpErrorResponse) {
             const body = error.error;

@@ -100,6 +100,11 @@
     color: var(--color-secondary);
     border-color: var(--color-secondary-border);
   }
+
+  &.badge-strain-type {
+    background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+    color: var(--color-primary);
+  }
 }
 
 /* --- AI Entry Slideup Animation --- */
@@ -170,8 +175,129 @@
     color: var(--color-text-secondary);
     font-size: var(--font-size-sm);
   }
+
+  &.table-empty-state {
+    min-height: 0;
+    padding: var(--space-8) var(--space-4);
+    background: none;
+    border: none;
+    border-radius: 0;
+  }
 }
 
+
+/* --- Generic Toolbar --- */
+.catalog-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 12px;
+  margin-bottom: var(--space-4);
+
+  .toolbar-search {
+    flex: 0 0 auto;
+    width: 320px;
+  }
+
+  .toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .toolbar-stats {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+}
+
+/* --- Generic Text Utilities --- */
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.row-label {
+  font-weight: var(--font-weight-medium);
+}
+
+.row-meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* --- Generic Tags --- */
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.tag-primary {
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+}
+
+.tag-muted {
+  background: color-mix(in srgb, var(--color-text-muted) 10%, transparent);
+  color: var(--color-text-secondary);
+}
+
+/* --- Generic Dot --- */
+.color-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+}
+
+/* --- Generic Chevron Button --- */
+.chevron-btn {
+  i {
+    display: inline-block;
+    font-size: 16px;
+    transition: transform var(--transition-standard);
+    color: var(--color-text-muted);
+  }
+
+  &.open {
+    i {
+      transform: rotate(90deg);
+      color: var(--color-primary);
+    }
+  }
+
+  /* RTL variant — ph-caret-left needs -90deg to point down when open */
+  &.rtl.open {
+    i {
+      transform: rotate(-90deg);
+    }
+  }
+
+  &.sm {
+    i {
+      font-size: 14px;
+    }
+  }
+}
+
+/* --- Generic Table Column Utilities --- */
+.col-expand {
+  width: 32px;
+}
+
+/* --- Generic Tag List --- */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 
 .app-tooltip {
   position: fixed;

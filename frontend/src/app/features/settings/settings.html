@@ -3,5 +3,18 @@
         <h2>הגדרות</h2>
     </header>
 
-    <app-llm-providers-management></app-llm-providers-management>
+    <p-tabs value="0">
+        <p-tablist>
+            <p-tab value="0">ספקי LLM</p-tab>
+            <p-tab value="1">Strain Hunter</p-tab>
+        </p-tablist>
+        <p-tabpanels>
+            <p-tabpanel value="0">
+                <app-llm-providers-management></app-llm-providers-management>
+            </p-tabpanel>
+            <p-tabpanel value="1">
+                <app-strain-hunter-settings></app-strain-hunter-settings>
+            </p-tabpanel>
+        </p-tabpanels>
+    </p-tabs>
 </div>

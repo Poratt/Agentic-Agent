@@ -1,7 +1,7 @@
 import { GeneticsDto, toGeneticsDto } from './genetics.dto';
 import { Genetics } from '../entities/genetics.entity';
 
-const DTO_KEYS = ['id', 'name', 'description', 'parent1', 'parent2', 'origin', 'type', 'color', 'colorDark', 'colorLight'].sort();
+const DTO_KEYS = ['id', 'name', 'description', 'parent1', 'parent2', 'origin', 'type', 'thcRange', 'terpenes', 'effects', 'color', 'colorDark', 'colorLight'].sort();
 
 describe('toGeneticsDto — DTO mapping coverage', () => {
     const MOCK_ENTITY: Genetics = {
@@ -12,6 +12,9 @@ describe('toGeneticsDto — DTO mapping coverage', () => {
         parent2: 'B',
         origin: 'ארה"ב',
         type: 'היברידי',
+        thcRange: '15-21%',
+        terpenes: 'Myrcene, Limonene',
+        effects: 'מרגיעה, מרדימה',
         color: '#000000',
         colorDark: '#000000',
         colorLight: '#000000',
@@ -40,6 +43,9 @@ describe('toGeneticsDto — DTO mapping coverage', () => {
             parent2: null,
             origin: null,
             type: null,
+            thcRange: null,
+            terpenes: null,
+            effects: null,
         };
         const result = toGeneticsDto(entity)!;
 
@@ -48,6 +54,9 @@ describe('toGeneticsDto — DTO mapping coverage', () => {
         expect(result.parent2).toBeUndefined();
         expect(result.origin).toBeUndefined();
         expect(result.type).toBeUndefined();
+        expect(result.thcRange).toBeUndefined();
+        expect(result.terpenes).toBeUndefined();
+        expect(result.effects).toBeUndefined();
     });
 
     it('returns null for null entity', () => {

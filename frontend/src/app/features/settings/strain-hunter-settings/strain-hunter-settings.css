@@ -1,0 +1,198 @@
+:host {
+    display: block;
+    width: 100%;
+
+    /* ── Table column overrides ───────────────────────────────────────────── */
+    .col-desc {
+        max-width: 280px;
+        font-size: var(--font-size-xs);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .col-color {
+        width: 40px;
+    }
+
+    .col-regen {
+        width: 40px;
+    }
+
+    /* ── Expansion row container ──────────────────────────────────────────── */
+    .expand-panel-row {
+        .expand-panel-cell {
+            background: color-mix(in srgb, var(--color-text-primary) 2%, transparent);
+            padding: 0;
+            overflow: hidden;
+            border-bottom: 1px solid var(--color-border);
+        }
+    }
+
+    /* ── Expansion panel (root wrapper) ───────────────────────────────────── */
+    .expand-panel {
+        padding: var(--space-3) var(--space-4);
+        box-sizing: border-box;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    /* ── Panel header ─────────────────────────────────────────────────────── */
+    .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        padding-bottom: var(--space-2);
+        margin-bottom: var(--space-3);
+        border-bottom: 1px solid color-mix(in srgb, var(--color-border) 40%, transparent);
+        flex-wrap: wrap;
+
+        .panel-title {
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-bold);
+            color: var(--color-primary);
+            min-width: 0;
+            word-break: break-word;
+        }
+
+        .panel-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            flex-shrink: 0;
+        }
+    }
+
+    /* ── Panel body ───────────────────────────────────────────────────────── */
+    .expand-panel-body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+        width: 100%;
+        box-sizing: border-box;
+
+        /* פריסה דו-עמודתית במסכים רחבים כאשר יש תוצאות LLM להשוואה */
+        &.has-enrichment {
+            @media (min-width: 1000px) {
+                flex-direction: row;
+                align-items: stretch;
+
+                .current-details,
+                .enrichment-panel {
+                    flex: 1;
+                    min-width: 0;
+                }
+            }
+        }
+
+        /* הגבלת רוחב סבירה כשאין LLM להשוואה, כדי שהתוכן לא יימרח */
+        .current-details {
+            width: 100%;
+            max-width: 900px;
+            box-sizing: border-box;
+        }
+    }
+
+    /* ── Detail grid ──────────────────────────────────────────────────────── */
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: var(--space-2) var(--space-3);
+        width: 100%;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+        overflow: hidden;
+
+        /* כרטיס תיאור מלא - רוחב שלם בעיצוב קומפקטי ומהודק */
+        &.detail-full {
+            grid-column: 1 / -1;
+            background: color-mix(in srgb, var(--color-surface) 40%, transparent);
+            padding: var(--space-2);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--color-border);
+            margin-top: var(--space-1);
+
+            .detail-value {
+                font-size: var(--font-size-xs);
+                color: var(--color-text-secondary);
+                line-height: var(--line-height-normal);
+            }
+        }
+    }
+
+    .detail-label {
+        font-size: 10px;
+        font-weight: var(--font-weight-semibold);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        line-height: 1.1;
+    }
+
+    .detail-value {
+        font-size: 11px;
+        font-weight: var(--font-weight-medium);
+        color: var(--color-text-primary);
+        line-height: var(--line-height-tight);
+        white-space: normal;
+        word-break: break-word;
+
+        /* כיווץ התגיות בתוך השורה המורחבת */
+        .badge {
+            padding: 2px var(--space-2);
+            font-size: 10px;
+        }
+    }
+
+    /* ── Enrichment panel (LLM Box) ──────────────────────────────────────── */
+    .enrichment-panel {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+        padding: var(--space-3);
+        background: color-mix(in srgb, var(--color-primary) 3%, transparent);
+        border: 1px solid color-mix(in srgb, var(--color-primary) 15%, transparent);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-soft);
+        box-sizing: border-box;
+        overflow: hidden;
+        min-width: 0;
+
+        .enrichment-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-2);
+            padding-bottom: var(--space-2);
+            border-bottom: 1px solid var(--color-border);
+            flex-wrap: wrap;
+
+            .detail-label {
+                color: var(--color-primary);
+                font-size: 11px;
+                font-weight: var(--font-weight-bold);
+            }
+        }
+
+        .enrichment-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+
+        .enrichment-new {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            width: 100%;
+        }
+    }
+}

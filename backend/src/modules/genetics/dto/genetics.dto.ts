@@ -54,6 +54,27 @@ export class GeneticsDto {
     type?: string;
 
     @ApiProperty({
+        description: 'THC percentage range (e.g. "15-21%"). Omitted when not set.',
+        example: '15-21%',
+        required: false,
+    })
+    thcRange?: string;
+
+    @ApiProperty({
+        description: 'Comma-separated list of dominant terpenes. Omitted when not set.',
+        example: 'Caryophyllene, Limonene, Myrcene',
+        required: false,
+    })
+    terpenes?: string;
+
+    @ApiProperty({
+        description: 'Comma-separated list of effect labels in Hebrew. Omitted when not set.',
+        example: 'מרגיעה, מרדימה, משככת כאבים',
+        required: false,
+    })
+    effects?: string;
+
+    @ApiProperty({
         description:
             'Hex accent color used by the frontend to render per-strain UI accents (dots, tag borders, etc.).',
         example: '#228B22',
@@ -91,6 +112,9 @@ export function toGeneticsDto(entity: Genetics | null): GeneticsDto | null {
         parent2: entity.parent2 ?? undefined,
         origin: entity.origin ?? undefined,
         type: entity.type ?? undefined,
+        thcRange: entity.thcRange ?? undefined,
+        terpenes: entity.terpenes ?? undefined,
+        effects: entity.effects ?? undefined,
         color: entity.color,
         colorDark: entity.colorDark,
         colorLight: entity.colorLight,

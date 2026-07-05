@@ -5,9 +5,10 @@ import { GeneticsService } from './genetics.service';
 import { GeneticsController } from './genetics.controller';
 import { LlmModule } from '../llm/llm.module';
 import { WebSearchModule } from '../web-search/web-search.module';
+import { CannlyticsModule } from '../cannlytics/cannlytics.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Genetics]), LlmModule, WebSearchModule],
+    imports: [TypeOrmModule.forFeature([Genetics]), LlmModule, WebSearchModule, CannlyticsModule],
     controllers: [GeneticsController],
     providers: [GeneticsService],
     exports: [GeneticsService],

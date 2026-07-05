@@ -38,6 +38,9 @@
                 <header class="tooltip-card-header">
                     <span class="tooltip-card-dot"></span>
                     <h4 class="tooltip-card-name">{{ g.name }}</h4>
+                    @if (g.type) {
+                        <span class="tooltip-card-badge">{{ g.type }}</span>
+                    }
                 </header>
 
                 @if (g.description) {
@@ -72,6 +75,27 @@
                     <div class="tooltip-card-row">
                         <span class="ph ph-leaf tooltip-card-icon"></span>
                         <span>{{ g.type }}</span>
+                    </div>
+                }
+
+                @if (g.thcRange) {
+                    <div class="tooltip-card-row">
+                        <span class="ph ph-flask tooltip-card-icon"></span>
+                        <span>THC: {{ g.thcRange }}</span>
+                    </div>
+                }
+
+                @if (g.terpenes) {
+                    <div class="tooltip-card-row">
+                        <span class="ph ph-flower-lotus tooltip-card-icon"></span>
+                        <span>{{ g.terpenes }}</span>
+                    </div>
+                }
+
+                @if (g.effects) {
+                    <div class="tooltip-card-row">
+                        <span class="ph ph-lightning tooltip-card-icon"></span>
+                        <span>{{ g.effects }}</span>
                     </div>
                 }
             </div>

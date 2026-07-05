@@ -65,6 +65,30 @@ export class Genetics {
     type!: string | null;
 
     @ApiProperty({
+        description: 'THC percentage range (e.g. "15-21%").',
+        example: '15-21%',
+        required: false,
+    })
+    @Column({ type: 'varchar', length: 50, nullable: true })
+    thcRange!: string | null;
+
+    @ApiProperty({
+        description: 'Comma-separated list of dominant terpenes.',
+        example: 'Caryophyllene, Limonene, Myrcene',
+        required: false,
+    })
+    @Column({ type: 'varchar', length: 500, nullable: true })
+    terpenes!: string | null;
+
+    @ApiProperty({
+        description: 'Comma-separated list of effect labels in Hebrew.',
+        example: 'מרגיעה, מרדימה, משככת כאבים',
+        required: false,
+    })
+    @Column({ type: 'varchar', length: 500, nullable: true })
+    effects!: string | null;
+
+    @ApiProperty({
         description:
             'Hex accent color used by the frontend to render per-strain UI accents (dots, tag borders, etc.).',
         example: '#228B22',

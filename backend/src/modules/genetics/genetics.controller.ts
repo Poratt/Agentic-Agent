@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Patch, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Delete, Param, Post, Patch, Body, UseGuards } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -232,6 +232,71 @@ export class GeneticsController {
             success: true,
             message: 'Genetics updated successfully',
             result: toGeneticsDto(item),
+        };
+    }
+
+    @Post(':name/enrich')
+    @ApiOperation({
+        summary: 'Enrich a single genetics record',
+        summaryHe: 'העשרת זן בודד באמצעות LLM',
+        toolIcon: 'ph-tree-evergreen',
+        description:
+            'Searches the web for the given strain name, sends context to LLM, and returns enriched description with web results. Does not persist — caller decides whether to save.',
+    } as CustomApiOperationOptions)
+    @ApiParam({
+        name: 'name',
+        type: String,
+        description: 'Hebrew strain name to enrich.',
+        example: 'גורילה גלו',
+    })
+    @ApiOkResponse({
+        description: 'Enrichment succeeded. `result` contains the LLM-generated description and web search results.',
+    })
+    @ApiBadRequestResponse({ description: 'Invalid strain name.' })
+    @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
+    @ApiForbiddenResponse({ description: 'Not applicable for this endpoint.' })
+    @ApiNotFoundResponse({ description: 'No genetics matches the given name.' })
+    @ApiInternalServerErrorResponse({ description: 'LLM or web search failure.' })
+    async enrichSingle(@Param('name') name: string) {
+        const result = await this.geneticsService.enrichSingle(name);
+        return {
+            success: true,
+            message: 'Enrichment completed successfully',
+            result,
+        };
+    }
+
+    @Post('enrich-missing')
+    @ApiOperation({ summary: 'Enrich all genetics with missing properties (thcRange, terpenes, effects).' })
+    @ApiOkResponse({ description: 'Bulk enrichment completed.' })
+    @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
+    @ApiInternalServerErrorResponse({ description: 'LLM or web search failure.' })
+    async enrichMissing() {
+        const result = await this.geneticsService.enrichMissing();
+        return {
+            success: true,
+            message: `Enrichment completed: ${result.enriched} enriched, ${result.errors} errors out of ${result.total} total.`,
+            result,
+        };
+    }
+
+    @Delete(':name')
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Delete a genetics strain by name.' })
+    @ApiParam({
+        name: 'name',
+        type: String,
+        description: 'Hebrew strain name to delete.',
+        example: 'גורילה גלו',
+    })
+    @ApiOkResponse({ description: 'Strain deleted successfully.' })
+    @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
+    @ApiNotFoundResponse({ description: 'No genetics matches the given name.' })
+    async delete(@Param('name') name: string) {
+        await this.geneticsService.delete(name);
+        return {
+            success: true,
+            message: `Strain "${name}" deleted successfully.`,
         };
     }
 }

@@ -16,6 +16,14 @@ Last updated: 2026-07-04
 
 New planning documents should go under `documents/features/todo/` unless they are audits, completed work, or incomplete drafts.
 
+## 2026-07-04 Session (continued — Strain Hunter Settings Filter Fix)
+
+- Completed: fixed the genetics and terpenes filter fields in `frontend/src/app/features/settings/strain-hunter-settings/`. `onGeneticsFilter`/`onTerpeneFilter` are now `(value: string)` to match `(ngModelChange)`, and `filteredGenetics`/`filteredTerpenes` are `computed()` signals so change detection reacts to filter changes.
+- Completed: added styled empty messages inside both `<p-table>`s. Genetics uses `ph-magnifying-glass-minus`, terpenes use `ph-leaf`. Each empty message contains a Hebrew title and a Hebrew subtitle, and the colspans match the column counts (7 for genetics, 5 for terpenes).
+- Completed: added a `.table-empty-state` rule to `strain-hunter-settings.css` that mirrors the global `.page-state.empty-state` visual language (icon + title + subtitle) using only `var(--token)` values, nested under the root selector.
+- Verified: `npx ng build` from `frontend` passes; mojibake scan on touched files is clean.
+- No architecture diagram update was needed because this was local Strain Hunter Settings UI filter behavior only.
+
 ## Recent Status
 
 - Planned: `documents/features/todo/genui-progressive-streaming-rendering-plan.md` documents progressive frontend rendering for streamed GenUI `component` blocks in `AiFormat`, replacing skeleton-only streaming with safe partial HTML/CSS previews.

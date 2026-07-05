@@ -26,6 +26,14 @@
   animation: slideDown 0.3s ease forwards;
 }
 
+.slide-left {
+  animation: slideLeft 0.3s ease forwards;
+}
+
+.slide-right {
+  animation: slideRight 0.3s ease forwards;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -67,6 +75,30 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes slideLeft {
+  from {
+    opacity: 0;
+    transform: translateX(var(--slide-distance, 15px));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideRight {
+  from {
+    opacity: 0;
+    transform: translateX(calc(-1 * var(--slide-distance, 15px)));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 

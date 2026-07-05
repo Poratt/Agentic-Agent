@@ -15,6 +15,7 @@ import { StrainHunterModule } from './modules/strain-hunter/strain-hunter.module
 import { TerpeneModule } from './modules/terpene/terpene.module';
 import { GeneticsModule } from './modules/genetics/genetics.module';
 import { WebSearchModule } from './modules/web-search/web-search.module';
+import { CannlyticsModule } from './modules/cannlytics/cannlytics.module';
 
 @Module({
   imports: [
@@ -46,7 +47,8 @@ import { WebSearchModule } from './modules/web-search/web-search.module';
     StrainHunterModule,
     TerpeneModule,
     GeneticsModule,
-    WebSearchModule
+    WebSearchModule,
+    CannlyticsModule
   ],
 })
 export class AppModule {

@@ -59,6 +59,51 @@ export class TerpeneStore {
         this.error.set(null);
     }
 
+    update(name: string, data: Partial<ITerpene>): void {
+        this.service.update(name, data).subscribe({
+            next: (res) => {
+                const updated = res.result;
+                if (updated) {
+                    this.terpenes.update(items =>
+                        items.map(t => t.name === name ? updated : t)
+                    );
+                }
+            },
+            error: (err: unknown) => {
+                this.error.set(this.extractMessage(err, 'עדכון טרפן נכשל'));
+            },
+        });
+    }
+
+    enrich(name: string): Promise<ITerpene | null> {
+        return new Promise((resolve, reject) => {
+            this.service.enrich(name).subscribe({
+                next: (res) => {
+                    resolve(res.result ?? null);
+                },
+                error: (err: unknown) => {
+                    this.error.set(this.extractMessage(err, 'העשרת טרפן נכשלה'));
+                    reject(err);
+                },
+            });
+        });
+    }
+
+    delete(name: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.service.delete(name).subscribe({
+                next: () => {
+                    this.terpenes.update(items => items.filter(t => t.name !== name));
+                    resolve();
+                },
+                error: (err: unknown) => {
+                    this.error.set(this.extractMessage(err, 'מחיקת טרפן נכשלה'));
+                    reject(err);
+                },
+            });
+        });
+    }
+
     private extractMessage(error: unknown, fallback: string): string {
         if (error instanceof HttpErrorResponse) {
             const body = error.error;

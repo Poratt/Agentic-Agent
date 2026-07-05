@@ -115,10 +115,13 @@ export class MatchingPreferencesDrawer {
         const el = event.currentTarget as HTMLElement;
         const rect = el.getBoundingClientRect();
 
-        // Always render the tooltip below the chip — never above. Above placement
-        // can cover the chip itself, and a consistent below-anchor keeps the
-        // behavior identical for both terpenes and genetics.
-        const top = rect.bottom + GAP;
+        // Try below first; if not enough space, flip above
+        let top = rect.bottom + GAP;
+        const TOOLTIP_H = 200; // approximate height
+        if (top + TOOLTIP_H > window.innerHeight) {
+            top = rect.top - TOOLTIP_H - GAP;
+        }
+        top = Math.max(GAP, top);
 
         // Horizontal: center on chip, clamp inside viewport
         const chipCenter = rect.left + rect.width / 2;

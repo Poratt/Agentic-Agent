@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Patch, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Delete, Param, Post, Patch, Body, UseGuards } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -245,6 +245,71 @@ export class TerpeneController {
             success: true,
             message: 'Terpene updated successfully',
             result: this.mapToDto(item),
+        };
+    }
+
+    @Post(':name/enrich')
+    @ApiOperation({
+        summary: 'Enrich a single terpene',
+        summaryHe: 'העשרת טרפן בודד באמצעות LLM',
+        toolIcon: 'ph-flower-lotus',
+        description:
+            'Searches the web for the given terpene name, sends context to LLM, and returns enriched description with web results. Does not persist — caller decides whether to save.',
+    } as CustomApiOperationOptions)
+    @ApiParam({
+        name: 'name',
+        type: String,
+        description: 'Hebrew terpene name to enrich.',
+        example: 'מירצן',
+    })
+    @ApiOkResponse({
+        description: 'Enrichment succeeded. `result` contains the LLM-generated description and web search results.',
+    })
+    @ApiBadRequestResponse({ description: 'Invalid terpene name.' })
+    @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
+    @ApiForbiddenResponse({ description: 'Not applicable for this endpoint.' })
+    @ApiNotFoundResponse({ description: 'No terpene matches the given name.' })
+    @ApiInternalServerErrorResponse({ description: 'LLM or web search failure.' })
+    async enrichSingle(@Param('name') name: string) {
+        const result = await this.terpeneService.enrichSingle(name);
+        return {
+            success: true,
+            message: 'Enrichment completed successfully',
+            result,
+        };
+    }
+
+    @Post('enrich-missing')
+    @ApiOperation({ summary: 'Enrich all terpenes with missing properties (description, scent, effects).' })
+    @ApiOkResponse({ description: 'Bulk enrichment completed.' })
+    @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
+    @ApiInternalServerErrorResponse({ description: 'LLM or web search failure.' })
+    async enrichMissing() {
+        const result = await this.terpeneService.enrichMissing();
+        return {
+            success: true,
+            message: `Enrichment completed: ${result.enriched} enriched, ${result.errors} errors out of ${result.total} total.`,
+            result,
+        };
+    }
+
+    @Delete(':name')
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Delete a terpene by name.' })
+    @ApiParam({
+        name: 'name',
+        type: String,
+        description: 'Hebrew terpene name to delete.',
+        example: 'מירצן',
+    })
+    @ApiOkResponse({ description: 'Terpene deleted successfully.' })
+    @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
+    @ApiNotFoundResponse({ description: 'No terpene matches the given name.' })
+    async delete(@Param('name') name: string) {
+        await this.terpeneService.delete(name);
+        return {
+            success: true,
+            message: `Terpene "${name}" deleted successfully.`,
         };
     }
 }

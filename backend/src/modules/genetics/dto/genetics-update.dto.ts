@@ -60,6 +60,33 @@ export class GeneticsUpdateDto {
     type?: string | null;
 
     @ApiPropertyOptional({
+        description: 'THC percentage range (e.g. "15-21%").',
+        example: '15-21%',
+    })
+    @IsOptional()
+    @IsString()
+    @MaxLength(50)
+    thcRange?: string | null;
+
+    @ApiPropertyOptional({
+        description: 'Comma-separated list of dominant terpenes.',
+        example: 'Caryophyllene, Limonene, Myrcene',
+    })
+    @IsOptional()
+    @IsString()
+    @MaxLength(500)
+    terpenes?: string | null;
+
+    @ApiPropertyOptional({
+        description: 'Comma-separated list of effect labels in Hebrew.',
+        example: 'מרגיעה, מרדימה, משככת כאבים',
+    })
+    @IsOptional()
+    @IsString()
+    @MaxLength(500)
+    effects?: string | null;
+
+    @ApiPropertyOptional({
         description:
             'Hex accent color used by the frontend to render per-strain UI accents (dots, tag borders, etc.). Must be a valid hex color starting with #.',
         example: '#228B22',

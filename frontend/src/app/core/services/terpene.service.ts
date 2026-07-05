@@ -17,12 +17,23 @@ export class TerpeneService {
     private http = inject(HttpClient);
     private base = `${environment.apiUrl}/terpenes`;
 
-    /**
-     * Fetch every terpene in the catalog, ordered alphabetically by Hebrew name.
-     *
-     * @returns Observable of the project-standard `ServiceResultContainer` envelope.
-     */
     list(): Observable<ServiceResultContainer<ITerpene[]>> {
         return this.http.get<ServiceResultContainer<ITerpene[]>>(this.base);
+    }
+
+    update(name: string, data: Partial<ITerpene>): Observable<ServiceResultContainer<ITerpene>> {
+        return this.http.patch<ServiceResultContainer<ITerpene>>(`${this.base}/${encodeURIComponent(name)}`, data);
+    }
+
+    enrich(name: string): Observable<ServiceResultContainer<ITerpene>> {
+        return this.http.post<ServiceResultContainer<ITerpene>>(`${this.base}/${encodeURIComponent(name)}/enrich`, {});
+    }
+
+    enrichMissing(): Observable<ServiceResultContainer<{ total: number; enriched: number; errors: number }>> {
+        return this.http.post<ServiceResultContainer<{ total: number; enriched: number; errors: number }>>(`${this.base}/enrich-missing`, {});
+    }
+
+    delete(name: string): Observable<ServiceResultContainer<void>> {
+        return this.http.delete<ServiceResultContainer<void>>(`${this.base}/${encodeURIComponent(name)}`);
     }
 }
