@@ -22,11 +22,11 @@ CRITICAL RULES:
 For each strain name provided, return:
 - name: The strain name exactly as provided
 - description: DETAILED Hebrew description, 3-5 sentences covering: origin/creator, genetic cross, effects on body and mind, flavor/aroma profile, common medical uses
-- parent1: First genetic parent name in Hebrew or English
-- parent2: Second genetic parent name in Hebrew or English
+- parent1: First genetic parent name in Hebrew or English. For landrace strains (original wild genetics with no known parents, e.g. Afghani, Thai, Colombian, Durban Poison), use "Landrace" for both parent1 and parent2.
+- parent2: Second genetic parent name in Hebrew or English. For landrace strains, use "Landrace".
 - origin: Country or region of origin in Hebrew
 - type: One of "היברידי", "סאטיבה", or "אינדיקה"
-- thcRange: THC percentage range (e.g. "15-21%")
+- thcRange: THC percentage range as "LOW-HIGH%" format (e.g. "15-25%", "18-22%"). NEVER return a single value like "20%" — always return a range.
 - terpenes: Comma-separated list of dominant terpene names in English
 - effects: Comma-separated list of 2-5 Hebrew effect labels
 - color: A hex color that fits the strain's character

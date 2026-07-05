@@ -275,7 +275,7 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
             const result = await firstValueFrom(this.geneticsService.enrichMissing());
             if (result.success && result.result) {
                 this.bulkResult.set(result.result);
-                await this.geneticsStore.loadAll();
+                await this.geneticsStore.loadAll(true);
             }
         } catch {
             // Error handled by store
@@ -292,7 +292,7 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
             const result = await firstValueFrom(this.terpeneService.enrichMissing());
             if (result.success && result.result) {
                 this.bulkResult.set(result.result);
-                await this.terpeneStore.loadAll();
+                await this.terpeneStore.loadAll(true);
             }
         } catch {
             // Error handled by store

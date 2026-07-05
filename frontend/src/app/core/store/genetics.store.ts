@@ -35,8 +35,8 @@ export class GeneticsStore {
         return this.byName().get(normalized);
     }
 
-    loadAll(): void {
-        if (this.genetics().length > 0 || this.loading()) {
+    loadAll(force = false): void {
+        if (!force && (this.genetics().length > 0 || this.loading())) {
             return;
         }
 

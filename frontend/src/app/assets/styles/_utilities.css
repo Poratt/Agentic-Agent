@@ -157,6 +157,10 @@
   box-sizing: border-box;
 }
 
+.ph-spin {
+  animation: spin 1s linear infinite;
+}
+
 /* --- Unified Page-State Container --- */
 .page-state {
   display: flex;

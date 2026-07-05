@@ -17,7 +17,7 @@ export class LlmClientService {
   ) { }
 
   async generateResponse(llmRequest: LlmRequest): Promise<LlmResponse> {
-    const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools, image } = llmRequest;
+    const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools, image, maxTokens } = llmRequest;
 
     // 🚀 הבאת הקליינט בצורה אסינכרונית מה-DB 🚀
     const client = await this.getClient(providerOverride);
@@ -40,7 +40,7 @@ export class LlmClientService {
         ],
         tools: tools && tools.length > 0 ? (tools as OpenAI.Chat.Completions.ChatCompletionTool[]) : undefined,
         temperature: 0.2,
-        max_tokens: 1024,
+        max_tokens: maxTokens ?? 1024,
       });
 
       const firstChoice = result?.choices?.[0];

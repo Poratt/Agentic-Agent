@@ -117,6 +117,7 @@ export class TerpeneService {
                     systemContext: TERPENE_ENRICH_SYSTEM_PROMPT,
                     providerOverride: 'openrouter',
                     modelOverride: 'google/gemma-4-31b-it:free',
+                    maxTokens: 4096,
                 });
 
                 const parsed = parseLlmJson<{ terpenes?: unknown[] }>(response.content, 'terpene-enrich');
@@ -191,6 +192,7 @@ export class TerpeneService {
                     systemContext: TERPENE_ENRICH_SYSTEM_PROMPT,
                     providerOverride: 'openrouter',
                     modelOverride: 'google/gemma-4-31b-it:free',
+                    maxTokens: 4096,
                 });
 
                 const parsed = parseLlmJson<{ terpenes?: unknown[] }>(response.content, 'terpene-enrich-missing');
@@ -375,6 +377,7 @@ Return JSON only:
             systemContext: TERPENE_ENRICH_SYSTEM_PROMPT,
             providerOverride: 'openrouter',
             modelOverride: 'google/gemma-4-31b-it:free',
+            maxTokens: 4096,
         });
 
         this.logger.debug(`[enrichSingle] Raw LLM response (${response.content?.length} chars): ${response.content?.slice(0, 200)}`);

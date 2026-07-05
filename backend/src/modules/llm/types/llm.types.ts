@@ -39,6 +39,8 @@ export interface LlmRequest {
   modelOverride?: string;
   /** Optional Base64 data URL image attached to the user turn */
   image?: string;
+  /** Override the default max_tokens limit (default: 1024) */
+  maxTokens?: number;
 }
 
 export type LlmRuntimeSelection = {

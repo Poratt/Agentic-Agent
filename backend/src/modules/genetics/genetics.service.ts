@@ -1,6 +1,8 @@
 import { Injectable, Logger, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 import { Genetics } from './entities/genetics.entity';
 import { GeneticsCreateDto } from './dto/genetics-create.dto';
 import { GeneticsUpdateDto } from './dto/genetics-update.dto';
@@ -31,6 +33,7 @@ export class GeneticsService {
         private readonly llmClientService: LlmClientService,
         private readonly webSearchService: WebSearchService,
         private readonly cannlyticsService: CannlyticsService,
+        private readonly httpService: HttpService,
     ) { }
 
     async findAll(): Promise<Genetics[]> {
@@ -81,14 +84,25 @@ export class GeneticsService {
 
             const searchResults = await this.searchChunk(chunk);
 
+            this.logger.log(`Fetching Demarily data for genetics chunk ${chunkNumber}/${totalChunks}...`);
+            const demarilyResults = await this.fetchDemarilyChunk(chunk);
+
+            // Merge Demarily data into search results for LLM prompt
+            const enrichedSearchResults = new Map(searchResults);
+            for (const [name, demarilyData] of demarilyResults) {
+                const existing = enrichedSearchResults.get(name) || '';
+                enrichedSearchResults.set(name, existing ? `Strain database:\n${demarilyData}\n\nWeb search:\n${existing}` : `Strain database:\n${demarilyData}`);
+            }
+
             this.logger.log(`Sending genetics chunk ${chunkNumber}/${totalChunks} to LLM...`);
 
             try {
                 const response = await this.llmClientService.generateResponse({
-                    prompt: buildGeneticsEnrichUserPrompt(chunk, searchResults),
+                    prompt: buildGeneticsEnrichUserPrompt(chunk, enrichedSearchResults),
                     systemContext: GENETICS_ENRICH_SYSTEM_PROMPT,
                     providerOverride: 'openrouter',
                     modelOverride: 'google/gemma-4-31b-it:free',
+                    maxTokens: 4096,
                 });
 
                 const parsed = parseLlmJson<{ genetics?: unknown[] }>(response.content, 'genetics-enrich');
@@ -156,15 +170,20 @@ export class GeneticsService {
             this.logger.log(`[enrichMissing] Fetching Cannlytics data for chunk ${chunkNumber}/${totalChunks}...`);
             const cannlyticsResults = await this.fetchCannlyticsChunk(names);
 
+            this.logger.log(`[enrichMissing] Fetching Demarily data for chunk ${chunkNumber}/${totalChunks}...`);
+            const demarilyResults = await this.fetchDemarilyChunk(names);
+
             this.logger.log(`[enrichMissing] Searching web for chunk ${chunkNumber}/${totalChunks} (${chunk.length} items)...`);
             const searchResults = await this.searchChunk(names);
 
-            // Combine Cannlytics and web search results
+            // Combine Cannlytics, Demarily, and web search results
             const combinedResults = new Map<string, string>();
             for (const name of names) {
                 const parts: string[] = [];
                 const cannlytics = cannlyticsResults.get(name);
+                const demarily = demarilyResults.get(name);
                 const search = searchResults.get(name);
+                if (demarily) parts.push(`Strain database:\n${demarily}`);
                 if (cannlytics) parts.push(`Lab data:\n${cannlytics}`);
                 if (search) parts.push(`Web search:\n${search}`);
                 if (parts.length > 0) {
@@ -179,6 +198,7 @@ export class GeneticsService {
                     systemContext: GENETICS_ENRICH_SYSTEM_PROMPT,
                     providerOverride: 'openrouter',
                     modelOverride: 'google/gemma-4-31b-it:free',
+                    maxTokens: 4096,
                 });
 
                 const parsed = parseLlmJson<{ genetics?: unknown[] }>(response.content, 'genetics-enrich-missing');
@@ -196,6 +216,7 @@ export class GeneticsService {
                     }
                     const existing = await this.geneticsRepository.findOne({ where: { name: record.name } });
                     if (!existing) {
+                        this.logger.warn(`[enrichMissing] Record not found in DB: "${record.name}"`);
                         errors++;
                         continue;
                     }
@@ -259,7 +280,11 @@ export class GeneticsService {
         const results = new Map<string, string>();
         for (const name of names) {
             try {
-                const searchResult = await this.webSearchService.search(`${name} cannabis strain genetics parents origin`);
+                const englishName = this.cannlyticsService.getEnglishName(name) || name;
+                const searchQuery = englishName !== name
+                    ? `${englishName} (${name}) cannabis strain genetics parents origin`
+                    : `${name} cannabis strain genetics parents origin`;
+                const searchResult = await this.webSearchService.search(searchQuery);
                 if (searchResult.success && searchResult.result) {
                     const parts: string[] = [];
                     if (searchResult.result.answer) {
@@ -297,6 +322,47 @@ export class GeneticsService {
         return results;
     }
 
+    private async fetchDemarilyChunk(names: string[]): Promise<Map<string, string>> {
+        const results = new Map<string, string>();
+        for (const name of names) {
+            try {
+                // Translate Hebrew name to English for API search
+                const englishName = this.cannlyticsService.getEnglishName(name) || name;
+                const response = await firstValueFrom(
+                    this.httpService.get(`https://budprofiles.com/api/v1/strains`, {
+                        params: { q: englishName, limit: 1 },
+                        timeout: 10000,
+                    }),
+                );
+                const strains = response.data?.data;
+                if (strains?.length > 0) {
+                    const strain = strains[0];
+                    const effects = strain.effects?.join(', ') || '';
+                    const flavors = strain.flavors?.join(', ') || '';
+                    const terpenes = strain.terpenes?.map((t: { name: string; percentage?: number }) =>
+                        t.percentage ? `${t.name} (${t.percentage}%)` : t.name
+                    ).join(', ') || '';
+                    const parts = [
+                        strain.description && `Description: ${strain.description}`,
+                        strain.thc && `THC: ${strain.thc}%`,
+                        strain.type && `Type: ${strain.type}`,
+                        effects && `Effects: ${effects}`,
+                        flavors && `Flavors: ${flavors}`,
+                        terpenes && `Terpenes: ${terpenes}`,
+                        strain.lineage && `Lineage: ${strain.lineage}`,
+                    ].filter(Boolean);
+                    if (parts.length > 0) {
+                        results.set(name, parts.join('\n'));
+                    }
+                }
+            } catch (error: unknown) {
+                const msg = error instanceof Error ? error.message : 'Unknown error';
+                this.logger.warn(`BudProfiles fetch failed for "${name}": ${msg}`);
+            }
+        }
+        return results;
+    }
+
     private mapGeneticsRecord(raw: unknown): Partial<Genetics> | null {
         if (!raw || typeof raw !== 'object') {
             return null;
@@ -327,6 +393,9 @@ export class GeneticsService {
             color,
             colorDark,
             colorLight,
+            thcRange: this.toNullableString(item.thcRange),
+            terpenes: this.toNullableString(item.terpenes),
+            effects: this.toNullableString(item.effects),
         };
     }
 
@@ -401,8 +470,19 @@ export class GeneticsService {
             this.logger.debug(`[enrichSingle] Cannlytics data for "${name}":\n${cannlyticsContext}`);
         }
 
+        // Try Demarily API for strain database data
+        const demarilyResults = await this.fetchDemarilyChunk([name]);
+        const demarilyContext = demarilyResults.get(name) || '';
+        if (demarilyContext) {
+            this.logger.debug(`[enrichSingle] Demarily data for "${name}":\n${demarilyContext}`);
+        }
+
         // Also get web search results for description/origin/parents
-        const searchResult = await this.webSearchService.search(`${name} cannabis strain genetics description parents origin`);
+        const englishName = this.cannlyticsService.getEnglishName(name);
+        const searchQuery = englishName
+            ? `${englishName} (${name}) cannabis strain genetics description parents origin`
+            : `${name} cannabis strain genetics description parents origin`;
+        const searchResult = await this.webSearchService.search(searchQuery);
 
         let searchContext = '';
         if (searchResult.success && searchResult.result) {
@@ -420,12 +500,10 @@ export class GeneticsService {
 
         // Build combined context
         const combinedContext = [
+            demarilyContext ? `Strain database (use this for effects, flavors, terpenes, THC):\n${demarilyContext}` : '',
             cannlyticsContext ? `Lab data from Cannlytics (use this for THC, terpenes, aromas):\n${cannlyticsContext}` : '',
             searchContext ? `Web search results:\n${searchContext}` : '',
         ].filter(Boolean).join('\n\n');
-
-        // Find English name for the strain
-        const englishName = this.cannlyticsService.getEnglishName(name);
 
         const prompt = `Enrich cannabis strain "${name}"${englishName ? ` (English name: ${englishName})` : ''}.
 ${combinedContext || 'No external data available.'}
@@ -440,6 +518,7 @@ Return JSON only:
             systemContext: GENETICS_ENRICH_SYSTEM_PROMPT,
             providerOverride: 'openrouter',
             modelOverride: 'google/gemma-4-31b-it:free',
+            maxTokens: 4096,
         });
 
         this.logger.debug(`[enrichSingle] Raw LLM response (${response.content?.length} chars): ${response.content?.slice(0, 200)}`);

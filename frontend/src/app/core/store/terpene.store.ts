@@ -35,8 +35,8 @@ export class TerpeneStore {
         return this.byName().get(normalized);
     }
 
-    loadAll(): void {
-        if (this.terpenes().length > 0 || this.loading()) {
+    loadAll(force = false): void {
+        if (!force && (this.terpenes().length > 0 || this.loading())) {
             return;
         }
 
