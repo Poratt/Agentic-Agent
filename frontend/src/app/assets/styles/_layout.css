@@ -275,7 +275,7 @@
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.5px;
   margin-bottom: var(--space-2);
-  box-shadow: var(--shadow-glow-primary), 0 4px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-glow-primary), var(--shadow-logo);
 }
 
 .form {

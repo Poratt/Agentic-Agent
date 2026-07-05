@@ -45,7 +45,6 @@
 		scroll-behavior: smooth;
 		direction: rtl;
 		width: 100%;
-		padding: 32px;
 
 		.empty-chat-state {
 			display: flex;

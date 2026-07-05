@@ -82,6 +82,14 @@
     border-color var(--transition-fast),
     color var(--transition-fast),
     box-shadow var(--transition-fast);
+
+  /* Family badge colors */
+  --color-family-indica: #1e3a8a;
+  --color-family-sativa: #d97706;
+  --color-family-hybrid: #15803d;
+
+  /* Logo shadow */
+  --shadow-logo: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="dark"] {

@@ -254,3 +254,7 @@
 - No architecture diagram update was needed because this was global design-token styling only.
 - Styling decision: LLM providers icon actions now reuse the global `icon-only` button convention instead of maintaining a component-local `.icon-btn`; the Add Model action uses the existing `transparent-btn sm` button pattern instead of a local `add-model-btn`.
 - No architecture diagram update was needed because this was CSS/HTML styling only.
+
+## 2026-07-05 — CSS Conventions Fix Closed
+- Added semantic family badge tokens + logo shadow token to `_variables.css` to retire the last hardcoded hex colors and the only remaining hardcoded `rgba` in `_layout.css`'s `.logo` rule.
+- Removed the duplicate hardcoded `padding: 32px` in `chat.css`'s `.chat-history` rule that was silently overriding `padding: var(--space-4)`.

@@ -174,18 +174,18 @@
       }
 
       &.family-badge {
-        color: var(--color-white, #ffffff);
+        color: var(--color-white);
 
         &.family-indica {
-          background-color: #1e3a8a;
+          background-color: var(--color-family-indica);
         }
 
         &.family-sativa {
-          background-color: #d97706;
+          background-color: var(--color-family-sativa);
         }
 
         &.family-hybrid {
-          background-color: #15803d;
+          background-color: var(--color-family-hybrid);
         }
       }
     }

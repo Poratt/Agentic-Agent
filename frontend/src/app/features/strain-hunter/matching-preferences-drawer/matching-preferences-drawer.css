@@ -442,7 +442,7 @@
         }
 
         .preview-penalty {
-          font-size: 10px;
+          font-size: var(--font-size-xs);
           color: var(--color-danger);
           font-weight: var(--font-weight-semibold);
           margin-top: var(--space-1);

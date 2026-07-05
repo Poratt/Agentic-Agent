@@ -718,3 +718,15 @@ documents/
 - Open questions for the user: none.
 - Next exact step: visually check `/settings/strain-hunter-settings` and confirm the empty messages appear centered with correct Hebrew rendering in dark and light themes, then pick the next active plan from `documents/features/todo/` (e.g. `database-storage-monitor-plan.md`, `provider-and-llm-db-plan.md` Phases 4-9, or `llm-model-test-results-retention-plan.md`).
 - No architecture diagram update was needed because this was local Strain Hunter Settings UI filter behavior only.
+
+## 2026-07-05 Session
+
+**CSS Conventions Fix**
+
+- Completed: all 6 steps of `documents/todo/css-conventions-fix.md` — added 4 tokens, replaced 4 hex colors, replaced 1 hardcoded `rgba`, replaced 2 hardcoded `font-size` px values, and removed 1 duplicate hardcoded padding override. Plan moved to `documents/done/css-conventions-fix.md`.
+- Files touched (modified): `frontend/src/app/assets/styles/_variables.css`, `frontend/src/app/features/strain-hunter/strain-hunter.css`, `frontend/src/app/assets/styles/_layout.css`, `frontend/src/app/features/chat/chat-message/chat-message.css`, `frontend/src/app/features/strain-hunter/matching-preferences-drawer/matching-preferences-drawer.css`, `frontend/src/app/features/chat/chat/chat.css`.
+- Files touched (docs): `documents/todo/css-conventions-fix.md` → `documents/done/css-conventions-fix.md`, `documents/STATUS.md`, `documents/HANDOFF.md`, `documents/LOG.md`.
+- Verification: `npx ng build` from `frontend` passes; grep for `rgba(0,0,0` in `_layout.css` returns none; grep for `#[0-9a-fA-F]{3,6}` in `strain-hunter.css` returns none; grep for `font-size: [0-9]+px` in `chat-message.css` and `matching-preferences-drawer.css` returns none; grep for `32px` in `chat.css` returns none. Remaining bundle warnings are pre-existing and unrelated.
+- Decisions made: kept this fix scoped to the 6 originally identified files; flagged the 2 out-of-scope `rgba(0,0,0,...)` literals in `_utilities.css:273` (`.color-dot`) and `_buttons.css:173` (`.primary-btn.filled:hover`) for a follow-up ticket rather than expanding scope.
+- Open questions for the user: none.
+- Next exact step: create a new follow-up plan to convert the `_utilities.css:273` and `_buttons.css:173` `rgba(0, 0, 0, ...)` shadows to global tokens, or pick up `documents/features/todo/database-storage-monitor-plan.md`.

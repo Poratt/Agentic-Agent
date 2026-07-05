@@ -302,3 +302,16 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: backfilled all 18 terpenes and 246 genetics rows with WCAG AA-safe color variants (`colorDark`/`colorLight`) using `deriveThemeColors()`.
 - Verified: frontend tooltip now uses `tooltipColor()` computed (theme-aware) instead of raw `t.color`/`g.color`.
 - Verified: `npx ng build` from `frontend` passes; `npm run build` from `backend` passes; `npm run test` passes 19/19.
+
+## 2026-07-05 Session (CSS Conventions Fix)
+- Completed: `documents/done/css-conventions-fix.md`.
+- Added 4 new tokens to `frontend/src/app/assets/styles/_variables.css`: `--color-family-indica`, `--color-family-sativa`, `--color-family-hybrid`, `--shadow-logo`.
+- Replaced hardcoded hex colors in `frontend/src/app/features/strain-hunter/strain-hunter.css` with the new family badge tokens.
+- Replaced the hardcoded `rgba(0, 0, 0, 0.3)` in `.logo`'s `box-shadow` in `frontend/src/app/assets/styles/_layout.css` with `var(--shadow-logo)`.
+- Replaced hardcoded `11px` in `frontend/src/app/features/chat/chat-message/chat-message.css` with `var(--font-size-xs)`.
+- Replaced hardcoded `10px` in `frontend/src/app/features/strain-hunter/matching-preferences-drawer/matching-preferences-drawer.css` with `var(--font-size-xs)`.
+- Removed the duplicate `padding: 32px` override on `.chat-history` in `frontend/src/app/features/chat/chat/chat.css` (line 48) that was overwriting `padding: var(--space-4)` on line 41.
+- Verification: `npx ng build` from `frontend` passes; all grep checks for remaining hardcoded values returned none.
+- Out of scope (noted for follow-up): two additional `rgba(0, 0, 0, ...)` literals in `_utilities.css:273` and `_buttons.css:173` were discovered during the file move but were not included in this fix.
+- Total files touched: 6 (`_variables.css`, `strain-hunter.css`, `_layout.css`, `chat-message.css`, `matching-preferences-drawer.css`, `chat.css`).
+- No architecture diagram update was needed because this was local CSS token consumption only.

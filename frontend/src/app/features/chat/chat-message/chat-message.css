@@ -232,7 +232,7 @@
 			overflow-y: auto;
 
 			border-top: 1px dashed var(--color-border);
-			font-size: 11px;
+			font-size: var(--font-size-xs);
 
 			.step-status-icon {
 				margin-inline-start: auto;
