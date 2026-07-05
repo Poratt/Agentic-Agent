@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -9,7 +9,6 @@ import { GeneticsStore } from '../../../core/store/genetics.store';
 import { TerpeneStore } from '../../../core/store/terpene.store';
 import { GeneticsService } from '../../../core/services/genetics.service';
 import { TerpeneService } from '../../../core/services/terpene.service';
-import { ThemeService } from '../../../core/services/theme.service';
 import { IGenetics } from '../../../core/models/genetics.interface';
 import { ITerpene } from '../../../core/models/terpene.interface';
 
@@ -21,12 +20,13 @@ import { ITerpene } from '../../../core/models/terpene.interface';
     styleUrls: ['./strain-hunter-settings.css'],
     changeDetection: ChangeDetectionStrategy.Eager,
 })
-export class StrainHunterSettings implements OnInit {
+export class StrainHunterSettings implements OnInit, OnDestroy {
     private readonly geneticsStore = inject(GeneticsStore);
     private readonly terpeneStore = inject(TerpeneStore);
     private readonly geneticsService = inject(GeneticsService);
     private readonly terpeneService = inject(TerpeneService);
-    private readonly themeService = inject(ThemeService);
+    private readonly mql = window.matchMedia('(max-width: 1599px)');
+    private readonly mqlHandler = () => this.isCompact.set(this.mql.matches);
 
     geneticsFilter = signal('');
     terpeneFilter = signal('');
@@ -37,6 +37,7 @@ export class StrainHunterSettings implements OnInit {
     enrichingIds = signal<Set<string>>(new Set());
     bulkEnriching = signal<'genetics' | 'terpenes' | null>(null);
     bulkResult = signal<{ total: number; enriched: number; errors: number } | null>(null);
+    isCompact = signal(false);
 
     filteredGenetics = computed<IGenetics[]>(() => {
         const q = this.geneticsFilter().toLowerCase();
@@ -63,16 +64,22 @@ export class StrainHunterSettings implements OnInit {
     });
 
     ngOnInit(): void {
+        this.isCompact.set(this.mql.matches);
+        this.mql.addEventListener('change', this.mqlHandler);
         this.geneticsStore.loadAll();
         this.terpeneStore.loadAll();
     }
 
+    ngOnDestroy(): void {
+        this.mql.removeEventListener('change', this.mqlHandler);
+    }
+
     isGeneticsExpanded(id: number): boolean {
-        return this.expandedGenetics().has(id);
+        return this.isCompact() || this.expandedGenetics().has(id);
     }
 
     isTerpeneExpanded(id: number): boolean {
-        return this.expandedTerpenes().has(id);
+        return this.isCompact() || this.expandedTerpenes().has(id);
     }
 
     toggleGenetics(id: number): void {
@@ -136,7 +143,7 @@ export class StrainHunterSettings implements OnInit {
     }
 
     getThemeColor(item: { colorDark: string; colorLight: string }): string {
-        return this.themeService.isDark() ? item.colorDark : item.colorLight;
+        return item.colorDark;
     }
 
     saveEnrichedGenetics(g: IGenetics): void {

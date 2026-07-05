@@ -54,6 +54,10 @@
             color: var(--color-primary);
             min-width: 0;
             word-break: break-word;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+
         }
 
         .panel-actions {
@@ -194,5 +198,12 @@
             gap: var(--space-2);
             width: 100%;
         }
+    }
+}
+
+
+@media (max-width: 1600px) {
+    .table-row-header {
+        display: none !important;
     }
 }

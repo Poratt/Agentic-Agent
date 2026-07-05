@@ -58,9 +58,11 @@
                     [rowsPerPageOptions]="[10, 20, 50]"
                     sortField="name"
                     [sortOrder]="1"
-                    styleClass="catalog-table"
+                    class="catalog-table"
+                    responsiveLayout="stack"
+                    [breakpoint]="'1600px'"
                 >
-                    <ng-template pTemplate="header">
+                    <ng-template #header>
                         <tr>
                             <th class="col-expand"></th>
                             <th pSortableColumn="name">שם <p-sortIcon field="name" /></th>
@@ -69,12 +71,12 @@
                             <th>הורה 1</th>
                             <th>הורה 2</th>
                             <th class="col-desc">תיאור</th>
-                            <th class="col-color"></th>
-                            <th class="col-regen"></th>
+                            <th class="col-color"><span class="sr-only">צבע</span></th>
+                            <th class="col-regen"><span class="sr-only">חידוש</span></th>
                         </tr>
                     </ng-template>
-                    <ng-template pTemplate="body" let-g>
-                        <tr>
+                    <ng-template #body let-g>
+                        <tr class="table-row-header">
                             <td class="col-expand">
                                 <button
                                     type="button"
@@ -99,7 +101,7 @@
                             <td>{{ g.parent2 || '—' }}</td>
                             <td class="col-desc row-meta">{{ g.description || '—' }}</td>
                             <td class="col-color">
-                                <span class="color-dot" [style.background]="getThemeColor(g)"></span>
+                                <span class="color-dot sm" [style.--dot-color]="getThemeColor(g)"></span>
                             </td>
                             <td class="col-regen">
                                 <button
@@ -122,7 +124,10 @@
                                 <td colspan="9" class="expand-panel-cell">
                                     <div class="expand-panel">
                                         <div class="panel-header">
-                                            <span class="panel-title">{{ g.name }}</span>
+                                            <span class="panel-title">
+                                                <span class="color-dot sm" [style.--dot-color]="getThemeColor(g)"></span>
+                                                {{ g.name }}
+                                            </span>
 
                                             <div class="panel-actions">
                                                 <button
@@ -264,7 +269,7 @@
                             </tr>
                         }
                     </ng-template>
-                    <ng-template pTemplate="emptymessage">
+                    <ng-template #emptymessage>
                         <tr>
                             <td colspan="9">
                                 <div class="page-state table-empty-state">
@@ -333,11 +338,11 @@
                     [rowsPerPageOptions]="[10, 20, 50]"
                     sortField="name"
                     [sortOrder]="1"
-                    breakpoint="1600"
+                    class="catalog-table"
                     responsiveLayout="stack"
-                    styleClass="catalog-table"
+                    [breakpoint]="'1600px'"
                 >
-                    <ng-template pTemplate="header">
+                    <ng-template #header>
                         <tr>
                             <th class="col-expand"></th>
                             <th pSortableColumn="name">שם <p-sortIcon field="name" /></th>
@@ -348,8 +353,8 @@
                             <th class="col-regen"></th>
                         </tr>
                     </ng-template>
-                    <ng-template pTemplate="body" let-t>
-                        <tr>
+                    <ng-template #body let-t>
+                        <tr class="table-row-header">
                             <td class="col-expand">
                                 <button
                                     type="button"
@@ -361,7 +366,9 @@
                                     <i class="ph ph-caret-left"></i>
                                 </button>
                             </td>
-                            <td class="row-label clickable" (click)="toggleTerpene(t.id)">{{ t.name }}</td>
+                            <td class="row-label clickable" (click)="toggleTerpene(t.id)">
+                                {{ t.name }}
+                            </td>
                             <td class="row-meta">{{ t.scent || '—' }}</td>
                             <td>
                                 @if (t.effects?.length) {
@@ -376,7 +383,7 @@
                             </td>
                             <td class="col-desc row-meta">{{ t.description || '—' }}</td>
                             <td class="col-color">
-                                <span class="color-dot" [style.background]="getThemeColor(t)"></span>
+                                <span class="color-dot sm" [style.--dot-color]="getThemeColor(t)"></span>
                             </td>
                             <td class="col-regen">
                                 <button
@@ -399,7 +406,10 @@
                                 <td colspan="7" class="expand-panel-cell">
                                     <div class="expand-panel">
                                         <div class="panel-header">
-                                            <span class="panel-title">{{ t.name }}</span>
+                                            <span class="panel-title">
+                                                <span class="color-dot sm" [style.--dot-color]="getThemeColor(t)"></span>
+                                                {{ t.name }}
+                                            </span>
 
                                             <div class="panel-actions">
                                                 <button
@@ -509,7 +519,7 @@
                             </tr>
                         }
                     </ng-template>
-                    <ng-template pTemplate="emptymessage">
+                    <ng-template #emptymessage>
                         <tr>
                             <td colspan="7">
                                 <div class="page-state table-empty-state">
