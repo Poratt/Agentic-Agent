@@ -95,10 +95,12 @@ export class GeneticsService {
             }
 
             this.logger.log(`Sending genetics chunk ${chunkNumber}/${totalChunks} to LLM...`);
+            const userPrompt = buildGeneticsEnrichUserPrompt(chunk, enrichedSearchResults);
+            this.logger.debug(`[enrichBatch] LLM prompt for chunk ${chunkNumber}:\n${userPrompt}`);
 
             try {
                 const response = await this.llmClientService.generateResponse({
-                    prompt: buildGeneticsEnrichUserPrompt(chunk, enrichedSearchResults),
+                    prompt: userPrompt,
                     systemContext: GENETICS_ENRICH_SYSTEM_PROMPT,
                     providerOverride: 'openrouter',
                     modelOverride: 'google/gemma-4-31b-it:free',
@@ -192,9 +194,11 @@ export class GeneticsService {
             }
 
             this.logger.log(`[enrichMissing] Sending chunk ${chunkNumber}/${totalChunks} to LLM...`);
+            const userPrompt = buildGeneticsEnrichUserPrompt(names, combinedResults);
+            this.logger.debug(`[enrichMissing] LLM prompt for chunk ${chunkNumber}:\n${userPrompt}`);
             try {
                 const response = await this.llmClientService.generateResponse({
-                    prompt: buildGeneticsEnrichUserPrompt(names, combinedResults),
+                    prompt: userPrompt,
                     systemContext: GENETICS_ENRICH_SYSTEM_PROMPT,
                     providerOverride: 'openrouter',
                     modelOverride: 'google/gemma-4-31b-it:free',
