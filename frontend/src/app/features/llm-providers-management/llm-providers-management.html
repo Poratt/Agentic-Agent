@@ -36,8 +36,13 @@
 
                 <div class="toolbar-actions">
                     <div class="toolbar-stats">
-                        <span class="ph ph-database"></span>
-                        <span>{{ llmProviders().length }} providers</span>
+                        <div class="action-row summary-row">
+                            <span class="summary-item">
+                                <span class="ph ph-database"></span>
+                                <span class="summary-label">ספקים</span>
+                                <span class="summary-value">{{ llmProviders().length }}</span>
+                            </span>
+                        </div>
                     </div>
                     <button type="button" class="primary-btn filled sm" (click)="openAddProviderDialog()">
                         <i class="ph ph-plus"></i>
