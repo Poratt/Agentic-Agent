@@ -451,23 +451,11 @@ export class GeneticsService {
         return this.geneticsRepository.save(genetics);
     }
 
-    async enrichSingle(name: string): Promise<{
-        name: string;
-        description: string | null;
-        parent1: string | null;
-        parent2: string | null;
-        origin: string | null;
-        type: string | null;
-        thcRange: string | null;
-        terpenes: string | null;
-        effects: string | null;
-        color: string;
-        colorDark: string;
-        colorLight: string;
-    } | null> {
+    async enrichSingle(name: string): Promise<Genetics | null> {
 
         // we mush translate the name to english before searching for it. 
         const enName = this.cannlyticsService.getEnglishName(name);
+        this.logger.debug(`enName: ${enName}, name: ${name}`);
         // Try Cannlytics API first for lab data
         const cannlyticsData = await this.cannlyticsService.getStrain(enName || name);
         let cannlyticsContext = '';
@@ -478,10 +466,10 @@ export class GeneticsService {
         }
 
         // Try BudProfiles API for strain database data (passes English name internally)
-        const demarilyResults = await this.fetchDemarilyChunk([name]);
-        const demarilyContext = demarilyResults.get(name) || '';
+        const demarilyResults = await this.fetchDemarilyChunk([enName || name]);
+        const demarilyContext = demarilyResults.get(enName || name) || '';
         if (demarilyContext) {
-            this.logger.debug(`[enrichSingle] BudProfiles data for "${name}":\n${demarilyContext}`);
+            this.logger.debug(`[enrichSingle] BudProfiles data for "${enName || name}":\n${demarilyContext}`);
         }
 
         // Also get web search results for description/origin/parents
@@ -502,7 +490,7 @@ export class GeneticsService {
             searchContext = parts.join('\n');
         }
 
-        this.logger.debug(`[enrichSingle] Search context for "${name}":\n${searchContext || '(empty)'}`);
+        this.logger.debug(`[enrichSingle] Search context for "${enName}":\n${searchContext || '(empty)'}`);
 
         // Build combined context
         const combinedContext = [
@@ -540,20 +528,27 @@ Return JSON only:
             : DEFAULT_COLOR;
         const { colorDark, colorLight } = deriveThemeColors(color);
 
-        return {
-            name,
-            description: this.toNullableString(item.description),
-            parent1: this.toNullableString(item.parent1),
-            parent2: this.toNullableString(item.parent2),
-            origin: this.toNullableString(item.origin),
-            type: typeof item.type === 'string' && VALID_TYPES.has(item.type.trim()) ? item.type.trim() : null,
-            thcRange: this.toNullableString(item.thcRange),
-            terpenes: this.toNullableString(item.terpenes),
-            effects: this.toNullableString(item.effects),
+        const existing = await this.geneticsRepository.findOne({ where: { name } });
+        if (!existing) {
+            this.logger.warn(`[enrichSingle] Record not found in DB: "${name}"`);
+            return null;
+        }
+
+        Object.assign(existing, {
+            description: this.toNullableString(item.description) ?? existing.description,
+            parent1: this.toNullableString(item.parent1) ?? existing.parent1,
+            parent2: this.toNullableString(item.parent2) ?? existing.parent2,
+            origin: this.toNullableString(item.origin) ?? existing.origin,
+            type: typeof item.type === 'string' && VALID_TYPES.has(item.type.trim()) ? item.type.trim() : existing.type,
+            thcRange: this.toNullableString(item.thcRange) ?? existing.thcRange,
+            terpenes: this.toNullableString(item.terpenes) ?? existing.terpenes,
+            effects: this.toNullableString(item.effects) ?? existing.effects,
             color,
             colorDark,
             colorLight,
-        };
+        });
+
+        return this.geneticsRepository.save(existing);
     }
 }
 ``
