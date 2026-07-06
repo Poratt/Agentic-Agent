@@ -324,3 +324,12 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Out of scope (noted for follow-up): two additional `rgba(0, 0, 0, ...)` literals in `_utilities.css:273` and `_buttons.css:173` were discovered during the file move but were not included in this fix.
 - Total files touched: 6 (`_variables.css`, `strain-hunter.css`, `_layout.css`, `chat-message.css`, `matching-preferences-drawer.css`, `chat.css`).
 - No architecture diagram update was needed because this was local CSS token consumption only.
+
+## 2026-07-06 Session (CSS Conventions Fix Plan — Audit Findings)
+
+- Completed: `documents/features/todo/css-conventions-fix-plan.md` → moved to `documents/done/css-conventions-fix-plan.md`.
+- Reviewed all 7 audit findings. Findings 1-3 and 6 were stale (referenced classes that no longer exist: `archive-item`, `nested-sessions-list`, `session-sub-item`, `.search-box`, `.search-container`). Finding 7 (inline styles) was already compliant.
+- Finding 4 (broad transitions): replaced `transition: var(--transition-standard)` in `main-sidebar.css` with explicit `background-color` and `color` transitions.
+- Finding 5 (hardcoded pixels): tokenized 40px in `.theme-toggle` and `.user-avatar` to `var(--space-10)`.
+- Added `--space-10: 40px` to `_variables.css`.
+- Verified: `npx ng build` from `frontend` passes.

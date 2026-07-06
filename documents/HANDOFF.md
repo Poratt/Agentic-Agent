@@ -743,3 +743,18 @@ documents/
 - Decisions made: keep Sunday 02:00 server-time weekly cron; hardcode 30-day retention for version 1; no architecture diagram update needed.
 - Open questions for the user: none.
 - Next exact step: pick the next active plan from `documents/features/todo/` (`database-storage-monitor-plan.md`, `provider-and-llm-db-plan.md` Phases 4-9, or `genui-progressive-streaming-rendering-plan.md`), or address the existing frontend CSS budget warnings.
+
+## 2026-07-06 Session (CSS Conventions Fix Plan — Audit Findings)
+
+**CSS Conventions Fix Plan (Audit Findings 1-6)**
+
+- Completed: `documents/features/todo/css-conventions-fix-plan.md` → moved to `documents/done/css-conventions-fix-plan.md`.
+- Reviewed all 7 audit findings against the current codebase. Findings 1-3 and 6 referenced stale class names (`archive-item`, `nested-sessions-list`, `session-sub-item`, `.search-box`, `.search-container`) that no longer exist — skipped as already resolved or inapplicable.
+- Finding 4 (broad transitions): replaced `transition: var(--transition-standard)` in `main-sidebar.css` `.nav-item` with explicit `background-color` and `color` transitions.
+- Finding 5 (hardcoded pixels): tokenized 40px values in `main-sidebar.css` (`.theme-toggle` and `.user-avatar`) to `var(--space-10)`.
+- Added `--space-10: 40px` token to `frontend/src/app/assets/styles/_variables.css`.
+- `220px` sidebar width kept as a documented exception (unique fixed layout dimension).
+- Verified: `npx ng build` from `frontend` passes. No new warnings.
+- Files touched: `frontend/src/app/assets/styles/_variables.css`, `frontend/src/app/features/layout/main-sidebar/main-sidebar.css`, `documents/features/todo/css-conventions-fix-plan.md` → `documents/done/css-conventions-fix-plan.md`, `documents/STATUS.md`, `documents/HANDOFF.md`.
+- Decisions made: most audit findings were stale (referencing classes that no longer exist); only 2 of 7 findings were actionable. No architecture diagram update needed (CSS-only refactoring).
+- Open questions for the user: none.
