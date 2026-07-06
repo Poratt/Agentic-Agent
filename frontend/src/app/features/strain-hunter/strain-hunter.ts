@@ -34,6 +34,7 @@ type StrainRow = ScoredStrain<Record<string, unknown>>;
 
 type StrainHunterResponse = {
     items: Record<string, unknown>[];
+    lastScrapedAt?: string | null;
 };
 
 type StrainHunterFilterField =
@@ -175,7 +176,8 @@ export class StrainHunter implements OnInit {
         'penaltyIngredient',
         'breakdown',
         'batch',
-        'growType'
+        'growType',
+        'lastScrapedAt',
     ];
 
     rawItems = signal<any[]>([]);
@@ -277,7 +279,7 @@ export class StrainHunter implements OnInit {
             .subscribe({
                 next: (response) => {
                     this.rawItems.set(response.items ?? []);
-                    this.lastUpdated.set(new Date());
+                    this.lastUpdated.set(response.lastScrapedAt ? new Date(response.lastScrapedAt) : null);
                     if (response.items && response.items.length > 0) {
                         console.log('First item symbols:', response.items[0]['symbols']);
                     }
@@ -337,7 +339,7 @@ export class StrainHunter implements OnInit {
                 });
             }
 
-        return [...prev, { key, fields: filterFields, label: filterLabel, value: filterValue, name: FILTER_FIELD_NAMES[filterFields[0]] ?? filterFields[0] }];
+            return [...prev, { key, fields: filterFields, label: filterLabel, value: filterValue, name: FILTER_FIELD_NAMES[filterFields[0]] ?? filterFields[0] }];
         });
         this.clearTooltip();
     }

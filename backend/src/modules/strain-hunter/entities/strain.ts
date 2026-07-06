@@ -82,4 +82,7 @@ export class Strain {
 
     @Column({ type: 'varchar', length: 100, default: '' })
     cbd!: string;
+
+    @Column({ type: 'datetime', nullable: true })
+    lastScrapedAt!: Date | null;
 }

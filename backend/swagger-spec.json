@@ -3309,6 +3309,12 @@
             "items": {
               "$ref": "#/components/schemas/StrainDto"
             }
+          },
+          "lastScrapedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp when the data was last scraped from the source.",
+            "example": "2026-07-06T13:18:23.153Z"
           }
         },
         "required": [

@@ -3,7 +3,7 @@ import { TerpeneController } from './terpene.controller';
 import { TerpeneService } from './terpene.service';
 import { Terpene } from './entities/terpene.entity';
 
-const DTO_KEYS = ['id', 'name', 'description', 'scent', 'effects', 'color', 'colorDark', 'colorLight'].sort();
+const DTO_KEYS = ['id', 'name', 'englishName', 'description', 'scent', 'effects', 'color', 'colorDark', 'colorLight'].sort();
 
 describe('TerpeneController — DTO mapping coverage', () => {
     let controller: TerpeneController;
@@ -11,6 +11,7 @@ describe('TerpeneController — DTO mapping coverage', () => {
     const MOCK_ENTITY: Terpene = {
         id: 1,
         name: 'טסט',
+        englishName: 'Test',
         description: 'test',
         scent: 'test',
         effects: ['test'],

@@ -91,4 +91,11 @@ export class StrainHunterFetchResponseDto {
     type: [StrainDto],
   })
   items!: StrainDto[];
+
+  @ApiProperty({
+    description: 'Timestamp when the data was last scraped from the source.',
+    example: '2026-07-06T13:18:23.153Z',
+    required: false,
+  })
+  lastScrapedAt?: Date | null;
 }

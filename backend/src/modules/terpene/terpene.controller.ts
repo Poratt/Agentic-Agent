@@ -49,6 +49,7 @@ export class TerpeneController {
         return {
             id: entity.id,
             name: entity.name,
+            englishName: entity.englishName ?? undefined,
             description: entity.description ?? undefined,
             scent: entity.scent ?? undefined,
             effects: entity.effects ?? undefined,

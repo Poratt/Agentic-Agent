@@ -71,12 +71,13 @@ export class StrainHunterService {
         private readonly terpeneService: TerpeneService,
     ) { }
 
-    async fetchData(forceRefresh = false): Promise<{ items: Strain[] }> {
+    async fetchData(forceRefresh = false): Promise<{ items: Strain[]; lastScrapedAt: Date | null }> {
         if (!forceRefresh) {
             const count = await this.strainRepository.count();
             if (count > 0) {
                 const items = await this.strainRepository.find();
-                return { items };
+                const lastScrapedAt = items.length > 0 ? items[0].lastScrapedAt : null;
+                return { items, lastScrapedAt };
             }
         }
 
@@ -97,6 +98,7 @@ export class StrainHunterService {
 
         await this.strainRepository.clear();
 
+        const scrapedAt = new Date();
         const entities = scraped.items.map((item) => {
             return this.strainRepository.create({
                 name: item.name,
@@ -125,6 +127,7 @@ export class StrainHunterService {
                 growType: item.growType,
                 thc: item.thc,
                 cbd: item.cbd,
+                lastScrapedAt: scrapedAt,
             });
         });
 
@@ -166,7 +169,7 @@ export class StrainHunterService {
             this.terpeneService.enrichBatch(allTerpeneNames),
         ]);
 
-        return { items: entities };
+        return { items: entities, lastScrapedAt: scrapedAt };
     }
 
     private async fetchDataFromUrl(url: string): Promise<{ items: StrainItem[] }> {
