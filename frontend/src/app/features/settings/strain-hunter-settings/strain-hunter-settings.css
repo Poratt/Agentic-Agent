@@ -23,9 +23,7 @@
     .col-desc {
         max-width: 280px;
         font-size: var(--font-size-xs);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        white-space: pre-wrap;
     }
 
     .col-color {

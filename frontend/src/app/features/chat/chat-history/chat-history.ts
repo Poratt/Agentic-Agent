@@ -26,6 +26,14 @@ export class ChatHistory implements OnInit {
         return this.chatStore.sessions().filter((session) => session.title.toLowerCase().includes(query));
     });
 
+    hasSearch = computed(() => this.searchQuery().trim().length > 0);
+
+    resultCountLabel = computed(() => {
+        const count = this.filteredSessions().length;
+        const suffix = this.hasSearch() ? 'תוצאות' : 'שיחות';
+        return `${count} ${suffix}`;
+    });
+
     currentSessionId = computed(() => this.chatStore.currentSessionId());
     pageState = computed<PageStates>(() => {
         if (this.chatStore.loading() && this.chatStore.sessions().length === 0) {
@@ -55,6 +63,10 @@ export class ChatHistory implements OnInit {
 
     onSearchChange(query: string) {
         this.searchQuery.set(query);
+    }
+
+    searchClear() {
+        this.searchQuery.set('');
     }
 
     setPendingDelete(event: Event, id: number) {

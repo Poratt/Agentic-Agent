@@ -1,30 +1,12 @@
-@switch (pageState()) {
-    @case (PageStates.Loading) {
-        <div class="page-state loading-state">
-            <span class="custom-loader"></span>
-        </div>
-    }
-    @case (PageStates.Error) {
-        <div class="page-state error-state">
-            <span class="icon ph ph-warning"></span>
-            <h4 class="title">אירעה שגיאה בטעינת השיחות.</h4>
-            <p class="subtitle">אנא נסה שוב מאוחר יותר.</p>
-            <button class="btn-primary" type="button" (click)="loadSessions()">רענן</button>
-        </div>
-    }
-    @case (PageStates.Empty) {
-        <div class="page-state empty-state">
-            <span class="icon ph ph-chat-centered-text"></span>
-            <h4 class="title">עדיין אין לך שיחות שמורות.</h4>
-        </div>
-    }
-    @case (PageStates.Ready) {
-        <div class="page-content">
-            <div class="page-header fade-in">
-                <div class="header-row">
-                    <div class="header-content">
-                        <h2>היסטוריית שיחות</h2>
-                    </div>
+<div class="page-content">
+    <div class="page-header">
+        <div class="header-row">
+            <div class="header-content">
+                <h2>היסטוריית שיחות</h2>
+            </div>
+
+            <div class="header-actions">
+                <div class="action-row">
                     <div class="form-field-has-icon">
                         <span class="ph ph-magnifying-glass field-icon"></span>
                         <input
@@ -34,55 +16,115 @@
                             placeholder="חפש שיחה..."
                             class="form-control"
                         />
-                    </div>
-                </div>
-            </div>
-
-            <div class="history-content">
-                @if (filteredSessions().length === 0) {
-                    <div class="state-container">
-                        <p>לא נמצאו שיחות התואמות לחיפוש</p>
-                    </div>
-                } @else {
-                    <div class="sessions-list">
-                        @for (session of filteredSessions(); track session.id) {
-                            <div
-                                class="session-row fade-in"
-                                [class.active]="currentSessionId() === session.id"
-                                [class.danger]="pendingDeleteSessionId() === session.id"
+                        @if (hasSearch()) {
+                            <button
+                                type="button"
+                                class="icon-only transparent-btn sm search-clear-btn"
+                                aria-label="נקה חיפוש"
+                                (click)="searchClear()"
                             >
-                                @if (pendingDeleteSessionId() === session.id) {
-                                    <div class="delete-confirmation">
-                                        <span class="warning-text typewriter">האם אתה בטוח שברצונך למחוק שיחה זו?</span>
-                                        <div class="action-btns">
-                                            <button class="icon-only transparent-btn" (click)="cancelDelete()">
-                                                <span class="ph ph-x"></span>
-                                            </button>
-                                            <button class="icon-only danger-btn" (click)="confirmDelete()">
-                                                <span class="ph ph-check"></span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                } @else {
-                                    <div class="session-info" [routerLink]="['/chat']" [queryParams]="{ sessionId: session.id }">
-                                        <div class="text-group scale-up">
-                                            <span class="ph ph-chat-centered-text chat-icon"></span>
-                                            <div class="flex-col">
-                                                <span class="title">{{ session.title }}</span>
-                                                <span class="date">{{ session.updatedAt | date: 'shortDate' }}</span>
-                                            </div>
-                                        </div>
-
-                                        <button class="icon-only danger-btn" (click)="setPendingDelete($event, session.id)">
-                                            <span class="ph ph-trash"></span>
-                                        </button>
-                                    </div>
-                                }
-                            </div>
+                                <i class="ph ph-x"></i>
+                            </button>
                         }
                     </div>
-                }
+                </div>
+
+                <div class="action-row summary-row">
+                    <span class="summary-item">
+                        <span class="ph ph-list-checks"></span>
+                        <span class="summary-label">{{ hasSearch() ? 'תוצאות' : 'שיחות' }}</span>
+                        <span class="summary-value">{{ resultCountLabel() }}</span>
+                    </span>
+                </div>
             </div>
         </div>
+    </div>
+
+    @switch (pageState()) {
+        @case (PageStates.Loading) {
+            <div class="page-state loading-state">
+                <span class="custom-loader"></span>
+            </div>
+        }
+        @case (PageStates.Error) {
+            <div class="page-state error-state">
+                <span class="icon ph ph-warning"></span>
+                <h4 class="title">אירעה שגיאה בטעינת השיחות.</h4>
+                <p class="subtitle">אנא נסה שוב מאוחר יותר.</p>
+                <button class="primary-btn sm" type="button" (click)="loadSessions()">רענן</button>
+            </div>
+        }
+        @case (PageStates.Empty) {
+            <div class="page-state empty-state">
+                <span class="icon ph ph-chat-centered-text"></span>
+                <h4 class="title">עדיין אין לך שיחות שמורות.</h4>
+                <p class="subtitle">התחל שיחה חדשה בעמוד הצ'אט — היא תופיע כאן.</p>
+            </div>
+        }
+        @case (PageStates.Ready) {
+            @if (filteredSessions().length === 0) {
+                <div class="page-state table-empty-state">
+                    <span class="icon ph ph-magnifying-glass-minus"></span>
+                    <h4 class="title">לא נמצאו שיחות התואמות לחיפוש.</h4>
+                    <p class="subtitle">נסה לשנות את מונחי החיפוש או לנקות את הסינון.</p>
+                </div>
+            } @else {
+                <div class="sessions-list stagger stagger-up">
+                    @for (session of filteredSessions(); track session.id) {
+                        <div
+                            class="session-row"
+                            [class.active]="currentSessionId() === session.id"
+                            [class.danger]="pendingDeleteSessionId() === session.id"
+                        >
+                            @if (pendingDeleteSessionId() === session.id) {
+                                <div class="delete-confirmation">
+                                    <span class="warning-text">
+                                        <span class="ph ph-warning-circle"></span>
+                                        האם למחוק את השיחה?
+                                    </span>
+                                    <div class="action-btns">
+                                        <button
+                                            type="button"
+                                            class="ghost-btn sm"
+                                            (click)="cancelDelete()"
+                                        >
+                                            ביטול
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="danger-btn sm"
+                                            (click)="confirmDelete()"
+                                        >
+                                            <span class="ph ph-trash"></span>
+                                            מחק
+                                        </button>
+                                    </div>
+                                </div>
+                            } @else {
+                                <div class="session-info" [routerLink]="['/chat']" [queryParams]="{ sessionId: session.id }">
+                                    <div class="session-icon">
+                                        <span class="ph ph-chat-centered-text"></span>
+                                    </div>
+
+                                    <div class="session-text">
+                                        <span class="title">{{ session.title }}</span>
+                                        <span class="date">{{ session.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        class="icon-only transparent-btn delete-btn"
+                                        (click)="setPendingDelete($event, session.id)"
+                                        aria-label="מחק שיחה"
+                                    >
+                                        <span class="ph ph-trash"></span>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        }
     }
-}
+</div>

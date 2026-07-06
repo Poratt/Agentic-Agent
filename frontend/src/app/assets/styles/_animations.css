@@ -279,57 +279,25 @@
 
   >* {
     opacity: 0;
-    animation: var(--anim-name) 0.5s ease-out forwards;
+    animation-name: var(--anim-name);
+    animation-duration: 0.5s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
     animation-delay: calc(var(--delay) * (var(--i, 1) - 1));
-
-    &:nth-child(1) {
-      --i: 1;
-    }
-
-    &:nth-child(2) {
-      --i: 2;
-    }
-
-    &:nth-child(3) {
-      --i: 3;
-    }
-
-    &:nth-child(4) {
-      --i: 4;
-    }
-
-    &:nth-child(5) {
-      --i: 5;
-    }
-
-    &:nth-child(6) {
-      --i: 6;
-    }
-
-    &:nth-child(7) {
-      --i: 7;
-    }
-
-    &:nth-child(8) {
-      --i: 8;
-    }
-
-    &:nth-child(9) {
-      --i: 9;
-    }
-
-    &:nth-child(10) {
-      --i: 10;
-    }
-
-    &:nth-child(11) {
-      --i: 11;
-    }
-
-    &:nth-child(12) {
-      --i: 12;
-    }
   }
+
+  >:nth-child(1) { --i: 1; }
+  >:nth-child(2) { --i: 2; }
+  >:nth-child(3) { --i: 3; }
+  >:nth-child(4) { --i: 4; }
+  >:nth-child(5) { --i: 5; }
+  >:nth-child(6) { --i: 6; }
+  >:nth-child(7) { --i: 7; }
+  >:nth-child(8) { --i: 8; }
+  >:nth-child(9) { --i: 9; }
+  >:nth-child(10) { --i: 10; }
+  >:nth-child(11) { --i: 11; }
+  >:nth-child(12) { --i: 12; }
 }
 
 .stagger-up {
@@ -354,7 +322,7 @@
 
 @keyframes stagger-up {
   0% {
-    opacity: 0.1;
+    opacity: 0;
     transform: translateY(var(--distance));
   }
 
@@ -366,7 +334,7 @@
 
 @keyframes stagger-down {
   0% {
-    opacity: 0.1;
+    opacity: 0;
     transform: translateY(calc(var(--distance) * -1));
   }
 
@@ -378,7 +346,7 @@
 
 @keyframes stagger-left {
   0% {
-    opacity: 0.1;
+    opacity: 0;
     transform: translateX(var(--distance));
   }
 
@@ -390,7 +358,7 @@
 
 @keyframes stagger-right {
   0% {
-    opacity: 0.1;
+    opacity: 0;
     transform: translateX(calc(var(--distance) * -1));
   }
 
@@ -409,13 +377,13 @@
 
 @keyframes stagger-scale-up {
   0% {
-    opacity: 0.1;
-    transform: scale(0);
+    opacity: 0;
+    transform: scale(0.8);
   }
 
   100% {
     opacity: 1;
-    transform: scale(var(--distance));
+    transform: scale(1);
   }
 }
 
