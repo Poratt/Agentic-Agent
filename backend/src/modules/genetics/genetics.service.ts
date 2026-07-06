@@ -465,26 +465,28 @@ export class GeneticsService {
         colorDark: string;
         colorLight: string;
     } | null> {
+
+        // we mush translate the name to english before searching for it. 
+        const enName = this.cannlyticsService.getEnglishName(name);
         // Try Cannlytics API first for lab data
-        const cannlyticsData = await this.cannlyticsService.getStrain(name);
+        const cannlyticsData = await this.cannlyticsService.getStrain(enName || name);
         let cannlyticsContext = '';
-        
+
         if (cannlyticsData) {
             cannlyticsContext = this.cannlyticsService.formatForEnrichment(cannlyticsData);
-            this.logger.debug(`[enrichSingle] Cannlytics data for "${name}":\n${cannlyticsContext}`);
+            this.logger.debug(`[enrichSingle] Cannlytics data for "${enName || name}":\n${cannlyticsContext}`);
         }
 
-        // Try Demarily API for strain database data
+        // Try BudProfiles API for strain database data (passes English name internally)
         const demarilyResults = await this.fetchDemarilyChunk([name]);
         const demarilyContext = demarilyResults.get(name) || '';
         if (demarilyContext) {
-            this.logger.debug(`[enrichSingle] Demarily data for "${name}":\n${demarilyContext}`);
+            this.logger.debug(`[enrichSingle] BudProfiles data for "${name}":\n${demarilyContext}`);
         }
 
         // Also get web search results for description/origin/parents
-        const englishName = this.cannlyticsService.getEnglishName(name);
-        const searchQuery = englishName
-            ? `${englishName} (${name}) cannabis strain genetics description parents origin`
+        const searchQuery = enName
+            ? `${enName} (${name}) cannabis strain genetics description parents origin`
             : `${name} cannabis strain genetics description parents origin`;
         const searchResult = await this.webSearchService.search(searchQuery);
 
@@ -509,13 +511,15 @@ export class GeneticsService {
             searchContext ? `Web search results:\n${searchContext}` : '',
         ].filter(Boolean).join('\n\n');
 
-        const prompt = `Enrich cannabis strain "${name}"${englishName ? ` (English name: ${englishName})` : ''}.
+        const prompt = `Enrich cannabis strain "${name}"${enName ? ` (English name: ${enName})` : ''}.
 ${combinedContext || 'No external data available.'}
 
 ${cannlyticsData ? 'Use the Cannlytics lab data above for accurate THC%, terpene names and percentages.' : 'Use web search or your knowledge for THC and terpenes.'}
 Use web search for description, parents, origin, and type.
 Return JSON only:
 {"genetics":[{"name":"${name}","description":"3-5 sentences in Hebrew covering origin, effects, flavor, medical uses","parent1":"parent or null","parent2":"parent or null","origin":"country in Hebrew","type":"היברידי/סאטיבה/אינדיקה","thcRange":"15-21%","terpenes":"Caryophyllene, Limonene","effects":"מרגיעה, מרדימה","color":"#hex"}]}`;
+
+        this.logger.debug(`[enrichSingle] LLM prompt:\n${prompt}`);
 
         const response = await this.llmClientService.generateResponse({
             prompt,
