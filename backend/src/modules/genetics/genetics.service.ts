@@ -313,7 +313,8 @@ export class GeneticsService {
         const results = new Map<string, string>();
         for (const name of names) {
             try {
-                const data = await this.cannlyticsService.getStrain(name);
+                const englishName = this.cannlyticsService.getEnglishName(name) || name;
+                const data = await this.cannlyticsService.getStrain(englishName);
                 if (data) {
                     const formatted = this.cannlyticsService.formatForEnrichment(data);
                     results.set(name, formatted);
