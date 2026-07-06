@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThan } from 'typeorm';
 
 import { ServiceResultContainer } from '../../core/models/service-result-container.model';
 import { CreateLlmModelDto } from './dto/create-llm-model.dto';
@@ -115,5 +115,12 @@ export class LlmProviderService {
 
     await this.testResultRepo.remove(testResult);
     return { success: true, message: 'Test result deleted', result: undefined };
+  }
+
+  async deleteOldTestResults(retentionDays = 30): Promise<number> {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - retentionDays);
+    const result = await this.testResultRepo.delete({ createdAt: LessThan(cutoff) });
+    return result.affected ?? 0;
   }
 }

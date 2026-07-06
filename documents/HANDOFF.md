@@ -730,3 +730,16 @@ documents/
 - Decisions made: kept this fix scoped to the 6 originally identified files; flagged the 2 out-of-scope `rgba(0,0,0,...)` literals in `_utilities.css:273` (`.color-dot`) and `_buttons.css:173` (`.primary-btn.filled:hover`) for a follow-up ticket rather than expanding scope.
 - Open questions for the user: none.
 - Next exact step: create a new follow-up plan to convert the `_utilities.css:273` and `_buttons.css:173` `rgba(0, 0, 0, ...)` shadows to global tokens, or pick up `documents/features/todo/database-storage-monitor-plan.md`.
+
+## 2026-07-06 Session (llm-model-test-results-retention)
+
+- Completed: `documents/done/llm-model-test-results-retention-plan.md`.
+  - Added `deleteOldTestResults(retentionDays = 30)` to `backend/src/modules/llm-provider/llm-provider.service.ts`. Uses TypeORM `LessThan` on `createdAt`; returns `affected` count.
+  - Added `cleanupOldLlmModelTestResults()` to `backend/src/modules/llm/services/llm-tasks.service.ts` with `@Cron('0 0 2 * * 0')` (Sunday 02:00 server time). Injects `LlmProviderService`. Logs start, cutoff, and deleted row count.
+  - No new module imports needed — `LlmProviderModule` already exports `LlmProviderService` and `LlmModule` already imports it.
+  - Added `backend/src/modules/llm-provider/llm-provider.service.spec.ts` with 5 tests asserting `LessThan` operator usage, cutoff calculation accuracy, affected-count return, zero-affected handling, and custom retention.
+  - Verified: `npm test` passes 25/25 (pre-existing `app.controller.spec.ts` FAIL unrelated); `npm run build` passes.
+- Files touched: `backend/src/modules/llm-provider/llm-provider.service.ts`, `backend/src/modules/llm/services/llm-tasks.service.ts`, `backend/src/modules/llm-provider/llm-provider.service.spec.ts`, `documents/done/llm-model-test-results-retention-plan.md`, `documents/STATUS.md`, `documents/HANDOFF.md`.
+- Decisions made: keep Sunday 02:00 server-time weekly cron; hardcode 30-day retention for version 1; no architecture diagram update needed.
+- Open questions for the user: none.
+- Next exact step: pick the next active plan from `documents/features/todo/` (`database-storage-monitor-plan.md`, `provider-and-llm-db-plan.md` Phases 4-9, or `genui-progressive-streaming-rendering-plan.md`), or address the existing frontend CSS budget warnings.

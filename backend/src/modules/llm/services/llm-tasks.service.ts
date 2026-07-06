@@ -1,12 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { LlmHealthService } from './llm-health.service';
+import { LlmProviderService } from '../../llm-provider/llm-provider.service';
 
 @Injectable()
 export class LlmTasksService {
     private readonly logger = new Logger(LlmTasksService.name);
 
-    constructor(private readonly healthService: LlmHealthService) { }
+    constructor(
+        private readonly healthService: LlmHealthService,
+        private readonly providerService: LlmProviderService,
+    ) { }
 
     // 🚀 הרצה כל לילה בין 00:00 ל-10:00 כל 3 שעות (00:00, 03:00, 06:00, 09:00) 🚀
     // @Cron('0 0 0,3,6,9 * * *')
@@ -30,5 +34,20 @@ export class LlmTasksService {
     @Cron('0 30 * * * *') // runs every hour at minute 30
     async runIntermittentCheck() {
         this.logger.log('Intermittent LLM health validation is active.');
+    }
+
+    // 🚀 ניקוי שבועי של תוצאות בדיקות מודלים ישנות מ-30 יום — רץ בכל יום ראשון ב-02:00 🚀
+    @Cron('0 0 2 * * 0')
+    async cleanupOldLlmModelTestResults() {
+        this.logger.log('--- Starting LLM Model Test Results Retention Cleanup ---');
+        try {
+            const retentionDays = 30;
+            const deletedCount = await this.providerService.deleteOldTestResults(retentionDays);
+            this.logger.log(
+                `LLM Model Test Results Retention Cleanup finished. Deleted ${deletedCount} rows older than ${retentionDays} days.`,
+            );
+        } catch (error) {
+            this.logger.error('Error occurred during LLM Model Test Results Retention Cleanup', error);
+        }
     }
 }

@@ -258,3 +258,10 @@
 ## 2026-07-05 — CSS Conventions Fix Closed
 - Added semantic family badge tokens + logo shadow token to `_variables.css` to retire the last hardcoded hex colors and the only remaining hardcoded `rgba` in `_layout.css`'s `.logo` rule.
 - Removed the duplicate hardcoded `padding: 32px` in `chat.css`'s `.chat-history` rule that was silently overriding `padding: var(--space-4)`.
+
+## 2026-07-06 — LLM Model Test Results Retention Implemented
+- Added `deleteOldTestResults(retentionDays = 30)` to `LlmProviderService` using TypeORM `LessThan` on `createdAt`.
+- Added `cleanupOldLlmModelTestResults()` cron to `LlmTasksService` with `@Cron('0 0 2 * * 0')` (Sunday 02:00 server time).
+- No new module imports needed — existing wiring between `LlmProviderModule`, `LlmModule`, and `LlmTasksService` already had the dependency.
+- Added `llm-provider.service.spec.ts` with 5 focused tests.
+- Decision: hardcode 30-day retention and Sunday 02:00 cron for version 1.

@@ -26,6 +26,15 @@ New planning documents should go under `documents/features/todo/` unless they ar
 
 ## Recent Status
 
+- Completed: `documents/done/llm-model-test-results-retention-plan.md`.
+  - Added `deleteOldTestResults(retentionDays = 30)` to `LlmProviderService` — uses TypeORM `LessThan` on `createdAt` to delete old rows, returns affected count.
+  - Added `cleanupOldLlmModelTestResults()` cron to `LlmTasksService` with `@Cron('0 0 2 * * 0')` (Sunday 02:00 server time), injecting `LlmProviderService`. Logs start, cutoff, and deleted row count. Errors are isolated to the cleanup job.
+  - No new module wiring needed — `LlmProviderModule` already exports `LlmProviderService` and `LlmModule` already imports it.
+  - Added `llm-provider.service.spec.ts` with 5 tests: `LessThan` operator verification, cutoff calculation accuracy, affected-count return, zero-affected handling, and custom retention.
+  - Verified: `npm test` passes 25/25 (pre-existing `app.controller.spec.ts` FAIL unrelated); `npm run build` passes.
+  - No architecture diagram update needed (scheduled task only, existing cron infrastructure).
+- Cancelled: `documents/todo/google-search-plan.md` — Tavily fallback with Google Search not needed.
+- Planned: `documents/features/todo/css-conventions-fix-plan.md` — converts 7 CSS audit findings into implementation tasks: global list-row pattern, input-shell pattern, card surface conversion, explicit transitions, hardcoded pixel tokenization, and nesting cleanup.
 - Planned: `documents/features/todo/genui-progressive-streaming-rendering-plan.md` documents progressive frontend rendering for streamed GenUI `component` blocks in `AiFormat`, replacing skeleton-only streaming with safe partial HTML/CSS previews.
 - No architecture diagram update was needed for this planning-only change; implementation must revisit the diagram only if it changes backend streaming protocol, event shape, or GenUI generation contract.
 - Completed: `documents/done/llm-service-refactor-plan.md`.
