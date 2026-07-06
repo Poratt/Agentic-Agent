@@ -10,6 +10,56 @@
   }
 }
 
+/* --- PrimeNG Confirm Dialog RTL --- */
+.p-confirmdialog.p-dialog {
+  direction: rtl;
+  text-align: right;
+  min-width: 400px !important;
+
+  .p-dialog-header {
+    direction: rtl;
+    text-align: right;
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: none !important;
+
+    .p-dialog-title {
+      margin: 0;
+      flex: 1;
+    }
+
+    .p-dialog-header-icons {
+      position: absolute;
+      left: var(--space-3);
+      top: 50%;
+      transform: translateY(-50%);
+    }
+  }
+
+  .p-dialog-content {
+    direction: rtl;
+    text-align: right;
+    padding: var(--space-2) var(--space-4) var(--space-4);
+    border-top: none !important;
+  }
+
+  .p-dialog-footer {
+    direction: rtl;
+    justify-content: flex-end;
+    padding: 0 var(--space-4) var(--space-4);
+    border-top: none !important;
+  }
+
+  .p-confirmdialog-message {
+    text-align: right;
+    direction: rtl;
+  }
+
+  .p-confirmdialog-icons {
+    display: none !important;
+  }
+}
+
 /* --- Section Divider --- */
 .divider {
   margin: var(--space-6) 0;
@@ -230,6 +280,52 @@
     gap: var(--space-2);
     font-size: var(--font-size-sm);
     color: var(--color-text-muted);
+  }
+}
+
+/* --- Generic Summary Row (stat strip in page header) --- */
+.summary-row {
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-surface);
+  border: thin solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: 1;
+
+  .summary-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+
+    .ph {
+      font-size: var(--font-size-sm);
+      color: var(--color-primary);
+    }
+
+    .summary-label {
+      color: var(--color-text-muted);
+      padding-top: 1px;
+    }
+
+    .summary-value {
+      font-family: var(--font-code);
+      font-variant-numeric: tabular-nums;
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-primary);
+
+      &.summary-value--muted {
+        color: var(--color-text-muted);
+        font-style: italic;
+      }
+    }
+  }
+
+  .summary-divider {
+    width: 1px;
+    height: var(--space-3);
+    background: var(--color-border);
   }
 }
 

@@ -148,7 +148,7 @@
                                                     }
                                                     Regenerate
                                                 </button>
-                                                <button type="button" class="danger-btn outlined sm" (click)="deleteGenetics(g)">
+                                                <button type="button" class="danger-btn outlined sm" (click)="deleteGenetics(g); $event.stopPropagation()">
                                                     <i class="ph ph-trash"></i>
                                                 </button>
                                             </div>
@@ -440,7 +440,7 @@
                                                     }
                                                     Regenerate
                                                 </button>
-                                                <button type="button" class="danger-btn outlined sm" (click)="deleteTerpene(t)">
+                                                <button type="button" class="danger-btn outlined sm" (click)="deleteTerpene(t); $event.stopPropagation()">
                                                     <i class="ph ph-trash"></i>
                                                 </button>
                                             </div>
@@ -550,3 +550,6 @@
         </p-tabpanel>
     </p-tabpanels>
 </p-tabs>
+
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>

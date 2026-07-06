@@ -67,9 +67,7 @@ export const AppPrimeConfig: PrimeNGConfigType = {
       separator: { class: '' },
       submenuLabel: { class: '!' },
     },
-    confirmdialog: {
-      root: { dir: 'ltr' },
-    },
+    confirmdialog: {},
   },
 };
 

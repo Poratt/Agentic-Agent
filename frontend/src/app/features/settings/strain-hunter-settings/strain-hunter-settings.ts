@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
 import { InputTextModule } from 'primeng/inputtext';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ToastModule } from 'primeng/toast';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { firstValueFrom } from 'rxjs';
 import { GeneticsStore } from '../../../core/store/genetics.store';
 import { TerpeneStore } from '../../../core/store/terpene.store';
@@ -11,11 +14,12 @@ import { GeneticsService } from '../../../core/services/genetics.service';
 import { TerpeneService } from '../../../core/services/terpene.service';
 import { IGenetics } from '../../../core/models/genetics.interface';
 import { ITerpene } from '../../../core/models/terpene.interface';
+import { confirmationDialog } from '../../../core/config/confirmation-dialog';
 
 @Component({
     selector: 'app-strain-hunter-settings',
     standalone: true,
-    imports: [CommonModule, FormsModule, TableModule, Tabs, TabList, Tab, TabPanels, TabPanel, InputTextModule],
+    imports: [CommonModule, FormsModule, TableModule, Tabs, TabList, Tab, TabPanels, TabPanel, InputTextModule, ConfirmDialogModule, ToastModule],
     templateUrl: './strain-hunter-settings.html',
     styleUrls: ['./strain-hunter-settings.css'],
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -25,6 +29,8 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
     private readonly terpeneStore = inject(TerpeneStore);
     private readonly geneticsService = inject(GeneticsService);
     private readonly terpeneService = inject(TerpeneService);
+    private readonly confirmService = inject(ConfirmationService);
+    private readonly messageService = inject(MessageService);
     private readonly mql = window.matchMedia('(max-width: 1599px)');
     private readonly mqlHandler = () => this.isCompact.set(this.mql.matches);
 
@@ -302,30 +308,57 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
     }
 
     async deleteGenetics(g: IGenetics): Promise<void> {
-        if (!confirm(`למחוק את "${g.name}"?`)) return;
-        try {
-            await this.geneticsStore.delete(g.name);
-            this.expandedGenetics.update(set => {
-                const next = new Set(set);
-                next.delete(g.id);
-                return next;
-            });
-        } catch {
-            // Error handled by store
-        }
+        this.confirmService.confirm({
+            ...confirmationDialog(),
+            message: `למחוק את "${g.name}"?`,
+            header: 'מחיקת זן',
+            accept: async () => {
+                try {
+                    await this.geneticsStore.delete(g.name);
+                    this.expandedGenetics.update(set => {
+                        const next = new Set(set);
+                        next.delete(g.id);
+                        return next;
+                    });
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'נמחק',
+                        detail: `"${g.name}" נמחק בהצלחה.`
+                    });
+                } catch {
+                    // Error handled by store
+                }
+            },
+            reject: () => { }
+        });
     }
 
     async deleteTerpene(t: ITerpene): Promise<void> {
-        if (!confirm(`למחוק את "${t.name}"?`)) return;
-        try {
-            await this.terpeneStore.delete(t.name);
-            this.expandedTerpenes.update(set => {
-                const next = new Set(set);
-                next.delete(t.id);
-                return next;
-            });
-        } catch {
-            // Error handled by store
-        }
+        this.confirmService.confirm({
+            ...confirmationDialog(),
+            message: `למחוק את "${t.name}"?`,
+            header: 'מחיקת טרפן',
+            accept: async () => {
+                try {
+                    await this.terpeneStore.delete(t.name);
+                    this.expandedTerpenes.update(set => {
+                        const next = new Set(set);
+                        next.delete(t.id);
+                        return next;
+                    });
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'נמחק',
+                        detail: `"${t.name}" נמחק בהצלחה.`
+                    });
+                } catch {
+                    // Error handled by store
+                }
+            },
+            reject: () => { }
+        });
     }
+
+
+
 }
