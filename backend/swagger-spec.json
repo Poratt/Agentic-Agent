@@ -3603,6 +3603,11 @@
             "description": "Hebrew display name. Unique — used as the lookup key from the frontend.",
             "example": "מירצן"
           },
+          "englishName": {
+            "type": "string",
+            "description": "English name of the terpene. Omitted when not set.",
+            "example": "Myrcene"
+          },
           "description": {
             "type": "string",
             "description": "Short Hebrew description of the terpene. Omitted when not set.",
@@ -3745,6 +3750,11 @@
             "description": "Hebrew display name. Must be unique. Used as the lookup key from the frontend.",
             "example": "מירצן"
           },
+          "englishName": {
+            "type": "string",
+            "description": "English name of the terpene.",
+            "example": "Myrcene"
+          },
           "description": {
             "type": "string",
             "description": "Short Hebrew description of the terpene.",
@@ -3780,6 +3790,11 @@
       "TerpeneUpdateDto": {
         "type": "object",
         "properties": {
+          "englishName": {
+            "type": "string",
+            "description": "English name of the terpene. Pass null or empty string to clear.",
+            "example": "Myrcene"
+          },
           "description": {
             "type": "string",
             "description": "Short Hebrew description of the terpene. Pass null or empty string to clear.",

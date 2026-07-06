@@ -20,7 +20,7 @@
     }
     @case (PageStates.Ready) {
         <div class="page-content">
-            <div class="page-header">
+            <div class="page-header fade-in">
                 <div class="header-row">
                     <div class="header-content">
                         <h2>משתמשים</h2>
@@ -40,9 +40,12 @@
                             </div>
                         </div>
 
-                        <div class="action-row">
-                            <span class="ph ph-users"></span>|
-                            <span>סה"כ משתמשים: {{ tableUsers().length }}</span>
+                        <div class="action-row summary-row">
+                            <span class="summary-item">
+                                <span class="ph ph-users"></span>
+                                <span class="summary-label">סה"כ משתמשים</span>
+                                <span class="summary-value">{{ tableUsers().length }}</span>
+                            </span>
                         </div>
                     </div>
                 </div>

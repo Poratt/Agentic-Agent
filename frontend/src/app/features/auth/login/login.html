@@ -1,43 +1,43 @@
 <div class="page">
-  <div class="glass-effect card auth-card">
-    <div class="page-header">
-      <div class="logo">LG</div>
-      <h1>ברוכים הבאים</h1>
-      <p class="subtitle">אנא היכנסו לחשבונכם כדי להמשיך</p>
-    </div>
+    <div class="glass-effect card auth-card">
+        <div class="page-header fade-in">
+            <div class="logo">LG</div>
+            <h1>ברוכים הבאים</h1>
+            <p class="subtitle">אנא היכנסו לחשבונכם כדי להמשיך</p>
+        </div>
 
-    @if (authStore.error()) {
-      <div class="error-badge">
-        {{ authStore.error() }}
-      </div>
-    }
-
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="form">
-      <div class="form-group">
-        <label for="email">אימייל או שם משתמש</label>
-        <input id="email" type="email" formControlName="email" placeholder="example@mail.com">
-        @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
-          <span class="error-text">אימייל לא תקין</span>
+        @if (authStore.error()) {
+            <div class="error-badge">
+                {{ authStore.error() }}
+            </div>
         }
-      </div>
 
-      <div class="form-group">
-        <label for="password">סיסמה</label>
-        <input id="password" type="password" formControlName="password" placeholder="••••••••">
-        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
-          <span class="error-text">סיסמה נדרשת</span>
-        }
-      </div>
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="form">
+            <div class="form-group">
+                <label for="email">אימייל או שם משתמש</label>
+                <input id="email" type="email" formControlName="email" placeholder="example@mail.com" />
+                @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+                    <span class="error-text">אימייל לא תקין</span>
+                }
+            </div>
 
-      <button type="submit" class="primary-btn filled" [disabled]="loginForm.invalid || authStore.loading()">
-        {{ authStore.loading() ? 'טוען...' : 'כניסה' }}
-      </button>
-    </form>
+            <div class="form-group">
+                <label for="password">סיסמה</label>
+                <input id="password" type="password" formControlName="password" placeholder="••••••••" />
+                @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+                    <span class="error-text">סיסמה נדרשת</span>
+                }
+            </div>
 
-    <div class="page-footer">
-      <a href="#" class="link">שכחתי סיסמה</a>
-      <div class="divider"><span>או</span></div>
-      <a routerLink="/register" class="link">עדיין אין לך חשבון? <strong>הרשמה</strong></a>
+            <button type="submit" class="primary-btn filled" [disabled]="loginForm.invalid || authStore.loading()">
+                {{ authStore.loading() ? 'טוען...' : 'כניסה' }}
+            </button>
+        </form>
+
+        <div class="page-footer">
+            <a href="#" class="link">שכחתי סיסמה</a>
+            <div class="divider"><span>או</span></div>
+            <a routerLink="/register" class="link">עדיין אין לך חשבון? <strong>הרשמה</strong></a>
+        </div>
     </div>
-  </div>
 </div>

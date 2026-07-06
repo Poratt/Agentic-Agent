@@ -1,49 +1,49 @@
 <div class="page">
-  <div class="glass-effect card auth-card">
-    <div class="page-header">
-      <div class="logo">RG</div>
-      <h1>הרשמה</h1>
-      <p class="subtitle">צרו חשבון חדש כדי להתחיל</p>
+    <div class="glass-effect card auth-card">
+        <div class="page-header fade-in">
+            <div class="logo">RG</div>
+            <h1>הרשמה</h1>
+            <p class="subtitle">צרו חשבון חדש כדי להתחיל</p>
+        </div>
+
+        @if (authStore.error()) {
+            <div class="error-badge">
+                {{ authStore.error() }}
+            </div>
+        }
+
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="form">
+            <div class="form-group">
+                <label for="fullName">שם מלא</label>
+                <input id="fullName" type="text" formControlName="fullName" placeholder="ישראל ישראלי" />
+                @if (registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched) {
+                    <span class="error-text">שם מלא נדרש</span>
+                }
+            </div>
+
+            <div class="form-group">
+                <label for="email">אימייל</label>
+                <input id="email" type="email" formControlName="email" placeholder="example@mail.com" />
+                @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+                    <span class="error-text">אימייל לא תקין</span>
+                }
+            </div>
+
+            <div class="form-group">
+                <label for="password">סיסמה</label>
+                <input id="password" type="password" formControlName="password" placeholder="••••••••" />
+                @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+                    <span class="error-text">סיסמה חייבת להיות לפחות 8 תווים</span>
+                }
+            </div>
+
+            <button type="submit" class="primary-btn filled" [disabled]="registerForm.invalid || authStore.loading()">
+                {{ authStore.loading() ? 'טוען...' : 'הרשמה' }}
+            </button>
+        </form>
+
+        <div class="page-footer">
+            <a routerLink="/login" class="link">כבר יש לך חשבון? <strong>התחברות</strong></a>
+        </div>
     </div>
-
-    @if (authStore.error()) {
-      <div class="error-badge">
-        {{ authStore.error() }}
-      </div>
-    }
-
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="form">
-      <div class="form-group">
-        <label for="fullName">שם מלא</label>
-        <input id="fullName" type="text" formControlName="fullName" placeholder="ישראל ישראלי">
-        @if (registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched) {
-          <span class="error-text">שם מלא נדרש</span>
-        }
-      </div>
-
-      <div class="form-group">
-        <label for="email">אימייל</label>
-        <input id="email" type="email" formControlName="email" placeholder="example@mail.com">
-        @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
-          <span class="error-text">אימייל לא תקין</span>
-        }
-      </div>
-
-      <div class="form-group">
-        <label for="password">סיסמה</label>
-        <input id="password" type="password" formControlName="password" placeholder="••••••••">
-        @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
-          <span class="error-text">סיסמה חייבת להיות לפחות 8 תווים</span>
-        }
-      </div>
-
-      <button type="submit" class="primary-btn filled" [disabled]="registerForm.invalid || authStore.loading()">
-        {{ authStore.loading() ? 'טוען...' : 'הרשמה' }}
-      </button>
-    </form>
-
-    <div class="page-footer">
-      <a routerLink="/login" class="link">כבר יש לך חשבון? <strong>התחברות</strong></a>
-    </div>
-  </div>
 </div>

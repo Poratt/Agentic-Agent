@@ -185,6 +185,7 @@ export class StrainHunter implements OnInit {
     selectedImageUrl = signal<string | null>(null);
     imageDialogVisible = signal(false);
     matchDrawerVisible = signal(false);
+    readonly lastUpdated = signal<Date | null>(null);
     readonly tooltip = signal<TooltipPos | null>(null);
     readonly activeScoreTooltip = signal<ScoreTooltipPos | null>(null);
     private readonly tooltipTimeout = signal<ReturnType<typeof setTimeout> | null>(null);
@@ -276,6 +277,7 @@ export class StrainHunter implements OnInit {
             .subscribe({
                 next: (response) => {
                     this.rawItems.set(response.items ?? []);
+                    this.lastUpdated.set(new Date());
                     if (response.items && response.items.length > 0) {
                         console.log('First item symbols:', response.items[0]['symbols']);
                     }

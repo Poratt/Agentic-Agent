@@ -14,7 +14,7 @@ import { GeneticsService } from '../../../core/services/genetics.service';
 import { TerpeneService } from '../../../core/services/terpene.service';
 import { IGenetics } from '../../../core/models/genetics.interface';
 import { ITerpene } from '../../../core/models/terpene.interface';
-import { confirmationDialog } from '../../../core/config/confirmation-dialog';
+import { confirmationDialogSettings } from '../../../core/config/confirmation-dialog-settings';
 
 @Component({
     selector: 'app-strain-hunter-settings',
@@ -309,7 +309,7 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
 
     async deleteGenetics(g: IGenetics): Promise<void> {
         this.confirmService.confirm({
-            ...confirmationDialog(),
+            ...confirmationDialogSettings(),
             message: `למחוק את "${g.name}"?`,
             header: 'מחיקת זן',
             accept: async () => {
@@ -335,7 +335,7 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
 
     async deleteTerpene(t: ITerpene): Promise<void> {
         this.confirmService.confirm({
-            ...confirmationDialog(),
+            ...confirmationDialogSettings(),
             message: `למחוק את "${t.name}"?`,
             header: 'מחיקת טרפן',
             accept: async () => {

@@ -20,7 +20,7 @@
     }
     @case (PageStates.Ready) {
         <div class="page-content">
-            <div class="page-header">
+            <div class="page-header fade-in">
                 <div class="header-row">
                     <div class="header-content">
                         <h2>היסטוריית שיחות</h2>
@@ -64,11 +64,7 @@
                                         </div>
                                     </div>
                                 } @else {
-                                    <div
-                                        class="session-info"
-                                        [routerLink]="['/chat']"
-                                        [queryParams]="{ sessionId: session.id }"
-                                    >
+                                    <div class="session-info" [routerLink]="['/chat']" [queryParams]="{ sessionId: session.id }">
                                         <div class="text-group scale-up">
                                             <span class="ph ph-chat-centered-text chat-icon"></span>
                                             <div class="flex-col">
@@ -77,10 +73,7 @@
                                             </div>
                                         </div>
 
-                                        <button
-                                            class="icon-only danger-btn"
-                                            (click)="setPendingDelete($event, session.id)"
-                                        >
+                                        <button class="icon-only danger-btn" (click)="setPendingDelete($event, session.id)">
                                             <span class="ph ph-trash"></span>
                                         </button>
                                     </div>
