@@ -18,6 +18,7 @@ const DEFAULT_COLOR = '#808080';
 const UNKNOWN_LABEL = 'לא ידוע';
 const MIN_NAME_LENGTH = 2;
 const CHUNK_SIZE = 15;
+const HEBREW_REGEX = /[א-ת]/;
 
 @Injectable()
 export class TerpeneService {
@@ -182,6 +183,13 @@ export class TerpeneService {
             const chunkNumber = Math.floor(i / CHUNK_SIZE) + 1;
             const totalChunks = Math.ceil(rows.length / CHUNK_SIZE);
 
+            // Translate all names to English upfront
+            const englishNames = new Map<string, string>();
+            for (const name of names) {
+                const en = await this.translateToEnglish(name);
+                englishNames.set(name, en);
+            }
+
             this.logger.log(`[enrichMissing] Searching web for chunk ${chunkNumber}/${totalChunks} (${chunk.length} items)...`);
             const searchResults = await this.searchChunk(names);
 
@@ -213,7 +221,9 @@ export class TerpeneService {
                         errors++;
                         continue;
                     }
+                    const enName = englishNames.get(record.name) ?? null;
                     await this.terpeneRepository.update(existing.id, {
+                        ...(enName && { englishName: enName }),
                         ...(record.description && { description: record.description }),
                         ...(record.scent && { scent: record.scent }),
                         ...(record.effects && { effects: record.effects }),
@@ -264,11 +274,38 @@ export class TerpeneService {
         return result;
     }
 
+    private async translateToEnglish(name: string): Promise<string> {
+        if (!HEBREW_REGEX.test(name)) {
+            return name;
+        }
+        try {
+            const response = await this.llmClientService.generateResponse({
+                prompt: `Return ONLY the English name for this Hebrew terpene name: "${name}". No explanation, just the English name.`,
+                systemContext: 'You translate Hebrew terpene names to English. Return only the English name.',
+                providerOverride: 'openrouter',
+                modelOverride: 'google/gemma-4-31b-it:free',
+                maxTokens: 50,
+            });
+            const translated = response.content?.trim();
+            if (translated && !HEBREW_REGEX.test(translated)) {
+                return translated;
+            }
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.warn(`Translation failed for "${name}": ${msg}`);
+        }
+        return name;
+    }
+
     private async searchChunk(names: string[]): Promise<Map<string, string>> {
         const results = new Map<string, string>();
         for (const name of names) {
             try {
-                const searchResult = await this.webSearchService.search(`${name} cannabis terpene scent effects`);
+                const englishName = await this.translateToEnglish(name);
+                const searchQuery = englishName !== name
+                    ? `${englishName} (${name}) cannabis terpene scent effects`
+                    : `${name} cannabis terpene scent effects`;
+                const searchResult = await this.webSearchService.search(searchQuery);
                 if (searchResult.success && searchResult.result) {
                     const parts: string[] = [];
                     if (searchResult.result.answer) {
@@ -289,7 +326,7 @@ export class TerpeneService {
         return results;
     }
 
-    private mapTerpeneRecord(raw: unknown): Partial<Terpene> | null {
+    private mapTerpeneRecord(raw: unknown, englishName?: string | null): Partial<Terpene> | null {
         if (!raw || typeof raw !== 'object') {
             return null;
         }
@@ -308,6 +345,7 @@ export class TerpeneService {
 
         return {
             name,
+            englishName: englishName ?? null,
             description: this.toNullableString(item.description),
             scent: this.toNullableString(item.scent),
             effects: this.parseEffects(item.effects),
@@ -349,7 +387,11 @@ export class TerpeneService {
         colorDark: string;
         colorLight: string;
     } | null> {
-        const searchResult = await this.webSearchService.search(`${name} cannabis terpene scent effects description`);
+        const englishName = await this.translateToEnglish(name);
+        const searchQuery = englishName !== name
+            ? `${englishName} (${name}) cannabis terpene scent effects description`
+            : `${name} cannabis terpene scent effects description`;
+        const searchResult = await this.webSearchService.search(searchQuery);
 
         let searchContext = '';
         if (searchResult.success && searchResult.result) {
@@ -365,7 +407,7 @@ export class TerpeneService {
 
         this.logger.debug(`[enrichSingle] Search context for "${name}":\n${searchContext || '(empty)'}`);
 
-        const prompt = `Enrich cannabis terpene "${name}".
+        const prompt = `Enrich cannabis terpene "${name}"${englishName !== name ? ` (English: ${englishName})` : ''}.
 Web search results: ${searchContext || 'none'}
 
 Use web search results as primary source. If insufficient, use your general knowledge about this terpene.
@@ -391,14 +433,22 @@ Return JSON only:
             : DEFAULT_COLOR;
         const { colorDark, colorLight } = deriveThemeColors(color);
 
-        return {
-            name,
-            description: this.toNullableString(item.description),
-            scent: this.toNullableString(item.scent),
-            effects: this.parseEffects(item.effects),
+        const existing = await this.terpeneRepository.findOne({ where: { name } });
+        if (!existing) {
+            this.logger.warn(`[enrichSingle] Record not found in DB: "${name}"`);
+            return null;
+        }
+
+        Object.assign(existing, {
+            englishName: englishName !== name ? englishName : existing.englishName,
+            description: this.toNullableString(item.description) ?? existing.description,
+            scent: this.toNullableString(item.scent) ?? existing.scent,
+            effects: this.parseEffects(item.effects) ?? existing.effects,
             color,
             colorDark,
             colorLight,
-        };
+        });
+
+        return this.terpeneRepository.save(existing);
     }
 }

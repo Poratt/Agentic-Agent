@@ -10,6 +10,15 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
  */
 export class TerpeneUpdateDto {
     @ApiPropertyOptional({
+        description: 'English name of the terpene. Pass null or empty string to clear.',
+        example: 'Myrcene',
+    })
+    @IsOptional()
+    @IsString()
+    @MaxLength(100, { message: 'English name must not exceed 100 characters' })
+    englishName?: string | null;
+
+    @ApiPropertyOptional({
         description: 'Short Hebrew description of the terpene. Pass null or empty string to clear.',
         example: 'הטרפן הנפוץ ביותר בקנאביס',
     })

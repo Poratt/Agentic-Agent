@@ -22,6 +22,14 @@ export class Terpene {
     name!: string;
 
     @ApiProperty({
+        description: 'English name of the terpene. Auto-translated from Hebrew. Optional.',
+        example: 'Myrcene',
+        required: false,
+    })
+    @Column({ type: 'varchar', length: 100, nullable: true })
+    englishName!: string | null;
+
+    @ApiProperty({
         description: 'Short Hebrew description of the terpene. Optional.',
         example: 'הטרפן הנפוץ ביותר בקנאביס',
         required: false,

@@ -2,6 +2,23 @@
     display: block;
     width: 100%;
 
+    /* ── Row title/subtitle (for name + englishName) ──────────────────────────── */
+    .row-title {
+        display: flex;
+        flex-direction: column;
+        font-weight: var(--font-weight-medium);
+        font-size: var(--font-size-sm);
+    }
+
+    .row-subtitle {
+        display: block;
+        font-family: var(--font-code);
+        font-size: var(--font-size-xs);
+        color: var(--color-text-muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
     /* ── Table column overrides ───────────────────────────────────────────── */
     .col-desc {
         max-width: 280px;

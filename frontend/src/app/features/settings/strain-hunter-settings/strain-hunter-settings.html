@@ -30,8 +30,13 @@
                     </div>
                 </div>
                 <div class="toolbar-stats">
-                    <span class="ph ph-dna"></span>
-                    <span>{{ filteredGenetics().length }} זנים</span>
+                    <div class="action-row summary-row">
+                        <span class="summary-item">
+                            <span class="ph ph-dna"></span>
+                            <span class="summary-value">{{ filteredGenetics().length }}</span>
+                            <span class="summary-label">זנים</span>
+                        </span>
+                    </div>
                     <button
                         type="button"
                         class="primary-btn outlined sm"
@@ -310,8 +315,13 @@
                     </div>
                 </div>
                 <div class="toolbar-stats">
-                    <span class="ph ph-leaf"></span>
-                    <span>{{ filteredTerpenes().length }} טרפנים</span>
+                    <div class="action-row summary-row">
+                        <span class="summary-item">
+                            <span class="ph ph-leaf"></span>
+                            <span class="summary-value">{{ filteredTerpenes().length }}</span>
+                            <span class="summary-label">טרפנים</span>
+                        </span>
+                    </div>
                     <button
                         type="button"
                         class="primary-btn outlined sm"
@@ -366,8 +376,13 @@
                                     <i class="ph ph-caret-left"></i>
                                 </button>
                             </td>
-                            <td class="row-label clickable" (click)="toggleTerpene(t.id)">
-                                {{ t.name }}
+                            <td class="clickable" (click)="toggleTerpene(t.id)">
+                                <div class="row-title">
+                                    <span class="row-label">{{ t.name }}</span>
+                                    @if (t.englishName) {
+                                        <span class="row-subtitle">{{ t.englishName }}</span>
+                                    }
+                                </div>
                             </td>
                             <td class="row-meta">{{ t.scent || '—' }}</td>
                             <td>

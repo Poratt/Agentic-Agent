@@ -17,6 +17,13 @@ export class TerpeneDto {
     name!: string;
 
     @ApiProperty({
+        description: 'English name of the terpene. Omitted when not set.',
+        example: 'Myrcene',
+        required: false,
+    })
+    englishName?: string | null;
+
+    @ApiProperty({
         description: 'Short Hebrew description of the terpene. Omitted when not set.',
         example: 'הטרפן הנפוץ ביותר בקנאביס',
         required: false,

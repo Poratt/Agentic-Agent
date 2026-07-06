@@ -11,6 +11,7 @@
 export interface ITerpene {
     id: number;
     name: string;
+    englishName?: string;
     description?: string;
     scent?: string;
     effects?: string[];

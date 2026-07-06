@@ -20,6 +20,15 @@ export class TerpeneCreateDto {
     name!: string;
 
     @ApiPropertyOptional({
+        description: 'English name of the terpene.',
+        example: 'Myrcene',
+    })
+    @IsOptional()
+    @IsString()
+    @MaxLength(100, { message: 'English name must not exceed 100 characters' })
+    englishName?: string;
+
+    @ApiPropertyOptional({
         description: 'Short Hebrew description of the terpene.',
         example: 'הטרפן הנפוץ ביותר בקנאביס',
     })
