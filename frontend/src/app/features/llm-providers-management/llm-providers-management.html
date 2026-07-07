@@ -39,8 +39,8 @@
                         <div class="action-row summary-row">
                             <span class="summary-item">
                                 <span class="ph ph-database"></span>
-                                <span class="summary-label">ספקים</span>
                                 <span class="summary-value">{{ llmProviders().length }}</span>
+                                <span class="summary-label">Providers</span>
                             </span>
                         </div>
                     </div>
@@ -52,240 +52,236 @@
             </div>
 
             <div class="glass-effect card table-container">
-                    <p-table #table [value]="llmProviders()" dataKey="id" [globalFilterFields]="globalFilterFields" [rowHover]="true">
-                        <ng-template pTemplate="header">
-                            <tr>
-                                <th class="col-expand"></th>
-                                <th pSortableColumn="key">Name <p-sortIcon field="key" /></th>
-                                <th pSortableColumn="baseUrl">baseUrl <p-sortIcon field="baseUrl" /></th>
-                                <th class="col-count" pSortableColumn="modelsCount">Models <p-sortIcon field="modelsCount" /></th>
-                                <th class="col-actions"></th>
-                            </tr>
-                        </ng-template>
+                <p-table #table [value]="llmProviders()" dataKey="id" [globalFilterFields]="globalFilterFields" [rowHover]="true">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th class="col-expand"></th>
+                            <th pSortableColumn="key">Name <p-sortIcon field="key" /></th>
+                            <th pSortableColumn="baseUrl">baseUrl <p-sortIcon field="baseUrl" /></th>
+                            <th class="col-count" pSortableColumn="modelsCount">Models <p-sortIcon field="modelsCount" /></th>
+                            <th class="col-actions"></th>
+                        </tr>
+                    </ng-template>
 
-                        <ng-template pTemplate="body" let-provider>
-                            <tr>
-                                <td class="col-expand">
+                    <ng-template pTemplate="body" let-provider>
+                        <tr>
+                            <td class="col-expand">
+                                <button
+                                    type="button"
+                                    class="icon-only transparent-btn chevron-btn"
+                                    [class.open]="isProviderExpanded(provider.id)"
+                                    [attr.aria-label]="isProviderExpanded(provider.id) ? 'Collapse' : 'Expand'"
+                                    (click)="toggleProvider(provider.id)"
+                                >
+                                    <i class="ph ph-caret-right"></i>
+                                </button>
+                            </td>
+                            <td class="row-label clickable" (click)="toggleProvider(provider.id)">{{ provider.label }}</td>
+                            <td class="row-meta">{{ provider.baseUrl }}</td>
+                            <td class="col-count count-badge">{{ provider.modelsCount }}</td>
+                            <td class="col-actions">
+                                <div class="row-actions">
                                     <button
                                         type="button"
-                                        class="icon-only transparent-btn chevron-btn"
-                                        [class.open]="isProviderExpanded(provider.id)"
-                                        [attr.aria-label]="isProviderExpanded(provider.id) ? 'Collapse' : 'Expand'"
-                                        (click)="toggleProvider(provider.id)"
+                                        class="icon-only transparent-btn"
+                                        aria-label="Edit"
+                                        (click)="openEditProviderDialog(provider)"
                                     >
-                                        <i class="ph ph-caret-right"></i>
+                                        <i class="ph ph-pencil-simple"></i>
                                     </button>
-                                </td>
-                                <td class="row-label clickable" (click)="toggleProvider(provider.id)">{{ provider.label }}</td>
-                                <td class="row-meta">{{ provider.baseUrl }}</td>
-                                <td class="col-count count-badge">{{ provider.modelsCount }}</td>
-                                <td class="col-actions">
-                                    <div class="row-actions">
+                                    <button
+                                        type="button"
+                                        class="icon-only danger-btn"
+                                        aria-label="Delete"
+                                        (click)="deleteProvider(provider.id)"
+                                    >
+                                        <i class="ph ph-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        @if (isProviderExpanded(provider.id)) {
+                            <tr class="expand-panel-row">
+                                <td colspan="5" class="expand-panel-cell">
+                                    <div class="panel-header">
+                                        <span class="panel-title">Models</span>
                                         <button
                                             type="button"
-                                            class="icon-only transparent-btn"
-                                            aria-label="Edit"
-                                            (click)="openEditProviderDialog(provider)"
+                                            class="transparent-btn sm"
+                                            (click)="openAddModelDialog(provider.id)"
+                                            aria-label="Add model"
                                         >
-                                            <i class="ph ph-pencil-simple"></i>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="icon-only danger-btn"
-                                            aria-label="Delete"
-                                            (click)="deleteProvider(provider.id)"
-                                        >
-                                            <i class="ph ph-trash"></i>
+                                            <i class="ph ph-plus"></i>
+                                            Add Model
                                         </button>
                                     </div>
-                                </td>
-                            </tr>
 
-                            @if (isProviderExpanded(provider.id)) {
-                                <tr class="expand-panel-row">
-                                    <td colspan="5" class="expand-panel-cell">
-                                        <div class="panel-header">
-                                            <span class="panel-title">Models</span>
-                                            <button
-                                                type="button"
-                                                class="transparent-btn sm"
-                                                (click)="openAddModelDialog(provider.id)"
-                                                aria-label="Add model"
-                                            >
-                                                <i class="ph ph-plus"></i>
-                                                Add Model
-                                            </button>
-                                        </div>
+                                    <p-table
+                                        [value]="provider.models"
+                                        dataKey="id"
+                                        [rowHover]="true"
+                                        class="subtable-wrapper"
+                                        sortField="performanceScore"
+                                        [sortOrder]="-1"
+                                        sortMode="single"
+                                    >
+                                        <ng-template pTemplate="header">
+                                            <tr>
+                                                <th class="col-expand-xs"></th>
+                                                <th pSortableColumn="label">Model <p-sortIcon field="label" /></th>
+                                                <th class="col-status" pSortableColumn="active">Active <p-sortIcon field="active" /></th>
+                                                <th class="col-perf" pSortableColumn="performanceScore">
+                                                    Performance <p-sortIcon field="performanceScore" />
+                                                </th>
+                                                <th class="col-test"></th>
+                                                <th class="col-actions-xs"></th>
+                                            </tr>
+                                        </ng-template>
 
-                                        <p-table
-                                            [value]="provider.models"
-                                            dataKey="id"
-                                            [rowHover]="true"
-                                            class="subtable-wrapper"
-                                            sortField="performanceScore"
-                                            [sortOrder]="-1"
-                                            sortMode="single"
-                                        >
-                                            <ng-template pTemplate="header">
-                                                <tr>
-                                                    <th class="col-expand-xs"></th>
-                                                    <th pSortableColumn="label">Model <p-sortIcon field="label" /></th>
-                                                    <th class="col-status" pSortableColumn="active">
-                                                        Active <p-sortIcon field="active" />
-                                                    </th>
-                                                    <th class="col-perf" pSortableColumn="performanceScore">
-                                                        Performance <p-sortIcon field="performanceScore" />
-                                                    </th>
-                                                    <th class="col-test"></th>
-                                                    <th class="col-actions-xs"></th>
-                                                </tr>
-                                            </ng-template>
-
-                                            <ng-template pTemplate="body" let-model>
-                                                <tr>
-                                                    <td class="col-expand-xs">
-                                                        @if (model.hasTests) {
-                                                            <button
-                                                                type="button"
-                                                                class="icon-only transparent-btn chevron-btn sm"
-                                                                [class.open]="isModelExpanded(model.id)"
-                                                                [attr.aria-label]="isModelExpanded(model.id) ? 'Collapse' : 'Expand'"
-                                                                (click)="toggleModel(model.id)"
-                                                            >
-                                                                <i class="ph ph-caret-right"></i>
-                                                            </button>
-                                                        }
-                                                    </td>
-                                                    <td class="clickable" (click)="toggleModel(model.id)">
-                                                        <div class="row-title">
-                                                            <span class="row-label">{{ model.label }}</span>
-                                                            <span class="row-subtitle">{{ model.key }}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td class="col-status">
-                                                        <span
-                                                            class="status-indicator"
-                                                            [class.status-active]="model.active"
-                                                            [class.status-inactive]="!model.active"
-                                                        >
-                                                            {{ model.active ? 'Active' : 'Inactive' }}
-                                                        </span>
-                                                    </td>
-                                                    <td class="col-perf">
-                                                        @if (model.hasTests) {
-                                                            <div class="metric-cell">
-                                                                <span
-                                                                    class="metric-primary"
-                                                                    [class]="performanceClass(model.successPercentage)"
-                                                                >
-                                                                    {{ model.successPercentage }}%
-                                                                </span>
-                                                                <span class="metric-secondary">
-                                                                    {{ formatLatency(model.latencyAverage) }}
-                                                                </span>
-                                                            </div>
-                                                        } @else {
-                                                            <span class="metric-empty">No tests yet</span>
-                                                        }
-                                                    </td>
-                                                    <td class="col-test">
+                                        <ng-template pTemplate="body" let-model>
+                                            <tr>
+                                                <td class="col-expand-xs">
+                                                    @if (model.hasTests) {
                                                         <button
                                                             type="button"
-                                                            class="icon-only transparent-btn"
-                                                            [class.testing]="testingModelId() === model.id"
-                                                            [disabled]="testingModelId() === model.id"
-                                                            aria-label="Run test"
-                                                            (click)="testModel(model.id)"
+                                                            class="icon-only transparent-btn chevron-btn sm"
+                                                            [class.open]="isModelExpanded(model.id)"
+                                                            [attr.aria-label]="isModelExpanded(model.id) ? 'Collapse' : 'Expand'"
+                                                            (click)="toggleModel(model.id)"
                                                         >
-                                                            <i class="ph ph-lightning"></i>
+                                                            <i class="ph ph-caret-right"></i>
                                                         </button>
-                                                    </td>
-                                                    <td class="col-actions-xs">
-                                                        <div class="row-actions">
-                                                            <button
-                                                                type="button"
-                                                                class="icon-only transparent-btn sm"
-                                                                aria-label="Edit model"
-                                                                (click)="openEditModelDialog(provider.id, model)"
+                                                    }
+                                                </td>
+                                                <td class="clickable" (click)="toggleModel(model.id)">
+                                                    <div class="row-title">
+                                                        <span class="row-label">{{ model.label }}</span>
+                                                        <span class="row-subtitle">{{ model.key }}</span>
+                                                    </div>
+                                                </td>
+                                                <td class="col-status">
+                                                    <span
+                                                        class="status-indicator"
+                                                        [class.status-active]="model.active"
+                                                        [class.status-inactive]="!model.active"
+                                                    >
+                                                        {{ model.active ? 'Active' : 'Inactive' }}
+                                                    </span>
+                                                </td>
+                                                <td class="col-perf">
+                                                    @if (model.hasTests) {
+                                                        <div class="metric-cell">
+                                                            <span
+                                                                class="metric-primary"
+                                                                [class]="performanceClass(model.successPercentage)"
                                                             >
-                                                                <i class="ph ph-pencil-simple"></i>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                class="icon-only danger-btn sm"
-                                                                aria-label="Delete model"
-                                                                (click)="deleteModel(provider.id, model.id)"
-                                                            >
-                                                                <i class="ph ph-trash"></i>
-                                                            </button>
+                                                                {{ model.successPercentage }}%
+                                                            </span>
+                                                            <span class="metric-secondary">
+                                                                {{ formatLatency(model.latencyAverage) }}
+                                                            </span>
                                                         </div>
+                                                    } @else {
+                                                        <span class="metric-empty">No tests yet</span>
+                                                    }
+                                                </td>
+                                                <td class="col-test">
+                                                    <button
+                                                        type="button"
+                                                        class="icon-only transparent-btn"
+                                                        [class.testing]="testingModelId() === model.id"
+                                                        [disabled]="testingModelId() === model.id"
+                                                        aria-label="Run test"
+                                                        (click)="testModel(model.id)"
+                                                    >
+                                                        <i class="ph ph-lightning"></i>
+                                                    </button>
+                                                </td>
+                                                <td class="col-actions-xs">
+                                                    <div class="row-actions">
+                                                        <button
+                                                            type="button"
+                                                            class="icon-only transparent-btn sm"
+                                                            aria-label="Edit model"
+                                                            (click)="openEditModelDialog(provider.id, model)"
+                                                        >
+                                                            <i class="ph ph-pencil-simple"></i>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="icon-only danger-btn sm"
+                                                            aria-label="Delete model"
+                                                            (click)="deleteModel(provider.id, model.id)"
+                                                        >
+                                                            <i class="ph ph-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+
+                                            @if (model.hasTests && isModelExpanded(model.id)) {
+                                                <tr class="nested-panel-row">
+                                                    <td colspan="6" class="nested-panel-cell">
+                                                        <table class="inner-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Date &amp; time</th>
+                                                                    <th>Legal/Latency</th>
+                                                                    <th>Status</th>
+                                                                    <th>Log output</th>
+                                                                    <th class="col-actions-xs"></th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @for (result of model.testResults; track result.id) {
+                                                                    <tr>
+                                                                        <td class="col-datetime">
+                                                                            {{ result.createdAt | date: 'dd/MM/yy HH:mm' }}
+                                                                        </td>
+                                                                        <td class="col-code">
+                                                                            {{ formatLatency(result.responseTimeMs) }}
+                                                                        </td>
+                                                                        <td>
+                                                                            <span
+                                                                                class="status-text"
+                                                                                [class.ok]="result.status === 'success'"
+                                                                                [class.err]="result.status !== 'success'"
+                                                                            >
+                                                                                {{ result.status === 'success' ? 'SUCCESS' : 'ERROR' }}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td
+                                                                            [class.log-ok]="result.status === 'success'"
+                                                                            [class.log-err]="result.status !== 'success'"
+                                                                        >
+                                                                            {{ result.errorMessage || 'OK' }}
+                                                                        </td>
+                                                                        <td class="col-actions-xs">
+                                                                            <button
+                                                                                type="button"
+                                                                                class="icon-only danger-btn sm"
+                                                                                aria-label="Delete test result"
+                                                                                (click)="deleteTestResult(provider.id, model.id, result.id)"
+                                                                            >
+                                                                                <i class="ph ph-trash"></i>
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                            </tbody>
+                                                        </table>
                                                     </td>
                                                 </tr>
-
-                                                @if (model.hasTests && isModelExpanded(model.id)) {
-                                                    <tr class="nested-panel-row">
-                                                        <td colspan="6" class="nested-panel-cell">
-                                                            <table class="inner-table">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th>Date &amp; time</th>
-                                                                        <th>Legal/Latency</th>
-                                                                        <th>Status</th>
-                                                                        <th>Log output</th>
-                                                                        <th class="col-actions-xs"></th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    @for (result of model.testResults; track result.id) {
-                                                                        <tr>
-                                                                            <td class="col-datetime">
-                                                                                {{ result.createdAt | date: 'dd/MM/yy HH:mm' }}
-                                                                            </td>
-                                                                            <td class="col-code">
-                                                                                {{ formatLatency(result.responseTimeMs) }}
-                                                                            </td>
-                                                                            <td>
-                                                                                <span
-                                                                                    class="status-text"
-                                                                                    [class.ok]="result.status === 'success'"
-                                                                                    [class.err]="result.status !== 'success'"
-                                                                                >
-                                                                                    {{ result.status === 'success' ? 'SUCCESS' : 'ERROR' }}
-                                                                                </span>
-                                                                            </td>
-                                                                            <td
-                                                                                [class.log-ok]="result.status === 'success'"
-                                                                                [class.log-err]="result.status !== 'success'"
-                                                                            >
-                                                                                {{ result.errorMessage || 'OK' }}
-                                                                            </td>
-                                                                            <td class="col-actions-xs">
-                                                                                <button
-                                                                                    type="button"
-                                                                                    class="icon-only danger-btn sm"
-                                                                                    aria-label="Delete test result"
-                                                                                    (click)="
-                                                                                        deleteTestResult(provider.id, model.id, result.id)
-                                                                                    "
-                                                                                >
-                                                                                    <i class="ph ph-trash"></i>
-                                                                                </button>
-                                                                            </td>
-                                                                        </tr>
-                                                                    }
-                                                                </tbody>
-                                                            </table>
-                                                        </td>
-                                                    </tr>
-                                                }
-                                            </ng-template>
-                                        </p-table>
-                                    </td>
-                                </tr>
-                            }
-                        </ng-template>
-                    </p-table>
-                </div>
+                                            }
+                                        </ng-template>
+                                    </p-table>
+                                </td>
+                            </tr>
+                        }
+                    </ng-template>
+                </p-table>
+            </div>
         }
     }
 </div>

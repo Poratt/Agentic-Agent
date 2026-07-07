@@ -31,9 +31,9 @@
 
                 <div class="action-row summary-row">
                     <span class="summary-item">
-                        <span class="ph ph-list-checks"></span>
+                        <span [ngClass]="hasSearch() ? 'ph ph-list-magnifying-glass' : 'ph ph-list-checks'"></span>
+                        <span class="summary-value">{{ filteredSessions().length }}</span>
                         <span class="summary-label">{{ hasSearch() ? 'תוצאות' : 'שיחות' }}</span>
-                        <span class="summary-value">{{ resultCountLabel() }}</span>
                     </span>
                 </div>
             </div>
@@ -83,18 +83,8 @@
                                         האם למחוק את השיחה?
                                     </span>
                                     <div class="action-btns">
-                                        <button
-                                            type="button"
-                                            class="ghost-btn sm"
-                                            (click)="cancelDelete()"
-                                        >
-                                            ביטול
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="danger-btn sm"
-                                            (click)="confirmDelete()"
-                                        >
+                                        <button type="button" class="ghost-btn sm" (click)="cancelDelete()">ביטול</button>
+                                        <button type="button" class="danger-btn sm" (click)="confirmDelete()">
                                             <span class="ph ph-trash"></span>
                                             מחק
                                         </button>
