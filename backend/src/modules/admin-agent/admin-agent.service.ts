@@ -4,7 +4,7 @@ import { AgentSessionService } from './services/agent-session.service';
 import { AgentToolExecutorService } from './services/agent-tool-executor.service';
 import { ChatSession } from './entities/chat-session.entity';
 import { ChatMessage } from './entities/chat-message.entity';
-import { SYSTEM_CONTEXT } from './constants/system-context.constant';
+import { SYSTEM_CONTEXT, buildSystemContext, VISUAL_TRIGGER_KEYWORDS } from './constants/system-context.constant';
 import { SwaggerToolsParser } from './services/swagger-tools.parser';
 import type { LlmProvider, LlmToolCall } from '../llm/types/llm.types';
 
@@ -105,7 +105,7 @@ export class AdminAgentService implements OnModuleInit {
     await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt);
 
     const tools = this.swaggerToolsParser.getTools();
-    const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model);
+    const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model, prompt);
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration = iteration + 1) {
       const history = await this.agentSessionService.loadHistory(session.id, userId);
@@ -169,7 +169,7 @@ export class AdminAgentService implements OnModuleInit {
     await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt);
 
     const tools = this.swaggerToolsParser.getTools();
-    const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model);
+    const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model, prompt);
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration = iteration + 1) {
       const history = await this.agentSessionService.loadHistory(session.id, userId);
@@ -223,6 +223,9 @@ export class AdminAgentService implements OnModuleInit {
         }
       } else {
         let accumulatedResponse = '';
+        let firstTokenAt: number | null = null;
+        const streamStart = Date.now();
+
         try {
           const stream = this.llmService.generateStream({
             prompt,
@@ -235,6 +238,9 @@ export class AdminAgentService implements OnModuleInit {
           });
 
           for await (const chunk of stream) {
+            if (firstTokenAt === null) {
+              firstTokenAt = Date.now();
+            }
             accumulatedResponse += chunk;
             yield JSON.stringify({ type: 'token', content: chunk }) + '\n';
           }
@@ -242,6 +248,14 @@ export class AdminAgentService implements OnModuleInit {
           this.logger.error('Failed to stream response from LLM Service', error);
           throw error;
         }
+
+        const streamEnd = Date.now();
+        const componentCount = (accumulatedResponse.match(/```component[\s\S]*?```/gi) ?? []).length;
+        const runtimeSelection = this.llmService.getRuntimeSelection(provider, model);
+
+        this.logger.log(
+          `[AdminAgentStream] userId=${userId} sessionId=${session.id} provider=${runtimeSelection.provider} model=${runtimeSelection.model} firstTokenMs=${firstTokenAt !== null ? firstTokenAt - streamStart : 'N/A'} totalMs=${streamEnd - streamStart} tokens=${accumulatedResponse.length} components=${componentCount}`,
+        );
 
         if (accumulatedResponse.length > 0) {
           await this.agentSessionService.saveMessage(userId, session.id, 'assistant', accumulatedResponse);
@@ -256,14 +270,20 @@ export class AdminAgentService implements OnModuleInit {
     }) + '\n';
   }
 
-  private getDynamicSystemContext(userId: number, provider?: LlmProvider, model?: string): string {
+  private getDynamicSystemContext(userId: number, provider?: LlmProvider, model?: string, prompt?: string): string {
     const runtimeSelection = this.llmService.getRuntimeSelection(provider, model);
+    const includeGenui = prompt ? this.shouldIncludeGenui(prompt) : true;
 
-    return SYSTEM_CONTEXT
+    return buildSystemContext({ includeGenui })
       .replace(/{{CURRENT_USER_ID}}/g, String(userId))
       .replace(/{{CURRENT_TIME}}/g, new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }))
       .replace(/{{CURRENT_LLM_PROVIDER}}/g, runtimeSelection.provider)
       .replace(/{{CURRENT_LLM_MODEL}}/g, runtimeSelection.model);
+  }
+
+  private shouldIncludeGenui(prompt: string): boolean {
+    const lowerPrompt = prompt.toLowerCase();
+    return VISUAL_TRIGGER_KEYWORDS.some((kw) => lowerPrompt.includes(kw.toLowerCase()));
   }
 
   private isParallelSafeTool(functionName: string): boolean {

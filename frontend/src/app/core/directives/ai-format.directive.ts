@@ -1,10 +1,17 @@
-import { Directive, ElementRef, input, OnChanges, Renderer2, inject, SecurityContext } from '@angular/core';
+import { Directive, ElementRef, input, OnChanges, OnDestroy, Renderer2, inject, SecurityContext } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 
 type ComponentRenderParts = {
   before: string;
   componentHtml: string;
   after: string;
+};
+
+type ProgressiveComponentParts = {
+  before: string;
+  partialComponentHtml: string;
+  after: string;
+  complete: boolean;
 };
 
 const HEBREW_ROLE_LABEL = 'תפקיד';
@@ -15,7 +22,7 @@ const HEBREW_USER_LABEL = 'משתמש';
   selector: '[aiFormat]',
   standalone: true,
 })
-export class AiFormat implements OnChanges {
+export class AiFormat implements OnChanges, OnDestroy {
   aiFormat = input<string>('');
 
   private el = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -24,6 +31,12 @@ export class AiFormat implements OnChanges {
   private animatedBlockSignatures = new Set<string>();
 
   private skeletonVisible = false;
+  private previewHost: HTMLElement | null = null;
+  private markdownHost: HTMLElement | null = null;
+  private previewRafHandle: number | null = null;
+  private lastPreviewRaw = '';
+  private lastCachedBeforeMarkdown = '';
+  private cachedBeforeMarkdownNodes: ChildNode[] = [];
 
   ngOnChanges() {
     const raw = this.aiFormat() ?? '';
@@ -31,6 +44,7 @@ export class AiFormat implements OnChanges {
     const componentParts = this.extractComponentParts(raw);
     if (componentParts) {
       this.skeletonVisible = false;
+      this.cancelProgressivePreview();
       this.renderComponentResponse(componentParts);
       return;
     }
@@ -40,6 +54,7 @@ export class AiFormat implements OnChanges {
       return;
     }
 
+    this.cancelProgressivePreview();
     this.skeletonVisible = false;
     const parsedHtml = this.parse(raw);
     const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, parsedHtml) || '';
@@ -98,9 +113,178 @@ export class AiFormat implements OnChanges {
     const componentStart = raw.search(/```component\b/i);
     const textBeforeComponent = componentStart >= 0 ? raw.slice(0, componentStart) : '';
 
+    const progressive = this.extractProgressiveComponentParts(raw);
+
+    if (progressive && !progressive.complete && progressive.partialComponentHtml.trim()) {
+      const sanitizedHtml = this.sanitizeProgressiveComponentHtml(progressive.partialComponentHtml);
+
+      this.el.nativeElement.innerHTML = '';
+
+      if (progressive.before.trim()) {
+        this.appendMarkdown(progressive.before);
+      }
+
+      if (sanitizedHtml) {
+        this.scheduleProgressivePreview(raw, progressive.before, sanitizedHtml);
+        return;
+      }
+    }
+
     this.el.nativeElement.innerHTML = '';
-    this.appendMarkdown(textBeforeComponent);
+
+    if (textBeforeComponent.trim()) {
+      this.appendMarkdown(textBeforeComponent);
+    }
+
     this.renderSkeletonOnce();
+  }
+
+  private extractProgressiveComponentParts(raw: string): ProgressiveComponentParts | null {
+    const openMatch = /```component\b([\s\S]*)/i.exec(raw);
+    if (!openMatch) return null;
+
+    const matchStart = openMatch.index;
+    const afterFence = openMatch[1];
+
+    const closeIdx = afterFence.search(/```(?!`)/);
+    if (closeIdx !== -1) {
+      return {
+        before: raw.slice(0, matchStart),
+        partialComponentHtml: afterFence.slice(0, closeIdx).trim(),
+        after: raw.slice(matchStart + openMatch[0].length - afterFence.length + closeIdx + 3),
+        complete: true,
+      };
+    }
+
+    const partialHtml = afterFence;
+
+    if (this.isInsideOpenTag(partialHtml)) {
+      const stablePrefix = this.findStableElementPrefix(partialHtml);
+      return {
+        before: raw.slice(0, matchStart),
+        partialComponentHtml: stablePrefix,
+        after: '',
+        complete: false,
+      };
+    }
+
+    return {
+      before: raw.slice(0, matchStart),
+      partialComponentHtml: partialHtml,
+      after: '',
+      complete: false,
+    };
+  }
+
+  private isInsideOpenTag(html: string): boolean {
+    const lastOpen = html.lastIndexOf('<');
+    const lastClose = html.lastIndexOf('>');
+    if (lastOpen === -1) return false;
+    return lastOpen > lastClose;
+  }
+
+  private findStableElementPrefix(html: string): string {
+    const lastOpen = html.lastIndexOf('<');
+    if (lastOpen === -1) return html;
+
+    const closeAfter = html.indexOf('>', lastOpen);
+    if (closeAfter === -1) {
+      return html.slice(0, lastOpen);
+    }
+
+    return html.slice(0, closeAfter + 1);
+  }
+
+  private sanitizeProgressiveComponentHtml(partialHtml: string): string {
+    if (!partialHtml.trim()) return '';
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div id="root">${partialHtml}</div>`, 'text/html');
+
+    doc.querySelectorAll('script, iframe, object, embed').forEach((node) => {
+      node.remove();
+    });
+
+    doc.querySelectorAll('style').forEach((style) => {
+      const sanitizedCss = this.sanitizePartialComponentCss(style.textContent ?? '');
+      if (!sanitizedCss.trim()) {
+        style.remove();
+        return;
+      }
+      style.textContent = sanitizedCss;
+    });
+
+    const rootEl = doc.getElementById('root');
+    if (!rootEl) return '';
+
+    const hasRenderableRoot = rootEl.querySelector('div, section, article');
+    if (!hasRenderableRoot) return '';
+
+    const headStyles = Array.from(doc.head.querySelectorAll('style'))
+      .map((style) => style.outerHTML)
+      .join('');
+
+    return `${headStyles}${rootEl.innerHTML}`;
+  }
+
+  private sanitizePartialComponentCss(css: string): string {
+    return this.splitCssRules(css)
+      .map((rule) => this.sanitizeCssRule(rule.selector, rule.body))
+      .filter((rule) => rule.trim())
+      .join('\n');
+  }
+
+  private scheduleProgressivePreview(raw: string, beforeMarkdown: string, sanitizedHtml: string): void {
+    this.lastPreviewRaw = raw;
+
+    if (this.previewRafHandle !== null) {
+      if (typeof requestAnimationFrame !== 'undefined') {
+        return;
+      }
+      cancelAnimationFrame(this.previewRafHandle);
+    }
+
+    const doRender = () => {
+      this.previewRafHandle = null;
+      const currentRaw = this.lastPreviewRaw;
+      if (currentRaw !== raw) return;
+
+      this.renderProgressivePreview(beforeMarkdown, sanitizedHtml);
+    };
+
+    if (typeof requestAnimationFrame !== 'undefined') {
+      this.previewRafHandle = requestAnimationFrame(doRender);
+    } else {
+      doRender();
+    }
+  }
+
+  private renderProgressivePreview(beforeMarkdown: string, sanitizedHtml: string): void {
+    const target = this.el.nativeElement;
+
+    if (!this.previewHost) {
+      this.previewHost = this.renderer.createElement('div');
+      this.renderer.appendChild(target, this.previewHost);
+    }
+
+    if (!this.markdownHost) {
+      this.markdownHost = this.renderer.createElement('div');
+      this.renderer.insertBefore(target, this.markdownHost, this.previewHost);
+    }
+
+    this.updateMarkdownHost(beforeMarkdown);
+
+    const preview = this.previewHost!;
+    const finalHtml = this.sanitizer.sanitize(SecurityContext.HTML, sanitizedHtml) || '';
+    preview.innerHTML = finalHtml;
+  }
+
+  private updateMarkdownHost(beforeMarkdown: string): void {
+    if (!this.markdownHost) return;
+
+    const parsedHtml = this.parse(beforeMarkdown);
+    const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, parsedHtml) || '';
+    this.markdownHost.innerHTML = sanitizedHtml;
   }
 
   private renderSkeletonOnce(): void {
@@ -110,10 +294,33 @@ export class AiFormat implements OnChanges {
   }
 
   private renderComponentResponse(parts: ComponentRenderParts): void {
+    this.cancelProgressivePreview();
+
+    if (this.previewHost) {
+      const sanitizedComponentHtml = this.sanitizeComponentHtml(parts.componentHtml);
+      const finalHtml = this.sanitizer.sanitize(SecurityContext.HTML, sanitizedComponentHtml) || '';
+      this.previewHost.innerHTML = finalHtml;
+
+      if (this.markdownHost) {
+        this.updateMarkdownHost(parts.before);
+      }
+
+      if (parts.after.trim()) {
+        const afterDiv = this.renderer.createElement('div');
+        this.el.nativeElement.appendChild(afterDiv);
+        this.appendMarkdownInto(parts.after, afterDiv);
+      }
+
+      return;
+    }
+
     this.el.nativeElement.innerHTML = '';
     this.appendMarkdown(parts.before);
     this.appendComponentHtml(parts.componentHtml);
-    this.appendMarkdown(parts.after);
+
+    if (parts.after.trim()) {
+      this.appendMarkdown(parts.after);
+    }
   }
 
   private appendComponentHtml(html: string): void {
@@ -263,6 +470,33 @@ export class AiFormat implements OnChanges {
     this.appendHtml(sanitizedHtml);
   }
 
+  private appendMarkdownInto(markdown: string, target: HTMLElement): void {
+    const parsedHtml = this.parse(markdown);
+    const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, parsedHtml) || '';
+    if (!sanitizedHtml.trim()) return;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(sanitizedHtml, 'text/html');
+    Array.from(doc.body.childNodes).forEach((node) => {
+      target.appendChild(node.cloneNode(true));
+    });
+  }
+
+  private cancelProgressivePreview(): void {
+    if (this.previewRafHandle !== null) {
+      if (typeof cancelAnimationFrame !== 'undefined') {
+        cancelAnimationFrame(this.previewRafHandle);
+      }
+      this.previewRafHandle = null;
+    }
+    this.previewHost = null;
+    this.markdownHost = null;
+  }
+
+  ngOnDestroy(): void {
+    this.cancelProgressivePreview();
+  }
+
   private appendHtml(html: string): void {
     if (!html.trim()) return;
 
@@ -274,24 +508,14 @@ export class AiFormat implements OnChanges {
   }
 
   private ensureSkeletonStyle(): void {
-    if (document.getElementById('skeleton-pulse-style')) return;
-
-    const style = document.createElement('style');
-    style.id = 'skeleton-pulse-style';
-    style.textContent = `
-          @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 0.15; }
-          }
-        `;
-    document.head.appendChild(style);
+    // Skeleton styles are now in _utilities.css - no inline style injection needed
   }
 
   private skeletonHtml(): string {
     return `
-        <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-6);">
-          <div style="height:20px;background:var(--color-border);border-radius:4px;margin-bottom:12px;animation:pulse 1.5s ease-in-out infinite;"></div>
-          <div style="height:40px;background:var(--color-border);border-radius:4px;animation:pulse 1.5s ease-in-out infinite 0.3s;"></div>
+        <div class="ai-skeleton">
+          <div class="ai-skeleton-bar"></div>
+          <div class="ai-skeleton-bar"></div>
         </div>`;
   }
 

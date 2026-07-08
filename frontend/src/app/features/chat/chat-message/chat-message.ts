@@ -106,7 +106,7 @@ export class ChatMessage implements OnDestroy {
     });
     showCursor = computed(() => {
         return (
-            this.isAssistant() && this.rowState() === 'typing' && this.hasQueuedText() && !this.isRenderingTemplate()
+            this.isAssistant() && this.rowState() === 'typing' && this.hasQueuedText() && !this.isRenderingTemplate() && !this.isInsideComponentStream()
         );
     });
     contentForDisplay = computed(() => {
@@ -248,6 +248,12 @@ export class ChatMessage implements OnDestroy {
             return 2;
         }
 
+        if (this.isInsideComponentStream()) {
+            if (queueLength > 360) return 24;
+            if (queueLength > 160) return 18;
+            return 12;
+        }
+
         if (queueLength > 360) return 3;
         if (queueLength > 160) return 2;
         return 1;
@@ -256,6 +262,10 @@ export class ChatMessage implements OnDestroy {
     private nextDelay(chunk: string): number {
         if (this.streamState() === 'completed') {
             return MIN_VISIBLE_TICK_MS;
+        }
+
+        if (this.isInsideComponentStream()) {
+            return 0;
         }
 
         const lastChar = chunk[chunk.length - 1] ?? '';
@@ -282,6 +292,16 @@ export class ChatMessage implements OnDestroy {
     private isInsideCodeBlock(): boolean {
         const fenceCount = (this.displayedContent().match(/```/g) ?? []).length;
         return fenceCount % 2 === 1;
+    }
+
+    private isInsideComponentStream(): boolean {
+        const content = this.displayedContent();
+        const openComponentFence = /```component\b/i.test(content);
+        if (!openComponentFence) return false;
+
+        const closedCount = (content.match(/```component[\s\S]*?```/gi) ?? []).length;
+        const openCount = (content.match(/```component\b/gi) ?? []).length;
+        return openCount > closedCount;
     }
 
     private isStatusStep(icon: string): boolean {

@@ -108,6 +108,9 @@ export class Chat implements OnInit, OnDestroy {
 
     private routeSub?: Subscription;
     private activeStreamSub?: Subscription;
+    private tokenFlushHandle: number | null = null;
+    private pendingTokenBuffer: string[] = [];
+    private pendingAssistantIndex: number | null = null;
 
     ngOnInit() {
         this.promptTextarea?.nativeElement.focus();
@@ -312,22 +315,14 @@ export class Chat implements OnInit, OnDestroy {
                 }
 
                 if (event.type === 'token' && event.content) {
-                    this.messages.update((prev) => {
-                        const updated = [...prev];
-                        const current = updated[assistantIndex];
-                        if (!current) return prev;
-
-                        updated[assistantIndex] = {
-                            ...current,
-                            content: current.content + event.content!,
-                        };
-
-                        return updated;
-                    });
+                    this.pendingTokenBuffer.push(event.content);
+                    this.pendingAssistantIndex = assistantIndex;
+                    this.scheduleTokenFlush();
                 }
             },
             error: () => {
                 this.activeStreamSub = undefined;
+                this.flushPendingTokens();
                 this.loading.set(false);
                 this.activeStreamState.set('errored');
                 this.messages.update((prev) => {
@@ -345,6 +340,7 @@ export class Chat implements OnInit, OnDestroy {
             },
             complete: () => {
                 this.activeStreamSub = undefined;
+                this.flushPendingTokens();
                 this.loading.set(false);
                 this.activeStreamState.set('completed');
 
@@ -424,6 +420,7 @@ export class Chat implements OnInit, OnDestroy {
             this.activeStreamSub = undefined;
         }
 
+        this.flushPendingTokens();
         this.clearActiveStream();
     }
 
@@ -431,6 +428,48 @@ export class Chat implements OnInit, OnDestroy {
         this.loading.set(false);
         this.activeAssistantIndex.set(null);
         this.activeStreamState.set('idle');
+    }
+
+    private scheduleTokenFlush(): void {
+        if (this.tokenFlushHandle !== null) return;
+
+        if (typeof requestAnimationFrame !== 'undefined') {
+            this.tokenFlushHandle = requestAnimationFrame(() => {
+                this.flushPendingTokens();
+            });
+        } else {
+            setTimeout(() => this.flushPendingTokens(), 0);
+        }
+    }
+
+    private flushPendingTokens(): void {
+        if (this.tokenFlushHandle !== null) {
+            if (typeof cancelAnimationFrame !== 'undefined') {
+                cancelAnimationFrame(this.tokenFlushHandle);
+            }
+            this.tokenFlushHandle = null;
+        }
+
+        const tokens = this.pendingTokenBuffer;
+        const assistantIndex = this.pendingAssistantIndex;
+        this.pendingTokenBuffer = [];
+        this.pendingAssistantIndex = null;
+
+        if (tokens.length === 0 || assistantIndex === null) return;
+
+        const joined = tokens.join('');
+        this.messages.update((prev) => {
+            const updated = [...prev];
+            const current = updated[assistantIndex];
+            if (!current) return prev;
+
+            updated[assistantIndex] = {
+                ...current,
+                content: current.content + joined,
+            };
+
+            return updated;
+        });
     }
 
 
@@ -486,12 +525,14 @@ export class Chat implements OnInit, OnDestroy {
 
     stopStreaming(): void {
         if (!this.activeStreamSub) {
+            this.flushPendingTokens();
             this.clearActiveStream();
             return;
         }
 
         this.activeStreamSub.unsubscribe();
         this.activeStreamSub = undefined;
+        this.flushPendingTokens();
         this.loading.set(false);
         this.activeStreamState.set('completed');
 

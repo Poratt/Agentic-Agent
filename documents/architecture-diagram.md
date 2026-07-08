@@ -257,9 +257,67 @@ flowchart TD
   Client --> Component[```component]
   Component --> Stream[SSE Stream]
   Stream --> AiFormat[AiFormat Directive]
+  AiFormat --> ProgressivePreview[Progressive Preview\nrAF-throttled]
   AiFormat --> Skeleton[Skeleton Loader]
-  AiFormat --> Render[Sanitized GenUI Component]
+  AiFormat --> FinalRender[Sanitized GenUI Component]
 ````
+
+## Streaming Event Flow
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Chat as Angular Chat UI
+  participant Service as ChatService
+  participant API as AdminAgentController
+  participant Agent as AdminAgentService
+  participant LLM as LlmClientService
+  participant Msg as ChatMessage
+  participant Format as AiFormat
+
+  Chat->>Service: sendMessageStream()
+  Service->>API: POST /query-stream
+  API->>Agent: queryDatabaseStream()
+
+  loop Tool execution steps
+    Agent-->>API: {"type":"step","icon":"...","message":"..."}
+    API-->>Service: JSON line
+    Service-->>Chat: observer.next({step})
+    Chat->>Chat: messages.update(steps)
+  end
+
+  loop LLM streaming tokens
+    Agent-->>API: {"type":"token","content":"..."}
+    API-->>Service: JSON line
+    Service-->>Chat: observer.next({token})
+    Chat->>Chat: pendingTokenBuffer.push() + scheduleTokenFlush()
+    Note over Chat: rAF-coalesced flush
+    Chat->>Msg: messages.update(content)
+    Msg->>Msg: syncContent effect
+    alt Prose mode
+      Msg->>Msg: per-character queue (18-35ms)
+    else Component mode
+      Msg->>Msg: fast flush (0ms)
+    end
+    Msg->>Format: aiFormat input changes
+    alt Open component fence
+      Format->>Format: extractProgressiveComponentParts()
+      Format->>Format: sanitizeProgressiveComponentHtml()
+      Format->>Format: scheduleProgressivePreview() [rAF]
+    else Closed component fence
+      Format->>Format: renderComponentResponse()
+    else Markdown only
+      Format->>Format: parse() + updateDomEfficiently()
+    end
+  end
+
+  Agent-->>API: Stream ends
+  API-->>Service: done
+  Service-->>Chat: observer.complete()
+  Chat->>Chat: flushPendingTokens() + loading.set(false)
+```
+
+See [genui-streaming-protocol.md](architecture/genui-streaming-protocol.md) for the full protocol reference.
 
 ## Model Selection Path
 
@@ -296,10 +354,9 @@ sequenceDiagram
 - Full conversation history is persisted in the backend.
 - Chat message deletion is persistent and deletes the selected message plus later session history to preserve context consistency.
 - Active chat streams can be cancelled from the Angular UI by unsubscribing from the stream request, which aborts the underlying fetch.
-- `LlmService` is the public facade used by controllers and `AdminAgentService`.
-- Internal LLM responsibilities are split into provider config, provider client, model catalog, and health-check services.
-- `StrainHunterModule` fetches Jane store data from the configured Jane API source and exposes normalized items through a protected backend endpoint.
-- `StrainHunterUI` calls the StrainHunter endpoint directly from the component for the first version; no dedicated Angular service exists yet.
-- `TerpeneModule` and `GeneticsModule` expose reference catalogs (terpene effects, strain lineage with parent1/parent2/origin) as protected endpoints. They are surfaced to the admin agent as tools via Swagger metadata and seeded from JSON catalogs on backend boot.
-- The shared `Tooltip` Angular component renders chip hover details for both terpenes and genetics, switching on a `category` input. The matching preferences drawer in `StrainHunterUI` collects genetics role metadata (first-write-wins: `origin > parent1 > parent2`) and passes it to the tooltip.
-- `TerpeneStore` and `GeneticsStore` are signal stores with `byName` map lookups and idempotent `loadAll()` actions; both are populated when the strain-hunter drawer becomes visible.
+- The streaming protocol uses newline-delimited JSON with `step`, `token`, and `done` events. See [genui-streaming-protocol.md](architecture/genui-streaming-protocol.md).
+- Token updates are rAF-coalesced in the Chat component to reduce signal writes per frame.
+- GenUI component streams flush faster (0ms delay, 12-24 char chunks) than prose streams (18-35ms delay, 1-3 char chunks).
+- `AiFormat` renders progressive GenUI previews during streaming using a stable preview host element, replacing the skeleton once partial HTML is safely renderable.
+- The backend logs `[AdminAgentStream]` with time-to-first-token, total duration, token count, and component count for each stream.
+- The system context is split into `SYSTEM_CONTEXT_BASE` (tool rules, security, anti-hallucination) and `SYSTEM_CONTEXT_GENUI` (visual standard, design system). GenUI rules are only included when the prompt contains visual-trigger keywords.

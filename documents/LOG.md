@@ -1,5 +1,27 @@
 # Documentation Change Log
 
+## 2026-07-07 GenUI Speed and Quality Improvement — Implementation
+
+- Implemented all five phases of the GenUI speed and quality improvement plan.
+- **Phase 1 — Progressive Streaming Rendering:** Added `extractProgressiveComponentParts`, `sanitizeProgressiveComponentHtml`, `sanitizePartialComponentCss`, `scheduleProgressivePreview` (rAF-throttled), and `renderProgressivePreview` (stable preview host) to `AiFormat`. Closed-fence finalization reuses the preview host to avoid DOM thrash. Added `OnDestroy` cleanup.
+- **Phase 2 — Smarter Chat Message Flushing:** Added `isInsideComponentStream()` to `ChatMessage`. Component streams flush 12-24 char chunks at 0ms delay; prose keeps 18-35ms cadence. Cursor hidden in component mode.
+- **Phase 3 — Backend Prompt Trimming:** Split `SYSTEM_CONTEXT` into `SYSTEM_CONTEXT_BASE` and `SYSTEM_CONTEXT_GENUI`. Added `buildSystemContext({ includeGenui })` and `VISUAL_TRIGGER_KEYWORDS`. `AdminAgentService.getDynamicSystemContext()` conditionally includes GenUI. Trimmed per-template boilerplate from `gen-ui-spec.constant.ts`.
+- **Phase 4 — Streaming Efficiency:** Added rAF-coalesced token buffering (`pendingTokenBuffer`, `scheduleTokenFlush`, `flushPendingTokens`) in `Chat`. Tokens flushed before `loading.set(false)`, on error, and on stream stop.
+- **Phase 5 — Documentation:** Updated `documents/architecture-diagram.md` with streaming event flow sequence diagram. Added `[AdminAgentStream]` log line (firstTokenMs, totalMs, tokens, components). Created `documents/architecture/genui-streaming-protocol.md`.
+- Architectural decision: progressive rendering is the default without a feature toggle; the skeleton fallback handles edge cases safely.
+- Architectural decision: GenUI keyword list is simple and in code for easy reversion; a future phase can move it to per-tool metadata.
+- Architectural decision: token coalescing uses rAF with setTimeout fallback for environments without requestAnimationFrame.
+- No additional architecture diagram update was needed beyond the streaming event flow sub-diagram added in Phase 5.
+
+## 2026-07-07 GenUI Speed and Quality Improvement Plan
+
+- Added `documents/features/todo/genui-speed-and-quality-improvement-plan.md` covering five phases: frontend progressive streaming rendering, smarter chat-message flushing, backend prompt trimming, streaming and store efficiency, and documentation/observability.
+- The new plan replaces the older `documents/done/genui-progressive-streaming-rendering-plan.md` as the source of truth for GenUI rendering work. The older plan is kept as historical reference and the new plan's Phase 1 is the implementation of what the older plan proposed.
+- Planning decision: keep the streaming protocol (`step` / `token` / `done` JSON lines) unchanged in version 1; speed wins come from prompt trimming, rAF-coalesced token updates, a stable preview host in `AiFormat`, and a small parsed-markdown cache for the text before the ` ```component ` fence.
+- Planning decision: split the backend system context into `SYSTEM_CONTEXT_BASE` and `SYSTEM_CONTEXT_GENUI`, and gate the GenUI spec on simple visual-trigger keywords to shrink prompts for short tool-call / prose requests.
+- Planning decision: the architecture diagram and a new `documents/architecture/genui-streaming-protocol.md` document the streaming event flow in one place so future GenUI work does not have to rediscover the pipeline.
+- No architecture diagram update was needed for this planning-only session; Phase 5 of the plan contains the explicit diagram update step.
+
 ## 2026-07-03 GenUI Progressive Streaming Rendering Plan
 
 - Added `documents/features/todo/genui-progressive-streaming-rendering-plan.md`.

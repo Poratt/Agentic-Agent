@@ -1,6 +1,17 @@
 # Project Documentation Status
 
-Last updated: 2026-07-04
+Last updated: 2026-07-07
+
+## 2026-07-07 Session (GenUI Speed and Quality Improvement — Implementation)
+
+- Implemented all five phases of `documents/features/todo/genui-speed-and-quality-improvement-plan.md`.
+- Phase 1: Progressive streaming rendering in `AiFormat` — partial parser, sanitizers, rAF-throttled preview, stable preview host, no-DOM-thrash finalization.
+- Phase 2: Smarter chat-message flushing — component mode flushes 12-24 char chunks at 0ms; prose keeps 18-35ms cadence; cursor hidden in component mode.
+- Phase 3: Backend prompt trimming — `SYSTEM_CONTEXT` split into `BASE` + `GENUI`; GenUI gated on visual-trigger keywords; per-template boilerplate trimmed.
+- Phase 4: Streaming efficiency — rAF-coalesced token buffering in `Chat`; `AiFormat` progressive preview uses stable preview host.
+- Phase 5: Documentation — architecture diagram updated with streaming event flow; `[AdminAgentStream]` log line added; `documents/architecture/genui-streaming-protocol.md` created.
+- Moved plan to `documents/done/genui-speed-and-quality-improvement-plan.md`.
+- Verification: frontend tests 47 pass (2 pre-existing failures), frontend build passes, backend tests 25 pass (1 pre-existing failure), backend build passes.
 
 ## Document Areas
 

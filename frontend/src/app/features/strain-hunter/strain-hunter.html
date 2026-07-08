@@ -406,7 +406,7 @@
                                             @if (splitTerpenes(item.terpenes).length > 0) {
                                                 <div class="terpenes">
                                                     <span class="ph ph-flower-lotus"></span>
-                                                    <div class="terpene-list">
+                                                    <div class="terpene-list stagger stagger-scale-up">
                                                         @for (terpene of splitTerpenes(item.terpenes); track terpene.label) {
                                                             <button
                                                                 [class]="terpeneClass(terpene.name)"

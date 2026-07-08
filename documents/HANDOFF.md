@@ -758,3 +758,18 @@ documents/
 - Files touched: `frontend/src/app/assets/styles/_variables.css`, `frontend/src/app/features/layout/main-sidebar/main-sidebar.css`, `documents/features/todo/css-conventions-fix-plan.md` → `documents/done/css-conventions-fix-plan.md`, `documents/STATUS.md`, `documents/HANDOFF.md`.
 - Decisions made: most audit findings were stale (referencing classes that no longer exist); only 2 of 7 findings were actionable. No architecture diagram update needed (CSS-only refactoring).
 - Open questions for the user: none.
+
+## 2026-07-07 Session (GenUI Speed and Quality Improvement — Implementation)
+
+- Implemented all five phases of `documents/features/todo/genui-speed-and-quality-improvement-plan.md`.
+- Phase 1: Added progressive streaming rendering to `AiFormat` directive. New methods: `extractProgressiveComponentParts`, `sanitizeProgressiveComponentHtml`, `sanitizePartialComponentCss`, `scheduleProgressivePreview` (rAF-throttled), `renderProgressivePreview` (stable preview host). Closed-fence finalization reuses the preview host to avoid DOM thrash. Added `OnDestroy` for cleanup.
+- Phase 1.7: Added 27 new tests covering progressive extraction, partial CSS/HTML sanitization, tag guard, open-tag detection, stable prefix detection, and streaming component detection.
+- Phase 2: Updated `ChatMessage` with `isInsideComponentStream()` helper. Component streams now flush in 12-24 char chunks with 0ms delay (vs 1-3 chars / 18-35ms for prose). Cursor hidden during component streams.
+- Phase 3: Split `SYSTEM_CONTEXT` into `SYSTEM_CONTEXT_BASE` and `SYSTEM_CONTEXT_GENUI`. Added `buildSystemContext({ includeGenui })` helper and `VISUAL_TRIGGER_KEYWORDS` array. `AdminAgentService.getDynamicSystemContext()` now conditionally includes GenUI based on prompt keywords. Trimmed per-template boilerplate from `gen-ui-spec.constant.ts`.
+- Phase 4: Added rAF-coalesced token buffering in `Chat` (`pendingTokenBuffer`, `scheduleTokenFlush`, `flushPendingTokens`). Tokens are flushed before `loading.set(false)`, on error, and on stream stop.
+- Phase 5: Updated `documents/architecture-diagram.md` with streaming event flow sequence diagram. Added `[AdminAgentStream]` log line with time-to-first-token, totalMs, tokens, components. Created `documents/architecture/genui-streaming-protocol.md`.
+- Moved plan to `documents/done/genui-speed-and-quality-improvement-plan.md`.
+- Verification: `npx ng test --watch=false` from `frontend` passes 47 tests (2 pre-existing `app.spec.ts` failures). `npx ng build` from `frontend` passes with existing budget warnings only. `npm.cmd run test` from `backend` passes 25 tests (1 pre-existing `app.controller.spec.ts` failure). `npm.cmd run build` from `backend` passes.
+- Files touched: `frontend/src/app/core/directives/ai-format.directive.ts`, `frontend/src/app/core/directives/ai-format.directive.spec.ts`, `frontend/src/app/features/chat/chat-message/chat-message.ts`, `frontend/src/app/features/chat/chat/chat.ts`, `backend/src/modules/admin-agent/constants/system-context.constant.ts`, `backend/src/modules/admin-agent/constants/gen-ui-spec.constant.ts`, `backend/src/modules/admin-agent/admin-agent.service.ts`, `documents/architecture-diagram.md`, `documents/architecture/genui-streaming-protocol.md`, `documents/done/genui-speed-and-quality-improvement-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`.
+- Decisions made: keep progressive rendering as the default (no feature toggle needed since the skeleton fallback handles edge cases); GenUI keyword list is simple and in code for easy reversion; token coalescing uses rAF with setTimeout fallback.
+- Open questions for the user: none.
