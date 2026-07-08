@@ -7,24 +7,26 @@
                     <h4 class="tooltip-card-name">{{ t.name }}</h4>
                 </header>
 
-                @if (t.description) {
-                    <p class="tooltip-card-desc">{{ t.description }}</p>
-                }
+                <div class="tooltip-card-body stagger stagger-up">
+                    @if (t.description) {
+                        <p class="tooltip-card-desc">{{ t.description }}</p>
+                    }
 
-                @if (t.scent) {
-                    <div class="tooltip-card-row">
-                        <span class="ph ph-flower-lotus tooltip-card-icon"></span>
-                        <span>{{ t.scent }}</span>
-                    </div>
-                }
+                    @if (t.scent) {
+                        <div class="tooltip-card-row">
+                            <span class="ph ph-flower-lotus tooltip-card-icon"></span>
+                            <span>{{ t.scent }}</span>
+                        </div>
+                    }
 
-                @if (t.effects?.length) {
-                    <div class="tooltip-card-effects">
-                        @for (effect of t.effects; track effect) {
-                            <span class="tooltip-card-effect-tag">{{ effect }}</span>
-                        }
-                    </div>
-                }
+                    @if (t.effects?.length) {
+                        <div class="tooltip-card-effects">
+                            @for (effect of t.effects; track effect) {
+                                <span class="tooltip-card-effect-tag">{{ effect }}</span>
+                            }
+                        </div>
+                    }
+                </div>
             </div>
         } @else {
             <div class="tooltip-card tooltip-card-empty">
@@ -43,61 +45,63 @@
                     }
                 </header>
 
-                @if (g.description) {
-                    <p class="tooltip-card-desc">{{ g.description }}</p>
-                }
+                <div class="tooltip-card-body stagger stagger-up">
+                    @if (g.description) {
+                        <p class="tooltip-card-desc">{{ g.description }}</p>
+                    }
 
-                @if (g.parent1 || g.parent2) {
-                    <div class="tooltip-card-row">
-                        <span class="ph ph-tree-evergreen tooltip-card-icon"></span>
-                        <span>
-                            @if (g.parent1) {
-                                <span>{{ g.parent1 }}</span>
-                            }
-                            @if (g.parent1 && g.parent2) {
-                                <span> ✕ </span>
-                            }
-                            @if (g.parent2) {
-                                <span>{{ g.parent2 }}</span>
-                            }
-                        </span>
-                    </div>
-                }
+                    @if (g.parent1 || g.parent2) {
+                        <div class="tooltip-card-row">
+                            <span class="ph ph-tree-evergreen tooltip-card-icon"></span>
+                            <span>
+                                @if (g.parent1) {
+                                    <span>{{ g.parent1 }}</span>
+                                }
+                                @if (g.parent1 && g.parent2) {
+                                    <span> ✕ </span>
+                                }
+                                @if (g.parent2) {
+                                    <span>{{ g.parent2 }}</span>
+                                }
+                            </span>
+                        </div>
+                    }
 
-                @if (g.origin) {
-                    <div class="tooltip-card-row">
-                        <span class="ph ph-globe-hemisphere-west tooltip-card-icon"></span>
-                        <span>{{ g.origin }}</span>
-                    </div>
-                }
+                    @if (g.origin) {
+                        <div class="tooltip-card-row">
+                            <span class="ph ph-globe-hemisphere-west tooltip-card-icon"></span>
+                            <span>{{ g.origin }}</span>
+                        </div>
+                    }
 
-                @if (g.type) {
-                    <div class="tooltip-card-row">
-                        <span class="ph ph-leaf tooltip-card-icon"></span>
-                        <span>{{ g.type }}</span>
-                    </div>
-                }
+                    @if (g.type) {
+                        <div class="tooltip-card-row">
+                            <span class="ph ph-leaf tooltip-card-icon"></span>
+                            <span>{{ g.type }}</span>
+                        </div>
+                    }
 
-                @if (g.thcRange) {
-                    <div class="tooltip-card-row">
-                        <span class="ph ph-flask tooltip-card-icon"></span>
-                        <span>THC: {{ g.thcRange }}</span>
-                    </div>
-                }
+                    @if (g.thcRange) {
+                        <div class="tooltip-card-row">
+                            <span class="ph ph-flask tooltip-card-icon"></span>
+                            <span>THC: {{ g.thcRange }}</span>
+                        </div>
+                    }
 
-                @if (g.terpenes) {
-                    <div class="tooltip-card-row">
-                        <span class="ph ph-flower-lotus tooltip-card-icon"></span>
-                        <span>{{ g.terpenes }}</span>
-                    </div>
-                }
+                    @if (g.terpenes) {
+                        <div class="tooltip-card-row">
+                            <span class="ph ph-flower-lotus tooltip-card-icon"></span>
+                            <span>{{ g.terpenes }}</span>
+                        </div>
+                    }
 
-                @if (g.effects) {
-                    <div class="tooltip-card-row">
-                        <span class="ph ph-lightning tooltip-card-icon"></span>
-                        <span>{{ g.effects }}</span>
-                    </div>
-                }
+                    @if (g.effects) {
+                        <div class="tooltip-card-row">
+                            <span class="ph ph-lightning tooltip-card-icon"></span>
+                            <span>{{ g.effects }}</span>
+                        </div>
+                    }
+                </div>
             </div>
         } @else {
             <div class="tooltip-card tooltip-card-empty">

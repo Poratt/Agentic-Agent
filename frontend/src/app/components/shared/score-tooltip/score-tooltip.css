@@ -11,6 +11,15 @@
     isolation: isolate;
     min-width: calc(var(--space-16) * 3.5);
     max-width: calc(var(--space-16) * 4.5);
+    max-height: 80vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
     padding: var(--space-4);
     border-radius: var(--radius-md);
     background: var(--glass-bg);
