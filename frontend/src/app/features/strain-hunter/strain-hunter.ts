@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import type { SortEvent } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { SliderModule } from 'primeng/slider';
 import { Table, TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { Subscription, timeout } from 'rxjs';
@@ -92,10 +94,12 @@ const TOOLTIP_DELAY_MS = 400;
     standalone: true,
     imports: [
         CommonModule,
+        FormsModule,
         TableModule,
         InputTextModule,
         TooltipModule,
         DialogModule,
+        SliderModule,
         MatchingPreferencesDrawer,
         Tooltip,
         ScoreTooltip,
@@ -193,6 +197,9 @@ export class StrainHunter implements OnInit {
     private readonly tooltipTimeout = signal<ReturnType<typeof setTimeout> | null>(null);
     private readonly scoreTooltipTimeout = signal<ReturnType<typeof setTimeout> | null>(null);
 
+    priceRange = signal<[number, number]>([0, 0]);
+    priceBounds = signal<[number, number]>([0, 0]);
+    filtersExpanded = signal(false);
 
     activeFilters = signal<StrainHunterFilter[]>([]);
     activeSortField = signal<string | null>(null);
@@ -200,20 +207,31 @@ export class StrainHunter implements OnInit {
     items = computed<StrainRow[]>(() => {
         const raw = this.rawItems();
         const filters = this.activeFilters();
+        const [priceMin, priceMax] = this.priceRange();
+        const [boundsMin, boundsMax] = this.priceBounds();
+        const hasPriceFilter = priceMin > boundsMin || priceMax < boundsMax;
 
-        const filtered = filters.length === 0
-            ? raw
-            : raw.filter((item) => {
-                return filters.every((filter) => {
-                    const val = filter.value.toLowerCase().trim();
-                    return filter.fields.some((field) => {
-                        const valueToCompare = field === "symbols"
-                            ? this.getSymbols(item.symbols).map(s => s.alt).join(", ")
-                            : this.formatValue(item[field]);
-                        return valueToCompare.trim().toLowerCase().includes(val);
-                    });
+        const filtered = raw.filter((item) => {
+            if (hasPriceFilter) {
+                const price = this.toNumber(this.formatValue(item.price));
+                if (price === null || price < priceMin || price > priceMax) {
+                    return false;
+                }
+            }
+
+            if (filters.length === 0) return true;
+
+            return filters.every((filter) => {
+                const val = filter.value.toLowerCase().trim();
+                return filter.fields.some((field) => {
+                    const valueToCompare = field === "symbols"
+                        ? this.getSymbols(item.symbols).map(s => s.alt).join(", ")
+                        : this.formatValue(item[field]);
+                    return valueToCompare.trim().toLowerCase().includes(val);
                 });
             });
+        });
+
         return filtered.map((item) => this.matchingEngine.calculateScore(item));
     });
 
@@ -278,11 +296,23 @@ export class StrainHunter implements OnInit {
             .pipe(timeout(90000))
             .subscribe({
                 next: (response) => {
-                    this.rawItems.set(response.items ?? []);
+                    const items = response.items ?? [];
+                    this.rawItems.set(items);
                     this.lastUpdated.set(response.lastScrapedAt ? new Date(response.lastScrapedAt) : null);
-                    if (response.items && response.items.length > 0) {
-                        console.log('First item symbols:', response.items[0]['symbols']);
+
+                    let min = Infinity;
+                    let max = -Infinity;
+                    for (const item of items) {
+                        const price = this.toNumber(this.formatValue(item['price']));
+                        if (price !== null) {
+                            if (price < min) min = price;
+                            if (price > max) max = price;
+                        }
                     }
+                    const bounds: [number, number] = min === Infinity ? [0, 0] : [Math.floor(min), Math.ceil(max)];
+                    this.priceBounds.set(bounds);
+                    this.priceRange.set([bounds[0], bounds[1]]);
+
                     this.loading.set(false);
                     this.refreshing.set(false);
                 },
@@ -297,6 +327,23 @@ export class StrainHunter implements OnInit {
 
     refresh() {
         this.load(true);
+    }
+
+    onPriceRangeChange(event: any) {
+        const values = event.values ?? event.value;
+        if (Array.isArray(values) && values.length === 2) {
+            this.priceRange.set([values[0], values[1]]);
+        }
+    }
+
+    toggleFilters() {
+        this.filtersExpanded.update(v => !v);
+    }
+
+    isPriceFilterActive(): boolean {
+        const [priceMin, priceMax] = this.priceRange();
+        const [boundsMin, boundsMax] = this.priceBounds();
+        return priceMin > boundsMin || priceMax < boundsMax;
     }
 
     openMatchDrawer() {
@@ -355,6 +402,8 @@ export class StrainHunter implements OnInit {
 
     clearAllFilters() {
         this.activeFilters.set([]);
+        this.priceRange.set([this.priceBounds()[0], this.priceBounds()[1]]);
+        this.filtersExpanded.set(false);
         this.clearTooltip();
     }
 

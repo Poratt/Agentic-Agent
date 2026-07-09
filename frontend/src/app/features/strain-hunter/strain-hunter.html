@@ -31,6 +31,21 @@
 
             <div class="header-actions">
                 <div class="action-row">
+                    <button
+                        class="primary-btn icon-only"
+                        type="button"
+                        [disabled]="loading()"
+                        (click)="toggleFilters()"
+                        [class.active]="filtersExpanded() || activeFilters().length > 0 || isPriceFilterActive()"
+                        aria-label="הצג מסננים"
+                        appTooltip
+                        text="הצג מסננים"
+                    >
+                        <span class="ph ph-funnel"></span>
+                        @if (activeFilters().length > 0 || isPriceFilterActive()) {
+                            <span class="filter-badge">{{ activeFilters().length + (isPriceFilterActive() ? 1 : 0) }}</span>
+                        }
+                    </button>
                     <div class="form-field-has-icon">
                         <span class="field-icon ph ph-magnifying-glass"></span>
                         <input
@@ -92,8 +107,28 @@
             </div>
         </div>
 
-        <div class="filters-row" [class.on-filter]="activeFilters().length > 0">
+        <div class="filters-row" [class.on-filter]="filtersExpanded()">
             <div class="filters-inner">
+                @if (priceBounds()[1] > 0) {
+                    <div class="price-range-filter">
+                        <div class="price-range-header">
+                            <span class="ph ph-currency-circle-dollar"></span>
+                            <span class="price-range-label">טווח מחירים</span>
+                            <span class="price-range-values" dir="ltr">
+                                ₪{{ priceRange()[0] }} — ₪{{ priceRange()[1] }}
+                            </span>
+                        </div>
+                        <div class="price-range-slider">
+                            <p-slider
+                                [range]="true"
+                                [min]="priceBounds()[0]"
+                                [max]="priceBounds()[1]"
+                                [(ngModel)]="priceRange"
+                                (onChange)="onPriceRangeChange($event)"
+                            />
+                        </div>
+                    </div>
+                }
                 <div class="filters-container" role="status" aria-live="polite">
                     <span class="filters-label">
                         <span class="ph ph-funnel" aria-hidden="true"></span>
