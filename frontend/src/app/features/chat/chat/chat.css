@@ -18,30 +18,23 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		gap: var(--space-4);
+		gap: var(--space-8);
 		color: var(--color-text-secondary);
 		background: var(--color-surface);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
 
-		.custom-loader {
-			width: 48px;
-			height: 48px;
-			border: 3px solid var(--color-border);
-			border-radius: 50%;
-			border-top-color: var(--color-primary);
-			animation: spin 1s linear infinite;
-		}
+		/* .custom-loader uses global definition in _utilities.css */
 	}
 
 	.chat-history {
 		flex: 1;
 		min-height: 0;
 		overflow-y: auto;
-		padding: var(--space-4);
+		padding: var(--space-8);
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-4);
+		gap: var(--space-8);
 		scroll-behavior: smooth;
 		direction: rtl;
 		width: 100%;
@@ -54,7 +47,7 @@
 			height: 100%;
 			text-align: center;
 			color: var(--color-text-secondary);
-			gap: var(--space-3);
+			gap: var(--space-6);
 
 			span {
 				color: var(--color-primary);
@@ -69,7 +62,7 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		gap: var(--space-3);
+		gap: var(--space-6);
 		background: color-mix(in srgb, var(--glass-bg) 80%, transparent);
 		border: 2px dashed var(--color-primary);
 		border-radius: var(--radius-lg);
@@ -108,7 +101,7 @@
 		overflow: hidden;
 		border: 1px solid var(--color-border);
 		background: var(--color-surface);
-		padding: var(--space-1);
+		padding: var(--space-2);
 		max-width: 180px;
 		transition: opacity var(--transition-fast);
 
@@ -121,8 +114,8 @@
 
 		.chat-image-preview-close {
 			position: absolute;
-			top: var(--space-1);
-			inset-inline-end: var(--space-1);
+			top: var(--space-2);
+			inset-inline-end: var(--space-2);
 			background: var(--glass-bg);
 			color: var(--color-text-primary);
 			border: 1px solid var(--color-border);
@@ -144,15 +137,15 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: var(--space-2);
-		padding: 0 var(--space-4) var(--space-4);
+		gap: var(--space-4);
+		padding: 0 var(--space-8) var(--space-8);
 		width: 100%;
 		max-width: 800px;
 		margin: 0 auto;
 
 		.chat-action-error {
 			width: 100%;
-			padding: var(--space-2) var(--space-3);
+			padding: var(--space-4) var(--space-6);
 			color: var(--color-danger);
 			background: var(--color-danger-bg);
 			border: 1px solid var(--color-danger-border);
@@ -170,8 +163,8 @@
 			width: 100%;
 			display: flex;
 			flex-direction: column;
-			gap: var(--space-2);
-			padding: var(--space-4);
+			gap: var(--space-4);
+			padding: var(--space-8);
 			background: var(--color-input-bg);
 			border: 1px solid var(--color-border);
 			border-radius: var(--radius-xl);
@@ -184,7 +177,7 @@
 			&:focus-within {
 				background: var(--color-input-bg);
 				border-color: var(--color-primary);
-				box-shadow: 0 0 0 var(--space-1) var(--color-primary-glow);
+				box-shadow: 0 0 0 var(--space-2) var(--color-primary-glow);
 			}
 
 			&:hover:not(:focus-within),
@@ -195,8 +188,8 @@
 
 			textarea {
 				width: 100%;
-				min-height: var(--space-16);
-				max-height: calc(var(--space-16) * 3);
+				min-height: var(--space-32);
+				max-height: calc(var(--space-32) * 3);
 				padding: 0;
 				resize: none;
 				line-height: 1.6;
@@ -224,8 +217,8 @@
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
-				width: calc(var(--space-8) + var(--space-1));
-				height: calc(var(--space-8) + var(--space-1));
+				width: calc(var(--space-16) + var(--space-2));
+				height: calc(var(--space-16) + var(--space-2));
 				padding: 0;
 				margin: 0;
 				color: var(--color-bg);

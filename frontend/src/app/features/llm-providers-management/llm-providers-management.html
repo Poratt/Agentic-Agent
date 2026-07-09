@@ -22,7 +22,7 @@
         @case (PageStates.Ready) {
             <div class="catalog-toolbar">
                 <div class="toolbar-search">
-                    <div class="form-field-has-icon">
+                    <div class="form-field-has-icon sm">
                         <span class="field-icon ph ph-magnifying-glass"></span>
                         <input
                             pInputText
@@ -77,7 +77,7 @@
                                 </button>
                             </td>
                             <td class="row-label clickable" (click)="toggleProvider(provider.id)">{{ provider.label }}</td>
-                            <td class="row-meta">{{ provider.baseUrl }}</td>
+                            <td class="row-meta row-meta--mono">{{ provider.baseUrl }}</td>
                             <td class="col-count count-badge">{{ provider.modelsCount }}</td>
                             <td class="col-actions">
                                 <div class="row-actions">

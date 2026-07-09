@@ -1,6 +1,6 @@
 /* 1. Base Button Structure - Shared by ALL buttons */
 button {
-  padding: var(--space-2);
+  padding: var(--space-4);
   font-family: var(--font-family);
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);
@@ -53,21 +53,21 @@ button {
 
   /* Sizes */
   &.xs {
-    padding: var(--space-1) 6px;
+    padding: var(--space-2) 6px;
     font-size: var(--font-size-xs);
 
     svg,
     i,
     .ph,
     app-icon {
-      width: var(--space-3);
-      height: var(--space-3);
+      width: var(--space-6);
+      height: var(--space-6);
       font-size: 10px;
     }
   }
 
   &.sm {
-    padding: var(--space-1) 6px;
+    padding: var(--space-2) 6px;
     font-size: var(--font-size-xs);
 
     svg,
@@ -81,7 +81,7 @@ button {
   }
 
   &.lg {
-    padding: var(--space-2);
+    padding: var(--space-4);
     font-size: var(--font-size-md);
 
     svg,
@@ -95,7 +95,7 @@ button {
   }
 
   &.icon-only {
-    padding: var(--space-2);
+    padding: var(--space-4);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -105,12 +105,12 @@ button {
       flex: 0 0 28px;
       width: 28px;
       height: 28px;
-      padding: var(--space-1);
+      padding: var(--space-2);
       box-sizing: border-box;
     }
 
     &.sm {
-      padding: var(--space-1);
+      padding: var(--space-2);
     }
 
     &.rounded {
@@ -138,7 +138,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 /* 2. Theme: PRIMARY */
@@ -170,7 +170,7 @@ button {
 
     &:hover:not(:disabled) {
       background-color: var(--primary-400);
-      box-shadow: 0 0 20px var(--color-primary-glow), 0 4px 12px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 0 20px var(--color-primary-glow), var(--shadow-soft);
     }
   }
 }

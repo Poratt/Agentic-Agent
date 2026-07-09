@@ -7,7 +7,7 @@
   .strain-main-details {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
+    gap: var(--space-6);
 
     .strain-thumbnail {
       width: 52px;
@@ -24,7 +24,7 @@
     .right-side {
       display: flex;
       flex-direction: column;
-      gap: var(--space-1);
+      gap: var(--space-2);
       text-align: right;
       min-width: 120px;
 
@@ -48,7 +48,7 @@
       .strain-cannabinoids {
         display: inline-flex;
         align-items: center;
-        gap: var(--space-1);
+        gap: var(--space-2);
         font-size: 11px;
         color: var(--color-text-secondary);
         font-weight: var(--font-weight-semibold);
@@ -62,17 +62,9 @@
       .strain-deal {
         display: inline-flex;
         align-items: center;
-        gap: var(--space-1);
+        gap: var(--space-2);
         font-size: var(--font-size-xs);
         line-height: 1;
-      }
-
-      .strain-rating {
-        color: var(--color-warning);
-      }
-
-      .strain-deal {
-        color: var(--color-danger);
       }
 
       .strain-rating {
@@ -86,8 +78,8 @@
       .strain-symbols {
         display: inline-flex;
         align-items: center;
-        gap: var(--space-2);
-        margin-top: var(--space-1);
+        gap: var(--space-4);
+        margin-top: var(--space-2);
 
         .strain-symbol {
           width: 28px;
@@ -106,7 +98,7 @@
     .right-side {
       justify-content: space-between;
       align-items: center;
-      gap: var(--space-1);
+      gap: var(--space-2);
       align-self: stretch;
     }
 
@@ -114,7 +106,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 2px var(--space-1) 0;
+      padding: 2px var(--space-2) 0;
       background: var(--color-success-bg);
       border-radius: var(--radius-xs);
       color: var(--color-success);
@@ -144,12 +136,12 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: var(--space-1);
+    gap: var(--space-2);
 
-    .badge {
+    .family-badge {
       display: inline-flex;
       align-items: center;
-      padding: var(--space-1) var(--space-2);
+      padding: var(--space-2) var(--space-4);
       border: none;
       border-radius: var(--radius-sm);
       font-size: 11px;
@@ -194,7 +186,7 @@
   .strain-price-cell {
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
+    gap: var(--space-2);
 
     .strain-current-price {
       color: var(--color-success);
@@ -210,7 +202,7 @@
   }
 
   .filter-node {
-    padding: 1px var(--space-2);
+    padding: 1px var(--space-4);
     background: transparent;
     border: thin solid var(--color-border);
     border-radius: var(--radius-lg);
@@ -282,18 +274,18 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-1);
+    gap: var(--space-2);
     max-width: 220px;
 
     .root-nodes {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: var(--space-1);
+      gap: var(--space-2);
 
       .parents-cell {
         display: flex;
-        gap: var(--space-1);
+        gap: var(--space-2);
       }
     }
 
@@ -302,9 +294,9 @@
       grid-template-columns: max-content 1fr;
       justify-content: center;
       align-items: flex-start;
-      gap: var(--space-2);
+      gap: var(--space-4);
       width: min(100%, var(--search-width));
-      padding: var(--space-1);
+      padding: var(--space-2);
       border-top: thin solid var(--color-border);
       color: var(--color-primary);
       overflow-wrap: anywhere;
@@ -319,7 +311,7 @@
         display: flex;
         justify-content: center;
         flex-wrap: wrap;
-        gap: var(--space-1);
+        gap: var(--space-2);
 
       }
     }
@@ -344,10 +336,10 @@
   .country-filter {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-1);
+    gap: var(--space-2);
 
     .country-flag {
-      width: var(--space-4);
+      width: var(--space-8);
       height: auto;
       border-radius: var(--radius-sm);
       flex: 0 0 auto;
@@ -358,7 +350,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--space-1);
+    gap: var(--space-2);
     width: fit-content;
   }
 
@@ -366,8 +358,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: var(--space-8);
-    min-height: var(--space-8);
+    min-width: var(--space-16);
+    min-height: var(--space-16);
     background: var(--primary-30);
     border-radius: var(--radius-sm);
     color: var(--color-primary);
@@ -385,7 +377,7 @@
   .match-btn {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-1);
+    gap: var(--space-2);
   }
 
   .score-ring-wrapper {
@@ -446,8 +438,8 @@
   .strain-penalty-badge {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-1);
-    padding: 2px var(--space-2);
+    gap: var(--space-2);
+    padding: 2px var(--space-4);
     background-color: var(--color-danger-bg);
     border: thin solid var(--color-danger-border);
     border-radius: var(--radius-xs);
@@ -496,17 +488,6 @@
     object-fit: contain;
     border-radius: var(--radius-md);
   }
-}
-
-::ng-deep .p-dialog {
-  background: transparent !important;
-  box-shadow: none !important;
-  border: none !important;
-}
-
-::ng-deep .p-dialog .p-dialog-content {
-  background: transparent !important;
-  padding: 0 !important;
 }
 
 @keyframes dot-bounce {

@@ -9,8 +9,8 @@
 .score-card {
     position: relative;
     isolation: isolate;
-    min-width: calc(var(--space-16) * 3.5);
-    max-width: calc(var(--space-16) * 4.5);
+    min-width: calc(var(--space-32) * 3.5);
+    max-width: calc(var(--space-32) * 4.5);
     max-height: 80vh;
     overflow-y: auto;
     scrollbar-width: none;
@@ -20,15 +20,15 @@
         display: none;
     }
 
-    padding: var(--space-4);
+    padding: var(--space-8);
     border-radius: var(--radius-md);
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow, var(--shadow-soft));
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
-    animation: tooltipReveal var(--transition-fast) ease-out forwards;
+    gap: var(--space-6);
+    animation: fadeIn var(--transition-fast) ease-out forwards;
 
     &::before {
         content: '';
@@ -42,7 +42,7 @@
 
     .score-card-header {
         border-bottom: 1px solid var(--color-border);
-        padding-bottom: var(--space-2);
+        padding-bottom: var(--space-4);
         margin: 0;
 
         .score-title {
@@ -58,11 +58,11 @@
     .penalty-banner {
         display: flex;
         align-items: flex-start;
-        gap: var(--space-2);
+        gap: var(--space-4);
         background: var(--color-danger-bg);
         border: 1px solid var(--color-danger-border);
         border-radius: var(--radius-sm);
-        padding: var(--space-2);
+        padding: var(--space-4);
 
         .penalty-icon {
             color: var(--color-danger);
@@ -91,12 +91,12 @@
     .score-group {
         display: flex;
         flex-direction: column;
-        gap: var(--space-2);
+        gap: var(--space-4);
 
         .score-group-header {
             display: flex;
             align-items: center;
-            gap: var(--space-2);
+            gap: var(--space-4);
             font-size: var(--font-size-xs);
 
             .group-icon {
@@ -125,13 +125,13 @@
         .tag-list {
             display: flex;
             flex-wrap: wrap;
-            gap: var(--space-1);
+            gap: var(--space-2);
 
             .tag {
                 display: inline-flex;
                 align-items: center;
                 gap: 4px;
-                padding: 2px var(--space-2);
+                padding: 2px var(--space-4);
                 border-radius: var(--radius-pill);
                 font-size: 10px;
                 font-weight: var(--font-weight-semibold);
@@ -156,8 +156,8 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: var(--space-2);
-        padding: var(--space-3);
+        gap: var(--space-4);
+        padding: var(--space-6);
         text-align: center;
         color: var(--color-text-secondary);
         font-size: var(--font-size-xs);
@@ -166,15 +166,5 @@
             font-size: var(--font-size-lg);
             color: var(--color-primary);
         }
-    }
-}
-
-@keyframes tooltipReveal {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
     }
 }

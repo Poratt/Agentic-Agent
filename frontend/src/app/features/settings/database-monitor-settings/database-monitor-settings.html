@@ -69,17 +69,17 @@
                 @for (table of getAllTables(); track table.tableName) {
                     <div class="db-table-row">
                         <div class="db-table-top">
-                            <span class="row-label">{{ table.tableName }}</span>
-                            <span class="row-meta">{{ table.totalSizeFormatted }}</span>
+                            <span class="row-label row-label--bold">{{ table.tableName }}</span>
+                            <span class="row-meta row-meta--xs">{{ table.totalSizeFormatted }}</span>
                         </div>
                         <div class="db-bar-track">
                             <div class="db-bar-fill" [style.width]="getBarWidth(table.percentOfDatabase)"></div>
                         </div>
                         <div class="db-table-chips">
-                            <span class="tag tag-muted"><i class="ph ph-rows"></i> {{ table.rowCount | number }} שורות</span>
-                            <span class="tag tag-muted"><i class="ph ph-hard-drives"></i> {{ table.dataSizeFormatted }}</span>
-                            <span class="tag tag-muted"><i class="ph ph-sort-ascending"></i> {{ table.indexSizeFormatted }}</span>
-                            <span class="tag db-pct">{{ table.percentOfDatabase }}%</span>
+                            <span class="db-chip tag-muted"><i class="ph ph-rows"></i> {{ table.rowCount | number }} שורות</span>
+                            <span class="db-chip tag-muted"><i class="ph ph-hard-drives"></i> {{ table.dataSizeFormatted }}</span>
+                            <span class="db-chip tag-muted"><i class="ph ph-sort-ascending"></i> {{ table.indexSizeFormatted }}</span>
+                            <span class="db-chip db-pct">{{ table.percentOfDatabase }}%</span>
                         </div>
                     </div>
                 }

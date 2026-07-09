@@ -107,7 +107,7 @@ const TOOLTIP_DELAY_MS = 400;
     ],
     templateUrl: './strain-hunter.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    styleUrls: ['./strain-hunter.css', './_strain-hunter-filters.css'],
+    styleUrls: ['./strain-hunter.css'],
 })
 export class StrainHunter implements OnInit {
     private http = inject(HttpClient);

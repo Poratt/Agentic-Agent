@@ -8,7 +8,7 @@
 	flex-direction: column;
 	position: relative;
 	max-width: 95%;
-	padding: var(--space-4);
+	padding: var(--space-8);
 	border-radius: var(--radius-md);
 	line-height: 1.6;
 
@@ -25,7 +25,7 @@
 		border-radius: var(--radius-md) var(--radius-md) 0 var(--radius-md);
 
 		.message-attachment {
-			margin-bottom: var(--space-2);
+			margin-bottom: var(--space-4);
 			max-width: 240px;
 			border-radius: var(--radius-sm);
 			overflow: hidden;
@@ -56,7 +56,7 @@
 				display: inline-block;
 				width: 2px;
 				height: 1.05em;
-				margin-inline-start: var(--space-1);
+				margin-inline-start: var(--space-2);
 				background: var(--color-primary);
 				border-radius: var(--radius-sm);
 				vertical-align: -0.15em;
@@ -69,8 +69,8 @@
 		display: flex;
 		align-items: center;
 		align-self: flex-end;
-		gap: var(--space-1);
-		margin-block-start: var(--space-2);
+		gap: var(--space-2);
+		margin-block-start: var(--space-4);
 		opacity: 0;
 		transition: opacity var(--transition-fast);
 
@@ -78,8 +78,8 @@
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
-			width: var(--space-6);
-			height: var(--space-6);
+			width: var(--space-12);
+			height: var(--space-12);
 			padding: 0;
 			color: var(--color-text-secondary);
 			background: transparent;
@@ -111,10 +111,10 @@
 	.message-meta {
 		display: flex;
 		align-items: center;
-		gap: var(--space-2);
+		gap: var(--space-4);
 		font-size: var(--font-size-sm);
 		color: var(--color-text-secondary);
-		margin-bottom: var(--space-2);
+		margin-bottom: var(--space-4);
 
 		.role-icon {
 			font-size: var(--font-size-xxl);
@@ -138,13 +138,13 @@
 	.response-loader {
 		display: inline-flex;
 		align-items: center;
-		gap: var(--space-2);
+		gap: var(--space-4);
 		width: fit-content;
-		padding: var(--space-2) 0;
+		padding: var(--space-4) 0;
 
 		span {
-			width: var(--space-2);
-			height: var(--space-2);
+			width: var(--space-4);
+			height: var(--space-4);
 			border-radius: var(--radius-sm);
 			background: var(--color-primary);
 			animation: responseLoaderPulse 900ms ease-in-out infinite;
@@ -160,13 +160,13 @@
 	}
 
 	.thinking-process-box {
-		margin: var(--space-2) 0 var(--space-4) 0;
-		background: rgba(255, 255, 255, 0.03);
+		margin: var(--space-4) 0 var(--space-8) 0;
+		background: var(--glass-bg);
 		border: 1px solid transparent;
 		border-radius: var(--radius-md);
 		overflow: hidden;
 		font-size: var(--font-size-sm);
-		max-height: calc(var(--space-16) * 4);
+		max-height: calc(var(--space-32) * 4);
 		max-width: max-content;
 		opacity: 1;
 		transition:
@@ -179,7 +179,7 @@
 		text-align: right;
 
 		&[open] {
-			background: rgba(0, 212, 255, 0.02);
+			background: var(--color-primary-glow-bg);
 			border-color: var(--color-primary-glow);
 
 			.expand-icon {
@@ -190,8 +190,8 @@
 		.thinking-summary {
 			display: flex;
 			align-items: center;
-			gap: var(--space-2);
-			padding: var(--space-2) var(--space-4);
+			gap: var(--space-4);
+			padding: var(--space-4) var(--space-8);
 			font-weight: var(--font-weight-medium);
 			color: var(--color-primary);
 			cursor: pointer;
@@ -223,12 +223,12 @@
 
 		.steps-list {
 			list-style: none;
-			padding: var(--space-3) var(--space-4) var(--space-3) var(--space-4);
+			padding: var(--space-6) var(--space-8) var(--space-6) var(--space-8);
 			margin: 0;
 			display: flex;
 			flex-direction: column;
-			gap: var(--space-2);
-			max-height: calc(var(--space-16) * 3);
+			gap: var(--space-4);
+			max-height: calc(var(--space-32) * 3);
 			overflow-y: auto;
 
 			border-top: 1px dashed var(--color-border);
@@ -241,7 +241,7 @@
 			.step-item {
 				display: flex;
 				align-items: center;
-				gap: var(--space-2);
+				gap: var(--space-4);
 				color: var(--color-text-secondary);
 				opacity: 1;
 				animation: slideUp var(--transition-slow) ease-out forwards;
@@ -307,7 +307,7 @@
 
 	50% {
 		opacity: 1;
-		transform: translateY(calc(var(--space-1) * -1));
+		transform: translateY(calc(var(--space-2) * -1));
 	}
 }
 

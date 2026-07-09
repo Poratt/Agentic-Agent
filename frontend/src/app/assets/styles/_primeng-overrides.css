@@ -21,8 +21,8 @@
 
 .p-datatable {
   .p-datatable-sort-icon {
-    width: var(--space-3);
-    height: var(--space-3);
+    width: var(--space-6);
+    height: var(--space-6);
   }
 
   .p-datatable-thead {
@@ -40,14 +40,14 @@
 
     p-sortIcon {
       margin: 0;
-      margin-inline-start: var(--space-2);
+      margin-inline-start: var(--space-4);
       color: var(--color-text-secondary);
     }
 
     >tr {
       >th {
         background-color: transparent;
-        padding-block: var(--space-6);
+        padding-block: var(--space-12);
 
         &.p-datatable-column-sorted {
           color: var(--color-primary);
@@ -132,6 +132,19 @@ li.p-select-option {
   font-family: inherit;
   direction: ltr;
   text-align: left;
+
+  &.image-dialog {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .p-dialog-content {
+    &.image-dialog-content {
+      background: transparent !important;
+      padding: 0 !important;
+    }
+  }
 }
 
 /* ── Tooltip ──────────────────────────────────────────────────────────────── */
@@ -151,9 +164,9 @@ li.p-select-option {
   .p-tooltip-text {
     position: relative;
     isolation: isolate;
-    min-width: calc(var(--space-16) * 2);
-    max-width: calc(var(--space-16) * 4);
-    padding: var(--space-2) var(--space-3);
+    min-width: calc(var(--space-32) * 2);
+    max-width: calc(var(--space-32) * 4);
+    padding: var(--space-4) var(--space-6);
     border-radius: var(--radius-md);
     box-shadow: var(--glass-shadow, var(--shadow-soft));
     font-size: var(--font-size-xs);

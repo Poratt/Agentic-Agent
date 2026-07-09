@@ -43,10 +43,10 @@
                     >
                         <span class="ph ph-funnel"></span>
                         @if (activeFilters().length > 0 || isPriceFilterActive()) {
-                            <span class="filter-badge">{{ activeFilters().length + (isPriceFilterActive() ? 1 : 0) }}</span>
+                            <span class="icon-badge">{{ activeFilters().length + (isPriceFilterActive() ? 1 : 0) }}</span>
                         }
                     </button>
-                    <div class="form-field-has-icon">
+                    <div class="form-field-has-icon sm">
                         <span class="field-icon ph ph-magnifying-glass"></span>
                         <input
                             pInputText
@@ -107,18 +107,18 @@
             </div>
         </div>
 
-        <div class="filters-row" [class.on-filter]="filtersExpanded()">
-            <div class="filters-inner">
+        <div class="collapsible-row" [class.is-open]="filtersExpanded()">
+            <div class="collapsible-inner">
                 @if (priceBounds()[1] > 0) {
-                    <div class="price-range-filter">
-                        <div class="price-range-header">
+                    <div class="filter-range">
+                        <div class="filter-range-header">
                             <span class="ph ph-currency-circle-dollar"></span>
-                            <span class="price-range-label">טווח מחירים</span>
-                            <span class="price-range-values" dir="ltr">
+                            <span class="filter-range-label">טווח מחירים</span>
+                            <span class="filter-range-value" dir="ltr">
                                 ₪{{ priceRange()[0] }} — ₪{{ priceRange()[1] }}
                             </span>
                         </div>
-                        <div class="price-range-slider">
+                        <div class="filter-range-slider">
                             <p-slider
                                 [range]="true"
                                 [min]="priceBounds()[0]"
@@ -129,15 +129,15 @@
                         </div>
                     </div>
                 }
-                <div class="filters-container" role="status" aria-live="polite">
-                    <span class="filters-label">
+                <div class="filter-bar" role="status" aria-live="polite">
+                    <span class="filter-bar-label">
                         <span class="ph ph-funnel" aria-hidden="true"></span>
                         <span>מסננים פעילים</span>
-                        <span class="filters-count">{{ activeFilters().length }}</span>
+                        <span class="filter-bar-count">{{ activeFilters().length }}</span>
                     </span>
-                    <div class="filters-list">
+                    <div class="filter-bar-list">
                         @for (f of activeFilters(); track f.key; let i = $index) {
-                            <span class="filter-chip" [style.--chip-i]="i" (click)="removeFilter(f.key)">
+                            <span class="chip" [style.--chip-i]="i" (click)="removeFilter(f.key)">
                                 <span class="filter-name">{{ f.name }}</span>
                                 <span class="chip-text">{{ f.label }}</span>
                                 <button
@@ -361,7 +361,7 @@
                                         <div class="characterization-cell">
                                             @if (hasDisplayValue(item.packageType)) {
                                                 <button
-                                                    class="badge package-badge"
+                                                    class="family-badge package-badge"
                                                     type="button"
                                                     (click)="applyDataFilter('packageType', item.packageType)"
                                                 >
@@ -370,7 +370,7 @@
                                             }
                                             @if (hasDisplayValue(item.category)) {
                                                 <button
-                                                    class="badge category-badge"
+                                                    class="family-badge category-badge"
                                                     type="button"
                                                     (click)="applyDataFilter('category', item.category)"
                                                 >
@@ -379,7 +379,7 @@
                                             }
                                             @if (hasDisplayValue(item.family)) {
                                                 <button
-                                                    class="badge family-badge"
+                                                    class="family-badge family-badge"
                                                     type="button"
                                                     [ngClass]="getFamilyClass(item.family)"
                                                     (click)="applyDataFilter('family', item.family)"
@@ -545,8 +545,9 @@
     [resizable]="false"
     [style]="{ width: '480px' }"
     (onHide)="closeImageDialog()"
+    class="image-dialog"
 >
-    <div style="text-align: center">
+    <div class="image-dialog-content" style="text-align: center">
         @if (selectedImageUrl()) {
             <img [src]="selectedImageUrl()" alt="Strain" style="max-width: 100%; border-radius: var(--radius-md)" />
         }
