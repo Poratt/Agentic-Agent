@@ -89,6 +89,14 @@
   --color-family-sativa: #d97706;
   --color-family-hybrid: #15803d;
 
+  /* Chart / donut colors */
+  --color-table-1: #22D3EE;
+  --color-table-2: #A78BFA;
+  --color-table-3: #10B981;
+  --color-table-4: #FBBF24;
+  --color-table-5: #F87171;
+  --color-table-6: #F472B6;
+
   /* Logo shadow */
   --shadow-logo: 0 4px 16px rgba(0, 0, 0, 0.3);
 }

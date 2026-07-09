@@ -16,6 +16,7 @@ import { TerpeneModule } from './modules/terpene/terpene.module';
 import { GeneticsModule } from './modules/genetics/genetics.module';
 import { WebSearchModule } from './modules/web-search/web-search.module';
 import { CannlyticsModule } from './modules/cannlytics/cannlytics.module';
+import { DatabaseMonitorModule } from './modules/database-monitor/database-monitor.module';
 
 @Module({
   imports: [
@@ -48,7 +49,8 @@ import { CannlyticsModule } from './modules/cannlytics/cannlytics.module';
     TerpeneModule,
     GeneticsModule,
     WebSearchModule,
-    CannlyticsModule
+    CannlyticsModule,
+    DatabaseMonitorModule
   ],
 })
 export class AppModule {

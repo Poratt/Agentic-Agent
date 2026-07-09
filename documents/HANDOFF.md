@@ -773,3 +773,25 @@ documents/
 - Files touched: `frontend/src/app/core/directives/ai-format.directive.ts`, `frontend/src/app/core/directives/ai-format.directive.spec.ts`, `frontend/src/app/features/chat/chat-message/chat-message.ts`, `frontend/src/app/features/chat/chat/chat.ts`, `backend/src/modules/admin-agent/constants/system-context.constant.ts`, `backend/src/modules/admin-agent/constants/gen-ui-spec.constant.ts`, `backend/src/modules/admin-agent/admin-agent.service.ts`, `documents/architecture-diagram.md`, `documents/architecture/genui-streaming-protocol.md`, `documents/done/genui-speed-and-quality-improvement-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`.
 - Decisions made: keep progressive rendering as the default (no feature toggle needed since the skeleton fallback handles edge cases); GenUI keyword list is simple and in code for easy reversion; token coalescing uses rAF with setTimeout fallback.
 - Open questions for the user: none.
+
+## 2026-07-09 Session (Database Storage Monitor)
+
+- Implemented `documents/features/todo/database-storage-monitor-plan.md` (full stack) and rendered it in the Settings page.
+- Backend:
+  - Created DTOs: `database-table-storage.dto.ts`, `database-storage-summary.dto.ts`, `database-storage-result-response.dto.ts` under `backend/src/modules/database-monitor/dto/`.
+  - Created `database-monitor.service.ts` — queries `information_schema.tables` with a fixed SQL string, formats bytes, calculates percentOfDatabase, sorts descending.
+  - Created `database-monitor.controller.ts` — `GET /database-monitor/storage` with full Swagger metadata including `summaryHe`, `toolIcon: 'ph-database'`, and `genUiSpec`.
+  - Created `database-monitor.module.ts`.
+  - Registered `DatabaseMonitorModule` in `AppModule`.
+  - Added `DATABASE_STORAGE_MONITOR` GenUI spec to `gen-ui-spec.constant.ts` with conic-gradient chart guidance and design-token-only instruction.
+  - Added `database-monitor.service.spec.ts` with 7 tests: sorted summary, empty tables, byte formatting, zero-division, percentOfDatabase accuracy, fixed query, null rowCount handling.
+- Frontend:
+  - Created `database-monitor.service.ts` in `core/services/`.
+  - Created `database-monitor-settings` component under `settings/` with loading/error/ready states, donut chart (conic-gradient), table bar chart, summary cards.
+  - Added third tab "מסד נתונים" to `settings.html`.
+  - Updated `settings.ts` imports.
+  - Added `--color-table-1` through `--color-table-6` chart tokens to `_variables.css`.
+- Verification: `npm.cmd run test` from `backend` passes (pre-existing `app.controller.spec.ts` failure only). `npm.cmd run build` from `backend` passes. `npx ng build` from `frontend` passes.
+- Files touched: `backend/src/modules/database-monitor/` (5 new files), `backend/src/app.module.ts`, `backend/src/modules/admin-agent/constants/gen-ui-spec.constant.ts`, `frontend/src/app/core/services/database-monitor.service.ts`, `frontend/src/app/features/settings/database-monitor-settings/` (3 new files), `frontend/src/app/features/settings/settings.ts`, `frontend/src/app/features/settings/settings.html`, `frontend/src/app/assets/styles/_variables.css`.
+- Decisions made: JWT-guarded endpoint as per plan; no growth rate in v1; CSS conic-gradient for donut chart; design tokens only in GenUI spec. UI standard: `auto-fit` grid, `aspect-ratio: 1/1` for donut, local fallback colors in `:host`, component-specific CSS only (global classes for everything else).
+- Open questions for the user: none.

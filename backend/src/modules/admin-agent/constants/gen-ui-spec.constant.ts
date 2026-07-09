@@ -137,4 +137,18 @@ export const GenUiSpec = {
         - Failed models: show a red badge with the text 'לא עונה (500)' and a warning circle.
         `
     ),
+
+    // Database Monitor
+    DATABASE_STORAGE_MONITOR: GENUI_HTML(
+        `Render a database storage maintenance dashboard from the tool response.
+        Rules:
+        1. Use only values returned by the tool. Never invent table sizes, row counts, or growth rates.
+        2. Header section: show result.databaseName, result.tableCount, result.totalRows, and result.totalSizeFormatted as summary metrics.
+        3. Render a donut/pie chart using CSS conic-gradient showing percentOfDatabase for the top 6 tables by totalSizeBytes descending.
+        4. Sort tables by totalSizeBytes descending. Show all tables in card list below the chart.
+        5. Each table card must show: tableName, rowCount, dataSizeFormatted, indexSizeFormatted, totalSizeFormatted, percentOfDatabase with a small bar.
+        6. If result.tables is empty, render a stable empty state that says "No tables found in the database."
+        7. Use an operational maintenance tone, not a sales dashboard tone.
+        8. CRITICAL: Use ONLY design tokens for all CSS values. Use var(--color-surface) for card backgrounds, var(--color-text-primary) for text, var(--color-text-secondary) for muted text, var(--color-border) for borders, var(--color-primary) and var(--color-secondary) for chart segment colors, var(--radius-lg) for card border-radius, var(--space-4) for padding, var(--shadow-soft) for card shadows. NEVER use hardcoded colors or pixel values.`
+    ),
 }

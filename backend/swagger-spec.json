@@ -2156,6 +2156,36 @@
           "terpenes"
         ]
       }
+    },
+    "/database-monitor/storage": {
+      "get": {
+        "description": "Returns row counts and storage sizes for all tables in the database.",
+        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nRender a database storage maintenance dashboard from the tool response.\n        Rules:\n        1. Use only values returned by the tool. Never invent table sizes, row counts, or growth rates.\n        2. Header section: show result.databaseName, result.tableCount, result.totalRows, and result.totalSizeFormatted as summary metrics.\n        3. Render a donut/pie chart using CSS conic-gradient showing percentOfDatabase for the top 6 tables by totalSizeBytes descending.\n        4. Sort tables by totalSizeBytes descending. Show all tables in card list below the chart.\n        5. Each table card must show: tableName, rowCount, dataSizeFormatted, indexSizeFormatted, totalSizeFormatted, percentOfDatabase with a small bar.\n        6. If result.tables is empty, render a stable empty state that says \"No tables found in the database.\"\n        7. Use an operational maintenance tone, not a sales dashboard tone.\n        8. CRITICAL: Use ONLY design tokens for all CSS values. Use var(--color-surface) for card backgrounds, var(--color-text-primary) for text, var(--color-text-secondary) for muted text, var(--color-border) for borders, var(--color-primary) and var(--color-secondary) for chart segment colors, var(--radius-lg) for card border-radius, var(--space-4) for padding, var(--shadow-soft) for card shadows. NEVER use hardcoded colors or pixel values.\n\nNo explanations. No plain text.",
+        "operationId": "DatabaseMonitorController_getStorage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Database storage summary retrieved successfully."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get database storage usage by table",
+        "summaryHe": "שולף נתוני שימוש בזיכרון במסד הנתונים לפי טבלה",
+        "tags": [
+          "database-monitor"
+        ],
+        "toolIcon": "ph-database"
+      }
     }
   },
   "info": {

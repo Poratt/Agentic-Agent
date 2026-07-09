@@ -1,6 +1,15 @@
 # Project Documentation Status
 
-Last updated: 2026-07-07
+Last updated: 2026-07-09
+
+## 2026-07-09 Session (Database Storage Monitor)
+
+- Implemented full-stack database storage monitor per `documents/features/todo/database-storage-monitor-plan.md`.
+- Backend: `DatabaseMonitorModule` with `GET /database-monitor/storage` endpoint, TypeORM `DataSource` query on `information_schema.tables`, DTOs with Swagger decorators, GenUI spec for donut chart + table cards.
+- Frontend: `DatabaseMonitorSettings` component in Settings page (third tab "מסד נתונים"), donut chart via CSS conic-gradient, per-table bar chart, summary cards with loading/error/empty states.
+- Tests: 7 backend service tests (sorted summary, empty tables, byte formatting, zero-division, percentOfDatabase, fixed query, null rowCount).
+- Verification: backend test 25 pass (1 pre-existing fail), backend build pass, frontend build pass.
+- Plan moved to `documents/done/database-storage-monitor-plan.md`.
 
 ## 2026-07-07 Session (GenUI Speed and Quality Improvement — Implementation)
 
@@ -166,7 +175,7 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: implemented clickable strain-symbol filters in StrainHunter table; updated items computed property to handle symbol alt-text matching.
 - Verified: frontend build passes after the strain-symbol filter update.
 - Closed: `documents/features/todo/explorer-plan.md` was not an active implementation plan; it is now `documents/done/explorer-source-reference.md`.
-- Active feature todo now contains only `documents/features/todo/database-storage-monitor-plan.md`.
+- Active feature todo now contains only `documents/features/todo/database-storage-monitor-plan.md` (completed 2026-07-09).
 - Completed: Chat message action buttons now render without borders; hover/focus uses tokenized color/background only.
 - Verified: `npx ng build` passes after the chat action-button border cleanup with existing warnings only.
 - Completed: Angular 22 baseline documentation was updated in `frontend/README.md`, `AGENTS.md`, `CLAUDE.md`, and `C:\Users\porat\.claude\rules\angular-rules.md`.
@@ -242,7 +251,7 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: `documents/done/terpenes-details-plan.md`. Terpene reference catalog is fully implemented: NestJS `Terpene` entity + `TerpeneService` + `TerpeneController` + `TerpeneModule` + seed of 17 Hebrew-named terpenes, and Angular `ITerpene` interface + `TerpeneService` + `TerpeneStore` + `TerpeneTooltip` hover-popover component consumed by `MatchingPreferencesDrawer`. `TerpeneModule` is registered in `AppModule`.
 - Completed: `documents/done/genetic-details-plan.md`. Genetics reference catalog is fully implemented: NestJS `Genetics` entity + `GeneticsService` + `GeneticsController` + `GeneticsModule` + idempotent seed of 209 Hebrew-named strains read from the JSON in the plan file (with parenthetical/`#`/three-parent handling and a loud-fail dedupe pass per §1.7), and Angular `IGenetics` interface + `GeneticsService` + `GeneticsStore` + a generic shared `Tooltip` component (replaces the terpene-only `TerpeneTooltip`) consumed by both `MatchingPreferencesDrawer` and the root `StrainHunter` page. `GeneticsModule` is registered in `AppModule`; `seedGenetics` runs after `seedLlmProviders` in `main.ts`. Tooltip shows an optional Hebrew role label above the strain name (`זן מקור` / `הורה #1` / `הורה #2`) so origin/parent chips are disambiguated on hover.
 - Runtime wiring note: a backend agent's self-report claimed `GeneticsModule` and `seedGenetics` were wired, but `nest build` is type-check only and never executes `main.ts`. Both wirings were missing on disk and were applied directly before close-out; `npm.cmd run build` from `backend` and `npx ng build` from `frontend` both pass after the fix.
-- Remaining active plans: `llm-model-test-results-retention-plan.md`, `provider-and-llm-db-plan.md` (partial — Phases 1-3 done, 4-9 remain), `database-storage-monitor-plan.md`.
+- Remaining active plans: `provider-and-llm-db-plan.md` (partial — Phases 1-3 done, 4-9 remain).
 
 ## 2026-06-28 Session (continued — Plan Cleanup)
 
@@ -252,7 +261,7 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Fixed: Tooltip "no info" error by ensuring `TerpeneStore` and `GeneticsStore` are initialized in `StrainHunter.ngOnInit`.
 - Fixed: Tooltip lookup failures by implementing normalized Hebrew name matching in `TerpeneStore` and `GeneticsStore` to handle punctuation/whitespace variations.
 - Added: 500ms mouse hover delay for `Tooltip` and `ScoreTooltip` components in `StrainHunter` to prevent flickering on rapid mouse movement.
-- Remaining active plans: `llm-model-test-results-retention-plan.md`, `provider-and-llm-db-plan.md` (partial — Phases 1-3 done, 4-9 remain), `database-storage-monitor-plan.md`.
+- Remaining active plans: `provider-and-llm-db-plan.md` (partial — Phases 1-3 done, 4-9 remain).
 
 ## 2026-06-28 Session (continued — Plan Cleanup)
 

@@ -1,0 +1,94 @@
+@if (loading()) {
+    <div class="page-state loading-state">
+        <span class="icon ph ph-spinner ph-spin"></span>
+        <h4 class="title">טוען נתוני מסד נתונים...</h4>
+    </div>
+} @else if (error()) {
+    <div class="page-state error-state">
+        <span class="icon ph ph-warning-circle"></span>
+        <h4 class="title">שגיאה בטעינת נתונים</h4>
+        <p class="subtitle">{{ error() }}</p>
+        <button type="button" class="primary-btn outlined" (click)="loadStorage()">
+            <i class="ph ph-arrow-clockwise"></i>
+            נסה שוב
+        </button>
+    </div>
+} @else if (data(); as d) {
+    <div class="db-monitor">
+        <div class="db-metrics">
+            @for (m of [
+                { icon: 'ph-database', value: d.totalSizeFormatted, label: 'גודל כולל' },
+                { icon: 'ph-table', value: d.tableCount, label: 'טבלאות' },
+                { icon: 'ph-rows', value: (d.totalRows | number), label: 'שורות כולל' },
+                { icon: 'ph-arrows-out-simple', value: d.largestTableName, label: 'הטבלה הגדולה ביותר', truncate: true }
+            ]; track m.label) {
+                @if (m.value) {
+                    <div class="glass-effect card db-metric">
+                        <span class="ph {{ m.icon }} icon-tile metric-icon"></span>
+                        <div class="db-metric-details">
+                            <div class="metric-value" [class.db-truncate]="m.truncate">{{ m.value }}</div>
+                            <div class="metric-label">{{ m.label }}</div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        @if (d.tables.length > 0) {
+            <div class="glass-effect card">
+                <div class="card-header">
+                    <span class="ph ph-chart-pie"></span>
+                    <h3>התפלגות גודל לפי טבלה</h3>
+                </div>
+                <div class="db-chart-row">
+                    <div class="db-donut-wrap">
+                        <div class="db-donut" [style.background]="getDonutGradient()">
+                            <div class="db-donut-hole">
+                                <span class="metric-value">{{ d.totalSizeFormatted }}</span>
+                                <span class="metric-label">סך הכל</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="db-legend">
+                        @for (table of getTopTables(); track table.tableName; let i = $index) {
+                            <div class="db-legend-row">
+                                <span class="db-legend-dot" [style.background]="getChartColor(i)"></span>
+                                <span class="db-legend-name">{{ table.tableName }}</span>
+                                <span class="db-legend-pct">{{ table.percentOfDatabase }}%</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-effect card">
+                <div class="card-header">
+                    <span class="ph ph-list"></span>
+                    <h3>טבלאות ({{ d.tableCount }})</h3>
+                </div>
+                @for (table of getAllTables(); track table.tableName) {
+                    <div class="db-table-row">
+                        <div class="db-table-top">
+                            <span class="row-label">{{ table.tableName }}</span>
+                            <span class="row-meta">{{ table.totalSizeFormatted }}</span>
+                        </div>
+                        <div class="db-bar-track">
+                            <div class="db-bar-fill" [style.width]="getBarWidth(table.percentOfDatabase)"></div>
+                        </div>
+                        <div class="db-table-chips">
+                            <span class="tag tag-muted"><i class="ph ph-rows"></i> {{ table.rowCount | number }} שורות</span>
+                            <span class="tag tag-muted"><i class="ph ph-hard-drives"></i> {{ table.dataSizeFormatted }}</span>
+                            <span class="tag tag-muted"><i class="ph ph-sort-ascending"></i> {{ table.indexSizeFormatted }}</span>
+                            <span class="tag db-pct">{{ table.percentOfDatabase }}%</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        } @else {
+            <div class="page-state empty-state">
+                <span class="icon ph ph-database"></span>
+                <h4 class="title">לא נמצאו טבלאות במסד הנתונים</h4>
+            </div>
+        }
+    </div>
+}

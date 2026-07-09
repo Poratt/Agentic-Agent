@@ -71,10 +71,15 @@ input[type='range'] {
 
   .search-clear-btn {
     position: absolute;
-    left: var(--space-2);
+    inset-inline-end: var(--space-1);
     top: 50%;
     transform: translateY(-50%);
     z-index: 1;
+    color: var(--color-text-muted);
+
+    &:hover {
+      color: var(--color-text-primary);
+    }
   }
 
   &:has(.search-clear-btn) input.form-control {
