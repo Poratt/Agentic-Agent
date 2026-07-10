@@ -219,10 +219,10 @@
   }
 
   /* Pin the "last updated" cell width so the pill doesn't shift between
-     the loading placeholder and the rendered date+time. */
+     the loading placeholder and the rendered relative time. */
   .summary-item--date {
     .summary-value {
-      min-width: 19ch;
+      min-width: 10ch;
       text-align: start;
     }
   }

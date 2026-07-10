@@ -92,7 +92,7 @@
                         <span class="ph ph-arrows-clockwise"></span>
                         <span class="summary-label">עודכן לאחרונה</span>
                         @if (lastUpdated(); as lastUpdate) {
-                            <span class="summary-value fade-in" dir="ltr">{{ lastUpdate | date: 'dd/MM/yyyy HH:mm:ss' }}</span>
+                            <span class="summary-value fade-in">{{ relativeTime(lastUpdate) }}</span>
                         } @else {
                             <span class="summary-value summary-value--muted" aria-label="טוען">
                                 <span class="dots-loader">

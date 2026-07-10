@@ -522,6 +522,32 @@ export class StrainHunter implements OnInit {
         return String(value);
     }
 
+    relativeTime(date: Date | null): string {
+        if (!date) return '';
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMin = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffHours < 1) {
+            return `${diffMin} דקות`;
+        }
+        if (diffHours < 24) {
+            return diffHours === 1 ? 'שעה' : `${diffHours} שעות`;
+        }
+        if (diffDays === 1) {
+            return 'אתמול';
+        }
+        if (diffDays <= 5) {
+            return `${diffDays} ימים`;
+        }
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+
     hasDisplayValue(value: unknown): boolean {
         return this.formatValue(value) !== '';
     }
