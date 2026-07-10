@@ -26,18 +26,20 @@ export const AppThemePreset = definePreset(Aura, {
     colorScheme: {
       light: {
         primary: {
-          color: '{primary.500}',
+          color: 'var(--color-primary)',
           inverseColor: 'var(--color-white)',
-          hoverColor: '{primary.600}',
-          activeColor: '{primary.700}',
+          hoverColor: 'var(--primary-300)',
+          focusColor: 'var(--color-primary)',
+          activeColor: 'var(--color-primary)',
         },
       },
       dark: {
         primary: {
-          color: '{primary.400}',
+          color: 'var(--color-primary)',
           inverseColor: 'var(--color-bg)',
-          hoverColor: '{primary.300}',
-          activeColor: '{primary.200}',
+          hoverColor: 'var(--primary-300)',
+          focusColor: 'var(--color-primary)',
+          activeColor: 'var(--color-primary)',
         },
       },
     },

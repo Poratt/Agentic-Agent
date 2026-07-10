@@ -43,7 +43,12 @@
                 @if (selectedImagePreview(); as preview) {
                     <div class="chat-image-preview">
                         <img [src]="preview" alt="תצוגה מקדימה של תמונה מצורפת" />
-                        <button type="button" class="transparent-btn icon-only xs chat-image-preview-close" aria-label="Remove image" (click)="clearSelectedImage()">
+                        <button
+                            type="button"
+                            class="transparent-btn icon-only xs chat-image-preview-close"
+                            aria-label="Remove image"
+                            (click)="clearSelectedImage()"
+                        >
                             <i class="ph ph-x"></i>
                         </button>
                     </div>
@@ -59,7 +64,12 @@
                 ></textarea>
                 <div class="chat-prompt-actions">
                     <input #fileInput type="file" accept="image/*" class="chat-file-input" (change)="onFileSelected($event)" />
-                    <button type="button" class="transparent-btn icon-only sm chat-upload-btn" aria-label="Attach image" (click)="openFilePicker()">
+                    <button
+                        type="button"
+                        class="transparent-btn icon-only sm chat-upload-btn"
+                        aria-label="Attach image"
+                        (click)="openFilePicker()"
+                    >
                         <i class="ph ph-image"></i>
                     </button>
 
@@ -73,7 +83,8 @@
                             optionValue="id"
                             placeholder="בחר מודל"
                             appendTo="body"
-                            class="custom-select"
+                            size="small"
+                            class="custom-select transparnet"
                         >
                             <ng-template let-group #group>
                                 <span>{{ group.label }}</span>
@@ -83,20 +94,20 @@
                             </ng-template>
                         </p-select>
 
-                    <button
-                        [type]="loading() ? 'button' : 'submit'"
-                        class="chat-send-btn"
-                        [class.stop]="loading()"
-                        [disabled]="!loading() && (!canSend() || historyLoading())"
-                        [attr.aria-label]="loading() ? 'Stop response' : 'Send message'"
-                        (click)="loading() ? stopStreaming() : null"
-                    >
-                        @if (loading()) {
-                            <span class="ph ph-stop sm"></span>
-                        } @else {
-                            <span class="ph ph-arrow-up sm"></span>
-                        }
-                    </button>
+                        <button
+                            [type]="loading() ? 'button' : 'submit'"
+                            class="chat-send-btn"
+                            [class.stop]="loading()"
+                            [disabled]="!loading() && (!canSend() || historyLoading())"
+                            [attr.aria-label]="loading() ? 'Stop response' : 'Send message'"
+                            (click)="loading() ? stopStreaming() : null"
+                        >
+                            @if (loading()) {
+                                <span class="ph ph-stop sm"></span>
+                            } @else {
+                                <span class="ph ph-arrow-up sm"></span>
+                            }
+                        </button>
                     </div>
                 </div>
             </div>

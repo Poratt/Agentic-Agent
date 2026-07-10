@@ -24,7 +24,7 @@ select {
 
   &:focus {
     background: var(--color-input-bg);
-    border-color: var(--color-primary);
+    border-color: var(--primary-300);
     box-shadow: 0 0 0 2px var(--color-primary-glow);
   }
 

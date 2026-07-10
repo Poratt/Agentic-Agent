@@ -23,11 +23,12 @@ import { UsersStore } from '../../../core/store/users.store';
 import { Select } from 'primeng/select';
 import { LlmProviderStore, GroupedLlmProvider } from '../../../core/store/llm-provider.store';
 import { ChatService } from '../../../core/services/chat.service';
+import { Dropdown } from '../../../components/shared/dropdown/dropdown';
 
 @Component({
     selector: 'app-chat',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, AutoScrollBottomDirective, ChatMessage, Select],
+    imports: [CommonModule, ReactiveFormsModule, AutoScrollBottomDirective, ChatMessage, Select, Dropdown],
     templateUrl: './chat.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './chat.css',

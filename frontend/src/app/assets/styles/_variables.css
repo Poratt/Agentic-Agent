@@ -28,8 +28,8 @@
   --font-family: var(--font-main);
   --font-code: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
 
-  --font-size-xs: 12px;
   --font-size-xxs: 10px;
+  --font-size-xs: 12px;
   --font-size-sm: 13px;
   --font-size-md: 15px;
   --font-size-lg: 18px;
