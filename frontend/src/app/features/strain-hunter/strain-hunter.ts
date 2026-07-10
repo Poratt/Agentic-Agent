@@ -274,8 +274,6 @@ export class StrainHunter implements OnInit {
     });
 
     ngOnInit() {
-        this.terpeneStore.loadAll();
-        this.geneticsStore.loadAll();
         this.load(false);
     }
 

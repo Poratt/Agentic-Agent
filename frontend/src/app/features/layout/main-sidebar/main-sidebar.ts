@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthStore } from '../../../core/store/auth.store';
@@ -25,6 +25,10 @@ export class MainSidebar implements OnInit {
     protected readonly getUserRoleData = getUserRoleData;
     public pendingDeleteSessionId = signal<number | null>(null);
 
+    ngOnInit() {
+        this.chatStore.loadSessions();
+    }
+
     public formattedSessions = computed(() => {
         return this.chatStore.recentSessions().map((session) => ({
             ...session,
@@ -32,10 +36,6 @@ export class MainSidebar implements OnInit {
                 session.title === 'New chat...' || session.title === 'New chat' ? 'שיחה חדשה...' : session.title,
         }));
     });
-
-    ngOnInit() {
-        this.chatStore.loadSessions();
-    }
 
     setPendingDelete(event: MouseEvent, sessionId: number) {
         event.preventDefault();

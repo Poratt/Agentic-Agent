@@ -8,7 +8,6 @@ import { ToastModule } from 'primeng/toast';
     imports: [RouterOutlet, ConfirmDialogModule, ToastModule],
     templateUrl: './app.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    styleUrl: './app.css',
 })
 export class App {
     protected readonly title = signal('frontend');

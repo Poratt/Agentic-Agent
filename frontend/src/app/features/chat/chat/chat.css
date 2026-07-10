@@ -24,7 +24,6 @@
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
 
-		/* .custom-loader uses global definition in _utilities.css */
 	}
 
 	.chat-history {
@@ -176,19 +175,19 @@
 
 			&:focus-within {
 				background: var(--color-input-bg);
-				border-color: var(--color-primary);
-				box-shadow: 0 0 0 var(--space-2) var(--color-primary-glow);
+				border-color: var(--primary-300);
+				box-shadow: 0 0 0 2px var(--color-primary-glow);
 			}
 
 			&:hover:not(:focus-within),
-			l &:hover:not(:disabled) {
+			&:hover:not(:disabled) {
 				background: var(--color-input-bg);
 				border-color: var(--primary-300);
 			}
 
 			textarea {
 				width: 100%;
-				min-height: var(--space-32);
+				min-height: var(--space-8);
 				max-height: calc(var(--space-32) * 3);
 				padding: 0;
 				resize: none;
@@ -210,15 +209,23 @@
 
 			.chat-prompt-actions {
 				display: flex;
+				align-items: center;
 				justify-content: space-between;
+				gap: var(--space-2);
+			}
+
+			.chat-prompt-actions-right {
+				display: flex;
+				align-items: center;
+				gap: var(--space-2);
 			}
 
 			.chat-send-btn {
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
-				width: calc(var(--space-16) + var(--space-2));
-				height: calc(var(--space-16) + var(--space-2));
+				width: var(--space-10);
+				height: var(--space-10);
 				padding: 0;
 				margin: 0;
 				color: var(--color-bg);
@@ -226,6 +233,7 @@
 				border: 0;
 				border-radius: 50%;
 				cursor: pointer;
+				flex-shrink: 0;
 				transition:
 					background-color var(--transition-fast),
 					color var(--transition-fast),

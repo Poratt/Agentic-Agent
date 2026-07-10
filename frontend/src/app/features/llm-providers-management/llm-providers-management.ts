@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, computed, viewChild, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, inject, computed, viewChild, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
@@ -46,7 +46,7 @@ export interface LlmProviderView extends Omit<LlmProvider, 'models'> {
     templateUrl: './llm-providers-management.html',
     styleUrl: './llm-providers-management.css'
 })
-export class LlmProvidersManagement implements OnInit {
+export class LlmProvidersManagement {
     private table = viewChild<Table>('table');
     private fb = inject(FormBuilder);
 
@@ -151,10 +151,6 @@ export class LlmProvidersManagement implements OnInit {
         return `${mode} Model | ${this.modelDialogProviderLabel()}`;
     });
 
-    ngOnInit() {
-        this.llmProviderStore.loadProviders();
-    }
-
     applyGlobalFilter(event: Event) {
         this.table()?.filterGlobal((event.target as HTMLInputElement).value, 'contains');
     }
@@ -187,7 +183,7 @@ export class LlmProvidersManagement implements OnInit {
         this.llmProviderService.testModel(modelId).subscribe({
             next: () => {
                 this.testingModelId.set(0);
-                this.llmProviderStore.loadProviders();
+                this.llmProviderStore.reload();
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Test Complete',
@@ -201,7 +197,7 @@ export class LlmProvidersManagement implements OnInit {
                     summary: 'Test Failed',
                     detail: err?.error?.message || 'Unknown error'
                 });
-                this.llmProviderStore.loadProviders();
+                this.llmProviderStore.reload();
             }
         });
     }

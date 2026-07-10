@@ -1,14 +1,20 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, httpResource } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { IGenetics } from '../models/genetics.interface';
 import { GeneticsService } from '../services/genetics.service';
+import { ServiceResultContainer } from '../models/service-result-container.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class GeneticsStore {
     private service = inject(GeneticsService);
 
-    genetics = signal<IGenetics[]>([]);
-    loading = signal(false);
+    geneticsResource = httpResource<ServiceResultContainer<IGenetics[]>>(() =>
+        `${environment.apiUrl}/genetics`
+    );
+
+    genetics = computed(() => this.geneticsResource.value()?.result ?? []);
+    loading = computed(() => this.geneticsResource.isLoading());
     error = signal<string | null>(null);
 
     readonly byName = computed<ReadonlyMap<string, IGenetics>>(() => {
@@ -35,24 +41,8 @@ export class GeneticsStore {
         return this.byName().get(normalized);
     }
 
-    loadAll(force = false): void {
-        if (!force && (this.genetics().length > 0 || this.loading())) {
-            return;
-        }
-
-        this.loading.set(true);
-        this.error.set(null);
-
-        this.service.list().subscribe({
-            next: (res) => {
-                this.genetics.set(res?.result ?? []);
-                this.loading.set(false);
-            },
-            error: (err: unknown) => {
-                this.error.set(this.extractMessage(err, 'טעינת גנטיקות נכשלה'));
-                this.loading.set(false);
-            },
-        });
+    reload(): void {
+        this.geneticsResource.reload();
     }
 
     clearError(): void {
@@ -61,13 +51,8 @@ export class GeneticsStore {
 
     update(name: string, data: Partial<IGenetics>): void {
         this.service.update(name, data).subscribe({
-            next: (res) => {
-                const updated = res.result;
-                if (updated) {
-                    this.genetics.update(items =>
-                        items.map(g => g.name === name ? updated : g)
-                    );
-                }
+            next: () => {
+                this.geneticsResource.reload();
             },
             error: (err: unknown) => {
                 this.error.set(this.extractMessage(err, 'עדכון גנטיקה נכשל'));
@@ -79,6 +64,7 @@ export class GeneticsStore {
         return new Promise((resolve, reject) => {
             this.service.enrich(name).subscribe({
                 next: (res) => {
+                    this.geneticsResource.reload();
                     resolve(res.result ?? null);
                 },
                 error: (err: unknown) => {
@@ -93,7 +79,7 @@ export class GeneticsStore {
         return new Promise((resolve, reject) => {
             this.service.delete(name).subscribe({
                 next: () => {
-                    this.genetics.update(items => items.filter(g => g.name !== name));
+                    this.geneticsResource.reload();
                     resolve();
                 },
                 error: (err: unknown) => {

@@ -12,9 +12,17 @@
   &.p-datatable-stacked {
     table-layout: auto !important;
 
-    .p-datatable-tbody > tr > td {
-      width: 100% !important;
-      max-width: none !important;
+    .p-datatable-tbody {
+      &>tr>td {
+        width: 100% !important;
+        max-width: none !important;
+      }
+    }
+  }
+
+  @media (max-width: 1600px) {
+    .table-row-header {
+      display: none;
     }
   }
 }
@@ -44,8 +52,8 @@
       color: var(--color-text-secondary);
     }
 
-    >tr {
-      >th {
+    &>tr {
+      &>th {
         background-color: transparent;
         padding-block: var(--space-12);
 
@@ -66,46 +74,42 @@
 
   tr {
     background: transparent !important;
+
+    td {
+      text-overflow: ellipsis;
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-xs);
+
+      &,
+      th {
+        white-space: nowrap;
+
+        &.col-toggle {
+          width: 40px;
+        }
+      }
+    }
   }
-}
 
-td,
-th {
-  white-space: nowrap;
-
-  &.col-toggle {
-    width: 40px;
+  p-paginator.p-paginator {
+    background: transparent;
+    flex-direction: row-reverse;
   }
+
 }
 
-td {
-  text-overflow: ellipsis;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-xs);
-}
-
-p-table {
-  p-table {
-    background-color: var(--grey-30) !important;
-
-  }
-}
-
-p-paginator.p-paginator {
-  background: transparent;
-  flex-direction: row-reverse;
-}
 
 /* ── Select ──────────────────────────────────────────────────────────────── */
 
 p-select.custom-select.p-select {
-  width: 240px;
+  width: 200px;
 
   .p-select-label {
     font-size: var(--font-size-xs);
-    padding: 0 12px;
+    padding: var(--space-3) var(--space-4);
     display: flex;
     align-items: center;
+    min-height: var(--space-10);
   }
 }
 
@@ -144,6 +148,28 @@ li.p-select-option {
       background: transparent !important;
       padding: 0 !important;
     }
+  }
+}
+
+/* ── Confirm Dialog ───────────────────────────────────────────────────────── */
+
+.p-confirmdialog {
+  direction: ltr;
+  text-align: left;
+
+  .p-dialog-header {
+    direction: ltr;
+    text-align: left;
+  }
+
+  .p-dialog-content {
+    direction: ltr;
+    text-align: left;
+  }
+
+  .p-dialog-footer {
+    direction: ltr;
+    text-align: right;
   }
 }
 

@@ -118,9 +118,8 @@ export class Chat implements OnInit, OnDestroy {
             this.chatForm.patchValue({ prompt });
             this.sendMessage();
         };
-        this.userStore.loadCurrentUser();
 
-        this.llmProviderStore.loadProviders();
+        this.llmProviderStore.reload();
 
         this.routeSub = this.route.queryParams.subscribe((params) => {
             const sessionId = params['sessionId'] ? Number(params['sessionId']) : null;
@@ -349,7 +348,7 @@ export class Chat implements OnInit, OnDestroy {
                 });
 
                 if (isFirstMessage || currentSession?.title === 'שיחה חדשה...') {
-                    this.chatStore.loadSessions();
+                    this.chatStore.reload();
                 }
 
                 this.router.navigate(['/chat'], { queryParams: { sessionId }, replaceUrl: true });
@@ -571,7 +570,7 @@ export class Chat implements OnInit, OnDestroy {
                     return prev.slice(0, deleteFromIndex);
                 });
                 this.deletingMessageId.set(null);
-                this.chatStore.loadSessions();
+                this.chatStore.reload();
             },
             error: () => {
                 this.deletingMessageId.set(null);

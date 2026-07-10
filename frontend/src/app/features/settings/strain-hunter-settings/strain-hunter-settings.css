@@ -69,7 +69,6 @@
         width: 100%;
         box-sizing: border-box;
 
-        /* פריסה דו-עמודתית במסכים רחבים כאשר יש תוצאות LLM להשוואה */
         &.has-enrichment {
             @media (min-width: 1000px) {
                 flex-direction: row;
@@ -83,10 +82,8 @@
             }
         }
 
-        /* הגבלת רוחב סבירה כשאין LLM להשוואה, כדי שהתוכן לא יימרח */
         .current-details {
             width: 100%;
-            max-width: 900px;
             box-sizing: border-box;
         }
     }
@@ -106,7 +103,6 @@
         min-width: 0;
         overflow: hidden;
 
-        /* כרטיס תיאור מלא - רוחב שלם בעיצוב קומפקטי ומהודק */
         &.detail-full {
             grid-column: 1 / -1;
             background: color-mix(in srgb, var(--color-surface) 40%, transparent);
@@ -140,7 +136,6 @@
         white-space: normal;
         word-break: break-word;
 
-        /* כיווץ התגיות בתוך השורה המורחבת */
         .badge {
             padding: 2px var(--space-4);
             font-size: 10px;
@@ -191,12 +186,5 @@
             gap: var(--space-4);
             width: 100%;
         }
-    }
-}
-
-
-@media (max-width: 1600px) {
-    :host .catalog-table .table-row-header {
-        display: none;
     }
 }

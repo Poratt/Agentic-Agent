@@ -1,14 +1,20 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, httpResource } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { ITerpene } from '../models/terpene.interface';
 import { TerpeneService } from '../services/terpene.service';
+import { ServiceResultContainer } from '../models/service-result-container.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class TerpeneStore {
     private service = inject(TerpeneService);
 
-    terpenes = signal<ITerpene[]>([]);
-    loading = signal(false);
+    terpenesResource = httpResource<ServiceResultContainer<ITerpene[]>>(() =>
+        `${environment.apiUrl}/terpenes`
+    );
+
+    terpenes = computed(() => this.terpenesResource.value()?.result ?? []);
+    loading = computed(() => this.terpenesResource.isLoading());
     error = signal<string | null>(null);
 
     readonly byName = computed<ReadonlyMap<string, ITerpene>>(() => {
@@ -35,24 +41,8 @@ export class TerpeneStore {
         return this.byName().get(normalized);
     }
 
-    loadAll(force = false): void {
-        if (!force && (this.terpenes().length > 0 || this.loading())) {
-            return;
-        }
-
-        this.loading.set(true);
-        this.error.set(null);
-
-        this.service.list().subscribe({
-            next: (res) => {
-                this.terpenes.set(res?.result ?? []);
-                this.loading.set(false);
-            },
-            error: (err: unknown) => {
-                this.error.set(this.extractMessage(err, 'טעינת טרפנים נכשלה'));
-                this.loading.set(false);
-            },
-        });
+    reload(): void {
+        this.terpenesResource.reload();
     }
 
     clearError(): void {
@@ -61,13 +51,8 @@ export class TerpeneStore {
 
     update(name: string, data: Partial<ITerpene>): void {
         this.service.update(name, data).subscribe({
-            next: (res) => {
-                const updated = res.result;
-                if (updated) {
-                    this.terpenes.update(items =>
-                        items.map(t => t.name === name ? updated : t)
-                    );
-                }
+            next: () => {
+                this.terpenesResource.reload();
             },
             error: (err: unknown) => {
                 this.error.set(this.extractMessage(err, 'עדכון טרפן נכשל'));
@@ -79,6 +64,7 @@ export class TerpeneStore {
         return new Promise((resolve, reject) => {
             this.service.enrich(name).subscribe({
                 next: (res) => {
+                    this.terpenesResource.reload();
                     resolve(res.result ?? null);
                 },
                 error: (err: unknown) => {
@@ -93,7 +79,7 @@ export class TerpeneStore {
         return new Promise((resolve, reject) => {
             this.service.delete(name).subscribe({
                 next: () => {
-                    this.terpenes.update(items => items.filter(t => t.name !== name));
+                    this.terpenesResource.reload();
                     resolve();
                 },
                 error: (err: unknown) => {

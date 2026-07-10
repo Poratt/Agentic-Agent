@@ -52,7 +52,7 @@
                     #promptTextarea
                     formControlName="prompt"
                     placeholder="הקלד את הודעתך כאן..."
-                    rows="3"
+                    rows="1"
                     autocomplete="off"
                     (keydown)="onPromptKeydown($event)"
                     (paste)="onPaste($event)"
@@ -62,26 +62,26 @@
                     <button type="button" class="transparent-btn icon-only sm chat-upload-btn" aria-label="Attach image" (click)="openFilePicker()">
                         <i class="ph ph-image"></i>
                     </button>
-                    <p-select
-                        [options]="models()"
-                        formControlName="model"
-                        [group]="true"
-                        optionGroupLabel="label"
-                        optionLabel="label"
-                        optionValue="id"
-                        placeholder="בחר מודל"
-                        class="custom-select"
-                    >
-                        <!-- Template לקבוצה (Group) -->
-                        <ng-template let-group #group>
-                            <span>{{ group.label }}</span>
-                        </ng-template>
 
-                        <!-- Template לפריט בודד -->
-                        <ng-template let-model #item>
-                            <div class="select-option">{{ model.label }}</div>
-                        </ng-template>
-                    </p-select>
+                    <div class="chat-prompt-actions-right">
+                        <p-select
+                            [options]="models()"
+                            formControlName="model"
+                            [group]="true"
+                            optionGroupLabel="label"
+                            optionLabel="label"
+                            optionValue="id"
+                            placeholder="בחר מודל"
+                            appendTo="body"
+                            class="custom-select"
+                        >
+                            <ng-template let-group #group>
+                                <span>{{ group.label }}</span>
+                            </ng-template>
+                            <ng-template let-model #item>
+                                <div class="select-option">{{ model.label }}</div>
+                            </ng-template>
+                        </p-select>
 
                     <button
                         [type]="loading() ? 'button' : 'submit'"
@@ -92,11 +92,12 @@
                         (click)="loading() ? stopStreaming() : null"
                     >
                         @if (loading()) {
-                            <span class="ph ph-stop md"></span>
+                            <span class="ph ph-stop sm"></span>
                         } @else {
-                            <span class="ph ph-arrow-up md"></span>
+                            <span class="ph ph-arrow-up sm"></span>
                         }
                     </button>
+                    </div>
                 </div>
             </div>
         </form>

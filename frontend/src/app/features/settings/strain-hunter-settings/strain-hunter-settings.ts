@@ -73,8 +73,6 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.isCompact.set(this.mql.matches);
         this.mql.addEventListener('change', this.mqlHandler);
-        this.geneticsStore.loadAll();
-        this.terpeneStore.loadAll();
     }
 
     ngOnDestroy(): void {
@@ -282,7 +280,7 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
             const result = await firstValueFrom(this.geneticsService.enrichMissing());
             if (result.success && result.result) {
                 this.bulkResult.set(result.result);
-                await this.geneticsStore.loadAll(true);
+                this.geneticsStore.reload();
             }
         } catch {
             // Error handled by store
@@ -299,7 +297,7 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
             const result = await firstValueFrom(this.terpeneService.enrichMissing());
             if (result.success && result.result) {
                 this.bulkResult.set(result.result);
-                await this.terpeneStore.loadAll(true);
+                this.terpeneStore.reload();
             }
         } catch {
             // Error handled by store

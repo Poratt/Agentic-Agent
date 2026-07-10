@@ -82,8 +82,6 @@ export class MatchingPreferencesDrawer {
     constructor() {
         effect(() => {
             if (this.visible()) {
-                this.terpeneStore.loadAll();
-                this.geneticsStore.loadAll();
             }
         });
     }

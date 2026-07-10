@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, computed, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, computed, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InputTextModule } from 'primeng/inputtext';
 import { Table, TableModule } from 'primeng/table';
@@ -27,7 +27,7 @@ type UserTableRow = User & {
     changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './users-management.html',
 })
-export class UsersManagement implements OnInit {
+export class UsersManagement {
     private table = viewChild<Table>('table');
 
     protected authStore = inject(AuthStore);
@@ -55,10 +55,6 @@ export class UsersManagement implements OnInit {
             };
         }),
     );
-
-    ngOnInit() {
-        this.usersStore.loadUsers();
-    }
 
     applyGlobalFilter(event: Event) {
         this.table()?.filterGlobal((event.target as HTMLInputElement).value, 'contains');
