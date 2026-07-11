@@ -50,7 +50,7 @@
                     </div>
                     <div content class="fade-in">
                         @for (session of formattedSessions(); track session.id) {
-                            <div class="nav-sub-item" [class.active]="chatStore.currentSessionId() === session.id">
+                            <div class="nav-sub-item stagger stagger-up" [class.active]="chatStore.currentSessionId() === session.id">
                                 @if (pendingDeleteSessionId() === session.id) {
                                     <div class="delete-confirmation">
                                         <span class="warning-text typewriter">האם אתה בטוח?</span>

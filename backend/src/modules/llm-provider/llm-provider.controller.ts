@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiOkResponse, ApiCreatedResponse, ApiBadRequestResponse, ApiUnauthorizedResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiOkResponse, ApiCreatedResponse, ApiBadRequestResponse, ApiUnauthorizedResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { LlmProviderService } from './llm-provider.service';
 import { CreateLlmProviderDto } from './dto/create-llm-provider.dto';
 import { UpdateLlmProviderDto } from './dto/update-llm-provider.dto';
@@ -68,5 +68,15 @@ export class LlmProviderController {
   @ApiUnauthorizedResponse({ description: 'JWT token missing or invalid' })
   async findModels(@Param('id') id: string): Promise<ServiceResultContainer<LlmModelEntity[]>> {
     return this.service.findModelsByProvider(+id);
+  }
+
+  @Post('cleanup-test-results')
+  @ApiOperation({ summary: 'Delete old test results', description: 'Manually triggers cleanup of LLM test results older than retention period.' })
+  @ApiQuery({ name: 'retentionDays', required: false, type: Number, description: 'Delete results older than N days (default: 30)' })
+  @ApiOkResponse({ description: 'Number of deleted rows' })
+  @ApiUnauthorizedResponse({ description: 'JWT token missing or invalid' })
+  async cleanupTestResults(@Query('retentionDays') retentionDays?: number): Promise<ServiceResultContainer<number>> {
+    const deleted = await this.service.deleteOldTestResults(retentionDays ?? 30);
+    return { success: true, message: `Deleted ${deleted} rows`, result: deleted };
   }
 }

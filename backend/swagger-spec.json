@@ -1065,6 +1065,40 @@
         ]
       }
     },
+    "/llm-provider/cleanup-test-results": {
+      "post": {
+        "description": "Manually triggers cleanup of LLM test results older than retention period.",
+        "operationId": "LlmProviderController_cleanupTestResults",
+        "parameters": [
+          {
+            "name": "retentionDays",
+            "required": false,
+            "in": "query",
+            "description": "Delete results older than N days (default: 30)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Number of deleted rows"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete old test results",
+        "tags": [
+          "LLM Provider"
+        ]
+      }
+    },
     "/analytics/query": {
       "post": {
         "description": "Runs a supported analytics metric from the server-side catalog and returns chart-ready data.",

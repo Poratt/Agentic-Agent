@@ -19,7 +19,7 @@ import { confirmationDialogSettings } from '../../../core/config/confirmation-di
 @Component({
     selector: 'app-strain-hunter-settings',
     standalone: true,
-    imports: [CommonModule, FormsModule, TableModule, Tabs, TabList, Tab, TabPanels, TabPanel, InputTextModule, ConfirmDialogModule, ToastModule],
+    imports: [CommonModule, FormsModule, TableModule, Tabs, TabList, Tab, TabPanels, TabPanel, InputTextModule, ToastModule, ConfirmDialogModule],
     templateUrl: './strain-hunter-settings.html',
     styleUrls: ['./strain-hunter-settings.css'],
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -44,7 +44,6 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
     bulkEnriching = signal<'genetics' | 'terpenes' | null>(null);
     bulkResult = signal<{ total: number; enriched: number; errors: number } | null>(null);
     isCompact = signal(false);
-    confirmOpen = signal(false);
 
     filteredGenetics = computed<IGenetics[]>(() => {
         const q = this.geneticsFilter().toLowerCase();
@@ -307,14 +306,11 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
     }
 
     async deleteGenetics(g: IGenetics): Promise<void> {
-        if (this.confirmOpen()) return;
-        this.confirmOpen.set(true);
         this.confirmService.confirm({
             ...confirmationDialogSettings(),
             message: `למחוק את "${g.name}"?`,
             header: 'מחיקת זן',
             accept: async () => {
-                this.confirmOpen.set(false);
                 try {
                     await this.geneticsStore.delete(g.name);
                     this.expandedGenetics.update(set => {
@@ -330,22 +326,16 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
                 } catch {
                     // Error handled by store
                 }
-            },
-            reject: () => {
-                this.confirmOpen.set(false);
             }
         });
     }
 
     async deleteTerpene(t: ITerpene): Promise<void> {
-        if (this.confirmOpen()) return;
-        this.confirmOpen.set(true);
         this.confirmService.confirm({
             ...confirmationDialogSettings(),
             message: `למחוק את "${t.name}"?`,
             header: 'מחיקת טרפן',
             accept: async () => {
-                this.confirmOpen.set(false);
                 try {
                     await this.terpeneStore.delete(t.name);
                     this.expandedTerpenes.update(set => {
@@ -361,9 +351,6 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
                 } catch {
                     // Error handled by store
                 }
-            },
-            reject: () => {
-                this.confirmOpen.set(false);
             }
         });
     }
