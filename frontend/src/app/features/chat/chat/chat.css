@@ -37,6 +37,8 @@
 		scroll-behavior: smooth;
 		direction: rtl;
 		width: 100%;
+		max-width: 800px;
+		margin: 0 auto;
 
 		.empty-chat-state {
 			display: flex;
