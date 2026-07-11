@@ -18,8 +18,23 @@ export class ChatService {
 		return this.http.get<IChatSession[]>(url);
 	}
 
-	getSessionMessages(sessionId: number): Observable<IChatMessage[]> {
-		return this.http.get<IChatMessage[]>(`${this.base}/sessions/${sessionId}/messages`);
+	getSessionMessages(sessionId: number): Observable<{ messages: IChatMessage[]; hasMoreImages: boolean }> {
+		return new Observable((observer) => {
+			this.http
+				.get<IChatMessage[]>(`${this.base}/sessions/${sessionId}/messages`, { observe: 'response' })
+				.subscribe({
+					next: (response) => {
+						const hasMoreImages = response.headers.get('x-has-more-images') === 'true';
+						observer.next({ messages: response.body ?? [], hasMoreImages });
+						observer.complete();
+					},
+					error: (err) => observer.error(err),
+				});
+		});
+	}
+
+	getMessageImages(messageIds: number[]): Observable<Record<number, string | null>> {
+		return this.http.post<Record<number, string | null>>(`${this.base}/messages/images`, { messageIds });
 	}
 
 	createSession(): Observable<IChatSession> {

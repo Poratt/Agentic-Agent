@@ -12,9 +12,9 @@
         <strong>{{ roleLabel() }}</strong>
     </div> -->
 
-    @if (isUser() && message().imagePreview) {
+    @if (isUser() && (message().imagePreview || message().imageUrl)) {
         <div class="message-attachment">
-            <img [src]="message().imagePreview" alt="תמונה מצורפת" />
+            <img [src]="message().imagePreview ?? message().imageUrl" alt="תמונה מצורפת" />
         </div>
     }
 

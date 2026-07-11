@@ -201,6 +201,10 @@ input {
   background: transparent !important;
 }
 
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
 
 ::-webkit-details-marker {
   display: none;

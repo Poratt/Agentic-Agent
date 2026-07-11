@@ -5,6 +5,11 @@ import { ChatSession } from '../entities/chat-session.entity';
 import { ChatMessage } from '../entities/chat-message.entity';
 import { LlmMessage } from '../../llm/types/llm.types';
 
+export interface SaveMessageOptions {
+  toolCallId?: string | null;
+  imageUrl?: string | null;
+}
+
 const DEFAULT_SESSION_TITLE = 'שיחה חדשה...';
 const LEGACY_DEFAULT_SESSION_TITLES = ['New chat...', 'New chat'];
 
@@ -35,7 +40,10 @@ export class AgentSessionService {
     });
   }
 
-  async getSessionMessages(sessionId: number, userId: number): Promise<ChatMessage[]> {
+  async getSessionMessages(
+    sessionId: number,
+    userId: number,
+  ): Promise<{ messages: ChatMessage[]; hasMoreImages: boolean }> {
     const session = await this.chatSessionRepository.findOne({
       where: { id: sessionId, userId },
     });
@@ -44,14 +52,40 @@ export class AgentSessionService {
       throw new ForbiddenException('אינך מורשה לגשת לשיחה זו או שהיא אינה קיימת.');
     }
 
-    return this.chatMessageRepository.find({
+    const messages = await this.chatMessageRepository.find({
       where: {
         sessionId,
         role: In(['user', 'assistant']),
         toolCallId: IsNull(),
       },
-      order: { createdAt: 'ASC' },
+      order: { createdAt: 'ASC', id: 'ASC' },
     });
+
+    let imageCount = 0;
+    for (const msg of messages) {
+      if (msg.imageUrl) {
+        imageCount++;
+        if (imageCount > 20) {
+          msg.imageUrl = null;
+        }
+      }
+    }
+
+    return { messages, hasMoreImages: imageCount > 20 };
+  }
+
+  async getMessageImages(
+    messageIds: number[],
+    userId: number,
+  ): Promise<Record<number, string | null>> {
+    const messages = await this.chatMessageRepository.find({
+      where: {
+        id: In(messageIds),
+        userId,
+      },
+    });
+
+    return Object.fromEntries(messages.map((m) => [m.id, m.imageUrl]));
   }
 
   async createSession(userId: number): Promise<ChatSession> {
@@ -141,14 +175,15 @@ export class AgentSessionService {
     sessionId: number,
     role: 'user' | 'assistant' | 'tool',
     content: string,
-    toolCallId: string | null = null,
+    options: SaveMessageOptions = {},
   ): Promise<ChatMessage> {
     const message = this.chatMessageRepository.create({
       userId,
       sessionId,
       role,
       content,
-      toolCallId,
+      toolCallId: options.toolCallId ?? null,
+      imageUrl: options.imageUrl ?? null,
     });
     return this.chatMessageRepository.save(message);
   }

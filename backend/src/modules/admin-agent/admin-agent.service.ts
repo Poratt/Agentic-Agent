@@ -73,8 +73,12 @@ export class AdminAgentService implements OnModuleInit {
     return this.agentSessionService.getSessions(userId, limit);
   }
 
-  async getSessionMessages(sessionId: number, userId: number): Promise<ChatMessage[]> {
+  async getSessionMessages(sessionId: number, userId: number) {
     return this.agentSessionService.getSessionMessages(sessionId, userId);
+  }
+
+  async getMessageImages(messageIds: number[], userId: number) {
+    return this.agentSessionService.getMessageImages(messageIds, userId);
   }
 
   async createSession(userId: number): Promise<ChatSession> {
@@ -102,7 +106,7 @@ export class AdminAgentService implements OnModuleInit {
     if (prompt && prompt.trim().length > 0) {
       await this.agentSessionService.updateSessionTitleIfDefault(session, prompt);
     }
-    await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt);
+    await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt, { imageUrl: image });
 
     const tools = this.swaggerToolsParser.getTools();
     const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model, prompt);
@@ -126,7 +130,7 @@ export class AdminAgentService implements OnModuleInit {
           session.id,
           'assistant',
           this.truncateForStorage(JSON.stringify(llmResponse.toolCalls)),
-          'YES_TOOL_CALLS',
+          { toolCallId: 'YES_TOOL_CALLS' },
         );
 
         const groups = this.groupToolCallsForExecution(llmResponse.toolCalls);
@@ -135,7 +139,7 @@ export class AdminAgentService implements OnModuleInit {
           const results = await this.executeToolCallGroup(group, userId);
 
           for (const { call, resultData } of results) {
-            await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), call.id);
+            await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), { toolCallId: call.id });
           }
         }
       } else {
@@ -166,7 +170,7 @@ export class AdminAgentService implements OnModuleInit {
     if (prompt && prompt.trim().length > 0) {
       await this.agentSessionService.updateSessionTitleIfDefault(session, prompt);
     }
-    await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt);
+    await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt, { imageUrl: image });
 
     const tools = this.swaggerToolsParser.getTools();
     const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model, prompt);
@@ -190,7 +194,7 @@ export class AdminAgentService implements OnModuleInit {
           session.id,
           'assistant',
           this.truncateForStorage(JSON.stringify(llmResponse.toolCalls)),
-          'YES_TOOL_CALLS',
+          { toolCallId: 'YES_TOOL_CALLS' },
         );
 
         const groups = this.groupToolCallsForExecution(llmResponse.toolCalls);
@@ -218,7 +222,7 @@ export class AdminAgentService implements OnModuleInit {
             yield JSON.stringify({ type: 'step', icon: STEP_ICONS.success, message: 'השלב בוצע בהצלחה!' }) + '\n';
           }
 
-          await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), call.id);
+          await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), { toolCallId: call.id });
         }
         }
       } else {

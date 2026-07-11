@@ -185,8 +185,8 @@ export class Chat implements OnInit, OnDestroy {
     }
 
     processFile(file: File): void {
-        if (file.size > 10 * 1024 * 1024) {
-            this.actionError.set('התמונה גדולה מדי (מקסימום 10MB). נסה קובץ קטן יותר.');
+        if (file.size > 8 * 1024 * 1024) {
+            this.actionError.set('התמונה גדולה מדי (מקסימום 8MB).');
             return;
         }
 
@@ -207,13 +207,16 @@ export class Chat implements OnInit, OnDestroy {
         }
     }
 
+    hasMoreImages = signal<boolean>(false);
+
     private loadConversationHistory(sessionId: number) {
         this.historyLoading.set(true);
         this.messages.set([]);
 
         this.chatService.getSessionMessages(sessionId).subscribe({
-            next: (history) => {
-                this.messages.set(history ?? []);
+            next: (result) => {
+                this.messages.set(result.messages ?? []);
+                this.hasMoreImages.set(result.hasMoreImages);
                 this.historyLoading.set(false);
             },
             error: () => {
@@ -224,6 +227,23 @@ export class Chat implements OnInit, OnDestroy {
                         content: '[שגיאה בטעינת היסטוריית השיחה. נא לנסות שוב]',
                     },
                 ]);
+            },
+        });
+    }
+
+    loadMoreImages(): void {
+        const strippedIds = this.messages()
+            .filter((m) => m.id && m.imageUrl === undefined)
+            .map((m) => m.id!);
+
+        if (strippedIds.length === 0) return;
+
+        this.chatService.getMessageImages(strippedIds).subscribe({
+            next: (imageMap) => {
+                this.messages.update((msgs) =>
+                    msgs.map((m) => (m.id && imageMap[m.id] !== undefined ? { ...m, imageUrl: imageMap[m.id] ?? undefined } : m)),
+                );
+                this.hasMoreImages.set(false);
             },
         });
     }
@@ -245,22 +265,19 @@ export class Chat implements OnInit, OnDestroy {
         const modelSelection = this.getModelSelection(selectedModelId);
         this.chatForm.patchValue({ prompt: '' });
 
+        const capturedPreview = this.selectedImagePreview();
         const capturedImage = imageValue ?? undefined;
-        this.selectedImageBase64.set(null);
-        this.selectedImagePreview.set(null);
-        if (this.fileInput) {
-            this.fileInput.nativeElement.value = '';
-        }
+        this.clearSelectedImage();
 
         const currentId = this.chatStore.currentSessionId();
         if (currentId) {
-            this.sendPromptToSession(promptValue, currentId, modelSelection, capturedImage);
+            this.sendPromptToSession(promptValue, currentId, modelSelection, capturedImage, capturedPreview ?? undefined);
             return;
         }
 
         this.chatStore.createSessionForMessage(false).subscribe({
             next: (session) => {
-                this.sendPromptToSession(promptValue, session.id, modelSelection, capturedImage);
+                this.sendPromptToSession(promptValue, session.id, modelSelection, capturedImage, capturedPreview ?? undefined);
             },
             error: () => {
                 this.loading.set(false);
@@ -268,14 +285,14 @@ export class Chat implements OnInit, OnDestroy {
         });
     }
 
-    private sendPromptToSession(promptValue: string, sessionId: number, modelSelection?: ChatModelSelection, image?: string) {
+    private sendPromptToSession(promptValue: string, sessionId: number, modelSelection?: ChatModelSelection, image?: string, imagePreview?: string) {
         this.cancelActiveStream();
         this.actionError.set(null);
 
         const userMsg: IChatMessage = {
             role: 'user',
             content: promptValue,
-            imagePreview: image || undefined,
+            imagePreview: imagePreview || image || undefined,
         };
 
         const assistantMsg: IChatMessage = {
@@ -357,6 +374,13 @@ export class Chat implements OnInit, OnDestroy {
         });
     }
 
+    autoGrow(): void {
+        const el = this.promptTextarea?.nativeElement;
+        if (!el) return;
+        el.style.height = 'auto';
+        const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 25.6;
+        el.style.height = `${Math.min(el.scrollHeight, lineHeight * 5)}px`;
+    }
 
     onPromptKeydown(event: KeyboardEvent): void {
         if (event.key !== 'Enter' || event.shiftKey) {

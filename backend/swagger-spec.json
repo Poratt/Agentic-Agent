@@ -614,7 +614,7 @@
     },
     "/admin-agent/sessions/{id}/messages": {
       "get": {
-        "description": "Returns user and assistant messages for a session owned by the authenticated user. Internal tool messages are filtered out for normal history display.",
+        "description": "Returns user and assistant messages for a session owned by the authenticated user. Internal tool messages are filtered out for normal history display. Response header X-Has-More-Images indicates whether additional images are available via the batch endpoint.",
         "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nRender a chat transcript timeline. Group messages by role, show user prompts and assistant replies clearly, include createdAt timestamps, and keep long message content readable with wrapping.\n\nNo explanations. No plain text.",
         "operationId": "AdminAgentController_getSessionMessages",
         "parameters": [
@@ -654,6 +654,57 @@
           "Admin Agent"
         ],
         "toolIcon": "ph-chats"
+      }
+    },
+    "/admin-agent/messages/images": {
+      "post": {
+        "description": "Returns the imageUrl (Base64 data URL) for each requested message ID. The frontend calls this for messages whose images were stripped by the 20-image cap.",
+        "operationId": "AdminAgentController_getMessageImages",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "messageIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "description": "Array of message IDs (max 50)."
+                  }
+                },
+                "required": [
+                  "messageIds"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Map of message ID to imageUrl."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "One or more messages do not belong to your sessions."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Batch fetch image data for messages",
+        "summaryHe": "שולף תמונות עבור הודעות בפאנץ'",
+        "tags": [
+          "Admin Agent"
+        ],
+        "toolIcon": "ph-image"
       }
     },
     "/admin-agent/sessions/{id}": {
@@ -2663,6 +2714,11 @@
             "example": "call_abc123",
             "nullable": true
           },
+          "imageUrl": {
+            "type": "string",
+            "description": "Optional Base64 data URL of an image attached to this user message.",
+            "nullable": true
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string",
@@ -2677,6 +2733,7 @@
           "role",
           "content",
           "toolCallId",
+          "imageUrl",
           "createdAt"
         ]
       },
@@ -2743,7 +2800,7 @@
           },
           "image": {
             "type": "string",
-            "description": "Optional Base64 data URL of an image to attach to this turn. Format: data:image/<mime>;base64,<payload>. If present, the user message is sent to the LLM as a multimodal content array containing this image plus the prompt text. If absent, the user message is sent as plain text.",
+            "description": "Optional Base64 data URL of an image to attach. Max 8 MB raw.",
             "example": "data:image/jpeg;base64,/9j/4AAQ..."
           }
         },

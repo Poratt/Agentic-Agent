@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -84,18 +85,61 @@ export class AdminAgentController {
     genUiSpec: GenUiSpec.CHAT_TRANSCRIPT_TIMELINE,
     description:
       'Returns user and assistant messages for a session owned by the authenticated user. ' +
-      'Internal tool messages are filtered out for normal history display.',
+      'Internal tool messages are filtered out for normal history display. ' +
+      'Response header X-Has-More-Images indicates whether additional images are available via the batch endpoint.',
   } as CustomApiOperationOptions)
   @ApiParam({ name: 'id', type: Number, description: 'Numeric chat session id.' })
   @ApiResponse({ status: 200, description: 'Historical messages loaded successfully.', type: [ChatMessageResponseDto] })
   async getSessionMessages(
     @Param('id', ParseIntPipe) id: number,
     @Req() req: RequestWithUser,
+    @Res({ passthrough: true }) res: Response,
   ) {
     if (!req.user) {
       throw new UnauthorizedException();
     }
-    return this.adminAgentService.getSessionMessages(id, req.user.sub);
+    const result = await this.adminAgentService.getSessionMessages(id, req.user.sub);
+    res.setHeader('x-has-more-images', String(result.hasMoreImages));
+    return result.messages;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('messages/images')
+  @ApiOperation({
+    summary: 'Batch fetch image data for messages',
+    summaryHe: 'שולף תמונות עבור הודעות בפאנץ\'',
+    toolIcon: 'ph-image',
+    description:
+      'Returns the imageUrl (Base64 data URL) for each requested message ID. ' +
+      'The frontend calls this for messages whose images were stripped by the 20-image cap.',
+  } as CustomApiOperationOptions)
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        messageIds: {
+          type: 'array',
+          items: { type: 'number' },
+          description: 'Array of message IDs (max 50).',
+        },
+      },
+      required: ['messageIds'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Map of message ID to imageUrl.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  @ApiForbiddenResponse({ description: 'One or more messages do not belong to your sessions.' })
+  async getMessageImages(
+    @Body('messageIds') messageIds: number[],
+    @Req() req: RequestWithUser,
+  ) {
+    if (!req.user) {
+      throw new UnauthorizedException();
+    }
+    if (!Array.isArray(messageIds) || messageIds.length === 0 || messageIds.length > 50) {
+      throw new BadRequestException('messageIds must be a non-empty array of at most 50 IDs.');
+    }
+    return this.adminAgentService.getMessageImages(messageIds, req.user.sub);
   }
 
   @UseGuards(JwtAuthGuard)

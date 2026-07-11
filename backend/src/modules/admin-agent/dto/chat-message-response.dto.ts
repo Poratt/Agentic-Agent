@@ -34,6 +34,12 @@ export class ChatMessageResponseDto {
   })
   toolCallId!: string | null;
 
+  @ApiProperty({
+    description: 'Optional Base64 data URL of an image attached to this user message.',
+    nullable: true,
+  })
+  imageUrl!: string | null;
+
   @ApiProperty({ description: 'Timestamp when the message was created.', example: '2026-05-12T10:00:00Z' })
   createdAt!: Date;
 }

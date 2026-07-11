@@ -13,6 +13,20 @@
         </div>
     } @else {
         <div class="chat-history" [autoScrollBottom]="true" [autoScrollBottomTrigger]="messages().length">
+            @if (hasMoreImages()) {
+                <div class="chat-load-more-images">
+                    <button
+                        type="button"
+                        class="primary-btn sm"
+                        (click)="loadMoreImages()"
+                        [disabled]="loading()"
+                    >
+                        <span class="ph ph-images"></span>
+                        טען תמונות נוספות
+                    </button>
+                </div>
+            }
+
             @for (msg of messages(); track $index) {
                 @if (msg.role !== 'tool') {
                     <app-chat-message
@@ -59,6 +73,7 @@
                     placeholder="הקלד את הודעתך כאן..."
                     rows="1"
                     autocomplete="off"
+                    (input)="autoGrow()"
                     (keydown)="onPromptKeydown($event)"
                     (paste)="onPaste($event)"
                 ></textarea>

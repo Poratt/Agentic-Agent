@@ -65,6 +65,9 @@ export class ChatMessage {
   @Column({ type: 'varchar', length: 255, nullable: true, default: null })
   toolCallId!: string | null;
 
+  @Column({ type: 'mediumtext', nullable: true, default: null })
+  imageUrl!: string | null;
+
   @ApiProperty({ description: 'Timestamp when the message was created.', example: '2026-05-12T10:00:00Z' })
   @CreateDateColumn()
   createdAt!: Date;

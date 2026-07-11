@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString, MaxLength, Matches } from 'class-validator';
 import type { LlmProvider } from '../../llm/types/llm.types';
 
 const LLM_PROVIDER_OPTIONS: LlmProvider[] = ['openrouter', 'nvidia', 'ollama', 'ollama-cloud'];
@@ -39,11 +39,12 @@ export class AgentRequestDto {
   model?: string;
 
   @ApiPropertyOptional({
-    description:
-      'Optional Base64 data URL of an image to attach to this turn. Format: data:image/<mime>;base64,<payload>. If present, the user message is sent to the LLM as a multimodal content array containing this image plus the prompt text. If absent, the user message is sent as plain text.',
+    description: 'Optional Base64 data URL of an image to attach. Max 8 MB raw.',
     example: 'data:image/jpeg;base64,/9j/4AAQ...',
   })
   @IsOptional()
   @IsString()
+  @MaxLength(14_000_000)
+  @Matches(/^data:image\/[a-zA-Z0-9+.-]+;base64,/)
   image?: string;
 }

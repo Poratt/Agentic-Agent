@@ -188,7 +188,7 @@
 			textarea {
 				width: 100%;
 				min-height: var(--space-8);
-				max-height: calc(var(--space-32) * 3);
+				max-height: calc(var(--space-32) * 5);
 				padding: 0;
 				resize: none;
 				line-height: 1.6;
@@ -196,7 +196,12 @@
 				border: 0;
 				border-radius: 0;
 				box-shadow: none;
-				scrollbar-width: thin;
+				scrollbar-width: none;
+				overflow-y: hidden;
+
+				&::-webkit-scrollbar {
+					display: none;
+				}
 
 				&:focus {
 					box-shadow: none;
