@@ -1,77 +1,105 @@
-<div
-    class="chat-message-row"
-    [ngClass]="{
-        'user-message': isUser(),
-        'assistant-message': isAssistant(),
-        'typing-active': showCursor(),
-        'bubble-enter': isActiveStream(),
-    }"
->
-    <!-- <div class="message-meta">
-        <span class="ph role-icon" [class.ph-user]="isUser()" [class.ph-robot]="!isUser()"></span>
-        <strong>{{ roleLabel() }}</strong>
-    </div> -->
+<div class="message-wrapper" [ngClass]="{ 'user-message-wrapper': isUser() }">
+    <div
+        class="chat-message-row"
+        [ngClass]="{
+            'user-message': isUser(),
+            'assistant-message': isAssistant(),
+            'typing-active': showCursor(),
+            'bubble-enter': isActiveStream(),
+        }"
+    >
+        <!-- <div class="message-meta">
+            <span class="ph role-icon" [class.ph-user]="isUser()" [class.ph-robot]="!isUser()"></span>
+            <strong>{{ roleLabel() }}</strong>
+        </div> -->
 
-    @if (isUser() && (message().imagePreview || message().imageUrl)) {
-        <div class="message-attachment">
-            <img [src]="message().imagePreview ?? message().imageUrl" alt="תמונה מצורפת" />
-        </div>
-    }
+        @if (isUser() && (message().imagePreview || message().imageUrl)) {
+            <div class="message-attachment">
+                <img [src]="message().imagePreview ?? message().imageUrl" alt="תמונה מצורפת" />
+            </div>
+        }
 
-    @if (isThinkingVisible()) {
-        <details class="thinking-process-box">
-            <summary class="thinking-summary">
-                <span class="ph ph-binoculars summary-icon" [class.thinking]="rowState() === 'thinking'"></span>
-                <span class="summary-label">עובד על זה...</span>
-                <span class="ph ph-caret-down expand-icon"></span>
-            </summary>
-            <ul class="steps-list" [autoScrollBottom]="true">
-                @for (step of displaySteps(); track $index) {
-                    <li class="step-item">
-                        <span class="xs ph {{ step.icon }}"></span>
-                        <span class="step-text">{{ step.message }}</span>
-                        @if (step.statusIcon) {
-                            <span class="ph {{ step.statusIcon }} step-status-icon"></span>
-                        }
-                    </li>
-                }
-            </ul>
-        </details>
-    }
+        @if (isThinkingVisible()) {
+            <details class="thinking-process-box">
+                <summary class="thinking-summary">
+                    <span class="ph ph-binoculars summary-icon" [class.thinking]="rowState() === 'thinking'"></span>
+                    <span class="summary-label">עובד על זה...</span>
+                    <span class="ph ph-caret-down expand-icon"></span>
+                </summary>
+                <ul class="steps-list" [autoScrollBottom]="true">
+                    @for (step of displaySteps(); track $index) {
+                        <li class="step-item">
+                            <span class="xs ph {{ step.icon }}"></span>
+                            <span class="step-text">{{ step.message }}</span>
+                            @if (step.statusIcon) {
+                                <span class="ph {{ step.statusIcon }} step-status-icon"></span>
+                            }
+                        </li>
+                    }
+                </ul>
+            </details>
+        }
 
-    @if (showPreparingLoader()) {
-        <div class="response-loader" aria-label="טוען תגובה">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-    }
+        @if (showPreparingLoader()) {
+            <div class="response-loader" aria-label="טוען תגובה">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        }
 
-    <div class="message-body" [aiFormat]="contentForDisplay()"></div>
+        <div class="message-body" [aiFormat]="contentForDisplay()"></div>
 
-    <div class="message-actions" aria-label="Message actions">
-        <button
-            type="button"
-            class="message-action-btn"
-            [disabled]="!canDelete()"
-            aria-label="Delete message"
-            (click)="requestAction('delete')"
-        >
-            <span class="ph ph-trash"></span>
-        </button>
-        <button
-            type="button"
-            class="message-action-btn"
-            [disabled]="!canSendAgain()"
-            aria-label="Send again"
-            (click)="requestAction('sendAgain')"
-        >
-            <span class="ph ph-arrow-clockwise"></span>
-        </button>
-        <button type="button" class="message-action-btn" aria-label="Copy message" (click)="requestAction('copy')">
-            <span class="ph" [class.ph-copy]="!copied()" [class.ph-check]="copied()"></span>
-        </button>
-        @if (isUser()) {
+        @if (!isUser()) {
+            <div class="message-actions" aria-label="Message actions">
+                <button
+                    type="button"
+                    class="message-action-btn"
+                    [disabled]="!canDelete()"
+                    aria-label="Delete message"
+                    (click)="requestAction('delete')"
+                >
+                    <span class="ph ph-trash"></span>
+                </button>
+                <button
+                    type="button"
+                    class="message-action-btn"
+                    [disabled]="!canSendAgain()"
+                    aria-label="Send again"
+                    (click)="requestAction('sendAgain')"
+                >
+                    <span class="ph ph-arrow-clockwise"></span>
+                </button>
+                <button type="button" class="message-action-btn" aria-label="Copy message" (click)="requestAction('copy')">
+                    <span class="ph" [class.ph-copy]="!copied()" [class.ph-check]="copied()"></span>
+                </button>
+            </div>
+        }
+    </div>
+
+    @if (isUser()) {
+        <div class="message-actions" aria-label="Message actions">
+            <button
+                type="button"
+                class="message-action-btn"
+                [disabled]="!canDelete()"
+                aria-label="Delete message"
+                (click)="requestAction('delete')"
+            >
+                <span class="ph ph-trash"></span>
+            </button>
+            <button
+                type="button"
+                class="message-action-btn"
+                [disabled]="!canSendAgain()"
+                aria-label="Send again"
+                (click)="requestAction('sendAgain')"
+            >
+                <span class="ph ph-arrow-clockwise"></span>
+            </button>
+            <button type="button" class="message-action-btn" aria-label="Copy message" (click)="requestAction('copy')">
+                <span class="ph" [class.ph-copy]="!copied()" [class.ph-check]="copied()"></span>
+            </button>
             <button
                 type="button"
                 class="message-action-btn"
@@ -81,6 +109,6 @@
             >
                 <span class="ph ph-pencil-simple"></span>
             </button>
-        }
-    </div>
+        </div>
+    }
 </div>

@@ -13,38 +13,40 @@
         </div>
     } @else {
         <div class="chat-history" [autoScrollBottom]="true" [autoScrollBottomTrigger]="messages().length">
-            @if (hasMoreImages()) {
-                <div class="chat-load-more-images">
-                    <button
-                        type="button"
-                        class="primary-btn sm"
-                        (click)="loadMoreImages()"
-                        [disabled]="loading()"
-                    >
-                        <span class="ph ph-images"></span>
-                        טען תמונות נוספות
-                    </button>
-                </div>
-            }
-
-            @for (msg of messages(); track $index) {
-                @if (msg.role !== 'tool') {
-                    <app-chat-message
-                        [message]="msg"
-                        [streamState]="getStreamState($index, msg)"
-                        [actionsDisabled]="loading() || deletingMessageId() === msg.id"
-                        (actionRequested)="handleMessageAction($event)"
-                    />
+            <div class="chat-history-messages">
+                @if (hasMoreImages()) {
+                    <div class="chat-load-more-images">
+                        <button
+                            type="button"
+                            class="primary-btn sm"
+                            (click)="loadMoreImages()"
+                            [disabled]="loading()"
+                        >
+                            <span class="ph ph-images"></span>
+                            טען תמונות נוספות
+                        </button>
+                    </div>
                 }
-            }
 
-            @if (messages().length === 0) {
-                <div class="empty-chat-state">
-                    <span class="ph ph-chat-circle-text xl"></span>
-                    <h3 class="">שלום {{ currentUserProfile()?.fullName || authStore.user()?.email }}!</h3>
-                    <p>כתוב הודעה למטה כדי להתחיל להתייעץ עם סוכן ה-AI שלך.</p>
-                </div>
-            }
+                @for (msg of messages(); track $index) {
+                    @if (msg.role !== 'tool') {
+                        <app-chat-message
+                            [message]="msg"
+                            [streamState]="getStreamState($index, msg)"
+                            [actionsDisabled]="loading() || deletingMessageId() === msg.id"
+                            (actionRequested)="handleMessageAction($event)"
+                        />
+                    }
+                }
+
+                @if (messages().length === 0) {
+                    <div class="empty-chat-state">
+                        <span class="ph ph-chat-circle-text xl"></span>
+                        <h3 class="">שלום {{ currentUserProfile()?.fullName || authStore.user()?.email }}!</h3>
+                        <p>כתוב הודעה למטה כדי להתחיל להתייעץ עם סוכן ה-AI שלך.</p>
+                    </div>
+                }
+            </div>
         </div>
     }
 

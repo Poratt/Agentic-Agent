@@ -2,6 +2,88 @@
 	display: contents;
 }
 
+.message-wrapper {
+	display: flex;
+	flex-direction: column;
+
+	&.user-message-wrapper {
+		align-self: flex-start;
+		max-width: 95%;
+
+		.message-actions {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			gap: var(--space-2);
+			justify-content: flex-end;
+			opacity: 0;
+			visibility: hidden;
+
+			.message-action-btn {
+				opacity: 0;
+				transform: translateY(4px);
+			}
+		}
+
+		&:hover,
+		&:focus-within {
+			.message-actions {
+				opacity: 1;
+				visibility: visible;
+
+				.message-action-btn {
+					animation: fadeInBtn 0.15s ease-out forwards;
+
+					&:nth-child(1) {
+						animation-delay: 0ms;
+					}
+
+					&:nth-child(2) {
+						animation-delay: 40ms;
+					}
+
+					&:nth-child(3) {
+						animation-delay: 80ms;
+					}
+
+					&:nth-child(4) {
+						animation-delay: 120ms;
+					}
+				}
+			}
+		}
+	}
+}
+
+
+.message-action-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--space-12);
+	height: var(--space-12);
+	padding: 0;
+	color: var(--color-text-secondary);
+	background: transparent;
+	border: 0;
+	border-radius: var(--radius-sm);
+	cursor: pointer;
+	transition: var(--transition-colors);
+	opacity: 0;
+	transform: translateY(4px);
+
+	&:hover:not(:disabled),
+	&:focus-visible:not(:disabled) {
+		color: var(--color-primary);
+		background: var(--primary-30);
+	}
+
+	&:disabled {
+		opacity: 0.45;
+		cursor: not-allowed;
+	}
+}
+
 
 .chat-message-row {
 	display: flex;
@@ -23,6 +105,10 @@
 		border: 1px solid var(--color-border);
 		text-align: right;
 		border-radius: var(--radius-md) var(--radius-md) 0 var(--radius-md);
+
+		.message-body {
+			text-align: right;
+		}
 
 		.message-attachment {
 			margin-bottom: var(--space-4);
@@ -72,45 +158,40 @@
 		gap: var(--space-2);
 		margin-block-start: var(--space-4);
 		opacity: 0;
-		transition: opacity var(--transition-fast);
-
-		.message-action-btn {
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			width: var(--space-12);
-			height: var(--space-12);
-			padding: 0;
-			color: var(--color-text-secondary);
-			background: transparent;
-			border: 0;
-			border-radius: var(--radius-sm);
-			cursor: pointer;
-			transition: var(--transition-colors), opacity var(--transition-fast);
-
-			&:hover:not(:disabled),
-			&:focus-visible:not(:disabled) {
-				color: var(--color-primary);
-				background: var(--primary-30);
-			}
-
-			&:disabled {
-				opacity: 0.45;
-				cursor: not-allowed;
-			}
-		}
+		visibility: hidden;
 	}
 
 	&:hover,
 	&:focus-within {
 		.message-actions {
 			opacity: 1;
+			visibility: visible;
+
+			.message-action-btn {
+				animation: fadeInBtn 0.15s ease-out forwards;
+
+				&:nth-child(1) {
+					animation-delay: 0ms;
+				}
+
+				&:nth-child(2) {
+					animation-delay: 40ms;
+				}
+
+				&:nth-child(3) {
+					animation-delay: 80ms;
+				}
+
+				&:nth-child(4) {
+					animation-delay: 120ms;
+				}
+			}
 		}
 	}
 
-	.message-meta {
+	&.user-message {
+		align-self: flex-end;
 		display: flex;
-		align-items: center;
 		gap: var(--space-4);
 		font-size: var(--font-size-sm);
 		color: var(--color-text-secondary);
@@ -297,6 +378,18 @@
 	}
 }
 
+@keyframes fadeInBtn {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
 @keyframes responseLoaderPulse {
 
 	0%,
@@ -326,6 +419,12 @@
 			}
 		}
 
+		.message-actions .message-action-btn {
+			animation: none;
+			opacity: 1;
+			transform: none;
+		}
+
 		.thinking-process-box {
 			.steps-list {
 				.step-item {
@@ -347,6 +446,54 @@
 	.chat-message-row {
 		.message-actions {
 			opacity: 1;
+			visibility: visible;
+
+			.message-action-btn {
+				animation: fadeInBtn 0.15s ease-out forwards;
+
+				&:nth-child(1) {
+					animation-delay: 0ms;
+				}
+
+				&:nth-child(2) {
+					animation-delay: 40ms;
+				}
+
+				&:nth-child(3) {
+					animation-delay: 80ms;
+				}
+
+				&:nth-child(4) {
+					animation-delay: 120ms;
+				}
+			}
+		}
+	}
+
+	.message-wrapper.user-message-wrapper {
+		.message-actions {
+			opacity: 1;
+			visibility: visible;
+
+			.message-action-btn {
+				animation: fadeInBtn 0.15s ease-out forwards;
+
+				&:nth-child(1) {
+					animation-delay: 0ms;
+				}
+
+				&:nth-child(2) {
+					animation-delay: 40ms;
+				}
+
+				&:nth-child(3) {
+					animation-delay: 80ms;
+				}
+
+				&:nth-child(4) {
+					animation-delay: 120ms;
+				}
+			}
 		}
 	}
 }
