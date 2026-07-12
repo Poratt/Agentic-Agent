@@ -113,6 +113,14 @@ button {
       padding: var(--space-2);
     }
 
+    &.md {
+      flex: 0 0 var(--space-12);
+      width: var(--space-12);
+      height: var(--space-12);
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     &.rounded {
       border-radius: 50%;
     }
@@ -222,6 +230,22 @@ button {
       background: var(--color-danger-bg);
       color: var(--color-danger);
     }
+  }
+}
+
+/* 4b. Bordered — visible border, primary highlight on hover */
+button.bordered {
+  border-color: var(--color-border);
+
+  &:hover:not(:disabled) {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background: var(--primary-30);
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--color-primary);
+    outline-offset: 1px;
   }
 }
 

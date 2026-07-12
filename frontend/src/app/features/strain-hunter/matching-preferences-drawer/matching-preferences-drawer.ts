@@ -7,6 +7,7 @@ import { MatchingEngineStore, ScoredStrain } from '../../../core/store/matching-
 import { TerpeneStore } from '../../../core/store/terpene.store';
 import { GeneticsStore } from '../../../core/store/genetics.store';
 import { Tooltip, TooltipCategory } from '../../../components/shared/tooltip/tooltip';
+import { TooltipDirective } from '../../../core/directives/tooltip.directive';
 
 type PreviewItem = {
     name: string;
@@ -34,7 +35,7 @@ const GAP = 8;
 @Component({
     selector: 'app-matching-preferences-drawer',
     standalone: true,
-    imports: [CommonModule, FormsModule, DrawerModule, ButtonModule, Tooltip],
+    imports: [CommonModule, FormsModule, DrawerModule, ButtonModule, Tooltip, TooltipDirective],
     templateUrl: './matching-preferences-drawer.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./matching-preferences-drawer.css'],

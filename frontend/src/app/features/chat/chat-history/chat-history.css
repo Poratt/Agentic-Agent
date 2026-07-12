@@ -35,14 +35,6 @@
                 background: var(--color-danger-bg);
                 border-color: var(--color-danger);
 
-                &::before {
-                    content: '';
-                    position: absolute;
-                    inset-block: 0;
-                    inset-inline-start: 0;
-                    width: 3px;
-                    background: var(--color-danger);
-                }
             }
 
             .session-info {
@@ -113,10 +105,12 @@
             }
 
             .delete-confirmation {
+                display: flex;
+                align-items: center;
                 gap: var(--space-6);
                 padding: var(--space-6) var(--space-8);
                 width: 100%;
-                flex-wrap: wrap;
+                height: calc(40px + var(--space-6) * 2);
 
                 .warning-text {
                     display: inline-flex;
@@ -124,6 +118,7 @@
                     gap: var(--space-4);
                     font-weight: var(--font-weight-medium);
                     font-size: var(--font-size-sm);
+                    flex: 1;
 
                     .ph {
                         font-size: var(--font-size-md);
@@ -133,6 +128,7 @@
                 .action-btns {
                     display: inline-flex;
                     gap: var(--space-4);
+                    flex: 0 0 auto;
                 }
             }
         }

@@ -11,7 +11,7 @@ import {
     effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ChatStore } from '../../../core/store/chat.store';
@@ -21,14 +21,13 @@ import { AutoScrollBottomDirective } from '../../../core/directives/auto-scroll-
 import { ChatMessage, ChatMessageActionEvent, ChatMessageStreamState } from '../chat-message/chat-message';
 import { UsersStore } from '../../../core/store/users.store';
 import { Select } from 'primeng/select';
-import { LlmProviderStore, GroupedLlmProvider } from '../../../core/store/llm-provider.store';
+import { LlmProviderStore } from '../../../core/store/llm-provider.store';
 import { ChatService } from '../../../core/services/chat.service';
-import { Dropdown } from '../../../components/shared/dropdown/dropdown';
 
 @Component({
     selector: 'app-chat',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, AutoScrollBottomDirective, ChatMessage, Select, Dropdown],
+    imports: [CommonModule, ReactiveFormsModule, AutoScrollBottomDirective, ChatMessage, Select],
     templateUrl: './chat.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './chat.css',

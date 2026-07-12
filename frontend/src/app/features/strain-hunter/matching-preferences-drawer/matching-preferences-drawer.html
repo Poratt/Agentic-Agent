@@ -25,14 +25,15 @@
                             <h4>{{ group.title }}</h4>
                         </div>
                         <div class="group-header-actions">
-                            <span class="hint">לחץ למעבר בין מצבים</span>
+                            <span class="subtitle">לחץ למעבר בין מצבים</span>
                             @if (hasCategoryPreferences(group.category)) {
                                 <button
                                     type="button"
-                                    class="category-reset-btn"
+                                    class="button icon-only md bordered"
                                     (click)="resetCategory(group.category)"
                                     [attr.aria-label]="'איפוס ' + group.title"
-                                    [title]="'איפוס ' + group.title"
+                                    appTooltip
+                                    [text]="'איפוס ' + group.title"
                                 >
                                     <span class="ph ph-arrow-counter-clockwise"></span>
                                 </button>
@@ -77,7 +78,7 @@
                             <span class="ph ph-magnifying-glass-minus genetics-empty-icon"></span>
                             <p class="genetics-empty-title">לא נמצאו גנטיקות תואמות</p>
                             <p class="genetics-empty-hint">נסה מילת חיפוש אחרת או אפס את הסינון.</p>
-                            <button type="button" class="genetics-empty-clear" (click)="clearGeneticsSearch()">
+                            <button type="button" class="button xs bordered genetics-empty-clear" (click)="clearGeneticsSearch()">
                                 <span class="ph ph-arrow-counter-clockwise"></span>
                                 איפוס חיפוש
                             </button>

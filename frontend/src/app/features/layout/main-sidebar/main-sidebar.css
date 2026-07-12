@@ -79,16 +79,29 @@
 			}
 
 			.delete-confirmation {
+				display: flex;
+				align-items: center;
+				gap: var(--space-4);
 				height: 100%;
 				flex: 1;
 				padding: var(--space-4) var(--space-6);
 
 				.warning-text {
+					display: inline-flex;
+					align-items: center;
+					gap: var(--space-2);
 					min-width: 0;
 					font-size: var(--font-size-xs);
+					flex: 1;
+
+					.ph {
+						font-size: var(--font-size-sm);
+					}
 				}
 
 				.action-btns {
+					display: inline-flex;
+					gap: var(--space-2);
 					flex: 0 0 auto;
 				}
 			}

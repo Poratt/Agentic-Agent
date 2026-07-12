@@ -53,7 +53,10 @@
                             <div class="nav-sub-item stagger stagger-up" [class.active]="chatStore.currentSessionId() === session.id">
                                 @if (pendingDeleteSessionId() === session.id) {
                                     <div class="delete-confirmation">
-                                        <span class="warning-text typewriter">האם אתה בטוח?</span>
+                                        <span class="warning-text">
+                                            <span class="ph ph-warning-circle"></span>
+                                            <span class="typewriter">האם אתה בטוח?</span>
+                                        </span>
                                         <div class="action-btns">
                                             <button class="icon-only transparent-btn sm" type="button" (click)="cancelDelete()">
                                                 <span class="ph ph-x"></span>

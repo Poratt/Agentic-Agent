@@ -14,6 +14,7 @@
 			opacity: 0;
 			visibility: hidden;
 			align-self: flex-end;
+			--slide-distance: 4px;
 
 			button {
 				opacity: 0;
@@ -27,7 +28,7 @@
 				visibility: visible;
 
 				button {
-					animation: fadeInBtn 0.15s ease-out forwards;
+					animation: slideUp 0.15s ease-out forwards;
 
 					&:nth-child(1) { animation-delay: 0ms; }
 					&:nth-child(2) { animation-delay: 40ms; }
@@ -114,7 +115,7 @@
 		margin-block-start: var(--space-4);
 		opacity: 0;
 		visibility: hidden;
-		--distance: 4px;
+		--slide-distance: 4px;
 
 		button {
 			opacity: 0;
@@ -128,7 +129,7 @@
 			visibility: visible;
 
 			button {
-				animation: fadeInBtn 0.15s ease-out forwards;
+				animation: slideUp 0.15s ease-out forwards;
 
 				&:nth-child(1) { animation-delay: 0ms; }
 				&:nth-child(2) { animation-delay: 40ms; }
@@ -142,8 +143,6 @@
 		align-self: flex-end;
 		display: flex;
 		gap: var(--space-4);
-		font-size: var(--font-size-sm);
-		color: var(--color-text-secondary);
 		margin-bottom: var(--space-4);
 
 		.role-icon {
@@ -152,9 +151,7 @@
 	}
 
 	.message-body {
-		font-size: var(--font-size-sm);
 		font-weight: 300;
-		color: var(--color-text-secondary);
 
 
 		::ng-deep .ai-bold {
@@ -254,7 +251,6 @@
 		.steps-list {
 			list-style: none;
 			padding: var(--space-6) var(--space-8) var(--space-6) var(--space-8);
-			margin: 0;
 			display: flex;
 			flex-direction: column;
 			gap: var(--space-4);
@@ -318,18 +314,6 @@
 			}
 
 		}
-	}
-}
-
-@keyframes fadeInBtn {
-	from {
-		opacity: 0;
-		transform: translateY(4px);
-	}
-
-	to {
-		opacity: 1;
-		transform: translateY(0);
 	}
 }
 
@@ -398,7 +382,7 @@
 			visibility: visible;
 
 			button {
-				animation: fadeInBtn 0.15s ease-out forwards;
+				animation: slideUp 0.15s ease-out forwards;
 
 				&:nth-child(1) { animation-delay: 0ms; }
 				&:nth-child(2) { animation-delay: 40ms; }
@@ -414,7 +398,7 @@
 			visibility: visible;
 
 			button {
-				animation: fadeInBtn 0.15s ease-out forwards;
+				animation: slideUp 0.15s ease-out forwards;
 
 				&:nth-child(1) { animation-delay: 0ms; }
 				&:nth-child(2) { animation-delay: 40ms; }

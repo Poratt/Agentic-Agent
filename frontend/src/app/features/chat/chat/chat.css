@@ -175,20 +175,19 @@
 			background: var(--color-input-bg);
 			border: 1px solid var(--color-border);
 			border-radius: var(--radius-xl);
-			transition:
-				border-color var(--transition-fast),
-				box-shadow var(--transition-fast),
-				opacity var(--transition-fast);
+		transition:
+			border-color var(--transition-fast),
+			box-shadow var(--transition-fast),
+			opacity var(--transition-fast);
 
+		&:focus-within {
+			background: var(--color-input-bg);
+			border-color: var(--primary-300);
+			box-shadow: 0 0 0 2px var(--color-primary-glow);
+		}
 
-			&:focus-within {
-				background: var(--color-input-bg);
-				border-color: var(--primary-300);
-				box-shadow: 0 0 0 2px var(--color-primary-glow);
-			}
-
-			&:hover:not(:focus-within),
-			&:hover:not(:disabled) {
+		&:hover:not(:focus-within),
+		&:hover:not(:disabled) {
 				background: var(--color-input-bg);
 				border-color: var(--primary-300);
 			}
