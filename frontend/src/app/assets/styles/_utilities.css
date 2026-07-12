@@ -310,10 +310,12 @@
     }
 
     .summary-value {
-      font-family: var(--font-code);
+      /* font-family: var(--font-code); */
       font-variant-numeric: tabular-nums;
       font-weight: var(--font-weight-semibold);
       color: var(--color-text-primary);
+      font-size: var(--font-size-xxs);
+
 
       &.summary-value--muted {
         color: var(--color-text-muted);
@@ -351,9 +353,18 @@
 }
 
 /* Modifiers — only added when 2+ feature files need them */
-.row-label--bold { font-weight: var(--font-weight-semibold); }
-.row-meta--xs { font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
-.row-meta--mono { font-family: var(--font-code); }
+.row-label--bold {
+  font-weight: var(--font-weight-semibold);
+}
+
+.row-meta--xs {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.row-meta--mono {
+  font-family: var(--font-code);
+}
 
 /* Canonical row title/subtitle — used in expand panels */
 .row-title {
@@ -538,9 +549,12 @@
 }
 
 @keyframes skeletonShimmer {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.6;
   }
+
   50% {
     opacity: 1;
   }
