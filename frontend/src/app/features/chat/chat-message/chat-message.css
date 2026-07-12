@@ -11,17 +11,12 @@
 		max-width: 95%;
 
 		.message-actions {
-			display: flex;
-			flex-direction: row;
-			align-items: center;
-			gap: var(--space-2);
-			justify-content: flex-end;
 			opacity: 0;
 			visibility: hidden;
+			align-self: flex-end;
 
-			.message-action-btn {
+			button {
 				opacity: 0;
-				transform: translateY(4px);
 			}
 		}
 
@@ -31,56 +26,16 @@
 				opacity: 1;
 				visibility: visible;
 
-				.message-action-btn {
+				button {
 					animation: fadeInBtn 0.15s ease-out forwards;
 
-					&:nth-child(1) {
-						animation-delay: 0ms;
-					}
-
-					&:nth-child(2) {
-						animation-delay: 40ms;
-					}
-
-					&:nth-child(3) {
-						animation-delay: 80ms;
-					}
-
-					&:nth-child(4) {
-						animation-delay: 120ms;
-					}
+					&:nth-child(1) { animation-delay: 0ms; }
+					&:nth-child(2) { animation-delay: 40ms; }
+					&:nth-child(3) { animation-delay: 80ms; }
+					&:nth-child(4) { animation-delay: 120ms; }
 				}
 			}
 		}
-	}
-}
-
-
-.message-action-btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: var(--space-12);
-	height: var(--space-12);
-	padding: 0;
-	color: var(--color-text-secondary);
-	background: transparent;
-	border: 0;
-	border-radius: var(--radius-sm);
-	cursor: pointer;
-	transition: var(--transition-colors);
-	opacity: 0;
-	transform: translateY(4px);
-
-	&:hover:not(:disabled),
-	&:focus-visible:not(:disabled) {
-		color: var(--color-primary);
-		background: var(--primary-30);
-	}
-
-	&:disabled {
-		opacity: 0.45;
-		cursor: not-allowed;
 	}
 }
 
@@ -159,6 +114,11 @@
 		margin-block-start: var(--space-4);
 		opacity: 0;
 		visibility: hidden;
+		--distance: 4px;
+
+		button {
+			opacity: 0;
+		}
 	}
 
 	&:hover,
@@ -167,24 +127,13 @@
 			opacity: 1;
 			visibility: visible;
 
-			.message-action-btn {
+			button {
 				animation: fadeInBtn 0.15s ease-out forwards;
 
-				&:nth-child(1) {
-					animation-delay: 0ms;
-				}
-
-				&:nth-child(2) {
-					animation-delay: 40ms;
-				}
-
-				&:nth-child(3) {
-					animation-delay: 80ms;
-				}
-
-				&:nth-child(4) {
-					animation-delay: 120ms;
-				}
+				&:nth-child(1) { animation-delay: 0ms; }
+				&:nth-child(2) { animation-delay: 40ms; }
+				&:nth-child(3) { animation-delay: 80ms; }
+				&:nth-child(4) { animation-delay: 120ms; }
 			}
 		}
 	}
@@ -372,12 +321,6 @@
 	}
 }
 
-@keyframes cursorBlink {
-	50% {
-		opacity: 0;
-	}
-}
-
 @keyframes fadeInBtn {
 	from {
 		opacity: 0;
@@ -387,6 +330,12 @@
 	to {
 		opacity: 1;
 		transform: translateY(0);
+	}
+}
+
+@keyframes cursorBlink {
+	50% {
+		opacity: 0;
 	}
 }
 
@@ -419,7 +368,7 @@
 			}
 		}
 
-		.message-actions .message-action-btn {
+		.message-actions button {
 			animation: none;
 			opacity: 1;
 			transform: none;
@@ -448,24 +397,13 @@
 			opacity: 1;
 			visibility: visible;
 
-			.message-action-btn {
+			button {
 				animation: fadeInBtn 0.15s ease-out forwards;
 
-				&:nth-child(1) {
-					animation-delay: 0ms;
-				}
-
-				&:nth-child(2) {
-					animation-delay: 40ms;
-				}
-
-				&:nth-child(3) {
-					animation-delay: 80ms;
-				}
-
-				&:nth-child(4) {
-					animation-delay: 120ms;
-				}
+				&:nth-child(1) { animation-delay: 0ms; }
+				&:nth-child(2) { animation-delay: 40ms; }
+				&:nth-child(3) { animation-delay: 80ms; }
+				&:nth-child(4) { animation-delay: 120ms; }
 			}
 		}
 	}
@@ -475,24 +413,13 @@
 			opacity: 1;
 			visibility: visible;
 
-			.message-action-btn {
+			button {
 				animation: fadeInBtn 0.15s ease-out forwards;
 
-				&:nth-child(1) {
-					animation-delay: 0ms;
-				}
-
-				&:nth-child(2) {
-					animation-delay: 40ms;
-				}
-
-				&:nth-child(3) {
-					animation-delay: 80ms;
-				}
-
-				&:nth-child(4) {
-					animation-delay: 120ms;
-				}
+				&:nth-child(1) { animation-delay: 0ms; }
+				&:nth-child(2) { animation-delay: 40ms; }
+				&:nth-child(3) { animation-delay: 80ms; }
+				&:nth-child(4) { animation-delay: 120ms; }
 			}
 		}
 	}

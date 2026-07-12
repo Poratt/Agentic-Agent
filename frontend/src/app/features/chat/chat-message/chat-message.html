@@ -54,7 +54,7 @@
             <div class="message-actions" aria-label="Message actions">
                 <button
                     type="button"
-                    class="message-action-btn"
+                    class="button icon-only transparent-btn sm"
                     [disabled]="!canDelete()"
                     aria-label="Delete message"
                     (click)="requestAction('delete')"
@@ -63,14 +63,14 @@
                 </button>
                 <button
                     type="button"
-                    class="message-action-btn"
+                    class="button icon-only transparent-btn sm"
                     [disabled]="!canSendAgain()"
                     aria-label="Send again"
                     (click)="requestAction('sendAgain')"
                 >
                     <span class="ph ph-arrow-clockwise"></span>
                 </button>
-                <button type="button" class="message-action-btn" aria-label="Copy message" (click)="requestAction('copy')">
+                <button type="button" class="button icon-only transparent-btn sm" aria-label="Copy message" (click)="requestAction('copy')">
                     <span class="ph" [class.ph-copy]="!copied()" [class.ph-check]="copied()"></span>
                 </button>
             </div>
@@ -81,7 +81,7 @@
         <div class="message-actions" aria-label="Message actions">
             <button
                 type="button"
-                class="message-action-btn"
+                class="button icon-only transparent-btn sm"
                 [disabled]="!canDelete()"
                 aria-label="Delete message"
                 (click)="requestAction('delete')"
@@ -90,19 +90,19 @@
             </button>
             <button
                 type="button"
-                class="message-action-btn"
+                class="button icon-only transparent-btn sm"
                 [disabled]="!canSendAgain()"
                 aria-label="Send again"
                 (click)="requestAction('sendAgain')"
             >
                 <span class="ph ph-arrow-clockwise"></span>
             </button>
-            <button type="button" class="message-action-btn" aria-label="Copy message" (click)="requestAction('copy')">
+            <button type="button" class="button icon-only transparent-btn sm" aria-label="Copy message" (click)="requestAction('copy')">
                 <span class="ph" [class.ph-copy]="!copied()" [class.ph-check]="copied()"></span>
             </button>
             <button
                 type="button"
-                class="message-action-btn"
+                class="button icon-only transparent-btn sm"
                 [disabled]="!canEdit()"
                 aria-label="Edit message"
                 (click)="requestAction('edit')"

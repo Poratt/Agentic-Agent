@@ -1,5 +1,7 @@
 # Claude Code Project Guide — Porat Monorepo
 
+**Language:** Respond in English only. If user writes in Hebrew, Thai, or other scripts, respond in English regardless.
+
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
 ## 1. Think Before Coding
