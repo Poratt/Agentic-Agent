@@ -40,6 +40,7 @@
 		.chat-history-messages {
 			display: flex;
 			flex-direction: column;
+			flex: 1;
 			gap: var(--space-8);
 			width: 100%;
 			max-width: 800px;
@@ -51,7 +52,7 @@
 			flex-direction: column;
 			align-items: center;
 			justify-content: center;
-			height: 100%;
+			flex: 1;
 			text-align: center;
 			color: var(--color-text-secondary);
 			gap: var(--space-6);

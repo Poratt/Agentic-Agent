@@ -133,7 +133,7 @@
                     <span class="filter-bar-label">
                         <span class="ph ph-funnel" aria-hidden="true"></span>
                         <span>מסננים פעילים</span>
-                        <span class="filter-bar-count">{{ activeFilters().length }}</span>
+                        <span class="filter-bar-count">{{ activeFilters().length + (isPriceFilterActive() ? 1 : 0) }}</span>
                     </span>
                     <div class="filter-bar-list">
                         @for (f of activeFilters(); track f.key; let i = $index) {

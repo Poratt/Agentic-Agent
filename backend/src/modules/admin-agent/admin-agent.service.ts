@@ -9,6 +9,7 @@ import { SwaggerToolsParser } from './services/swagger-tools.parser';
 import type { LlmProvider, LlmToolCall } from '../llm/types/llm.types';
 
 const MAX_ITERATIONS = 10;
+const MAX_DUPLICATE_TOOL_CALLS = 2;
 const PARALLEL_UNSAFE_TOOL_NAMES = new Set([
   'LlmController_testLlm',
   'LlmController_testAll',
@@ -27,6 +28,7 @@ type ToolCallResult = {
 @Injectable()
 export class AdminAgentService implements OnModuleInit {
   private readonly logger = new Logger(AdminAgentService.name);
+  private readonly toolCallCounter: Map<string, number> = new Map<string, number>();
 
   constructor(
     private readonly llmService: LlmService,
@@ -101,6 +103,7 @@ export class AdminAgentService implements OnModuleInit {
     model?: string,
     image?: string,
   ): Promise<string> {
+    this.resetToolCallCounter();
     const session = await this.agentSessionService.getOrCreateSession(userId, requestedSessionId);
 
     if (prompt && prompt.trim().length > 0) {
@@ -125,6 +128,18 @@ export class AdminAgentService implements OnModuleInit {
       });
 
       if (llmResponse.toolCalls && llmResponse.toolCalls.length > 0) {
+        const duplicateCall = this.findDuplicateToolCall(llmResponse.toolCalls);
+
+        if (duplicateCall) {
+          const args = this.parseToolArguments(duplicateCall);
+          this.logger.warn(
+            `[AgentLoopBreaker] userId=${userId} sessionId=${session.id} toolName=${duplicateCall.function.name} args=${JSON.stringify(args)} — model called the same tool+args ${MAX_DUPLICATE_TOOL_CALLS + 1}+ times in one turn, breaking the loop.`,
+          );
+          const breakerMessage = this.breakerErrorMessage(duplicateCall.function.name, args);
+          await this.agentSessionService.saveMessage(userId, session.id, 'assistant', breakerMessage);
+          return breakerMessage;
+        }
+
         await this.agentSessionService.saveMessage(
           userId,
           session.id,
@@ -136,6 +151,10 @@ export class AdminAgentService implements OnModuleInit {
         const groups = this.groupToolCallsForExecution(llmResponse.toolCalls);
 
         for (const group of groups) {
+          for (const call of group) {
+            this.recordToolCall(call);
+          }
+
           const results = await this.executeToolCallGroup(group, userId);
 
           for (const { call, resultData } of results) {
@@ -165,6 +184,7 @@ export class AdminAgentService implements OnModuleInit {
       return;
     }
 
+    this.resetToolCallCounter();
     const session = await this.agentSessionService.getOrCreateSession(userId, requestedSessionId);
 
     if (prompt && prompt.trim().length > 0) {
@@ -189,6 +209,20 @@ export class AdminAgentService implements OnModuleInit {
       });
 
       if (llmResponse.toolCalls && llmResponse.toolCalls.length > 0) {
+        const duplicateCall = this.findDuplicateToolCall(llmResponse.toolCalls);
+
+        if (duplicateCall) {
+          const args = this.parseToolArguments(duplicateCall);
+          this.logger.warn(
+            `[AgentLoopBreaker] userId=${userId} sessionId=${session.id} toolName=${duplicateCall.function.name} args=${JSON.stringify(args)} — model called the same tool+args ${MAX_DUPLICATE_TOOL_CALLS + 1}+ times in one turn, breaking the loop.`,
+          );
+          const breakerMessage = this.breakerErrorMessage(duplicateCall.function.name, args);
+          yield JSON.stringify({ type: 'step', icon: STEP_ICONS.error, message: breakerMessage }) + '\n';
+          yield JSON.stringify({ type: 'token', content: breakerMessage }) + '\n';
+          await this.agentSessionService.saveMessage(userId, session.id, 'assistant', breakerMessage);
+          return;
+        }
+
         await this.agentSessionService.saveMessage(
           userId,
           session.id,
@@ -205,6 +239,8 @@ export class AdminAgentService implements OnModuleInit {
           const description = this.agentToolExecutorService.getSemanticActionDescription(call.function.name, args);
           const endpoint = this.swaggerToolsParser.getEndpoint(call.function.name);
           const toolIcon = endpoint?.toolIcon || STEP_ICONS.tool;
+
+          this.recordToolCall(call);
 
           yield JSON.stringify({ type: 'step', icon: toolIcon, message: `${description}...` }) + '\n';
         }
@@ -357,6 +393,59 @@ export class AdminAgentService implements OnModuleInit {
         }),
       };
     }
+  }
+
+  private resetToolCallCounter(): void {
+    this.toolCallCounter.clear();
+  }
+
+  private toolCallKey(call: LlmToolCall): string {
+    // Normalize arguments so semantically equal JSON (different key order,
+    // extra whitespace) collapses to the same key. If the args are malformed
+    // JSON we keep the raw string so the breaker still trips on identical
+    // garbage repeats rather than treating them as distinct.
+    let normalizedArgs = call.function.arguments || '{}';
+    try {
+      const parsed = JSON.parse(normalizedArgs);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        const sortedKeys = Object.keys(parsed).sort();
+        const sorted: Record<string, unknown> = {};
+        for (const key of sortedKeys) {
+          sorted[key] = parsed[key];
+        }
+        normalizedArgs = JSON.stringify(sorted);
+      } else {
+        normalizedArgs = JSON.stringify(parsed);
+      }
+    } catch {
+      // keep raw
+    }
+    return `${call.function.name}::${normalizedArgs}`;
+  }
+
+  private recordToolCall(call: LlmToolCall): number {
+    const key = this.toolCallKey(call);
+    const next = (this.toolCallCounter.get(key) ?? 0) + 1;
+    this.toolCallCounter.set(key, next);
+    return next;
+  }
+
+  private findDuplicateToolCall(calls: LlmToolCall[]): LlmToolCall | null {
+    for (const call of calls) {
+      const key = this.toolCallKey(call);
+      const count = this.toolCallCounter.get(key) ?? 0;
+      // MAX_DUPLICATE_TOOL_CALLS=2 means "allow 2 calls, trip on the 3rd".
+      // A pending call with count >= 3 would be the 3rd (or later) execution.
+      if (count > MAX_DUPLICATE_TOOL_CALLS) {
+        return call;
+      }
+    }
+    return null;
+  }
+
+  private breakerErrorMessage(toolName: string, args: Record<string, unknown>): string {
+    const argsJson = Object.keys(args).length > 0 ? JSON.stringify(args) : '{}';
+    return `הסוכן ניסה לקרוא שוב ושוב לכלי "${toolName}" עם אותם ארגומנטים (${argsJson}) ונעצר. כנראה שהמודל לא הצליח להפיק תשובה סופית. אפשר לנסות שוב עם מודל אחר או לנסח את הבקשה מחדש.`;
   }
 
   private parseToolArguments(call: LlmToolCall): Record<string, unknown> {

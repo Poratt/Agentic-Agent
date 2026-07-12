@@ -46,6 +46,13 @@ input[type='range'] {
   accent-color: var(--color-primary);
 }
 
+.p-inputtext.p-variant-filled:enabled:focus {
+  border-color: var(--primary-300);
+  box-shadow: 0 0 0 2px var(--color-primary-glow);
+  background: var(--color-input-bg);
+
+}
+
 /* ── Utilities ───────────────────────────────────────────────────────────── */
 
 .form-group {
@@ -53,6 +60,24 @@ input[type='range'] {
   flex-direction: column;
   text-align: right;
   gap: var(--space-4);
+  position: relative;
+  padding-bottom: var(--space-8);
+}
+
+.form-group .error-text {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--space-2) * -1);
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+  margin-top: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: max-content;
+  animation: typewriter 1.2s steps(36, end) forwards;
 }
 
 .form-field-has-icon {

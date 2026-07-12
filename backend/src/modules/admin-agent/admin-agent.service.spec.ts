@@ -4,6 +4,7 @@ import { LlmService } from '../llm/llm.service';
 import { AgentSessionService } from './services/agent-session.service';
 import { AgentToolExecutorService } from './services/agent-tool-executor.service';
 import { SwaggerToolsParser } from './services/swagger-tools.parser';
+import { LlmToolCall } from '../llm/types/llm.types';
 
 function makeService(): AdminAgentService {
   return new AdminAgentService(
@@ -126,5 +127,120 @@ describe('AdminAgentService.truncateForStorage', () => {
     expect(result.length).toBeGreaterThanOrEqual(21);
     // 4. Marker present
     expect(result).toContain('"_truncated":true');
+  });
+});
+
+function makeToolCall(name: string, args: Record<string, unknown> | string = {}): LlmToolCall {
+  return {
+    id: `call_${name}_${Math.random().toString(36).slice(2, 8)}`,
+    type: 'function',
+    function: {
+      name,
+      arguments: typeof args === 'string' ? args : JSON.stringify(args),
+    },
+  };
+}
+
+describe('AdminAgentService.toolCallLoopBreaker', () => {
+  it('allows the first call to a tool+args pair (count=1, no break)', () => {
+    const svc = makeService();
+    (svc as any).resetToolCallCounter();
+
+    const call = makeToolCall('WeatherController_getWeather', { city: 'Petah Tikva' });
+    const count = (svc as any).recordToolCall(call);
+
+    expect(count).toBe(1);
+    expect((svc as any).findDuplicateToolCall([call])).toBeNull();
+  });
+
+  it('allows the second call to the same tool+args pair (count=2, no break)', () => {
+    const svc = makeService();
+    (svc as any).resetToolCallCounter();
+
+    const call = makeToolCall('WeatherController_getWeather', { city: 'Petah Tikva' });
+    (svc as any).recordToolCall(call);
+    const second = (svc as any).recordToolCall(call);
+
+    expect(second).toBe(2);
+    // A pending 2nd call request is still allowed; breaker only trips on the 3rd.
+    expect((svc as any).findDuplicateToolCall([call])).toBeNull();
+  });
+
+  it('trips the breaker on the third call to the same tool+args pair (count=3)', () => {
+    const svc = makeService();
+    (svc as any).resetToolCallCounter();
+
+    const call = makeToolCall('WeatherController_getWeather', { city: 'Petah Tikva' });
+    (svc as any).recordToolCall(call);
+    (svc as any).recordToolCall(call);
+    (svc as any).recordToolCall(call);
+
+    const dup = (svc as any).findDuplicateToolCall([call]);
+
+    expect(dup).not.toBeNull();
+    expect(dup.function.name).toBe('WeatherController_getWeather');
+  });
+
+  it('does NOT trip the breaker when the same tool is called with different args', () => {
+    const svc = makeService();
+    (svc as any).resetToolCallCounter();
+
+    (svc as any).recordToolCall(makeToolCall('WeatherController_getWeather', { city: 'Petah Tikva' }));
+    (svc as any).recordToolCall(makeToolCall('WeatherController_getWeather', { city: 'Tel Aviv' }));
+    (svc as any).recordToolCall(makeToolCall('WeatherController_getWeather', { city: 'Haifa' }));
+
+    const newCall = makeToolCall('WeatherController_getWeather', { city: 'Eilat' });
+    expect((svc as any).findDuplicateToolCall([newCall])).toBeNull();
+  });
+
+  it('does NOT trip the breaker when different tools are called with the same args', () => {
+    const svc = makeService();
+    (svc as any).resetToolCallCounter();
+
+    (svc as any).recordToolCall(makeToolCall('WeatherController_getWeather', { city: 'Petah Tikva' }));
+    (svc as any).recordToolCall(makeToolCall('WeatherController_getForecast', { city: 'Petah Tikva' }));
+
+    const newCall = makeToolCall('UsersController_getById', { id: 1 });
+    expect((svc as any).findDuplicateToolCall([newCall])).toBeNull();
+  });
+
+  it('treats semantically equal args with different key order as the same call', () => {
+    const svc = makeService();
+    (svc as any).resetToolCallCounter();
+
+    (svc as any).recordToolCall(makeToolCall('WeatherController_getWeather', { city: 'Petah Tikva', units: 'metric' }));
+    (svc as any).recordToolCall(makeToolCall('WeatherController_getWeather', { units: 'metric', city: 'Petah Tikva' }));
+    (svc as any).recordToolCall(makeToolCall('WeatherController_getWeather', { units: 'metric', city: 'Petah Tikva' }));
+
+    const third = makeToolCall('WeatherController_getWeather', JSON.stringify({ city: 'Petah Tikva', units: 'metric' }));
+    expect((svc as any).findDuplicateToolCall([third])).not.toBeNull();
+  });
+
+  it('resets the counter between turns', () => {
+    const svc = makeService();
+    (svc as any).resetToolCallCounter();
+
+    const call = makeToolCall('WeatherController_getWeather', { city: 'Petah Tikva' });
+    (svc as any).recordToolCall(call);
+    (svc as any).recordToolCall(call);
+    (svc as any).recordToolCall(call);
+
+    (svc as any).resetToolCallCounter();
+
+    expect((svc as any).findDuplicateToolCall([call])).toBeNull();
+    const fresh = (svc as any).recordToolCall(call);
+    expect(fresh).toBe(1);
+  });
+
+  it('builds a Hebrew breaker error message that names the stuck tool and its args', () => {
+    const svc = makeService();
+    const msg = (svc as any).breakerErrorMessage('WeatherController_getWeather', { city: 'Petah Tikva' }) as string;
+
+    expect(msg).toContain('WeatherController_getWeather');
+    expect(msg).toContain('Petah Tikva');
+    // Hex range covers the Hebrew Unicode block. Ensures the breaker
+    // message is genuinely Hebrew, not an English fallback.
+    const hebrewRange = /[֐-׿]/;
+    expect(msg).toMatch(hebrewRange);
   });
 });
