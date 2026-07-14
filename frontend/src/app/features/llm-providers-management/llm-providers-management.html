@@ -71,6 +71,8 @@
                                     class="icon-only transparent-btn chevron-btn"
                                     [class.open]="isProviderExpanded(provider.id)"
                                     [attr.aria-label]="isProviderExpanded(provider.id) ? 'Collapse' : 'Expand'"
+                                    appTooltip
+                                    [text]="isProviderExpanded(provider.id) ? 'Collapse' : 'Expand'"
                                     (click)="toggleProvider(provider.id)"
                                 >
                                     <i class="ph ph-caret-right"></i>
@@ -85,6 +87,8 @@
                                         type="button"
                                         class="icon-only transparent-btn"
                                         aria-label="Edit"
+                                        appTooltip
+                                        [text]="'Edit provider'"
                                         (click)="openEditProviderDialog(provider)"
                                     >
                                         <i class="ph ph-pencil-simple"></i>
@@ -93,6 +97,8 @@
                                         type="button"
                                         class="icon-only danger-btn"
                                         aria-label="Delete"
+                                        appTooltip
+                                        [text]="'Delete provider'"
                                         (click)="deleteProvider(provider.id)"
                                     >
                                         <i class="ph ph-trash"></i>
@@ -111,6 +117,8 @@
                                             class="transparent-btn sm"
                                             (click)="openAddModelDialog(provider.id)"
                                             aria-label="Add model"
+                                            appTooltip
+                                            [text]="'Add model'"
                                         >
                                             <i class="ph ph-plus"></i>
                                             Add Model
@@ -148,6 +156,8 @@
                                                             class="icon-only transparent-btn chevron-btn sm"
                                                             [class.open]="isModelExpanded(model.id)"
                                                             [attr.aria-label]="isModelExpanded(model.id) ? 'Collapse' : 'Expand'"
+                                                            appTooltip
+                                                            [text]="isModelExpanded(model.id) ? 'Collapse' : 'Expand'"
                                                             (click)="toggleModel(model.id)"
                                                         >
                                                             <i class="ph ph-caret-right"></i>
@@ -189,10 +199,12 @@
                                                 <td class="col-test">
                                                     <button
                                                         type="button"
-                                                        class="icon-only transparent-btn"
+                                                        class="icon-only transparent-btn sm"
                                                         [class.testing]="testingModelId() === model.id"
                                                         [disabled]="testingModelId() === model.id"
                                                         aria-label="Run test"
+                                                        appTooltip
+                                                        [text]="testingModelId() === model.id ? 'Testing...' : 'Test model'"
                                                         (click)="testModel(model.id)"
                                                     >
                                                         <i class="ph ph-lightning"></i>
@@ -202,8 +214,19 @@
                                                     <div class="row-actions">
                                                         <button
                                                             type="button"
+                                                            class="icon-only accent-btn sm"
+                                                            appTooltip
+                                                            [text]="model.isDefault ? 'Default model' : 'Set as default'"
+                                                            (click)="setDefaultModel(model)"
+                                                        >
+                                                            <i [class]="model.isDefault ? 'ph-fill ph-star' : 'ph ph-star'"></i>
+                                                        </button>
+                                                        <button
+                                                            type="button"
                                                             class="icon-only transparent-btn sm"
                                                             aria-label="Edit model"
+                                                            appTooltip
+                                                            [text]="'Edit model'"
                                                             (click)="openEditModelDialog(provider.id, model)"
                                                         >
                                                             <i class="ph ph-pencil-simple"></i>
@@ -212,6 +235,8 @@
                                                             type="button"
                                                             class="icon-only danger-btn sm"
                                                             aria-label="Delete model"
+                                                            appTooltip
+                                                            [text]="'Deactivate model'"
                                                             (click)="deleteModel(provider.id, model.id)"
                                                         >
                                                             <i class="ph ph-trash"></i>
@@ -262,6 +287,8 @@
                                                                                 type="button"
                                                                                 class="icon-only danger-btn sm"
                                                                                 aria-label="Delete test result"
+                                                                                appTooltip
+                                                                                [text]="'Delete test result'"
                                                                                 (click)="deleteTestResult(provider.id, model.id, result.id)"
                                                                             >
                                                                                 <i class="ph ph-trash"></i>

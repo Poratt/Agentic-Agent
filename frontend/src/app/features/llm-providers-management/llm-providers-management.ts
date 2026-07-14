@@ -13,6 +13,7 @@ import { AuthStore } from '../../core/store/auth.store';
 import { LlmProviderStore } from '../../core/store/llm-provider.store';
 import { PageStates } from '../../core/enums/page-states.enum';
 import { BadgeColor } from '../../core/directives/badge-color.directive';
+import { TooltipDirective } from '../../core/directives/tooltip.directive';
 
 import { LlmProvider, LlmProviderService, LlmModel } from '../../core/services/llm-provider.service';
 
@@ -41,6 +42,7 @@ export interface LlmProviderView extends Omit<LlmProvider, 'models'> {
         RippleModule,
         DialogModule,
         ToggleSwitchModule,
+        TooltipDirective,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './llm-providers-management.html',
@@ -380,6 +382,27 @@ export class LlmProvidersManagement {
                     severity: 'success',
                     summary: 'Deleted',
                     detail: 'Test result has been deleted successfully.'
+                });
+            }
+        });
+    }
+
+    setDefaultModel(model: LlmModel) {
+        if (model.isDefault) return;
+        this.llmProviderService.setDefaultModel(model.id).subscribe({
+            next: () => {
+                this.llmProviderStore.reload();
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Default Set',
+                    detail: `"${model.label}" is now the default model.`
+                });
+            },
+            error: (err) => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: err?.error?.message || 'Failed to set default model'
                 });
             }
         });

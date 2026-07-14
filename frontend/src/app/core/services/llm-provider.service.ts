@@ -10,6 +10,7 @@ export interface LlmModel {
     label: string;
     active: boolean;
     sortOrder: number;
+    isDefault: boolean;
     providerId: number;
     createdAt: string;
     updatedAt: string;
@@ -69,5 +70,9 @@ export class LlmProviderService {
 
     deleteTestResult(testResultId: number): Observable<ServiceResultContainer<void>> {
         return this.http.delete<ServiceResultContainer<void>>(`${environment.apiUrl}/llm/test-results/${testResultId}`);
+    }
+
+    setDefaultModel(modelId: number): Observable<ServiceResultContainer<LlmModel>> {
+        return this.http.post<ServiceResultContainer<LlmModel>>(`${this.base}/models/${modelId}/default`, {});
     }
 }

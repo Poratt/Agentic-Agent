@@ -123,4 +123,18 @@ export class LlmProviderService {
     const result = await this.testResultRepo.delete({ createdAt: LessThan(cutoff) });
     return result.affected ?? 0;
   }
+
+  async setDefaultModel(modelId: number): Promise<ServiceResultContainer<LlmModelEntity>> {
+    const model = await this.modelRepo.findOneBy({ id: modelId });
+    if (!model) throw new NotFoundException('Model not found');
+
+    // Unset isDefault on all models for this provider
+    await this.modelRepo.update({ providerId: model.providerId }, { isDefault: false });
+
+    // Set isDefault on the target model
+    model.isDefault = true;
+    const saved = await this.modelRepo.save(model);
+
+    return { success: true, message: 'Default model updated', result: saved };
+  }
 }

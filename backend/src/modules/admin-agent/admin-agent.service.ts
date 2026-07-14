@@ -262,6 +262,17 @@ export class AdminAgentService implements OnModuleInit {
         }
         }
       } else {
+        if (llmResponse.content && llmResponse.content.length > 0) {
+          const runtimeSelection = this.llmService.getRuntimeSelection(provider, model);
+          const componentCount = (llmResponse.content.match(/```component[\s\S]*?```/gi) ?? []).length;
+          this.logger.log(
+            `[AdminAgentStream] userId=${userId} sessionId=${session.id} provider=${runtimeSelection.provider} model=${runtimeSelection.model} tokens=${llmResponse.content.length} components=${componentCount} (from generateResponse)`,
+          );
+          await this.agentSessionService.saveMessage(userId, session.id, 'assistant', llmResponse.content);
+          yield JSON.stringify({ type: 'token', content: llmResponse.content }) + '\n';
+          return;
+        }
+
         let accumulatedResponse = '';
         let firstTokenAt: number | null = null;
         const streamStart = Date.now();

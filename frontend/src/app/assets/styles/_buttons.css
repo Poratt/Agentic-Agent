@@ -142,6 +142,7 @@ button {
 
 .primary-btn,
 .danger-btn,
+.accent-btn,
 .transparent-btn {
   display: flex;
   align-items: center;
@@ -214,6 +215,35 @@ button {
   }
 }
 
+/* 3b. Theme: ACCENT */
+.accent-btn {
+  color: var(--color-warning);
+
+  &:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--color-warning) 15%, transparent);
+  }
+
+  &.outlined {
+    background-color: transparent;
+    border-color: color-mix(in srgb, var(--color-warning) 40%, transparent);
+
+    &:hover:not(:disabled) {
+      background-color: color-mix(in srgb, var(--color-warning) 15%, transparent);
+      border-color: var(--color-warning);
+    }
+  }
+
+  &.filled {
+    background-color: var(--color-warning);
+    color: #1a1a1a;
+    border-color: transparent;
+
+    &:hover:not(:disabled) {
+      background-color: color-mix(in srgb, var(--color-warning) 80%, #000);
+    }
+  }
+}
+
 /* 4. Theme: TRANSPARENT */
 .transparent-btn {
   background-color: transparent;
@@ -223,6 +253,23 @@ button {
   &:hover:not(:disabled) {
     background-color: var(--color-surface-hover);
     color: var(--color-text-primary);
+  }
+
+  &.outlined {
+    border-color: var(--color-border);
+
+    &:hover:not(:disabled) {
+      border-color: var(--color-text-secondary);
+    }
+  }
+
+  &.filled {
+    background-color: var(--color-surface-hover);
+    color: var(--color-text-primary);
+
+    &:hover:not(:disabled) {
+      background-color: var(--color-border);
+    }
   }
 
   &.warning-btn {

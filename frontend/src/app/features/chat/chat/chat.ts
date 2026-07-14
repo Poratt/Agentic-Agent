@@ -49,6 +49,7 @@ export class Chat implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private fb = inject(FormBuilder);
+    private defaultModel = 'google/gemma-4-31b-it:free'
 
     constructor() {
         effect(() => {
@@ -59,7 +60,7 @@ export class Chat implements OnInit, OnDestroy {
                 // Try to find Gemma 4 31B model
                 let modelToSelect = null;
                 for (const group of groups) {
-                    const gemmaModel = group.items?.find(m => m.key === 'tencent/hy3:free');
+                    const gemmaModel = group.items?.find(m => m.key === this.defaultModel);
                     if (gemmaModel) {
                         modelToSelect = gemmaModel;
                         break;

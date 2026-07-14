@@ -1150,6 +1150,39 @@
         ]
       }
     },
+    "/llm-provider/models/{id}/default": {
+      "post": {
+        "description": "Sets a model as the default for its provider, unsetting any previous default.",
+        "operationId": "LlmProviderController_setDefaultModel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Model set as default"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set model as default",
+        "tags": [
+          "LLM Provider"
+        ]
+      }
+    },
     "/analytics/query": {
       "post": {
         "description": "Runs a supported analytics metric from the server-side catalog and returns chart-ready data.",
@@ -2895,6 +2928,11 @@
             "type": "number",
             "description": "Sort hierarchy order",
             "default": 0
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "Mark this model as the default for this provider",
+            "default": false
           }
         },
         "required": [
@@ -2924,6 +2962,11 @@
             "type": "number",
             "description": "Sort hierarchy order",
             "default": 0
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "Mark this model as the default for this provider",
+            "default": false
           }
         }
       },

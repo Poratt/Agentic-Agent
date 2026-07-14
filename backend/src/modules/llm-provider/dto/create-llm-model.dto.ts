@@ -21,4 +21,9 @@ export class CreateLlmModelDto {
   @IsNumber()
   @IsOptional()
   sortOrder?: number;
+
+  @ApiPropertyOptional({ description: 'Mark this model as the default for this provider', default: false })
+  @IsBoolean()
+  @IsOptional()
+  isDefault?: boolean;
 }
