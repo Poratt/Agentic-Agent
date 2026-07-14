@@ -90,7 +90,7 @@
                     placeholder="הקלד את הודעתך כאן..."
                     rows="1"
                     autocomplete="off"
-                    (input)="autoGrow()"
+                    (input)="onPromptInput($event)"
                     (keydown)="onPromptKeydown($event)"
                     (paste)="onPaste($event)"
                 ></textarea>
@@ -119,28 +119,39 @@
                             class="custom-select transparnet"
                         >
                             <ng-template let-group #group>
-                                <span>{{ group.label }}</span>
+                                <span class="group-label">{{ group.label }}</span>
                             </ng-template>
                             <ng-template let-model #item>
                                 <div class="select-option">
-                                    <span>{{ model.label }}</span>
-                                    <span
-                                        >{{ model.performancePercentage }}%
-                                        {{
-                                            model.latencyAverageMs > 1000
-                                                ? (model.latencyAverageMs / 1000 | number: '1.1-1') + 's'
-                                                : model.latencyAverageMs + 'ms'
-                                        }}</span
-                                    >
-                                    <button
-                                        type="button"
-                                        class="star-btn"
-                                        [class.star-active]="model.isDefault"
-                                        [attr.aria-label]="model.isDefault ? 'Default model' : 'Set as default'"
-                                        (click)="setDefaultModel($event, model)"
-                                    >
-                                        <span [class]="model.isDefault ? 'ph ph-star ph-fill' : 'ph ph-star'"></span>
-                                    </button>
+                                    <div class="select-option-main">
+                                        <span class="model-name">{{ model.label }}</span>
+                                        <button
+                                            type="button"
+                                            class="star-btn"
+                                            [class.star-active]="model.isDefault"
+                                            [attr.aria-label]="model.isDefault ? 'Default model' : 'Set as default'"
+                                            (click)="setDefaultModel($event, model)"
+                                        >
+                                            <span [class]="model.isDefault ? 'ph ph-star ph-fill' : 'ph ph-star'"></span>
+                                        </button>
+                                    </div>
+                                    <div class="select-option-meta">
+                                        <span
+                                            class="perf-badge"
+                                            [class.perf-good]="model.performancePercentage >= 80"
+                                            [class.perf-warn]="model.performancePercentage >= 50 && model.performancePercentage < 80"
+                                            [class.perf-bad]="model.performancePercentage < 50"
+                                            >{{ model.performancePercentage }}%
+                                        </span>
+                                        <span class="latency-pill">
+                                            <span class="ph ph-timer"></span>
+                                            {{
+                                                model.latencyAverageMs > 1000
+                                                    ? (model.latencyAverageMs / 1000 | number: '1.1-1') + 's'
+                                                    : model.latencyAverageMs + 'ms'
+                                            }}
+                                        </span>
+                                    </div>
                                 </div>
                             </ng-template>
                         </p-select>

@@ -75,8 +75,12 @@ export class LlmProviderController {
   @ApiQuery({ name: 'retentionDays', required: false, type: Number, description: 'Delete results older than N days (default: 30)' })
   @ApiOkResponse({ description: 'Number of deleted rows' })
   @ApiUnauthorizedResponse({ description: 'JWT token missing or invalid' })
-  async cleanupTestResults(@Query('retentionDays') retentionDays?: number): Promise<ServiceResultContainer<number>> {
-    const deleted = await this.service.deleteOldTestResults(retentionDays ?? 30);
+  async cleanupTestResults(
+    @Query('retentionDays') queryRetentionDays?: number,
+    @Body('retentionDays') bodyRetentionDays?: number,
+  ): Promise<ServiceResultContainer<number>> {
+    const retentionDays = queryRetentionDays ?? bodyRetentionDays ?? 30;
+    const deleted = await this.service.deleteOldTestResults(retentionDays);
     return { success: true, message: `Deleted ${deleted} rows`, result: deleted };
   }
 

@@ -98,8 +98,10 @@ export class Chat implements OnInit, OnDestroy {
     // 🚀 כאן אנחנו פשוט שואבים את הנתונים המוכנים מה-Store 🚀
     models = this.llmProviderStore.groupedProviders;
 
+    promptText = signal('');
+
     canSend = computed(() => {
-        const hasText = !!this.chatForm.value.prompt?.trim();
+        const hasText = !!this.promptText().trim();
         const hasImage = !!this.selectedImageBase64();
         return (hasText || hasImage) && !this.loading() && !this.historyLoading();
     });
@@ -121,6 +123,10 @@ export class Chat implements OnInit, OnDestroy {
             this.chatForm.patchValue({ prompt });
             this.sendMessage();
         };
+
+        this.chatForm.get('prompt')?.valueChanges.subscribe((value) => {
+            this.promptText.set(value ?? '');
+        });
 
         this.llmProviderStore.reload();
 
@@ -393,6 +399,12 @@ export class Chat implements OnInit, OnDestroy {
                 this.router.navigate(['/chat'], { queryParams: { sessionId }, replaceUrl: true });
             },
         });
+    }
+
+    onPromptInput(event: Event): void {
+        const value = (event.target as HTMLTextAreaElement).value;
+        this.promptText.set(value);
+        this.autoGrow();
     }
 
     autoGrow(): void {
