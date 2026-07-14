@@ -118,13 +118,14 @@ export class AdminAgentService implements OnModuleInit {
       const history = await this.agentSessionService.loadHistory(session.id, userId);
 
       const llmResponse = await this.llmService.generateResponse({
-        prompt,
+        prompt: iteration === 0 ? prompt : '',
         systemContext: dynamicSystemContext,
         messageHistory: history,
         tools,
         providerOverride: provider,
         modelOverride: model,
-        image,
+        image: iteration === 0 ? image : undefined,
+        maxTokens: 4096,
       });
 
       if (llmResponse.toolCalls && llmResponse.toolCalls.length > 0) {
@@ -199,13 +200,14 @@ export class AdminAgentService implements OnModuleInit {
       const history = await this.agentSessionService.loadHistory(session.id, userId);
 
       const llmResponse = await this.llmService.generateResponse({
-        prompt,
+        prompt: iteration === 0 ? prompt : '',
         systemContext: dynamicSystemContext,
         messageHistory: history,
         tools,
         providerOverride: provider,
         modelOverride: model,
-        image,
+        image: iteration === 0 ? image : undefined,
+        maxTokens: 4096,
       });
 
       if (llmResponse.toolCalls && llmResponse.toolCalls.length > 0) {
@@ -286,6 +288,7 @@ export class AdminAgentService implements OnModuleInit {
             providerOverride: provider,
             modelOverride: model,
             image,
+            maxTokens: 4096,
           });
 
           for await (const chunk of stream) {

@@ -30,18 +30,20 @@ export class LlmClientService {
 
     this.logger.log(`Generating response via ${activeProvider} (model: ${activeModel})`);
 
+    const start = Date.now();
     const completion = await this.withRetry(async () => {
       const result = await client.chat.completions.create({
         model: activeModel,
         messages: [
           { role: 'system', content: systemContext || 'You are a helpful assistant.' },
           ...(messageHistory?.length ? messageHistory : []),
-          { role: 'user', content: this.buildUserMessage(prompt, image) },
+          ...(prompt ? [{ role: 'user' as const, content: this.buildUserMessage(prompt, image) }] : []),
         ],
         tools: tools && tools.length > 0 ? (tools as OpenAI.Chat.Completions.ChatCompletionTool[]) : undefined,
         temperature: 0.2,
         max_tokens: maxTokens ?? 1024,
-      });
+        ...(activeProvider === 'openrouter' && { reasoning: { enabled: false } }),
+      } as any, {});
 
       const firstChoice = result?.choices?.[0];
       if (!firstChoice?.message) {
@@ -50,6 +52,7 @@ export class LlmClientService {
 
       return result;
     }, 'generateResponse');
+    this.logger.log(`LLM response took ${((Date.now() - start) / 1000).toFixed(1)}s`);
 
     const message = completion.choices[0].message;
     const content = typeof message?.content === 'string' ? message.content : null;
@@ -60,7 +63,7 @@ export class LlmClientService {
   }
 
   async *generateStream(llmRequest: LlmRequest): AsyncIterable<string> {
-    const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools, image } = llmRequest;
+    const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools, image, maxTokens } = llmRequest;
 
     // 🚀 הבאת הקליינט בצורה אסינכרונית מה-DB 🚀
     const client = await this.getClient(providerOverride);
@@ -73,6 +76,7 @@ export class LlmClientService {
 
     this.logger.log(`Streaming response via ${activeProvider} (model: ${activeModel})`);
 
+    const start = Date.now();
     try {
       const stream = await this.withRetry(() => {
         return client.chat.completions.create({
@@ -85,7 +89,9 @@ export class LlmClientService {
           ],
           tools: tools && tools.length > 0 ? (tools as OpenAI.Chat.Completions.ChatCompletionTool[]) : undefined,
           temperature: 0.7,
-        });
+          max_tokens: maxTokens ?? 1024,
+          ...(activeProvider === 'openrouter' && { reasoning: { enabled: false } }),
+        } as OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming);
       }, 'generateStream');
 
       for await (const chunk of stream) {
@@ -94,6 +100,7 @@ export class LlmClientService {
           yield token;
         }
       }
+      this.logger.log(`LLM stream completed in ${((Date.now() - start) / 1000).toFixed(1)}s`);
     } catch (error: unknown) {
       this.logger.error(`Stream Error (after retries): ${this.getErrorMessage(error)}`);
       throw error;
@@ -150,11 +157,9 @@ export class LlmClientService {
         lastError = error;
         const errorLike = error as { status?: number; message?: string };
         const isRetryable =
-          errorLike.status === 429 ||
           errorLike.status === 503 ||
           errorLike.status === 502 ||
           errorLike.message?.includes('no choices') ||
-          errorLike.message?.includes('rate limit') ||
           errorLike.message?.includes('overloaded');
 
         if (!isRetryable || attempt === MAX_RETRIES) {

@@ -80,14 +80,19 @@ export class AiFormat implements OnChanges, OnDestroy {
       return null;
     }
 
+    const stripped = trimmed.replace(/^```component\s*/i, '');
+
     return {
       before: '',
-      componentHtml: trimmed,
+      componentHtml: stripped,
       after: '',
     };
   }
 
   private looksLikeRawComponentHtml(value: string): boolean {
+    const startsWithComponent = /^```component\b/i.test(value);
+    if (startsWithComponent) return true;
+
     const startsWithHtml = /^<style[\s>]/i.test(value) || /^<(div|section|article)\b/i.test(value);
     const hasRenderableRoot = /<\/(div|section|article)>/i.test(value);
 
@@ -106,7 +111,7 @@ export class AiFormat implements OnChanges, OnDestroy {
       return false;
     }
 
-    return /```component\b/i.test(raw) || this.looksLikeOpenRawComponentHtml(raw);
+    return /```component\b/i.test(raw) || this.looksLikeRawComponentHtml(raw.trim());
   }
 
   private renderStreamingComponent(raw: string): void {
