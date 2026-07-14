@@ -16,12 +16,7 @@
             <div class="chat-history-messages">
                 @if (hasMoreImages()) {
                     <div class="chat-load-more-images">
-                        <button
-                            type="button"
-                            class="primary-btn sm"
-                            (click)="loadMoreImages()"
-                            [disabled]="loading()"
-                        >
+                        <button type="button" class="primary-btn sm" (click)="loadMoreImages()" [disabled]="loading()">
                             <span class="ph ph-images"></span>
                             טען תמונות נוספות
                         </button>
@@ -107,7 +102,18 @@
                                 <span>{{ group.label }}</span>
                             </ng-template>
                             <ng-template let-model #item>
-                                <div class="select-option">{{ model.label }}</div>
+                                <div class="select-option">
+                                    <span>{{ model.label }}</span>
+                                    <span
+                                        >{{ model.performancePercentage }}%
+                                        {{
+                                            model.latencyAverageMs > 1000
+                                                ? (model.latencyAverageMs / 1000 | number: '1.1-1') + 's'
+                                                : model.latencyAverageMs + 'ms'
+                                        }}</span
+                                    >
+                                    <span [class]="model.isDefault ? 'ph ph-star ph-fill' : 'ph ph-star'"></span>
+                                </div>
                             </ng-template>
                         </p-select>
 

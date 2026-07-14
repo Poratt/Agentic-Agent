@@ -171,10 +171,38 @@ li.p-select-option {
   direction: ltr;
   padding: var(--space-3) var(--space-4);
 
+  &.p-highlight {
+    background: color-mix(in srgb, var(--color-primary) 15%, transparent) !important;
+    color: var(--color-text-primary) !important;
+  }
+
 
   .select-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    width: 100%;
     font-size: var(--font-size-xxs);
     direction: ltr;
+
+    span:first-child {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    span:nth-child(2) {
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-xxs);
+      white-space: nowrap;
+    }
+
+    span.ph-star {
+      color: var(--color-text-muted);
+      font-size: var(--font-size-xs);
+    }
   }
 }
 

@@ -5,9 +5,15 @@ import { PageStates } from '../../core/enums/page-states.enum';
 import { ServiceResultContainer } from '../../core/models/service-result-container.model';
 import { environment } from '../../environments/environment';
 
+export interface GroupedLlmProviderModel extends LlmModel {
+    performanceScore: number;
+    performancePercentage: number;
+    latencyAverageMs: number;
+}
+
 export interface GroupedLlmProvider {
     label: string;
-    items: LlmModel[];
+    items: GroupedLlmProviderModel[];
 }
 
 @Injectable({
@@ -25,7 +31,27 @@ export class LlmProviderStore {
     groupedProviders = computed<GroupedLlmProvider[]>(() => {
         return this.providers().map(provider => ({
             label: provider.label,
-            items: provider.models ?? []
+            items: (provider.models ?? []).map(model => {
+                const results = model.testResults || [];
+                const totalTests = results.length;
+                if (totalTests === 0) {
+                    return { ...model, performanceScore: -1, performancePercentage: 0, latencyAverageMs: 0 };
+                }
+                const successfulTests = results.filter(r => r.status === 'success').length;
+                const successPercentage = Math.round((successfulTests / totalTests) * 100);
+                const successfulResults = results.filter(r => r.status === 'success');
+                let latencyAverage = 0;
+                if (successfulResults.length > 0) {
+                    const totalLatency = successfulResults.reduce((sum, r) => sum + (r.responseTimeMs || 0), 0);
+                    latencyAverage = Math.round(totalLatency / successfulResults.length);
+                }
+                return {
+                    ...model,
+                    performanceScore: (successPercentage * 100000) - latencyAverage,
+                    performancePercentage: successPercentage,
+                    latencyAverageMs: latencyAverage
+                };
+            }).sort((a, b) => b.performanceScore - a.performanceScore)
         }));
     });
 
