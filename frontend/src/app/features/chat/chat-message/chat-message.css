@@ -123,6 +123,13 @@
 		}
 	}
 
+	.response-time-label {
+		align-self: flex-end;
+		font-size: var(--font-size-xxs);
+		color: var(--color-text-muted);
+		margin-block-start: var(--space-4);
+	}
+
 	&:hover,
 	&:focus-within {
 		.message-actions {

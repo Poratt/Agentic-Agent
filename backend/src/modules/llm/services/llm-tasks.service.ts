@@ -35,8 +35,8 @@ export class LlmTasksService {
         this.logger.log('Intermittent LLM health validation is active.');
     }
 
-    // 🚀 ניקוי שבועי של תוצאות בדיקות מודלים ישנות מ-30 יום — רץ בכל יום ראשון ב-02:00 🚀
-    @Cron('0 0 2 * * 0')
+    // 🚀 ניקוי יומי של תוצאות בדיקות מודלים ישנות מ-30 יום — רץ כל יום ב-03:00 🚀
+    @Cron('0 0 3 * * *')
     async cleanupOldLlmModelTestResults() {
         this.logger.log('--- Starting LLM Model Test Results Retention Cleanup ---');
         try {

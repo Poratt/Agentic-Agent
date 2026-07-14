@@ -156,7 +156,7 @@ export class AdminAgentService implements OnModuleInit {
             this.recordToolCall(call);
           }
 
-          const results = await this.executeToolCallGroup(group, userId);
+          const results = await this.executeToolCallGroup(group, userId, session.id);
 
           for (const { call, resultData } of results) {
             await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), { toolCallId: call.id });
@@ -247,9 +247,26 @@ export class AdminAgentService implements OnModuleInit {
           yield JSON.stringify({ type: 'step', icon: toolIcon, message: `${description}...` }) + '\n';
         }
 
-          const results = await this.executeToolCallGroup(group, userId);
+          const results = await this.executeToolCallGroup(group, userId, session.id);
 
         for (const { call, resultData } of results) {
+          let parsedResult: any;
+          try {
+            parsedResult = JSON.parse(resultData);
+          } catch {
+            parsedResult = null;
+          }
+
+          if (parsedResult?.error === 'CONFIRMATION_REQUIRED') {
+            yield JSON.stringify({
+              type: 'confirmation',
+              action: parsedResult.description,
+              target: parsedResult.target,
+              message: parsedResult.message,
+            }) + '\n';
+            return;
+          }
+
           if (resultData.includes('error')) {
             yield JSON.stringify({
               type: 'step',
@@ -375,21 +392,21 @@ export class AdminAgentService implements OnModuleInit {
     return groups;
   }
 
-  private async executeToolCallGroup(calls: LlmToolCall[], userId: number): Promise<ToolCallResult[]> {
+  private async executeToolCallGroup(calls: LlmToolCall[], userId: number, sessionId?: number): Promise<ToolCallResult[]> {
     if (calls.length === 1) {
-      return [await this.executeToolCallSafely(calls[0], userId)];
+      return [await this.executeToolCallSafely(calls[0], userId, sessionId)];
     }
 
     this.logger.log(`Executing ${calls.length} read-only tools in parallel.`);
 
     return Promise.all(calls.map((call) => {
-      return this.executeToolCallSafely(call, userId);
+      return this.executeToolCallSafely(call, userId, sessionId);
     }));
   }
 
-  private async executeToolCallSafely(call: LlmToolCall, userId: number): Promise<ToolCallResult> {
+  private async executeToolCallSafely(call: LlmToolCall, userId: number, sessionId?: number): Promise<ToolCallResult> {
     try {
-      const resultData = await this.agentToolExecutorService.executeToolCall(call, userId);
+      const resultData = await this.agentToolExecutorService.executeToolCall(call, userId, sessionId);
 
       return { call, resultData };
     } catch (error: unknown) {

@@ -23,6 +23,7 @@ import { UsersStore } from '../../../core/store/users.store';
 import { Select } from 'primeng/select';
 import { LlmProviderStore } from '../../../core/store/llm-provider.store';
 import { ChatService } from '../../../core/services/chat.service';
+import { LlmProviderService } from '../../../core/services/llm-provider.service';
 
 @Component({
     selector: 'app-chat',
@@ -49,6 +50,7 @@ export class Chat implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private fb = inject(FormBuilder);
+    private llmProviderService = inject(LlmProviderService);
 
     constructor() {
         effect(() => {
@@ -88,6 +90,8 @@ export class Chat implements OnInit, OnDestroy {
     isDragging = signal<boolean>(false);
     selectedImageBase64 = signal<string | null>(null);
     selectedImagePreview = signal<string | null>(null);
+
+    pendingConfirmation = signal<{ action: string; target: string; sessionId: number } | null>(null);
 
     currentUserProfile = this.userStore.currentUserProfile;
 
@@ -308,9 +312,19 @@ export class Chat implements OnInit, OnDestroy {
         this.activeStreamState.set('streaming');
 
         const isFirstMessage = this.messages().length <= 2;
+        const streamStartTime = Date.now();
 
         this.activeStreamSub = this.chatService.sendMessageStream(promptValue, sessionId, modelSelection, image).subscribe({
             next: (event) => {
+                if (event.type === 'confirmation' && event.action && event.target) {
+                    this.pendingConfirmation.set({
+                        action: event.action,
+                        target: event.target,
+                        sessionId,
+                    });
+                    return;
+                }
+
                 if (event.type === 'step' && event.message && event.icon) {
                     this.messages.update((prev) => {
                         const updated = [...prev];
@@ -358,6 +372,15 @@ export class Chat implements OnInit, OnDestroy {
                 this.flushPendingTokens();
                 this.loading.set(false);
                 this.activeStreamState.set('completed');
+
+                const responseTimeMs = Date.now() - streamStartTime;
+                this.messages.update((prev) => {
+                    const updated = [...prev];
+                    const current = updated[assistantIndex];
+                    if (!current) return prev;
+                    updated[assistantIndex] = { ...current, responseTimeMs };
+                    return updated;
+                });
 
                 const currentSession = this.chatStore.sessions().find((s) => {
                     return s.id === sessionId;
@@ -491,6 +514,36 @@ export class Chat implements OnInit, OnDestroy {
             };
 
             return updated;
+        });
+    }
+
+    confirmPendingAction(confirmed: boolean): void {
+        const pending = this.pendingConfirmation();
+        if (!pending) return;
+
+        this.pendingConfirmation.set(null);
+        this.chatForm.patchValue({ prompt: confirmed ? 'yes' : 'no' });
+        this.sendMessage();
+    }
+
+    setDefaultModel(event: Event, model: any): void {
+        if (model.isDefault) return;
+
+        this.llmProviderService.setDefaultModel(model.id).subscribe({
+            next: () => {
+                this.chatForm.patchValue({ model: model.id });
+                this.llmProviderStore.reload();
+
+                setTimeout(() => {
+                    const target = event.target as HTMLElement;
+                    const selectHost = target?.closest('p-select');
+                    const trigger = selectHost?.querySelector('.p-select-trigger') as HTMLElement | null;
+                    trigger?.blur();
+                });
+            },
+            error: (err) => {
+                console.error('Failed to set default model', err);
+            }
         });
     }
 

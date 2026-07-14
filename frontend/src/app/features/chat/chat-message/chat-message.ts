@@ -63,6 +63,11 @@ export class ChatMessage implements OnDestroy {
     canDelete = computed(() => !!this.message().id && !this.isActiveStream() && !this.actionsDisabled());
     canSendAgain = computed(() => !this.isActiveStream() && !this.actionsDisabled());
     canEdit = computed(() => this.isUser() && !this.actionsDisabled());
+    responseTimeLabel = computed(() => {
+        const ms = this.message().responseTimeMs;
+        if (!ms) return null;
+        return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
+    });
     steps = computed(() => this.message().steps ?? []);
     displaySteps = computed<ChatDisplayStep[]>(() => {
         return this.steps().reduce<ChatDisplayStep[]>((displaySteps, step) => {

@@ -1150,6 +1150,49 @@
         ]
       }
     },
+    "/llm-provider/test-results": {
+      "get": {
+        "description": "Retrieves paginated list of LLM model test results with total count.",
+        "operationId": "LlmProviderController_findTestResults",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max results to return (default: 50)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Offset for pagination (default: 0)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test results list with total count"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get test results",
+        "tags": [
+          "LLM Provider"
+        ]
+      }
+    },
     "/llm-provider/models/{id}/default": {
       "post": {
         "description": "Sets a model as the default for its provider, unsetting any previous default.",

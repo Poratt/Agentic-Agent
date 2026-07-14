@@ -124,6 +124,16 @@ export class LlmProviderService {
     return result.affected ?? 0;
   }
 
+  async findTestResults(limit = 50, offset = 0): Promise<ServiceResultContainer<{ results: LlmModelTestResultEntity[]; total: number }>> {
+    const [results, total] = await this.testResultRepo.findAndCount({
+      relations: ['model', 'model.provider'],
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+    return { success: true, message: 'Test results retrieved', result: { results, total } };
+  }
+
   async setDefaultModel(modelId: number): Promise<ServiceResultContainer<LlmModelEntity>> {
     const model = await this.modelRepo.findOneBy({ id: modelId });
     if (!model) throw new NotFoundException('Model not found');

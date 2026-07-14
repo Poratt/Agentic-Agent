@@ -80,6 +80,19 @@ export class LlmProviderController {
     return { success: true, message: `Deleted ${deleted} rows`, result: deleted };
   }
 
+  @Get('test-results')
+  @ApiOperation({ summary: 'Get test results', description: 'Retrieves paginated list of LLM model test results with total count.' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max results to return (default: 50)' })
+  @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Offset for pagination (default: 0)' })
+  @ApiOkResponse({ description: 'Test results list with total count' })
+  @ApiUnauthorizedResponse({ description: 'JWT token missing or invalid' })
+  async findTestResults(
+    @Query('limit') limit?: number,
+    @Query('offset') offset?: number,
+  ): Promise<ServiceResultContainer<{ results: import('./entities/llm-model-test-results.entity').LlmModelTestResultEntity[]; total: number }>> {
+    return this.service.findTestResults(limit ?? 50, offset ?? 0);
+  }
+
   @Post('models/:id/default')
   @ApiOperation({ summary: 'Set model as default', description: 'Sets a model as the default for its provider, unsetting any previous default.' })
   @ApiCreatedResponse({ description: 'Model set as default' })

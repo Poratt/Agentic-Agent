@@ -51,9 +51,10 @@
         <div class="message-body" [aiFormat]="contentForDisplay()"></div>
 
         @if (!isUser()) {
+            @if (responseTimeLabel()) {
+                <span class="response-time-label">{{ responseTimeLabel() }}</span>
+            }
             <div class="message-actions" aria-label="Message actions">
-                <!-- TODO: Add response took time here   -->
-
                 <button
                     type="button"
                     class="button icon-only transparent-btn sm"

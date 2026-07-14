@@ -29,30 +29,36 @@ export class LlmProviderStore {
     error = signal<string | null>(null);
 
     groupedProviders = computed<GroupedLlmProvider[]>(() => {
-        return this.providers().map(provider => ({
-            label: provider.label,
-            items: (provider.models ?? []).map(model => {
-                const results = model.testResults || [];
-                const totalTests = results.length;
-                if (totalTests === 0) {
-                    return { ...model, performanceScore: -1, performancePercentage: 0, latencyAverageMs: 0 };
-                }
-                const successfulTests = results.filter(r => r.status === 'success').length;
-                const successPercentage = Math.round((successfulTests / totalTests) * 100);
-                const successfulResults = results.filter(r => r.status === 'success');
-                let latencyAverage = 0;
-                if (successfulResults.length > 0) {
-                    const totalLatency = successfulResults.reduce((sum, r) => sum + (r.responseTimeMs || 0), 0);
-                    latencyAverage = Math.round(totalLatency / successfulResults.length);
-                }
-                return {
-                    ...model,
-                    performanceScore: (successPercentage * 100000) - latencyAverage,
-                    performancePercentage: successPercentage,
-                    latencyAverageMs: latencyAverage
-                };
-            }).sort((a, b) => b.performanceScore - a.performanceScore)
-        }));
+        return this.providers()
+            .filter(provider => provider.active)
+            .map(provider => ({
+                label: provider.label,
+                items: (provider.models ?? [])
+                    .filter(model => model.active)
+                    .map(model => {
+                        const results = model.testResults || [];
+                        const totalTests = results.length;
+                        if (totalTests === 0) {
+                            return { ...model, performanceScore: -1, performancePercentage: 0, latencyAverageMs: 0 };
+                        }
+                        const successfulTests = results.filter(r => r.status === 'success').length;
+                        const successPercentage = Math.round((successfulTests / totalTests) * 100);
+                        const successfulResults = results.filter(r => r.status === 'success');
+                        let latencyAverage = 0;
+                        if (successfulResults.length > 0) {
+                            const totalLatency = successfulResults.reduce((sum, r) => sum + (r.responseTimeMs || 0), 0);
+                            latencyAverage = Math.round(totalLatency / successfulResults.length);
+                        }
+                        return {
+                            ...model,
+                            performanceScore: (successPercentage * 100000) - latencyAverage,
+                            performancePercentage: successPercentage,
+                            latencyAverageMs: latencyAverage
+                        };
+                    })
+                    .sort((a, b) => b.performanceScore - a.performanceScore)
+            }))
+            .filter(provider => (provider.items?.length ?? 0) > 0);
     });
 
     pageState = computed<PageStates>(() => {

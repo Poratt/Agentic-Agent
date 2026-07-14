@@ -10,6 +10,7 @@ export interface IChatMessage {
   content: string;
   createdAt?: Date;
   steps?: IChatStep[];
+  responseTimeMs?: number;
   /** In-memory data URL of the image being composed before send. Not persisted. */
   imagePreview?: string;
   /** Base64 data URL of an image persisted in the backend. Returned from the API on session load. */
@@ -18,7 +19,8 @@ export interface IChatMessage {
 
 export type ChatStreamEvent =
   | ({ type: 'step' } & IChatStep)
-  | { type: 'token'; content?: string };
+  | { type: 'token'; content?: string }
+  | { type: 'confirmation'; action: string; target: string; message?: string };
 
 export interface ChatModelSelection {
   // provider: 'openrouter' | 'nvidia' | 'ollama';

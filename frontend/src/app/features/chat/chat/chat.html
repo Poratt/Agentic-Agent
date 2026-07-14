@@ -45,6 +45,26 @@
         </div>
     }
 
+    @if (pendingConfirmation(); as confirmation) {
+        <div class="confirmation-banner">
+            <div class="confirmation-content">
+                <span class="ph ph-warning-circle"></span>
+                <div class="confirmation-text">
+                    <strong>פעולה מסוכנת דורשת אישור</strong>
+                    <span>{{ confirmation.action }} — {{ confirmation.target }}</span>
+                </div>
+            </div>
+            <div class="confirmation-actions">
+                <button type="button" class="primary-btn sm" (click)="confirmPendingAction(true)">
+                    <span class="ph ph-check"></span> אישור
+                </button>
+                <button type="button" class="transparent-btn sm" (click)="confirmPendingAction(false)">
+                    <span class="ph ph-x"></span> ביטול
+                </button>
+            </div>
+        </div>
+    }
+
     <div class="chat-input-area">
         @if (actionError()) {
             <div class="chat-action-error" role="alert">{{ actionError() }}</div>
@@ -112,7 +132,15 @@
                                                 : model.latencyAverageMs + 'ms'
                                         }}</span
                                     >
-                                    <span [class]="model.isDefault ? 'ph ph-star ph-fill' : 'ph ph-star'"></span>
+                                    <button
+                                        type="button"
+                                        class="star-btn"
+                                        [class.star-active]="model.isDefault"
+                                        [attr.aria-label]="model.isDefault ? 'Default model' : 'Set as default'"
+                                        (click)="setDefaultModel($event, model)"
+                                    >
+                                        <span [class]="model.isDefault ? 'ph ph-star ph-fill' : 'ph ph-star'"></span>
+                                    </button>
                                 </div>
                             </ng-template>
                         </p-select>

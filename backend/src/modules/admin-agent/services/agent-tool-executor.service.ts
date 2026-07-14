@@ -10,9 +10,23 @@ import { LlmToolCall } from '../../llm/types/llm.types';
 import { SwaggerToolsParser } from './swagger-tools.parser';
 import { AxiosRequestConfig } from 'axios';
 
+export interface PendingAction {
+  sessionId: number;
+  functionName: string;
+  args: Record<string, any>;
+  description: string;
+  target: string;
+  createdAt: number;
+}
+
 @Injectable()
 export class AgentToolExecutorService {
   private readonly logger = new Logger(AgentToolExecutorService.name);
+  private readonly pendingActions = new Map<string, PendingAction>();
+  private readonly DANGEROUS_OPERATIONS = new Set([
+    'UsersController_delete',
+    'UsersController_updateRole',
+  ]);
 
   constructor(
     @InjectRepository(User)
@@ -23,19 +37,70 @@ export class AgentToolExecutorService {
     private readonly swaggerToolsParser: SwaggerToolsParser,
   ) { }
 
+  private getPendingKey(sessionId: number, functionName: string, args: Record<string, any>): string {
+    return `${sessionId}:${functionName}:${JSON.stringify(args)}`;
+  }
+
+  isDangerousOperation(functionName: string): boolean {
+    return this.DANGEROUS_OPERATIONS.has(functionName);
+  }
+
+  getPendingAction(sessionId: number): PendingAction | undefined {
+    for (const [, action] of this.pendingActions.entries()) {
+      if (action.sessionId === sessionId) {
+        return action;
+      }
+    }
+    return undefined;
+  }
+
+  storePendingAction(sessionId: number, functionName: string, args: Record<string, any>, description: string, target: string): void {
+    const key = this.getPendingKey(sessionId, functionName, args);
+    this.pendingActions.set(key, {
+      sessionId,
+      functionName,
+      args,
+      description,
+      target,
+      createdAt: Date.now(),
+    });
+    this.logger.log(`Stored pending action: ${functionName} for session ${sessionId}`);
+  }
+
+  confirmPendingAction(sessionId: number): PendingAction | undefined {
+    for (const [key, action] of this.pendingActions.entries()) {
+      if (action.sessionId === sessionId) {
+        this.pendingActions.delete(key);
+        this.logger.log(`Confirmed pending action: ${action.functionName} for session ${sessionId}`);
+        return action;
+      }
+    }
+    return undefined;
+  }
+
+  cancelPendingAction(sessionId: number): boolean {
+    for (const [key, action] of this.pendingActions.entries()) {
+      if (action.sessionId === sessionId) {
+        this.pendingActions.delete(key);
+        this.logger.log(`Cancelled pending action: ${action.functionName} for session ${sessionId}`);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  hasPendingConfirmation(sessionId: number, functionName: string, args: Record<string, any>): boolean {
+    const key = this.getPendingKey(sessionId, functionName, args);
+    return this.pendingActions.has(key);
+  }
 
   getSemanticActionDescription(functionName: string, args: any): string {
-    const id = args && args.id ? args.id : '';
-
-    // שליפת המטא-דאטה ששמרנו ב-Map
     const endpointMeta = this.swaggerToolsParser.getEndpoint(functionName);
 
-    // אם מצאנו summary (שהוא ה-summaryHe בעדיפות ראשונה מהסוואגר), נחזיר אותו
     if (endpointMeta && endpointMeta.summary) {
       return endpointMeta.summary;
     }
 
-    // פולבק זמני בעברית, למקרה ששכחת להגדיר באחד הקונטרולרים
     return `מפעיל את כלי המערכת: ${functionName}`;
   }
 
@@ -50,7 +115,7 @@ export class AgentToolExecutorService {
       if (functionName === 'UsersController_delete') {
         return {
           allowed: false,
-          reason: 'חוק אבטחת מערכת: אינך מורשה למחוק את החשבון המחובר של עצמך מהמערכת.',
+          reason: 'חוק אבטחת מערכת: אינך מורשה למחוק את החשבון המחובר של עצמך מהממשק.',
         };
       }
 
@@ -87,14 +152,13 @@ export class AgentToolExecutorService {
     };
   }
 
-  async executeToolCall(call: LlmToolCall, userId: number): Promise<string> {
+  async executeToolCall(call: LlmToolCall, userId: number, sessionId?: number): Promise<string> {
     const endpointMeta = this.swaggerToolsParser.getEndpoint(call.function.name);
     if (!endpointMeta) {
       this.logger.error(`Unknown tool call: ${call.function.name}`);
       return JSON.stringify({ error: `Unknown tool call: ${call.function.name}` });
     }
 
-    // תיקון באג 1: הגנה מפני קריסת קריאת JSON פגום מה-LLM
     let args: Record<string, any> = {};
     try {
       args = JSON.parse(call.function.arguments || '{}');
@@ -102,7 +166,6 @@ export class AgentToolExecutorService {
       this.logger.warn(`Failed to parse tool arguments for ${call.function.name}, using empty object.`);
     }
 
-    // המרת תפקיד מטקסט למספר (Coercion)
     if (args && typeof args.role === 'string') {
       const lowerRole = args.role.toLowerCase();
       if (lowerRole === 'admin') {
@@ -112,11 +175,26 @@ export class AgentToolExecutorService {
       }
     }
 
-    // בדיקת חוקי אבטחה
     const guardResult = this.checkActionAllowed(call.function.name, args, userId);
     if (!guardResult.allowed) {
       this.logger.warn(`Security Blocked Action: ${guardResult.reason}`);
       return JSON.stringify({ error: guardResult.reason, status: 403 });
+    }
+
+    if (sessionId && this.isDangerousOperation(call.function.name) && !this.hasPendingConfirmation(sessionId, call.function.name, args)) {
+      const description = this.getSemanticActionDescription(call.function.name, args);
+      const target = args.id ? `ID ${args.id}` : JSON.stringify(args);
+      this.storePendingAction(sessionId, call.function.name, args, description, target);
+      return JSON.stringify({
+        error: 'CONFIRMATION_REQUIRED',
+        description,
+        target,
+        message: `פעולה זו דורשת אישור: ${description}. אשר את הפעולה כדי שאוכל לבצע.`,
+      });
+    }
+
+    if (sessionId && this.isDangerousOperation(call.function.name)) {
+      this.confirmPendingAction(sessionId);
     }
 
     const baseUrl = `http://localhost:${this.configService.get('PORT', 3000)}`;
@@ -133,13 +211,11 @@ export class AgentToolExecutorService {
     try {
       const method = endpointMeta.method.toLowerCase();
 
-      // תיקון באג 2 + כתיבה גנרית: שימוש בקונפיגורציית Axios אחידה שתומכת ב-Body לכל סוגי הבקשות (כולל DELETE/PUT)
       const config: AxiosRequestConfig = {
         method: method as any,
         url: resolved.targetUrl,
         headers: systemHeaders,
         params: resolved.queryParams,
-        // קריאות גט לא שולחות Body
         ...(method !== 'get' ? { data: resolved.body } : {}),
       };
 
