@@ -9,14 +9,16 @@ import { AuthModule } from '../auth/auth.module';
 import { LlmModule } from '../llm/llm.module';
 import { ChatMessage } from './entities/chat-message.entity';
 import { ChatSession } from './entities/chat-session.entity';
+import { AgentActionAuditLog } from './entities/agent-action-audit-log.entity';
 import { SwaggerToolsParser } from './services/swagger-tools.parser';
 import { AgentSessionService } from './services/agent-session.service';
 import { AgentToolExecutorService } from './services/agent-tool-executor.service';
+import { AgentAuditService } from './services/agent-audit.service';
 
 @Module({
   imports: [
     HttpModule,
-    TypeOrmModule.forFeature([User, ChatMessage, ChatSession]),
+    TypeOrmModule.forFeature([User, ChatMessage, ChatSession, AgentActionAuditLog]),
     UsersModule,
     AuthModule,
     LlmModule,
@@ -27,6 +29,7 @@ import { AgentToolExecutorService } from './services/agent-tool-executor.service
     SwaggerToolsParser,
     AgentSessionService,
     AgentToolExecutorService,
+    AgentAuditService,
   ],
   exports: [AdminAgentService],
 })

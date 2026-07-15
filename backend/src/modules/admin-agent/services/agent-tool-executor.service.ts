@@ -11,22 +11,25 @@ import { SwaggerToolsParser } from './swagger-tools.parser';
 import { AxiosRequestConfig } from 'axios';
 
 export interface PendingAction {
+  id: string;
   sessionId: number;
+  userId: number;
   functionName: string;
   args: Record<string, any>;
   description: string;
   target: string;
+  metadata?: Record<string, any>;
   createdAt: number;
+  expiresAt: number;
+  executed: boolean;
 }
+
+const PENDING_ACTION_TTL_MS = 5 * 60 * 1000;
 
 @Injectable()
 export class AgentToolExecutorService {
   private readonly logger = new Logger(AgentToolExecutorService.name);
   private readonly pendingActions = new Map<string, PendingAction>();
-  private readonly DANGEROUS_OPERATIONS = new Set([
-    'UsersController_delete',
-    'UsersController_updateRole',
-  ]);
 
   constructor(
     @InjectRepository(User)
@@ -42,7 +45,7 @@ export class AgentToolExecutorService {
   }
 
   isDangerousOperation(functionName: string): boolean {
-    return this.DANGEROUS_OPERATIONS.has(functionName);
+    return this.swaggerToolsParser.requiresConfirmation(functionName);
   }
 
   getPendingAction(sessionId: number): PendingAction | undefined {
@@ -54,17 +57,74 @@ export class AgentToolExecutorService {
     return undefined;
   }
 
-  storePendingAction(sessionId: number, functionName: string, args: Record<string, any>, description: string, target: string): void {
-    const key = this.getPendingKey(sessionId, functionName, args);
-    this.pendingActions.set(key, {
+  storePendingAction(sessionId: number, userId: number, functionName: string, args: Record<string, any>, description: string, target: string, metadata?: Record<string, any>): PendingAction {
+    const id = `pending_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const now = Date.now();
+    const action: PendingAction = {
+      id,
       sessionId,
+      userId,
       functionName,
       args,
       description,
       target,
-      createdAt: Date.now(),
-    });
-    this.logger.log(`Stored pending action: ${functionName} for session ${sessionId}`);
+      metadata,
+      createdAt: now,
+      expiresAt: now + PENDING_ACTION_TTL_MS,
+      executed: false,
+    };
+    this.pendingActions.set(id, action);
+    this.logger.log(`Stored pending action ${id}: ${functionName} for session ${sessionId}`);
+    return action;
+  }
+
+  confirmPendingActionById(actionId: string): PendingAction | undefined {
+    const action = this.pendingActions.get(actionId);
+    if (!action) {
+      this.logger.warn(`confirmPendingActionById: action ${actionId} not found`);
+      return undefined;
+    }
+
+    if (action.executed) {
+      this.logger.warn(`confirmPendingActionById: action ${actionId} already executed`);
+      this.pendingActions.delete(actionId);
+      return undefined;
+    }
+
+    if (Date.now() > action.expiresAt) {
+      this.logger.warn(`confirmPendingActionById: action ${actionId} expired`);
+      this.pendingActions.delete(actionId);
+      return undefined;
+    }
+
+    action.executed = true;
+    this.pendingActions.delete(actionId);
+    this.logger.log(`Confirmed pending action ${actionId}: ${action.functionName}`);
+    return action;
+  }
+
+  cancelPendingActionById(actionId: string): PendingAction | undefined {
+    const action = this.pendingActions.get(actionId);
+    if (action) {
+      this.pendingActions.delete(actionId);
+      this.logger.log(`Cancelled pending action ${actionId}: ${action.functionName}`);
+      return action;
+    }
+    return undefined;
+  }
+
+  getPendingActionOwner(actionId: string): { userId: number; sessionId: number } | undefined {
+    const action = this.pendingActions.get(actionId);
+    if (!action) return undefined;
+    return { userId: action.userId, sessionId: action.sessionId };
+  }
+
+  inspectPendingAction(actionId: string): { status: 'pending' | 'expired' | 'already_processed' | 'not_found'; action?: PendingAction } {
+    const action = this.pendingActions.get(actionId);
+    if (!action) return { status: 'not_found' };
+    if (action.executed) return { status: 'already_processed', action };
+    if (Date.now() > action.expiresAt) return { status: 'expired', action };
+    return { status: 'pending', action };
   }
 
   confirmPendingAction(sessionId: number): PendingAction | undefined {
@@ -184,12 +244,20 @@ export class AgentToolExecutorService {
     if (sessionId && this.isDangerousOperation(call.function.name) && !this.hasPendingConfirmation(sessionId, call.function.name, args)) {
       const description = this.getSemanticActionDescription(call.function.name, args);
       const target = args.id ? `ID ${args.id}` : JSON.stringify(args);
-      this.storePendingAction(sessionId, call.function.name, args, description, target);
+      const metadata: Record<string, any> = {};
+
+      if (call.function.name === 'LlmProviderController_cleanupTestResults') {
+        metadata.retentionDays = args.retentionDays ?? 30;
+      }
+
+      const pendingAction = this.storePendingAction(sessionId, userId, call.function.name, args, description, target, metadata);
       return JSON.stringify({
         error: 'CONFIRMATION_REQUIRED',
+        actionId: pendingAction.id,
         description,
         target,
-        message: `פעולה זו דורשת אישור: ${description}. אשר את הפעולה כדי שאוכל לבצע.`,
+        metadata,
+        message: `פעולה זו דורשת אישור: ${description}`,
       });
     }
 

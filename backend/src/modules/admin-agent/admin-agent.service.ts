@@ -260,8 +260,10 @@ export class AdminAgentService implements OnModuleInit {
           if (parsedResult?.error === 'CONFIRMATION_REQUIRED') {
             yield JSON.stringify({
               type: 'confirmation',
+              actionId: parsedResult.actionId,
               action: parsedResult.description,
               target: parsedResult.target,
+              metadata: parsedResult.metadata,
               message: parsedResult.message,
             }) + '\n';
             return;

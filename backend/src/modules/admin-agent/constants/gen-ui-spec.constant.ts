@@ -4,6 +4,8 @@ export const GENUI_HTML = (hint: string) => {
 <style>...</style>
 <div style="...">...</div>
 \`\`\`
+FONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.
+ICONS: Use <span class="ph ph-{icon-name}"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.
 ${hint}
 
 No explanations. No plain text.`;
@@ -27,12 +29,21 @@ export const GenUiSpec = {
 
     USERS_TABLE: GENUI_HTML(
         `Render a styled users table with columns: ID, Full Name, Email, Role badge, Created At.
-        Add action buttons (including icon and label) per row:
-        - "פרטים" button: onclick="window.agentPrompt('תראה לי את פרטי המשתמש עם מזהה ' + id)"
-        - "מחק" button (red, only for non-admin): onclick="window.agentPrompt('מחק את המשתמש עם מזהה ' + id)"
-        - "שנה תפקיד" button: onclick="window.agentPrompt('שנה את תפקיד המשתמש עם מזהה ' + id)"
-        Replace 'id' with the actual user id from the data.
-        CRITICAL: Use ONLY design tokens for all CSS values. Use var(--color-surface) for table background, var(--color-text-primary) for text, var(--color-border) for table borders, var(--color-primary) for action buttons, var(--color-danger) for delete button, var(--radius-sm) for button border-radius, var(--space-2) for cell padding. NEVER use hardcoded colors or pixel values.`
+        CSS REQUIREMENTS — these exact declarations MUST appear in the <style> block:
+        - .users-table th { font-size: var(--font-size-xs) }
+        - .users-table td { font-size: var(--font-size-xs) }
+        - .act-btn { font-size: var(--font-size-xs) }
+        - .role-badge { font-size: var(--font-size-xs) }
+        Do NOT use font-size-md or font-size-lg anywhere.
+        ICONS: Use <span class="ph ph-{icon-name}"></span> for all icons. NEVER use emojis.
+        Action buttons: Small pill-shaped with Phosphor icon span before label. Button classes: act-btn, act-del (for delete).
+        Date: toLocaleDateString('he-IL') for DD/MM/YYYY format.
+        Role badge: var(--color-primary) for admin, var(--color-surface-elevated) for user.
+        Button actions:
+           - "פרטים": onclick="window.agentPrompt('תראה לי את פרטי המשתמש עם מזהה ' + id)"
+           - "מחק" (act-del, non-admin only): onclick="window.agentPrompt('מחק את המשתמש עם מזהה ' + id)"
+           - "שנה תפקיד": onclick="window.agentPrompt('שנה את תפקיד המשתמש עם מזהה ' + id)"
+        Replace 'id' with actual user id. Use ONLY design tokens for CSS values.`
     ),
 
     USER_UPDATE_CONFIRMATION: GENUI_HTML(
@@ -87,31 +98,35 @@ export const GenUiSpec = {
     // Weather
     WEATHER_CURRENT: GENUI_HTML(
         `Render a premium animated current-weather card from the tool response.
+        Weather emojis ARE ALLOWED here (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️).
         Rules:
         1. Use only values returned in result. Never invent weather values, location, timestamps, icons, or measurements.
         2. Build a single polished weather card with an animated hero area, not a table.
         3. Header: show the weather description and result.requestLocalTime as the current local Israel time. Do not use observationTime as the main current time.
         4. Main metric: show tempC as the dominant animated number, with feelsLikeC and optional tempF/feelsLikeF as secondary text.
         5. Detail grid: show humidity, windSpeedKmph + windDirection, uvIndex, cloudCover, precipitationMm, pressure, visibility, and observationTime only as "provider observation time" when available. Hide any row whose value is missing or empty.
-        6. Create an exciting but professional animation: root card enters with fade + lift, temperature scales in once, detail chips stagger in, weather emoji gently floats. Add a subtle animated weather scene using inline HTML/CSS only: sun rays for sunny, drifting cloud for cloudy, diagonal rain lines for rainy, or moving wind streaks when wind is prominent.
-        7. Add severity cues without inventing labels: uvIndex >= 6 make UV chip warning-like, precipitationMm > 0 make precipitation active, windSpeedKmph >= 30 make wind active.
-        8. Keep animations smooth and non-blocking: 150-400ms for entrance, 2-6s for ambient loops, no flashing, no infinite aggressive pulsing.
-        9. CRITICAL: Use ONLY design tokens for all CSS values. Use var(--color-surface) for backgrounds, var(--color-text-primary) for text, var(--color-border) for borders, var(--radius-lg) for border-radius, var(--space-4) for padding, etc. NEVER use hardcoded colors like #fff, #333, or pixel values like 16px.`
+        6. ANIMATIONS (make them rich and visible):
+           - Root card: fade-in + lift (translateY(-20px) to 0) over 500ms ease-out.
+           - Weather emoji: large (48-64px), float animation (translateY oscillation 3-5s infinite ease-in-out), glow effect.
+           - Temperature number: scale from 0 to 1 over 600ms with bounce easing.
+           - Detail chips: stagger in from bottom with 80ms delay between each (opacity 0→1 + translateY).
+           - Background scene: animated sun rays rotating slowly (20s), rain drops falling (linear infinite), clouds drifting (horizontal float 8-15s), or snow particles falling.
+           - Severity pulsing: uvIndex>=6 pulse the UV chip red, precipitation>0 animate rain icon, wind>30 animate wind icon.
+        7. Keep animations smooth: use transform and opacity only, no layout thrashing.`
     ),
 
     WEATHER_FORECAST: GENUI_HTML(
         `Render a gorgeous 5-day forecast container.
-        - Header with city name + calendar icon
-        - 5 cards horizontally (flexbox), each with: day name, emoji, max/min temp, humidity
-        - Hover: border color change
-        - CRITICAL: Use ONLY design tokens for all CSS values:
-          * Backgrounds: var(--color-surface), var(--color-surface-elevated)
-          * Text: var(--color-text-primary), var(--color-text-secondary)
-          * Borders: var(--color-border)
-          * Border radius: var(--radius-lg), var(--radius-xl)
-          * Spacing: var(--space-4), var(--space-6)
-          * Shadows: var(--shadow-soft)
-          * NEVER use hardcoded colors (#fff, #333) or pixel values (16px, 24px)`
+        Weather emojis ARE ALLOWED here (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️).
+        - Header with city name + <span class="ph ph-calendar"></span> icon
+        - 5 cards horizontally (flexbox), each with: day name, weather emoji, max/min temp, humidity
+        - ANIMATIONS:
+          * Container: fade-in on load 400ms
+          * Cards: stagger entrance from right (translateX(30px)→0) with 100ms delay between each
+          * Weather emoji: gentle float animation (2-4s infinite)
+          * On hover: card lifts (translateY(-4px)), border glows, emoji scales up 1.1x
+          * Temperature: number scales in on card entrance
+        - CRITICAL: Use ONLY design tokens for CSS values. NEVER use hardcoded colors or pixel values.`
     ),
 
 
@@ -131,10 +146,11 @@ export const GenUiSpec = {
 
     LLM_TEST_RESULTS: GENUI_HTML(
         `Render a gorgeous summary dashboard of tested LLM models.
-        - Include a header card with a summary statistic (e.g. "X out of Y models active") with ph-activity and pulsing dot.
+        - Include a header card with a summary statistic (e.g. "X out of Y models active") with <span class="ph ph-activity"></span> and pulsing dot.
         - Render a clean grid of models. For each model show its full name, its provider badge, and its dynamic online status.
-        - Verified models: show a green active badge with the text 'תקין ופעיל' and a checkmark.
-        - Failed models: show a red badge with the text 'לא עונה (500)' and a warning circle.
+        - Verified models: show a green active badge with <span class="ph ph-check-circle"></span> and the text 'תקין ופעיל'.
+        - Failed models: show a red badge with <span class="ph ph-warning-circle"></span> and the text 'לא עונה (500)'.
+        - NEVER use emojis or Unicode symbols. Use <span class="ph ph-{icon-name}"></span> for all icons.
         `
     ),
 

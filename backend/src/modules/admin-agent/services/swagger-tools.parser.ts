@@ -1,7 +1,9 @@
 // FILE: src/modules/admin-agent/services/swagger-tools.parser.ts
 
 import { Injectable, Logger } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import * as fs from 'fs';
+import { REQUIRES_CONFIRMATION_KEY } from '../decorators/requires-confirmation.decorator';
 
 interface LlmToolFunctionSchema {
   name: string;
@@ -18,6 +20,7 @@ export interface LlmToolSchema {
 export class SwaggerToolsParser {
   private readonly logger = new Logger(SwaggerToolsParser.name);
   private swaggerTools: LlmToolSchema[] = [];
+  private requiresConfirmationOps = new Set<string>();
 
   private swaggerEndpointsMap = new Map<
     string,
@@ -27,12 +30,13 @@ export class SwaggerToolsParser {
       summary?: string;
       toolIcon?: string;
       genUiSpec?: string;
+      requiresConfirmation?: boolean;
     }
   >();
 
   private swaggerSpecMtimeMs = 0;
 
-  constructor() {
+  constructor(private readonly reflector: Reflector) {
     this.loadSwaggerAsTools();
   }
 
@@ -64,6 +68,10 @@ export class SwaggerToolsParser {
     this.refreshSwaggerToolsIfChanged();
 
     return this.swaggerEndpointsMap.get(operationId);
+  }
+
+  requiresConfirmation(operationId: string): boolean {
+    return this.requiresConfirmationOps.has(operationId);
   }
 
   resolveArguments(
@@ -309,13 +317,20 @@ export class SwaggerToolsParser {
             continue;
           }
 
+          const requiresConfirmation = op['x-requires-confirmation'] === true;
+
           this.swaggerEndpointsMap.set(op.operationId, {
             path,
             method,
             summary: op.summaryHe || op.summary,
             toolIcon: op.toolIcon,
             genUiSpec: op.genUiSpec,
+            requiresConfirmation,
           });
+
+          if (requiresConfirmation) {
+            this.requiresConfirmationOps.add(op.operationId);
+          }
 
           const properties: Record<string, any> = {};
           const requiredFields: string[] = [];

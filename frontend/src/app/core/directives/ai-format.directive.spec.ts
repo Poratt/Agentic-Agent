@@ -295,7 +295,7 @@ describe('AiFormat progressive streaming rendering', () => {
     });
 
     it('detects open raw component HTML', () => {
-      expect(directive.isStreamingComponent('<style>.card{}</style><div class="card">')).toBe(true);
+      expect(directive.isStreamingComponent('<style>.card{}</style><div class="card"></div>')).toBe(true);
     });
 
     it('does not detect non-component code fences', () => {

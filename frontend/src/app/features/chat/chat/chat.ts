@@ -91,7 +91,7 @@ export class Chat implements OnInit, OnDestroy {
     selectedImageBase64 = signal<string | null>(null);
     selectedImagePreview = signal<string | null>(null);
 
-    pendingConfirmation = signal<{ action: string; target: string; sessionId: number } | null>(null);
+    pendingConfirmation = signal<{ actionId: string; action: string; target: string; metadata?: Record<string, any> } | null>(null);
 
     currentUserProfile = this.userStore.currentUserProfile;
 
@@ -324,9 +324,10 @@ export class Chat implements OnInit, OnDestroy {
             next: (event) => {
                 if (event.type === 'confirmation' && event.action && event.target) {
                     this.pendingConfirmation.set({
+                        actionId: event.actionId,
                         action: event.action,
                         target: event.target,
-                        sessionId,
+                        metadata: event.metadata,
                     });
                     return;
                 }
@@ -355,11 +356,12 @@ export class Chat implements OnInit, OnDestroy {
                     this.scheduleTokenFlush();
                 }
             },
-            error: () => {
+            error: (err) => {
                 this.activeStreamSub = undefined;
                 this.flushPendingTokens();
                 this.loading.set(false);
                 this.activeStreamState.set('errored');
+                const errorDetail = err?.message ? ` (${err.message})` : '';
                 this.messages.update((prev) => {
                     const updated = [...prev];
                     const current = updated[assistantIndex];
@@ -367,7 +369,7 @@ export class Chat implements OnInit, OnDestroy {
 
                     updated[assistantIndex] = {
                         ...current,
-                        content: '[שגיאה בקבלת תגובה מהשרת. נא לנסות שוב]',
+                        content: `[שגיאה בקבלת תגובה מהשרת${errorDetail}. נא לנסות שוב]`,
                     };
 
                     return updated;
@@ -534,8 +536,41 @@ export class Chat implements OnInit, OnDestroy {
         if (!pending) return;
 
         this.pendingConfirmation.set(null);
-        this.chatForm.patchValue({ prompt: confirmed ? 'yes' : 'no' });
-        this.sendMessage();
+        this.loading.set(true);
+
+        this.chatService.confirmAction(pending.actionId, confirmed).subscribe({
+            next: (result) => {
+                this.loading.set(false);
+                if (confirmed && result.result) {
+                    const assistantMsg: IChatMessage = {
+                        role: 'assistant',
+                        content: typeof result.result === 'string' ? result.result : JSON.stringify(result.result),
+                    };
+                    this.messages.update((prev) => [...prev, assistantMsg]);
+                } else if (!confirmed) {
+                    const assistantMsg: IChatMessage = {
+                        role: 'assistant',
+                        content: 'הפעולה בוטלה.',
+                    };
+                    this.messages.update((prev) => [...prev, assistantMsg]);
+                }
+            },
+            error: (err) => {
+                this.loading.set(false);
+                console.error('Failed to confirm action', err);
+                let errorMessage = 'שגיאה בביטול הפעולה.';
+                if (err?.status === 403) {
+                    errorMessage = 'פעולה זו שייכת למשתמש אחר.';
+                } else if (err?.status === 404) {
+                    errorMessage = 'הבקשה פגה hoặc כבר טופלה. נסה שוב.';
+                }
+                const assistantMsg: IChatMessage = {
+                    role: 'assistant',
+                    content: errorMessage,
+                };
+                this.messages.update((prev) => [...prev, assistantMsg]);
+            }
+        });
     }
 
     setDefaultModel(event: Event, model: any): void {

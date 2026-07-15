@@ -28,15 +28,12 @@ export class AiFormat implements OnChanges, OnDestroy {
   private el = inject<ElementRef<HTMLElement>>(ElementRef);
   private renderer = inject(Renderer2);
   private sanitizer = inject(DomSanitizer);
-  private animatedBlockSignatures = new Set<string>();
 
   private skeletonVisible = false;
   private previewHost: HTMLElement | null = null;
   private markdownHost: HTMLElement | null = null;
   private previewRafHandle: number | null = null;
   private lastPreviewRaw = '';
-  private lastCachedBeforeMarkdown = '';
-  private cachedBeforeMarkdownNodes: ChildNode[] = [];
 
   ngOnChanges() {
     const raw = this.aiFormat() ?? '';
@@ -93,7 +90,7 @@ export class AiFormat implements OnChanges, OnDestroy {
     const startsWithComponent = /^```component\b/i.test(value);
     if (startsWithComponent) return true;
 
-    const startsWithHtml = /^<style[\s>]/i.test(value) || /^<(div|section|article)\b/i.test(value);
+    const startsWithHtml = /^<style[\s>]/i.test(value) || /^<style\b/i.test(value) || /^<(div|section|article)\b/i.test(value);
     const hasRenderableRoot = /<\/(div|section|article)>/i.test(value);
 
     return startsWithHtml && hasRenderableRoot;
@@ -101,7 +98,7 @@ export class AiFormat implements OnChanges, OnDestroy {
 
   private looksLikeOpenRawComponentHtml(value: string): boolean {
     const trimmed = value.trim();
-    const startsWithHtml = /^<style[\s>]/i.test(trimmed) || /^<(div|section|article)\b/i.test(trimmed);
+    const startsWithHtml = /^<style[\s>]/i.test(trimmed) || /^<style\b/i.test(trimmed) || /^<(div|section|article)\b/i.test(trimmed);
 
     return startsWithHtml && !this.looksLikeRawComponentHtml(trimmed);
   }
@@ -532,31 +529,92 @@ export class AiFormat implements OnChanges, OnDestroy {
     const newNodes = Array.from(doc.body.childNodes);
     const currentNodes = Array.from(target.childNodes);
 
-    newNodes.forEach((newNode, index) => {
-      const currentNode = currentNodes[index];
+    const maxLen = Math.max(currentNodes.length, newNodes.length);
+    for (let i = 0; i < maxLen; i++) {
+      const current = currentNodes[i];
+      const next = newNodes[i];
 
-      if (!currentNode) {
-        this.renderer.appendChild(target, newNode.cloneNode(true));
-        return;
+      if (!current && next) {
+        this.renderer.appendChild(target, next.cloneNode(true));
+        continue;
       }
 
-      if (currentNode.nodeType !== newNode.nodeType ||
-        (currentNode instanceof HTMLElement && newNode instanceof HTMLElement && currentNode.outerHTML !== newNode.outerHTML) ||
-        (currentNode.nodeType === Node.TEXT_NODE && currentNode.textContent !== newNode.textContent)) {
-
-        const clone = newNode.cloneNode(true);
-
-        if (currentNode instanceof HTMLElement && currentNode.classList.contains('ai-node-fade-in')) {
-          this.renderer.addClass(clone, 'ai-node-fade-in');
-        }
-
-        this.renderer.insertBefore(target, clone, currentNode);
-        this.renderer.removeChild(target, currentNode);
+      if (current && !next) {
+        this.renderer.removeChild(target, current);
+        continue;
       }
-    });
 
-    while (target.childNodes.length > newNodes.length) {
-      this.renderer.removeChild(target, target.lastChild);
+      this.morphNode(current, next);
+    }
+  }
+
+  private morphNode(current: ChildNode, newNode: ChildNode): void {
+    if (current.nodeType !== newNode.nodeType) {
+      const parent = current.parentNode!;
+      const clone = newNode.cloneNode(true);
+      this.renderer.insertBefore(parent, clone, current);
+      this.renderer.removeChild(parent, current);
+      return;
+    }
+
+    if (current.nodeType === Node.TEXT_NODE) {
+      if (current.textContent !== newNode.textContent) {
+        current.textContent = newNode.textContent;
+      }
+      return;
+    }
+
+    if (!(current instanceof HTMLElement) || !(newNode instanceof HTMLElement)) return;
+
+    if (current.tagName !== newNode.tagName) {
+      const parent = current.parentNode!;
+      const clone = newNode.cloneNode(true);
+      this.renderer.insertBefore(parent, clone, current);
+      this.renderer.removeChild(parent, current);
+      return;
+    }
+
+    this.morphAttributes(current, newNode);
+    this.morphChildren(current, newNode);
+  }
+
+  private morphAttributes(current: HTMLElement, newNode: HTMLElement): void {
+    const currentAttrs = Array.from(current.attributes);
+    const newAttrs = Array.from(newNode.attributes);
+
+    for (const attr of newAttrs) {
+      if (current.getAttribute(attr.name) !== attr.value) {
+        this.renderer.setAttribute(current, attr.name, attr.value);
+      }
+    }
+
+    for (const attr of currentAttrs) {
+      if (!newNode.hasAttribute(attr.name)) {
+        this.renderer.removeAttribute(current, attr.name);
+      }
+    }
+  }
+
+  private morphChildren(current: HTMLElement, newNode: HTMLElement): void {
+    const currentChildren = Array.from(current.childNodes);
+    const newChildren = Array.from(newNode.childNodes);
+
+    const maxLen = Math.max(currentChildren.length, newChildren.length);
+    for (let i = 0; i < maxLen; i++) {
+      const cur = currentChildren[i];
+      const nxt = newChildren[i];
+
+      if (!cur && nxt) {
+        this.renderer.appendChild(current, nxt.cloneNode(true));
+        continue;
+      }
+
+      if (cur && !nxt) {
+        this.renderer.removeChild(current, cur);
+        continue;
+      }
+
+      this.morphNode(cur, nxt);
     }
   }
   private roleBadge(text: string): string {
@@ -578,23 +636,18 @@ export class AiFormat implements OnChanges, OnDestroy {
     const lastBlockIsStable = this.isLastBlockStable(raw);
 
     blocks.forEach((block) => {
+      if (block.hasAttribute('data-ai-animated')) return;
+
       const isLast = block === lastBlock;
       if (isLast && !lastBlockIsStable) return;
 
-      const signature = this.blockSignature(block);
-      if (this.animatedBlockSignatures.has(signature)) return;
-
-      this.animatedBlockSignatures.add(signature);
+      block.setAttribute('data-ai-animated', '1');
       this.renderer.addClass(block, 'ai-node-fade-in');
     });
   }
 
   private isLastBlockStable(raw: string): boolean {
     return /\n\s*\n$/.test(raw) || /```[\s\S]*?```\s*$/.test(raw) || /\|.+\|\s*$/.test(raw);
-  }
-
-  private blockSignature(block: HTMLElement): string {
-    return `${block.tagName}:${block.textContent?.trim() ?? ''}:${block.innerHTML.length}`;
   }
 
   private parse(text: string): string {

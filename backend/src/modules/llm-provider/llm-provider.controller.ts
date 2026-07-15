@@ -9,6 +9,7 @@ import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { ServiceResultContainer } from '../../core/models/service-result-container.model';
 import { LlmProviderEntity } from './entities/llm-provider.entity';
 import { LlmModelEntity } from './entities/llm-model.entity';
+import { RequiresConfirmation } from '../admin-agent/decorators/requires-confirmation.decorator';
 
 /**
  * LlmProviderController manages the configuration of LLM providers and their associated models.
@@ -71,6 +72,7 @@ export class LlmProviderController {
   }
 
   @Post('cleanup-test-results')
+  @RequiresConfirmation()
   @ApiOperation({ summary: 'Delete old test results', description: 'Manually triggers cleanup of LLM test results older than retention period.' })
   @ApiQuery({ name: 'retentionDays', required: false, type: Number, description: 'Delete results older than N days (default: 30)' })
   @ApiOkResponse({ description: 'Number of deleted rows' })

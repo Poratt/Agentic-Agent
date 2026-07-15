@@ -20,7 +20,7 @@ export interface IChatMessage {
 export type ChatStreamEvent =
   | ({ type: 'step' } & IChatStep)
   | { type: 'token'; content?: string }
-  | { type: 'confirmation'; action: string; target: string; message?: string };
+  | { type: 'confirmation'; actionId: string; action: string; target: string; metadata?: Record<string, any>; message?: string };
 
 export interface ChatModelSelection {
   // provider: 'openrouter' | 'nvidia' | 'ollama';

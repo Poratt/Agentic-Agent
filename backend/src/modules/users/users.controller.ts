@@ -33,6 +33,7 @@ import { AdminGuard } from '../../core/guards/admin.guard';
 import { ServiceResultContainer } from '../../core/models/service-result-container.model';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { JwtPayload } from '../../core/interfaces/jwt-payload.interface';
+import { RequiresConfirmation } from '../admin-agent/decorators/requires-confirmation.decorator';
 import { JwtPayloadResultResponseDto } from '../../core/dto/jwt-payload-result-response.dto';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { GenUiSpec } from '../admin-agent/constants/gen-ui-spec.constant';
@@ -145,6 +146,7 @@ export class UsersController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, AdminGuard)
+  @RequiresConfirmation()
   @ApiOperation({
     summary: 'Delete user permanently',
     summaryHe: 'מוחק לצמיתות את המשתמש (מזהה: ${id})',
@@ -168,6 +170,7 @@ export class UsersController {
   @Patch(':id/role')
   @HttpCode(200)
   @UseGuards(JwtAuthGuard, AdminGuard)
+  @RequiresConfirmation()
   @ApiOperation({
     summary: 'Change user role',
     summaryHe: 'משנה את תפקיד המשתמש (מזהה: ${id})',

@@ -3,9 +3,11 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   Logger,
+  NotFoundException,
   Param,
   ParseIntPipe,
   Post,
@@ -39,6 +41,10 @@ import { AgentStreamEventDto } from './dto/agent-stream-event.dto';
 import { GetSessionsQueryDto } from './dto/get-sessions-query.dto';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { GenUiSpec } from './constants/gen-ui-spec.constant';
+import { AgentToolExecutorService } from './services/agent-tool-executor.service';
+import { AgentAuditService } from './services/agent-audit.service';
+import { AuditAction } from './entities/agent-action-audit-log.entity';
+import { LlmToolCall } from '../llm/types/llm.types';
 
 @ApiTags('Admin Agent')
 @ApiBearerAuth()
@@ -47,7 +53,11 @@ import { GenUiSpec } from './constants/gen-ui-spec.constant';
 export class AdminAgentController {
   private readonly logger = new Logger(AdminAgentController.name);
 
-  constructor(private readonly adminAgentService: AdminAgentService) { }
+  constructor(
+    private readonly adminAgentService: AdminAgentService,
+    private readonly agentToolExecutorService: AgentToolExecutorService,
+    private readonly agentAuditService: AgentAuditService,
+  ) { }
 
   @UseGuards(JwtAuthGuard)
   @Get('sessions')
@@ -279,6 +289,115 @@ export class AdminAgentController {
       if (!res.closed) {
         res.end();
       }
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('confirm-action')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Confirm or cancel a pending dangerous action',
+    summaryHe: 'מאשר או מבטל פעולה מסוכנת שממתינה',
+    toolIcon: 'ph-shield-check',
+    description: 'Confirms or cancels a pending dangerous action. When confirmed, the action is executed immediately.',
+  } as CustomApiOperationOptions)
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        actionId: { type: 'string', description: 'The pending action ID from the confirmation event' },
+        confirmed: { type: 'boolean', description: 'true to confirm, false to cancel' },
+      },
+      required: ['actionId', 'confirmed'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Action confirmed/cancelled and executed if confirmed.' })
+  @ApiForbiddenResponse({ description: 'Action belongs to another user.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  async confirmAction(
+    @Body('actionId') actionId: string,
+    @Body('confirmed') confirmed: boolean,
+    @Req() req: RequestWithUser,
+  ) {
+    if (!req.user) {
+      throw new UnauthorizedException();
+    }
+
+    const ownership = this.agentToolExecutorService.getPendingActionOwner(actionId);
+    if (!ownership) {
+      throw new NotFoundException('Pending action not found or already processed');
+    }
+
+    if (ownership.userId !== req.user.sub) {
+      await this.agentAuditService.log({
+        userId: req.user.sub,
+        actionType: AuditAction.ACTION_UNAUTHORIZED_ACCESS_ATTEMPT,
+        functionName: 'unknown',
+        sessionId: ownership.sessionId,
+        actionId,
+        metadata: {
+          targetUserId: ownership.userId,
+          requestedBy: req.user.sub,
+          ip: req.ip,
+        },
+      });
+
+      this.logger.warn(
+        `SECURITY: User ${req.user.sub} attempted to confirm action ${actionId} owned by user ${ownership.userId}`,
+      );
+      throw new ForbiddenException('This action belongs to another user');
+    }
+
+    if (confirmed) {
+      const inspection = this.agentToolExecutorService.inspectPendingAction(actionId);
+      if (inspection.status === 'expired') {
+        await this.agentAuditService.log({
+          userId: req.user.sub,
+          actionType: AuditAction.ACTION_EXPIRED,
+          functionName: inspection.action?.functionName ?? 'unknown',
+          sessionId: ownership.sessionId,
+          actionId,
+        });
+        throw new BadRequestException('Pending action expired or already processed');
+      }
+
+      const pendingAction = this.agentToolExecutorService.confirmPendingActionById(actionId);
+      if (!pendingAction) {
+        throw new BadRequestException('Pending action expired or already processed');
+      }
+
+      await this.agentAuditService.log({
+        userId: req.user.sub,
+        actionType: AuditAction.ACTION_CONFIRMED,
+        functionName: pendingAction.functionName,
+        sessionId: pendingAction.sessionId,
+        actionId,
+        metadata: pendingAction.args,
+      });
+
+      const call: LlmToolCall = {
+        id: `confirmed_${Date.now()}`,
+        type: 'function',
+        function: {
+          name: pendingAction.functionName,
+          arguments: JSON.stringify(pendingAction.args),
+        },
+      };
+
+      const result = await this.agentToolExecutorService.executeToolCall(call, req.user.sub);
+      return { success: true, result };
+    } else {
+      const cancelledAction = this.agentToolExecutorService.cancelPendingActionById(actionId);
+
+      await this.agentAuditService.log({
+        userId: req.user.sub,
+        actionType: AuditAction.ACTION_CANCELLED,
+        functionName: cancelledAction?.functionName ?? 'unknown',
+        sessionId: ownership.sessionId,
+        actionId,
+      });
+
+      return { success: true, cancelled: !!cancelledAction };
     }
   }
 }

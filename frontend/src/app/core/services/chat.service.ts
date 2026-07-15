@@ -49,6 +49,10 @@ export class ChatService {
 		return this.http.delete<void>(`${this.base}/sessions/${sessionId}/messages/${messageId}`);
 	}
 
+	confirmAction(actionId: string, confirmed: boolean): Observable<{ success: boolean; result?: any; cancelled?: boolean }> {
+		return this.http.post<{ success: boolean; result?: any; cancelled?: boolean }>(`${this.base}/confirm-action`, { actionId, confirmed });
+	}
+
 	sendMessageStream(
 		prompt: string,
 		sessionId?: number,
