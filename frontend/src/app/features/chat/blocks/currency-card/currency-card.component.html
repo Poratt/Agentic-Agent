@@ -1,0 +1,63 @@
+<div class="currency-card glass-effect">
+    <!-- Conversion mode -->
+    <ng-container *ngIf="isConvertMode(); else ratesMode">
+        <!-- Header with flags + codes -->
+        <div class="currency-header">
+            <div class="currency-flag-pair">
+                <div class="flag-badge" *ngIf="data().sourceCurrency">
+                    <img [src]="flagUrl(data().sourceCurrency!)" [alt]="data().sourceCurrency" class="flag-img" />
+                    <span class="currency-code">{{ data().sourceCurrency }}</span>
+                </div>
+                <span class="ph ph-arrow-right"></span>
+                <div class="flag-badge" *ngIf="data().targetCurrency">
+                    <img [src]="flagUrl(data().targetCurrency!)" [alt]="data().targetCurrency" class="flag-img" />
+                    <span class="currency-code">{{ data().targetCurrency }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Converted amount -->
+        <div class="converted-amount" *ngIf="data().convertedAmount !== undefined && data().convertedAmount !== null">
+            <span class="amount-value">{{ data().convertedAmount | number:'1.2-2' }}</span>
+            <span class="amount-currency">{{ data().targetCurrency }}</span>
+        </div>
+
+        <!-- Original amount + rate -->
+        <div class="conversion-footer">
+            <span class="original-amount" *ngIf="data().amount !== undefined && data().amount !== null">
+                {{ data().amount | number:'1.2-2' }} {{ data().sourceCurrency }}
+            </span>
+            <span class="rate-info" *ngIf="data().rate !== undefined && data().rate !== null">
+                1 {{ data().sourceCurrency }} = {{ data().rate | number:'1.4-6' }} {{ data().targetCurrency }}
+            </span>
+            <span class="last-updated" *ngIf="data().lastUpdated">
+                <span class="ph ph-clock"></span>
+                {{ data().lastUpdated }}
+            </span>
+        </div>
+    </ng-container>
+
+    <!-- Rates mode -->
+    <ng-template #ratesMode>
+        <div class="rates-header">
+            <span class="ph ph-chart-line-up"></span>
+            <span class="rates-title">Exchange Rates</span>
+            <span class="rates-base" *ngIf="data().sourceCurrency">Base: {{ data().sourceCurrency }}</span>
+        </div>
+
+        <div class="rates-grid" *ngIf="rateEntries().length > 0">
+            <div class="rate-row" *ngFor="let entry of rateEntries()">
+                <div class="rate-currency">
+                    <img [src]="flagUrl(entry[0])" [alt]="entry[0]" class="flag-img-sm" />
+                    <span class="currency-code-sm">{{ entry[0] }}</span>
+                </div>
+                <span class="rate-value">{{ entry[1] | number:'1.4-6' }}</span>
+            </div>
+        </div>
+
+        <div class="rates-footer" *ngIf="data().lastUpdated">
+            <span class="ph ph-clock"></span>
+            {{ data().lastUpdated }}
+        </div>
+    </ng-template>
+</div>

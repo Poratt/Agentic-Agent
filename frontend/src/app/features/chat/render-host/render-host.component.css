@@ -1,0 +1,12 @@
+.render-host-root {
+    margin: var(--space-3) 0;
+}
+
+.render-placeholder {
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}

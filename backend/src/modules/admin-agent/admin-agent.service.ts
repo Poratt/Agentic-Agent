@@ -4,8 +4,9 @@ import { AgentSessionService } from './services/agent-session.service';
 import { AgentToolExecutorService } from './services/agent-tool-executor.service';
 import { ChatSession } from './entities/chat-session.entity';
 import { ChatMessage } from './entities/chat-message.entity';
-import { SYSTEM_CONTEXT, buildSystemContext, VISUAL_TRIGGER_KEYWORDS } from './constants/system-context.constant';
+import { SYSTEM_CONTEXT, buildSystemContext } from './constants/system-context.constant';
 import { SwaggerToolsParser } from './services/swagger-tools.parser';
+import { RenderSpecService } from './render-spec/render-spec.service';
 import type { LlmProvider, LlmToolCall } from '../llm/types/llm.types';
 
 const MAX_ITERATIONS = 10;
@@ -35,6 +36,7 @@ export class AdminAgentService implements OnModuleInit {
     private readonly swaggerToolsParser: SwaggerToolsParser,
     private readonly agentSessionService: AgentSessionService,
     private readonly agentToolExecutorService: AgentToolExecutorService,
+    private readonly renderSpecService: RenderSpecService,
   ) { }
 
   onModuleInit(): void {
@@ -57,10 +59,9 @@ export class AdminAgentService implements OnModuleInit {
         const functionName = tool.function?.name;
         if (functionName) {
           const endpoint = this.swaggerToolsParser.getEndpoint(functionName);
-          const uiSpecTag = endpoint?.genUiSpec ? 'HTML|' : '|'.padStart(5);
           const methodStr = endpoint?.method.toUpperCase();
           this.logger.log(
-            `Tool Name: "${functionName.padEnd(fnWidth)}" |${uiSpecTag} ${endpoint?.path}, ${methodStr}`,
+            `Tool Name: "${functionName.padEnd(fnWidth)}" | ${endpoint?.path}, ${methodStr}`,
           );
         }
       });
@@ -112,7 +113,8 @@ export class AdminAgentService implements OnModuleInit {
     await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt, { imageUrl: image });
 
     const tools = this.swaggerToolsParser.getTools();
-    const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model, prompt);
+    const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model);
+    const collectedRenderBlocks: Array<{ component: string; data: Record<string, unknown> }> = [];
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration = iteration + 1) {
       const history = await this.agentSessionService.loadHistory(session.id, userId);
@@ -159,12 +161,21 @@ export class AdminAgentService implements OnModuleInit {
           const results = await this.executeToolCallGroup(group, userId, session.id);
 
           for (const { call, resultData } of results) {
-            await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), { toolCallId: call.id });
+            const renderSpec = this.renderSpecService.buildRenderSpec(call.function.name, resultData);
+            if (renderSpec) {
+              collectedRenderBlocks.push({ component: renderSpec.type, data: renderSpec.data });
+            }
+            await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), {
+              toolCallId: call.id,
+              renderSpec: renderSpec ? JSON.stringify(renderSpec) : null,
+            });
           }
         }
       } else {
         const assistantContent = llmResponse.content || '';
-        await this.agentSessionService.saveMessage(userId, session.id, 'assistant', assistantContent);
+        await this.agentSessionService.saveMessage(userId, session.id, 'assistant', assistantContent, {
+          renderSpec: collectedRenderBlocks.length > 0 ? JSON.stringify(collectedRenderBlocks) : null,
+        });
         return assistantContent;
       }
     }
@@ -194,7 +205,8 @@ export class AdminAgentService implements OnModuleInit {
     await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt, { imageUrl: image });
 
     const tools = this.swaggerToolsParser.getTools();
-    const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model, prompt);
+    const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model);
+    const collectedRenderBlocks: Array<{ component: string; data: Record<string, unknown> }> = [];
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration = iteration + 1) {
       const history = await this.agentSessionService.loadHistory(session.id, userId);
@@ -279,7 +291,16 @@ export class AdminAgentService implements OnModuleInit {
             yield JSON.stringify({ type: 'step', icon: STEP_ICONS.success, message: 'השלב בוצע בהצלחה!' }) + '\n';
           }
 
-          await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), { toolCallId: call.id });
+          const renderSpec = this.renderSpecService.buildRenderSpec(call.function.name, resultData);
+          if (renderSpec) {
+            yield JSON.stringify({ type: 'render', component: renderSpec.type, data: renderSpec.data }) + '\n';
+            collectedRenderBlocks.push({ component: renderSpec.type, data: renderSpec.data });
+          }
+
+          await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), {
+            toolCallId: call.id,
+            renderSpec: renderSpec ? JSON.stringify(renderSpec) : null,
+          });
         }
         }
       } else {
@@ -289,7 +310,9 @@ export class AdminAgentService implements OnModuleInit {
           this.logger.log(
             `[AdminAgentStream] userId=${userId} sessionId=${session.id} provider=${runtimeSelection.provider} model=${runtimeSelection.model} tokens=${llmResponse.content.length} components=${componentCount} (from generateResponse)`,
           );
-          await this.agentSessionService.saveMessage(userId, session.id, 'assistant', llmResponse.content);
+          await this.agentSessionService.saveMessage(userId, session.id, 'assistant', llmResponse.content, {
+            renderSpec: collectedRenderBlocks.length > 0 ? JSON.stringify(collectedRenderBlocks) : null,
+          });
           yield JSON.stringify({ type: 'token', content: llmResponse.content }) + '\n';
           return;
         }
@@ -331,7 +354,9 @@ export class AdminAgentService implements OnModuleInit {
         );
 
         if (accumulatedResponse.length > 0) {
-          await this.agentSessionService.saveMessage(userId, session.id, 'assistant', accumulatedResponse);
+          await this.agentSessionService.saveMessage(userId, session.id, 'assistant', accumulatedResponse, {
+            renderSpec: collectedRenderBlocks.length > 0 ? JSON.stringify(collectedRenderBlocks) : null,
+          });
         }
         return;
       }
@@ -343,20 +368,14 @@ export class AdminAgentService implements OnModuleInit {
     }) + '\n';
   }
 
-  private getDynamicSystemContext(userId: number, provider?: LlmProvider, model?: string, prompt?: string): string {
+  private getDynamicSystemContext(userId: number, provider?: LlmProvider, model?: string): string {
     const runtimeSelection = this.llmService.getRuntimeSelection(provider, model);
-    const includeGenui = prompt ? this.shouldIncludeGenui(prompt) : true;
 
-    return buildSystemContext({ includeGenui })
+    return buildSystemContext()
       .replace(/{{CURRENT_USER_ID}}/g, String(userId))
       .replace(/{{CURRENT_TIME}}/g, new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }))
       .replace(/{{CURRENT_LLM_PROVIDER}}/g, runtimeSelection.provider)
       .replace(/{{CURRENT_LLM_MODEL}}/g, runtimeSelection.model);
-  }
-
-  private shouldIncludeGenui(prompt: string): boolean {
-    const lowerPrompt = prompt.toLowerCase();
-    return VISUAL_TRIGGER_KEYWORDS.some((kw) => lowerPrompt.includes(kw.toLowerCase()));
   }
 
   private isParallelSafeTool(functionName: string): boolean {

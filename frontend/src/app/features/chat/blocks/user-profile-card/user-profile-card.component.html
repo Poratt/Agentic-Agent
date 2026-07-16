@@ -1,0 +1,40 @@
+<div class="profile-card">
+    <div class="card-header">
+        <span class="ph ph-user card-icon"></span>
+        <span class="card-title">User Profile</span>
+    </div>
+    <div class="card-body">
+        @if (data().sub != null) {
+            <div class="field-row">
+                <span class="field-label">ID:</span>
+                <span class="field-value">{{ data().sub }}</span>
+            </div>
+        }
+        @if (data().email) {
+            <div class="field-row">
+                <span class="field-label">Email:</span>
+                <span class="field-value">{{ data().email }}</span>
+            </div>
+        }
+        @if (roleLabel()) {
+            <div class="field-row">
+                <span class="field-label">Role:</span>
+                <span class="role-badge" [class.admin]="isAdmin()" [class.user]="!isAdmin()">
+                    {{ roleLabel() }}
+                </span>
+            </div>
+        }
+        @if (data().iat != null) {
+            <div class="field-row">
+                <span class="field-label">Issued At:</span>
+                <span class="field-value">{{ formatTimestamp(data().iat) }}</span>
+            </div>
+        }
+        @if (data().exp != null) {
+            <div class="field-row">
+                <span class="field-label">Expiration:</span>
+                <span class="field-value">{{ formatTimestamp(data().exp) }}</span>
+            </div>
+        }
+    </div>
+</div>

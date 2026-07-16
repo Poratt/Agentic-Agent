@@ -1,5 +1,15 @@
 # Documentation Change Log
 
+## 2026-07-15 Remove LLM Prose Duplication of Card Data
+
+- Added a `VISUAL RESPONSE RULE` block to `SYSTEM_CONTEXT_BASE` in `backend/src/modules/admin-agent/constants/system-context.constant.ts` that tells the LLM structured tool results are auto-rendered as visual cards and that prose should not duplicate the same numbers/rows in markdown tables, bullet lists, or inline lists.
+- Listed the 11 render-bearing tool types by name (weather forecast, currency conversion, users table, analytics chart, system status, database storage, chat sessions, transcript, LLM test results, delete confirmation, register form) so the rule has an explicit enumeration.
+- Allowed inline reproduction only when the user explicitly asks for raw text-only output (screen reader, copy-paste).
+- Architectural decision: the rule is generic across all render-bearing tools; no per-tool or per-component instruction list was added to the codebase.
+- Architectural decision: the LLM still produces natural prose around the render event for the brief intro, the system-protection warnings, and the data-integrity confirmations — only the duplication of structured data is suppressed.
+- No architecture diagram update was needed because this was a system-prompt instruction only; the streaming event flow, render spec contract, and `RenderSpecService` are unchanged.
+- Files touched: `backend/src/modules/admin-agent/constants/system-context.constant.ts`, `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.
+
 ## 2026-07-07 GenUI Speed and Quality Improvement — Implementation
 
 - Implemented all five phases of the GenUI speed and quality improvement plan.

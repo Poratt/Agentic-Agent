@@ -16,7 +16,6 @@ import { CurrencyConversionResultResponseDto } from './dto/currency-conversion-r
 import { CurrencyRatesResultResponseDto } from './dto/currency-rates-result-response.dto';
 import { RateQueryDto } from './dto/rate-query.dto';
 import { CurrencyService } from './currency.service';
-import { GenUiSpec } from '../admin-agent/constants/gen-ui-spec.constant';
 
 @ApiTags('currency')
 @ApiBearerAuth()
@@ -31,7 +30,6 @@ export class CurrencyController {
     summaryHe: 'בודק שערי מטבע עדכניים לפי מטבע בסיס',
     toolIcon: 'ph-currency-circle-dollar',
     description: 'Retrieves current exchange rates from the external exchange-rate provider.',
-    genUiSpec: GenUiSpec.CURRENCY,
   } as CustomApiOperationOptions)
   @ApiQuery({
     name: 'base',
@@ -57,7 +55,6 @@ export class CurrencyController {
     summaryHe: 'ממיר סכום בין שני מטבעות לפי שער עדכני',
     toolIcon: 'ph-currency-circle-dollar',
     description: 'Converts a positive amount between two supported currencies using current exchange rates.',
-    genUiSpec: GenUiSpec.CURRENCY,
   } as CustomApiOperationOptions)
   @ApiQuery({
     name: 'from',

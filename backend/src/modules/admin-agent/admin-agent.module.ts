@@ -14,6 +14,7 @@ import { SwaggerToolsParser } from './services/swagger-tools.parser';
 import { AgentSessionService } from './services/agent-session.service';
 import { AgentToolExecutorService } from './services/agent-tool-executor.service';
 import { AgentAuditService } from './services/agent-audit.service';
+import { RenderSpecService } from './render-spec/render-spec.service';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AgentAuditService } from './services/agent-audit.service';
     AgentSessionService,
     AgentToolExecutorService,
     AgentAuditService,
+    RenderSpecService,
   ],
   exports: [AdminAgentService],
 })

@@ -29,7 +29,6 @@ export class SwaggerToolsParser {
       method: string;
       summary?: string;
       toolIcon?: string;
-      genUiSpec?: string;
       requiresConfirmation?: boolean;
     }
   >();
@@ -324,7 +323,6 @@ export class SwaggerToolsParser {
             method,
             summary: op.summaryHe || op.summary,
             toolIcon: op.toolIcon,
-            genUiSpec: op.genUiSpec,
             requiresConfirmation,
           });
 
@@ -376,7 +374,6 @@ export class SwaggerToolsParser {
               description: [
                 op.summaryHe || op.summary,
                 op.description,
-                op.genUiSpec ? `AGENT_INSTRUCTION: ${op.genUiSpec}` : null,
               ].filter(Boolean).join('\n'),
               parameters: {
                 type: 'object',

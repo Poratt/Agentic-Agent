@@ -795,3 +795,109 @@ documents/
 - Files touched: `backend/src/modules/database-monitor/` (5 new files), `backend/src/app.module.ts`, `backend/src/modules/admin-agent/constants/gen-ui-spec.constant.ts`, `frontend/src/app/core/services/database-monitor.service.ts`, `frontend/src/app/features/settings/database-monitor-settings/` (3 new files), `frontend/src/app/features/settings/settings.ts`, `frontend/src/app/features/settings/settings.html`, `frontend/src/app/assets/styles/_variables.css`.
 - Decisions made: JWT-guarded endpoint as per plan; no growth rate in v1; CSS conic-gradient for donut chart; design tokens only in GenUI spec. UI standard: `auto-fit` grid, `aspect-ratio: 1/1` for donut, local fallback colors in `:host`, component-specific CSS only (global classes for everything else).
 - Open questions for the user: none.
+
+## 2026-07-15 Session (GenUI → JSON Migration — Phases 1 & 2)
+
+- Completed Phase 1 (Backend) and Phase 2 (Frontend) of `documents/features/todo/genui-to-json-migration-plan.md`.
+- **Phase 1 — Backend JSON Contracts & Infrastructure:**
+  - Installed `zod` in backend.
+  - Created `backend/src/modules/admin-agent/render-spec/` directory with 12 files:
+    - `render-spec.interface.ts` — `RenderSpecType` enum (16 types) + `RenderSpec` union type with Zod discriminated union.
+    - 9 domain files: `weather.render-spec.ts`, `currency.render-spec.ts`, `users.render-spec.ts`, `chat.render-spec.ts`, `analytics.render-spec.ts`, `system.render-spec.ts`, `db-monitor.render-spec.ts`, `llm.render-spec.ts`, `common.render-spec.ts` — each with TypeScript interfaces + Zod schemas.
+    - `render-spec.service.ts` — Injectable service with `buildRenderSpec(toolName, resultData)` that maps 16 tool names to render specs, validates via Zod, returns null on error.
+    - `render-spec.service.spec.ts` — 17 unit tests covering all tool mappings, error paths, and edge cases.
+  - Added `renderSpec` column (text, nullable) to `ChatMessage` entity.
+  - Updated `AgentSessionService.saveMessage` to persist `renderSpec` in options.
+  - Updated `AdminAgentService.queryDatabaseStream` to yield `{type:"render", component, data}` events after tool execution, and save `renderSpec` to DB.
+  - Registered `RenderSpecService` in `AdminAgentModule`.
+  - Verification: `npm run build` passes, `npm run test` passes (60 tests, 1 pre-existing failure).
+- **Phase 2 — Frontend Core Rendering Infrastructure:**
+  - Created `frontend/src/app/features/chat/render-host/render-host.component.ts` — standalone component with `@switch` for all 15 render types (placeholder cases for Phase 3-5).
+  - Created `render-host.component.css` — minimal layout with design tokens.
+  - Updated `ChatStreamEvent` type — added `render` event: `{ type: 'render', component: string; data: Record<string, unknown> }`.
+  - Added `IRenderBlock` interface and `renderBlocks` field to `IChatMessage`.
+  - Added `renderSpec` field to `IChatMessage` for persisted messages.
+  - Updated `ChatMessage` component — imported `RenderHostComponent`, added `pendingRenderBlocks` signal, `renderBlocksForDisplay` computed (reads from message during streaming, from `renderSpec` when idle), `handleStreamEvent()` method, `resetLocalState()` parses `renderSpec` from message.
+  - Updated `chat-message.html` — renders `<app-render-host>` blocks after prose `AiFormat` div.
+  - Updated `Chat` component stream subscription — handles `render` events by adding to message's `renderBlocks` array.
+  - Compatibility layer: both old ` ```component ` blocks (via `AiFormat`) and new `render` events work simultaneously.
+  - Verification: `npx ng build` passes, `npx ng test --watch=false` passes (47 tests, 2 pre-existing failures).
+- Files touched: 12 new files in `backend/src/modules/admin-agent/render-spec/`, `backend/src/modules/admin-agent/entities/chat-message.entity.ts`, `backend/src/modules/admin-agent/services/agent-session.service.ts`, `backend/src/modules/admin-agent/admin-agent.service.ts`, `backend/src/modules/admin-agent/admin-agent.module.ts`, `backend/src/modules/admin-agent/admin-agent.service.spec.ts`, `backend/package.json`, `frontend/src/app/features/chat/render-host/` (2 new files), `frontend/src/app/core/models/chat-message.interface.ts`, `frontend/src/app/features/chat/chat-message/chat-message.ts`, `frontend/src/app/features/chat/chat-message/chat-message.html`, `frontend/src/app/features/chat/chat/chat.ts`.
+- Decisions made: Zod schemas co-located with interfaces; `buildRenderSpec` wraps parse in try/catch returning null on failure; render events emitted during streaming alongside existing step/token events; compatibility layer keeps both GenUI and render paths alive until Phase 6-7 cleanup.
+- Open questions for the user: none.
+- Next exact step: Phase 3 — Build Angular Components (Batch 1: WeatherCurrentCard, CurrencyCard, DeleteConfirmCard, SessionCreatedCard, RoleChangeCard).
+
+## 2026-07-15 Session (GenUI → JSON Migration — Phases 6, 7)
+
+- Completed Phase 6 (Backend Cleanup) and Phase 7 (Frontend Cleanup) of `genui-to-json-migration-plan.md`.
+- **Phase 6 — Backend Cleanup:**
+  - Removed `genUiSpec` logging from `AdminAgentService` (line 62).
+  - Removed `shouldIncludeGenui` method and `VISUAL_TRIGGER_KEYWORDS` reference.
+  - Simplified `getDynamicSystemContext` — removed `prompt` parameter and `includeGenui` logic.
+  - `gen-ui-spec.constant.ts` was already deleted (Phase 1).
+  - `system-context.constant.ts` was already cleaned (Phase 1).
+  - Grep for `GenUI|genui|genUiSpec|VISUAL_TRIGGER_KEYWORDS|shouldIncludeGenui|includeGenui` returns zero results in `backend/src`.
+- **Phase 7 — Frontend Cleanup:**
+  - Removed 31 GenUI tests from `ai-format.directive.spec.ts` that called removed methods (`sanitizeComponentHtml`, `isStreamingComponent`, `extractProgressiveComponentParts`, `sanitizeProgressiveComponentHtml`, `sanitizePartialComponentCss`, `isInsideOpenTag`, `findStableElementPrefix`).
+  - Kept 2 passing tests that test `parse()` (CSS fences, role badges).
+  - Grep for `genui|GenUI|genUiSpec|sanitizeComponentHtml|isStreamingComponent` returns zero results in `frontend/src`.
+- **Verification:** Backend: `npx jest` — 60/60 pass (only pre-existing `app.controller.spec.ts` failure). Frontend: `npx ng test --watch=false` — 121/123 pass (only 2 pre-existing `app.spec.ts` failures).
+- **Files touched:** `admin-agent.service.ts` (removed 3 GenUI references), `ai-format.directive.spec.ts` (removed 31 failing tests).
+- **Decisions made:** Kept `AiFormat` directive with legacy `component` block handler for old chat history compatibility (as planned in Phase 7 step 7.8).
+- **GenUI migration status:** All 7 phases complete. 15 Angular components built and registered. Backend sends typed JSON `render` events. Frontend renders via `RenderHostComponent`. Old GenUI path fully removed.
+- **Open questions:** None.
+- **Next step:** Move `genui-to-json-migration-plan.md` to `documents/done/`. Update `STATUS.md`.
+
+## 2026-07-15 Session (continued — Weather Forecast Render Bug)
+
+- Fixed the `RenderSpecService` data mapping bug that was causing all 16 render components to receive empty data and fall back to LLM prose rendering.
+- **Root cause:** `agent-tool-executor.service.ts:293` returns `JSON.stringify((res as any).data)`, the raw HTTP response body. Every domain controller in this project wraps its response in `ServiceResultContainer<T>` (shape: `{ success, message, result: T, error? }`), but the `TOOL_RENDER_MAPPINGS` transforms in `render-spec.service.ts` were reading from `data` directly (e.g. `data.location`, `data.users`, `data.forecast`). All fields resolved to `undefined`, the Zod schema (everything `.optional()`) accepted the empty candidate, and the service yielded a `render` event with empty data. The Angular component template has `@if (data().forecast?.length)` and `@if (data().location)` guards, so the card rendered as an empty `<div class="forecast-container">` and the user only saw the LLM prose.
+- Secondary bug: even if `.result` is unwrapped, several field names in the transforms did not match the actual DTOs. The forecast DTO has `tempMax`/`tempMin`/`description`/`emoji` but the transform and Zod schema expected `maxTempC`/`minTempC`/`weatherDesc`/`weatherEmoji`. The current weather transform read `data.temp_C` (wttr.in raw field) but the DTO has `data.result.tempC` (string, not number).
+- **Fix in `render-spec.service.ts`:**
+  - Added `toNumber` and `toBool` coercion helpers for DTOs that return numeric/bool fields as strings.
+  - Rewrote all 16 transforms to: (a) unwrap `data.result` for `ServiceResultContainer`-wrapped endpoints, (b) fall back to `data.data` and direct field for the few unwrapped admin-agent endpoints, (c) map actual DTO field names into the contract names the Zod schemas and Angular components expect.
+  - Verified field names against each DTO file (`WeatherCurrentDto`, `WeatherForecastDto`, `WeatherForecastDayDto`, `CurrencyConversionResponseDto`, `CurrencyRatesResponseDto`, `UserResponseDto`, `SystemStatusDto`, `AnalyticsQueryResponseDto`, `DatabaseStorageSummaryDto`).
+- **Fix in `render-spec.service.spec.ts`:**
+  - Updated 5 test fixtures (WeatherCurrent, WeatherForecast, Currency convert, Currency rates, pre-parsed-objects) to wrap input as `ServiceResultContainer` so they actually exercise the production unwrap path.
+  - Existing tests passed raw data and never caught the bug — fixing the tests is part of the fix.
+- **Files NOT changed (intentionally):**
+  - Angular components (`WeatherForecastComponent`, `WeatherCurrentCardComponent`, etc.) — they read `data().location`, `data().forecast[i].maxTempC`, etc. Those are the correct **contract** names; the fix is on the backend mapping DTO names to contract names.
+  - Zod schemas — they describe the contract. Already use `.optional()` everywhere, so the empty-data event was technically valid (Zod accepted it).
+  - `system-context.constant.ts` — already cleaned, no GenUI prompt.
+  - Frontend `ChatMessage` / `RenderHostComponent` — they correctly read `message().renderBlocks` and switch on `componentType`. They are not the bug.
+- **Verification:**
+  - `npm.cmd run build` from `backend` — pass.
+  - `npm.cmd run test` from `backend` — 60/60 pass (only pre-existing `app.controller.spec.ts` TS error unrelated).
+  - `npx ng build` from `frontend` — pass with existing warnings only.
+  - `npx ng test --watch=false` from `frontend` — 121/123 pass (only 2 pre-existing `app.spec.ts` `MessageService` provider failures unrelated).
+- **Decisions made:**
+  - Kept Zod schemas as-is because they already declare all field names correctly under the contract — the bug was the backend transform not producing matching data, not the contract.
+  - Coerced string DTO fields (`tempC`, `humidity`, etc. as strings) to numbers via `toNumber` helper so the schema's `z.number()` constraints are satisfied. The component template handles them as numbers, which is what they should be.
+  - Did not add `@defer` to the forecast/weather components — they are light enough that synchronous rendering is fine, and the user's primary complaint is that nothing renders, not that it renders slowly.
+- **Next step:** ~~Manually test in the running app: ask "מה תחזית מזג האוויר ל-5 ימים בתל אביב" and "מזג האוויר הנוכחי בלונדון" — both should now show the Angular cards with proper data, not the LLM prose table. If the user confirms this works, move `genui-to-json-migration-plan.md` to `documents/done/`.~~ **Done.** User screenshot confirms the weather forecast card now renders 5 day cards with proper data (Tel Aviv, רביעי 32°/25° ☀️, etc.) and the LLM prose is reduced to a brief intro. `genui-to-json-migration-plan.md` moved to `documents/done/`. The next step is to continue with the other active plans from `documents/features/todo/` or address the remaining frontend warnings.
+- **Files touched:** `backend/src/modules/admin-agent/render-spec/render-spec.service.ts`, `backend/src/modules/admin-agent/render-spec/render-spec.service.spec.ts`, `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.
+
+## 2026-07-15 Session (continued — Remove LLM Prose Duplication of Card Data)
+
+- After the render-spec fix landed, the weather forecast card rendered correctly with 5 day cards, but the LLM was still producing a duplicate markdown table of the same data above the card (e.g. "יום ראשון ☀️ 32°C 24°C 60% / יום שני ☁️ 35°C 28°C 55% / ..." inline in the prose). User feedback: "הטבלה הראשונית מיותרת" (The initial table is redundant).
+- **Root cause:** the system prompt in `system-context.constant.ts` did not tell the LLM that structured tool results are auto-rendered as visual cards. The LLM reasonably reproduced the data in prose as a "just in case" fallback.
+- **Fix in `backend/src/modules/admin-agent/constants/system-context.constant.ts`:**
+  - Added a `VISUAL RESPONSE RULE` block to `SYSTEM_CONTEXT_BASE` (right after the `CRITICAL ANTI-HALLUCINATION RULE` block).
+  - Lists the 11 render-bearing tool types so the LLM knows which tools trigger a card: weather forecast, currency conversion, users table, analytics chart, system status, database storage, chat sessions, transcript, LLM test results, delete confirmation, register form.
+  - Instructs the LLM to write only a short prose summary that adds context the visual cannot show (e.g. "תל אביב תהיה הכי חמה ביום שישי", "ההמרה מבוססת על שער יציג נכון להיום").
+  - Forbids markdown tables, bullet lists, or inline lists of the same numbers/rows the card will show.
+  - Allows inline reproduction only when the user explicitly asks for raw text-only output (screen reader, copy-paste).
+- **Rule is generic** — it lists each tool type by name in the prompt so the LLM has an explicit enumeration, but the rule itself applies to all render-bearing tools without per-tool customization.
+- **Files NOT changed (intentionally):**
+  - The `RenderSpec` Zod schemas, the Angular components, and `RenderSpecService` — they already produce and render the right data.
+  - The tool-executor path — the duplicate prose is an LLM authoring choice, not a duplicate render event.
+  - The `ai-format.directive` — it correctly renders whatever the LLM produces; the fix is upstream in the prompt.
+- **Verification:**
+  - `npm.cmd run build` from `backend` — pass.
+  - No new code tests were added because the change is a system-prompt instruction; the verification is a live chat test that requires a dev server, JWT, and LLM credentials.
+- **Live verification (user-driven):** send "מה תחזית מזג האוויר ל-5 ימים בתל אביב" again and confirm the LLM now produces only a 1-2 sentence prose intro with the structured card as the only tabular presentation.
+- **Decisions made:**
+  - Listed the 11 render-bearing tool types by name in the prompt rather than using a generic phrase — explicit enumeration is harder for the LLM to overlook or misinterpret.
+  - Did not introduce a per-tool or per-component instruction list in the code; the single rule covers all of them generically.
+  - Did not add a JSON-mode constraint or a `tools`-only response mode — the LLM still needs to produce natural prose around the render event for the brief intro, the system protection warnings, and the data-integrity confirmations.
+- **Files touched:** `backend/src/modules/admin-agent/constants/system-context.constant.ts`, `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.

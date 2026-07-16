@@ -1,0 +1,123 @@
+:host {
+    display: block;
+}
+
+.analytics-chart-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
+    max-width: 480px;
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        margin-bottom: var(--space-5);
+
+        .card-icon {
+            color: var(--color-primary);
+            font-size: var(--font-size-lg);
+        }
+
+        .card-title {
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-primary);
+        }
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-10) 0;
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+
+        .ph {
+            font-size: var(--font-size-xl);
+        }
+    }
+
+    .chart-area {
+        padding: var(--space-4) 0;
+    }
+
+    .bar-chart,
+    .line-chart {
+        width: 100%;
+        height: auto;
+    }
+
+    .bar {
+        rx: 3;
+        opacity: 0.85;
+        transition: opacity var(--transition-fast);
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    .line {
+        opacity: 0.9;
+    }
+
+    .dot {
+        opacity: 0.9;
+    }
+
+    .pie-wrapper {
+        display: flex;
+        align-items: center;
+        gap: var(--space-8);
+    }
+
+    .pie-circle {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .pie-legend {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            font-size: var(--font-size-xs);
+
+            .legend-dot {
+                width: var(--space-3);
+                height: var(--space-3);
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+
+            .legend-label {
+                color: var(--color-text-secondary);
+            }
+
+            .legend-value {
+                color: var(--color-text-primary);
+                font-weight: var(--font-weight-semibold);
+                font-family: var(--font-code);
+                margin-left: auto;
+            }
+        }
+    }
+
+    .chart-summary {
+        margin-top: var(--space-5);
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--color-border);
+        font-size: var(--font-size-xs);
+        color: var(--color-text-muted);
+    }
+}

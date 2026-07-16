@@ -8,7 +8,6 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { GenUiSpec } from '../admin-agent/constants/gen-ui-spec.constant';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { WeatherQueryDto } from './dto/weather-query.dto';
@@ -27,7 +26,6 @@ export class WeatherController {
     summaryHe: 'בודק את מזג האוויר הנוכחי במיקום או בעיר מסוימת בעולם',
     toolIcon: 'ph-cloud-sun',
     description: 'Queries an external weather service to retrieve dynamic real-time conditions.',
-    genUiSpec: GenUiSpec.WEATHER_CURRENT,
   } as CustomApiOperationOptions)
   @ApiQuery({
     name: 'city',
@@ -49,9 +47,8 @@ export class WeatherController {
   @ApiOperation({
     summary: 'Get 5-day weather forecast',
     summaryHe: 'בודק את תחזית מזג האוויר ל-5 הימים הקרובים',
-    toolIcon: 'ph-calendar-days',
+    toolIcon: 'ph-calendar',
     description: 'Retrieves a five-day forecast metrics grid for a specific city.',
-    genUiSpec: GenUiSpec.WEATHER_FORECAST,
   } as CustomApiOperationOptions)
   @ApiQuery({
     name: 'city',

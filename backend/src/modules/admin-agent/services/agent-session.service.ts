@@ -8,6 +8,7 @@ import { LlmMessage } from '../../llm/types/llm.types';
 export interface SaveMessageOptions {
   toolCallId?: string | null;
   imageUrl?: string | null;
+  renderSpec?: string | null;
 }
 
 const DEFAULT_SESSION_TITLE = 'שיחה חדשה...';
@@ -184,6 +185,7 @@ export class AgentSessionService {
       content,
       toolCallId: options.toolCallId ?? null,
       imageUrl: options.imageUrl ?? null,
+      renderSpec: options.renderSpec ?? null,
     });
     return this.chatMessageRepository.save(message);
   }

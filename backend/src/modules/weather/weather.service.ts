@@ -75,6 +75,8 @@ export class WeatherService {
         hour12: false,
       });
 
+      const observationTime = this.toIsraelTime(currentCondition.observation_time ?? '');
+
       const result: WeatherCurrentDto = {
         tempC: currentCondition.temp_C ?? '',
         tempF: currentCondition.temp_F ?? '',
@@ -95,7 +97,7 @@ export class WeatherService {
         uvIndex: currentCondition.uvIndex ?? '',
         precipitationMm: currentCondition.precipMM ?? '',
         precipitationInches: currentCondition.precipInches ?? '',
-        observationTime: currentCondition.observation_time ?? '',
+        observationTime,
         requestLocalTime,
         requestLocalDateTime,
         weatherCode: currentCondition.weatherCode ?? '',
@@ -195,5 +197,40 @@ export class WeatherService {
     }
 
     return 'Unknown error';
+  }
+
+  private toIsraelTime(observationTime: string): string {
+    if (!observationTime) {
+      return '';
+    }
+
+    // wttr.in returns observation_time in 12-hour AM/PM format (UTC), e.g. "10:03 AM".
+    // Pass through any input that doesn't match (e.g. already-local 24h strings from tests).
+    const match = observationTime.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!match) {
+      return observationTime;
+    }
+
+    let hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
+    const ampm = match[3].toUpperCase();
+    if (ampm === 'PM' && hours !== 12) {
+      hours += 12;
+    }
+    if (ampm === 'AM' && hours === 12) {
+      hours = 0;
+    }
+
+    const now = new Date();
+    const utcDate = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hours, minutes, 0),
+    );
+
+    return utcDate.toLocaleTimeString('he-IL', {
+      timeZone: 'Asia/Jerusalem',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
   }
 }

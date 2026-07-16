@@ -1,8 +1,40 @@
 # Project Documentation Status
 
-Last updated: 2026-07-09
+Last updated: 2026-07-15
 
-## 2026-07-09 Session (Database Storage Monitor)
+## 2026-07-15 Session (continued — Remove LLM Prose Duplication of Card Data)
+
+- After the render-spec fix landed, the weather forecast card rendered correctly with 5 day cards, but the LLM was still producing a duplicate markdown table of the same data above the card. User feedback: "הטבלה הראשונית מיותרת" (The initial table is redundant).
+- Root cause: the system prompt in `system-context.constant.ts` did not tell the LLM that structured tool results are auto-rendered as visual cards. The LLM reasonably reproduced the data in prose as a "just in case" fallback.
+- Fix: added a `VISUAL RESPONSE RULE` block to `SYSTEM_CONTEXT_BASE` in `backend/src/modules/admin-agent/constants/system-context.constant.ts`. The rule:
+  - Lists the 11 render-bearing tool types by name so the LLM has an explicit enumeration (weather forecast, currency conversion, users table, analytics chart, system status, database storage, chat sessions, transcript, LLM test results, delete confirmation, register form).
+  - Instructs the LLM to write only a short prose summary that adds context the visual cannot show.
+  - Forbids markdown tables, bullet lists, or inline lists of the same numbers/rows the card will show.
+  - Allows inline reproduction only when the user explicitly asks for raw text-only output (screen reader, copy-paste).
+- Rule is generic and applies to all render-bearing tools without per-tool customization.
+- Verification: `npm.cmd run build` from `backend` passes. No new code tests were added because the change is a system-prompt instruction; the live verification requires a dev server, JWT, and LLM credentials.
+- Files touched: `backend/src/modules/admin-agent/constants/system-context.constant.ts`, `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.
+
+## 2026-07-15 Session (continued — RenderSpec Data Mapping Fix)
+
+- Fixed the `RenderSpecService` data mapping bug that was causing all 16 render components to receive empty data and fall back to LLM prose rendering (e.g. weather forecast showing as a markdown table from the LLM instead of a 5-day card list).
+- Root cause: every domain controller wraps its response in `ServiceResultContainer<T>` (shape: `{ success, message, result: T, error? }`), but the `TOOL_RENDER_MAPPINGS` transforms in `render-spec.service.ts` were reading from `data` directly, so all fields resolved to `undefined`. Zod (everything `.optional()`) accepted the empty candidate, and the service yielded a `render` event with empty data.
+- Secondary bug: several transforms referenced wttr.in raw field names (`temp_C`, `FeelsLikeC`, `weatherDesc?.[0]?.value`) instead of the DTO field names (`tempC`, `feelsLikeC`, `description`). Even after unwrapping, values would be `undefined`.
+- Fix: rewrote all 16 transforms to (a) unwrap `data.result` for `ServiceResultContainer`-wrapped endpoints, (b) handle the few admin-agent endpoints that return data directly (`getSessions` array, `getSessionMessages` `{messages, hasMoreImages}`), (c) map DTO field names to the contract names the Zod schemas and Angular components expect. Added `toNumber`/`toBool` helpers for DTOs that return string-encoded numerics/booleans.
+- Updated 5 test fixtures in `render-spec.service.spec.ts` to wrap input as `ServiceResultContainer` so tests actually exercise the production unwrap path.
+- Verification: backend build pass, backend tests 60/60 pass (1 pre-existing `app.controller.spec.ts` TS error), frontend build pass with existing warnings, frontend tests 121/123 pass (2 pre-existing `app.spec.ts` `MessageService` failures).
+- Files touched: `backend/src/modules/admin-agent/render-spec/render-spec.service.ts`, `backend/src/modules/admin-agent/render-spec/render-spec.service.spec.ts`, `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.
+- Next: ~~manually test in running app — ask "מה תחזית מזג האוויר ל-5 ימים בתל אביב" — should show `WeatherForecastComponent` with 5 day cards, not the LLM prose table. If confirmed, move `genui-to-json-migration-plan.md` to `documents/done/`.~~ **Done.** User screenshot confirms `WeatherForecastComponent` renders 5 day cards (רביעי 32°/25° ☀️, חמישי 35°/28° ☁️, שישי 35°/29° 🌧️, שבת 33°/27° ⛈️, ראשון 31°/24° ☀️) with humidity and "Tel Aviv" location label. `genui-to-json-migration-plan.md` moved to `documents/done/`.
+
+## 2026-07-15 Session (GenUI → JSON Migration — Phases 1 & 2)
+
+- Completed Phase 1 (Backend) and Phase 2 (Frontend) of `genui-to-json-migration-plan.md`.
+- **Phase 1 Backend**: Installed `zod`. Created `render-spec/` directory with 12 files: `RenderSpecType` enum (16 types), `RenderSpec` union type, 9 domain render spec files with TypeScript interfaces + Zod schemas, `RenderSpecService` with `buildRenderSpec()` mapping 16 tool names, 17 unit tests. Added `renderSpec` column to `ChatMessage` entity. Updated `AdminAgentService` to yield `{type:"render"}` SSE events after tool execution and persist `renderSpec` to DB.
+- **Phase 2 Frontend**: Created `RenderHostComponent` with `@switch` for all 15 render types. Updated `ChatStreamEvent` with `render` type. Added `IRenderBlock`, `renderBlocks`, `renderSpec` to `IChatMessage`. Updated `ChatMessage` with `pendingRenderBlocks` signal, `renderBlocksForDisplay` computed, `handleStreamEvent()`, and `resetLocalState()` parsing. Updated `chat-message.html` with render host blocks. Updated `Chat` component to handle `render` stream events.
+- Compatibility layer: both old ` ```component ` and new `render` events work simultaneously.
+- Verification: backend build pass, backend tests 60 pass (1 pre-existing fail), frontend build pass, frontend tests 47 pass (2 pre-existing fail).
+- Plan active at `documents/features/todo/genui-to-json-migration-plan.md`.
+- Next: Phase 3 — Build Angular Components (Batch 1: WeatherCurrentCard, CurrencyCard, DeleteConfirmCard, SessionCreatedCard, RoleChangeCard).
 
 - Implemented full-stack database storage monitor per `documents/features/todo/database-storage-monitor-plan.md`.
 - Backend: `DatabaseMonitorModule` with `GET /database-monitor/storage` endpoint, TypeORM `DataSource` query on `information_schema.tables`, DTOs with Swagger decorators, GenUI spec for donut chart + table cards.

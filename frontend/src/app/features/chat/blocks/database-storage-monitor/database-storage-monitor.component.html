@@ -1,0 +1,63 @@
+<div class="storage-monitor glass-effect fade-in">
+    <div class="summary-section">
+        <div class="donut-wrapper">
+            <div class="donut" [style.background]="donutGradient()">
+                <div class="donut-hole">
+                    <span class="donut-total">{{ data().totalSizeFormatted ?? '—' }}</span>
+                    <span class="donut-label">Total</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-cards">
+            @if (data().databaseName) {
+                <div class="summary-card">
+                    <span class="ph ph-database summary-icon"></span>
+                    <span class="summary-value">{{ data().databaseName }}</span>
+                    <span class="summary-label">Database</span>
+                </div>
+            }
+            @if (data().tableCount !== undefined && data().tableCount !== null) {
+                <div class="summary-card">
+                    <span class="ph ph-table summary-icon"></span>
+                    <span class="summary-value">{{ data().tableCount }}</span>
+                    <span class="summary-label">Tables</span>
+                </div>
+            }
+            @if (data().totalRows !== undefined && data().totalRows !== null) {
+                <div class="summary-card">
+                    <span class="ph ph-rows summary-icon"></span>
+                    <span class="summary-value">{{ data().totalRows | number }}</span>
+                    <span class="summary-label">Total Rows</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (sortedTables().length) {
+        <div class="table-list">
+            <div class="table-list-header">
+                <span>Table</span>
+                <span>Rows</span>
+                <span>Size</span>
+                <span>%</span>
+            </div>
+            @for (table of sortedTables(); track $index) {
+                <div class="table-row">
+                    <div class="table-name">
+                        <span class="color-dot" [style.background]="tableColor($index)"></span>
+                        <span>{{ table.tableName }}</span>
+                    </div>
+                    <span class="table-rows">{{ table.rowCount | number }}</span>
+                    <span class="table-size">{{ table.totalSizeFormatted }}</span>
+                    <div class="table-percent">
+                        <div class="percent-bar">
+                            <div class="percent-fill" [style.width.%]="barWidth(table)" [style.background]="tableColor($index)"></div>
+                        </div>
+                        <span class="percent-value">{{ table.percentOfDatabase }}%</span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

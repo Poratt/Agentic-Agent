@@ -35,95 +35,16 @@ CRITICAL ANTI-HALLUCINATION RULE:
 - If you call a tool and it returns no result or insufficient data, say so EXPLICITLY. Do NOT fill in plausible-sounding data yourself.
 - NEVER fabricate genetic information (parent strains, origin, type), user data, or any other factual claim and present it as real.
 - If you are unsure about a fact, say "I could not find reliable information about this" instead of guessing.
-- Writing fabricated data to the database is strictly forbidden. Only write data that was actually returned by a tool or explicitly provided by the user.`;
+- Writing fabricated data to the database is strictly forbidden. Only write data that was actually returned by a tool or explicitly provided by the user.
 
-export const DESIGN_TOKENS_REFERENCE = `
-DESIGN TOKENS (MUST USE IN ALL GenUI CSS - NEVER HARDCODE COLORS/SIZES):
-The app uses CSS custom properties that adapt to dark/light mode. You MUST use these tokens instead of hardcoded values.
-
-SURFACES:
-- var(--color-surface) — main card/section background
-- var(--color-surface-elevated) — elevated elements (sub-cards, dropdowns)
-- var(--color-surface-hover) — hover state background
-
-TEXT:
-- var(--color-text-primary) — main text color
-- var(--color-text-secondary) — secondary/muted text
-- var(--color-text-disabled) — disabled text
-
-BORDERS:
-- var(--color-border) — default borders
-- var(--color-border-strong) — emphasis borders
-
-STATUS COLORS:
-- var(--color-success) — success/positive (green)
-- var(--color-danger) — error/destructive (red)
-- var(--color-warning) — warning/caution (amber)
-- var(--color-info) — informational (blue)
-
-PRIMARY/SECONDARY:
-- var(--color-primary) — primary accent
-- var(--color-secondary) — secondary accent
-
-SPACING (use instead of hardcoded px):
-- var(--space-1)=4px, var(--space-2)=8px, var(--space-3)=12px, var(--space-4)=16px
-- var(--space-6)=24px, var(--space-8)=32px, var(--space-10)=40px, var(--space-12)=48px
-
-BORDER RADIUS:
-- var(--radius-xs)=4px, var(--radius-sm)=8px, var(--radius-md)=12px
-- var(--radius-lg)=16px, var(--radius-xl)=24px, var(--radius-pill)=9999px
-
-TYPOGRAPHY:
-- Font sizes: var(--font-size-xs)=12px, var(--font-size-sm)=13px, var(--font-size-md)=15px, var(--font-size-lg)=18px, var(--font-size-xl)=22px
-- Font weights: var(--font-weight-normal)=400, var(--font-weight-medium)=500, var(--font-weight-semibold)=600, var(--font-weight-bold)=700
-
-SHADOWS:
-- var(--shadow-soft) — subtle shadow
-- var(--shadow-elevated) — stronger elevation shadow
-
-TRANSITIONS:
-- var(--transition-fast) — 150ms
-- var(--transition-standard) — 200ms
-
-GLASS EFFECTS (for premium cards):
-- var(--glass-bg) — glass background
-- var(--glass-border) — glass border
-- var(--glass-shadow) — glass shadow
-- var(--glass-blur) — backdrop blur amount
-
-EXAMPLE - Correct usage:
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  box-shadow: var(--shadow-soft);
-
-EXAMPLE - WRONG (never do this):
-  background: #ffffff;
-  color: #333333;
-  border-radius: 16px;
-`;
-
-export const SYSTEM_CONTEXT_GENUI = `
-CRITICAL GENUI MANDATORY RENDERING RULES:
-- Whenever you present data fetched from a tool call (such as weather, currency, system status, users, tables, analytics), you are strictly FORBIDDEN from outputting standard markdown bullet points, plain text summaries, or unformatted responses.
-- You MUST render the output using the exact HTML structure and CSS style rules defined in the tool's "AGENT_INSTRUCTION" (GenUI Spec template).
-- MULTI-TOOL RENDERING: If the user query resulted in multiple tool executions (e.g., checking weather for two different cities like Haifa and Nahariya, or querying multiple users), you MUST render multiple separate, sequential HTML GenUI components in your response (e.g., one premium weather card for Haifa, followed immediately by another premium weather card for Nahariya). Do NOT collapse them into a text list!
-- Every GenUI HTML component block must start with \`\`\`component and end with \`\`\` with the <style> tag placed before the root <div>.
-${DESIGN_TOKENS_REFERENCE}
-Then use the results to answer the user in English using the GenUI components.`;
-
-export const VISUAL_TRIGGER_KEYWORDS = [
-  'הצג', 'תראה', 'רשימה', 'טבלה', 'כרטיס', 'סטטוס', 'נתונים', 'גרף', 'מצב', 'דוח',
-  'show', 'list', 'display', 'table', 'card', 'status', 'data', 'chart', 'report',
-];
+VISUAL RESPONSE RULE:
+- Tool results that return structured data (weather forecast, currency conversion, users table, analytics chart, system status, database storage, chat sessions, transcript, LLM test results, delete confirmation, register form) are AUTOMATICALLY rendered as a visual card on the client immediately after the tool finishes.
+- Do NOT duplicate that data in your prose. Do NOT produce markdown tables, bullet lists, or inline lists of the same numbers/rows the visual card will show.
+- Write a short prose summary that adds context the visual cannot show (e.g. "תל אביב תהיה הכי חמה ביום שישי", "ההמרה מבוססת על שער יציג נכון להיום"), then let the card do the structured presentation.
+- If the user asks for raw text-only output (e.g. screen reader, copy-paste), then and only then may you reproduce the data inline.`;
 
 export const SYSTEM_CONTEXT = SYSTEM_CONTEXT_BASE;
 
-export function buildSystemContext(opts: { includeGenui: boolean }): string {
-  if (opts.includeGenui) {
-    return SYSTEM_CONTEXT_BASE + SYSTEM_CONTEXT_GENUI;
-  }
+export function buildSystemContext(): string {
   return SYSTEM_CONTEXT_BASE;
 }

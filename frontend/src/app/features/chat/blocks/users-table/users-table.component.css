@@ -1,0 +1,105 @@
+:host {
+    display: block;
+}
+
+.users-table-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
+    max-width: 640px;
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        margin-bottom: var(--space-5);
+
+        .card-icon {
+            color: var(--color-primary);
+            font-size: var(--font-size-lg);
+        }
+
+        .card-title {
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-primary);
+        }
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-10) 0;
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+
+        .ph {
+            font-size: var(--font-size-xl);
+        }
+    }
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: var(--space-2) var(--space-4);
+        border-radius: var(--radius-pill);
+        font-size: var(--font-size-xxs);
+        font-weight: var(--font-weight-semibold);
+
+        &.admin {
+            background: var(--color-primary-glow-bg);
+            color: var(--color-primary);
+            border: 1px solid var(--color-primary-glow);
+        }
+
+        &.user {
+            background: var(--grey-30);
+            color: var(--color-text-secondary);
+            border: 1px solid var(--color-border);
+        }
+    }
+
+    .cell-id {
+        font-family: var(--font-code);
+        color: var(--color-text-muted);
+        font-size: var(--font-size-xs);
+    }
+
+    .cell-date {
+        font-family: var(--font-code);
+        font-size: var(--font-size-xs);
+        color: var(--color-text-secondary);
+    }
+}
+
+:host ::ng-deep .users-prime-table {
+    .p-datatable-header {
+        display: none;
+    }
+
+    .p-datatable-thead > tr > th {
+        background: var(--color-surface);
+        color: var(--color-text-muted);
+        font-size: var(--font-size-xxs);
+        font-weight: var(--font-weight-semibold);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: var(--space-3) var(--space-4);
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .p-datatable-tbody > tr > td {
+        padding: var(--space-3) var(--space-4);
+        border-bottom: 1px solid var(--color-border);
+        font-size: var(--font-size-xs);
+        color: var(--color-text-primary);
+        background: transparent;
+    }
+
+    .p-datatable-tbody > tr:hover > td {
+        background: var(--color-surface-hover);
+    }
+}

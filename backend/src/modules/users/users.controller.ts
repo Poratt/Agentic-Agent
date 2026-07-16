@@ -36,7 +36,6 @@ import { JwtPayload } from '../../core/interfaces/jwt-payload.interface';
 import { RequiresConfirmation } from '../admin-agent/decorators/requires-confirmation.decorator';
 import { JwtPayloadResultResponseDto } from '../../core/dto/jwt-payload-result-response.dto';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
-import { GenUiSpec } from '../admin-agent/constants/gen-ui-spec.constant';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -50,7 +49,6 @@ export class UsersController {
     summary: 'List all users',
     summaryHe: 'שולף את רשימת כל המשתמשים במערכת',
     toolIcon: 'ph-users',
-    genUiSpec: GenUiSpec.USERS_TABLE,
     description:
       'Returns every user in the system with public fields only: id, email, fullName, numeric role, createdAt, updatedAt, lastLoginAt. ' +
       'Passwords and refresh token hashes are never returned.',
@@ -71,7 +69,6 @@ export class UsersController {
     summary: 'Get current authenticated user payload',
     summaryHe: 'שולף את פרטי המשתמש המחובר מתוך הטוקן',
     toolIcon: 'ph-user-circle',
-    genUiSpec: GenUiSpec.USER_PROFILE,
     description:
       'Returns the JWT payload decoded by JwtAuthGuard. No database query is made. Role is numeric: 1 = Admin, 2 = User.',
   } as CustomApiOperationOptions)
@@ -96,7 +93,6 @@ export class UsersController {
     summary: 'Get user by id',
     summaryHe: 'שולף משתמש לפי מזהה (מזהה: ${id})',
     toolIcon: 'ph-user',
-    genUiSpec: GenUiSpec.USER_PROFILE,
     description:
       'Fetches one user by numeric id with public fields only. Use GET /users first to discover valid IDs.',
   } as CustomApiOperationOptions)
@@ -122,7 +118,6 @@ export class UsersController {
     summary: 'Update user profile fields',
     summaryHe: 'מעדכן את שדות הפרופיל של המשתמש (מזהה: ${id})',
     toolIcon: 'ph-pencil-simple',
-    genUiSpec: GenUiSpec.USER_UPDATE_CONFIRMATION,
     description:
       'Updates fullName and/or email for the user identified by :id. ' +
       'This endpoint intentionally does not accept role changes; use PATCH /users/:id/role for role updates.',
@@ -151,7 +146,6 @@ export class UsersController {
     summary: 'Delete user permanently',
     summaryHe: 'מוחק לצמיתות את המשתמש (מזהה: ${id})',
     toolIcon: 'ph-trash',
-    genUiSpec: GenUiSpec.DELETE_CONFIRM,
     description: 'Hard-deletes the user record. This is irreversible and requires admin privileges.',
   } as CustomApiOperationOptions)
   @ApiParam({ name: 'id', type: Number, description: 'Numeric id of the user to delete.' })
@@ -175,7 +169,6 @@ export class UsersController {
     summary: 'Change user role',
     summaryHe: 'משנה את תפקיד המשתמש (מזהה: ${id})',
     toolIcon: 'ph-shield',
-    genUiSpec: GenUiSpec.USER_ROLE_CHANGE_CONFIRMATION,
     description:
       'Sets only the role field of the user identified by :id. IMPORTANT: role must be a NUMBER: 1 = Admin, 2 = User. Never send a string. Accepted numeric values : 1 = Admin, 2 = User. ' +
       'Other user fields must be updated through PATCH /users/:id.',

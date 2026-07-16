@@ -1,0 +1,29 @@
+<div class="forecast-container glass-effect fade-in">
+    @if (data().location) {
+        <div class="forecast-location">
+            <span class="ph ph-map-pin"></span>
+            <span>{{ data().location }}</span>
+        </div>
+    }
+
+    @if (data().forecast?.length) {
+        <div class="forecast-list">
+            @for (day of data().forecast; track $index) {
+                <div class="forecast-card" [style.animation-delay]="($index * 80) + 'ms'">
+                    <span class="day-name">{{ day.dayName }}</span>
+                    <span class="weather-emoji">{{ day.weatherEmoji }}</span>
+                    <div class="temp-range">
+                        <span class="temp-max">{{ day.maxTempC }}°</span>
+                        <span class="temp-min">{{ day.minTempC }}°</span>
+                    </div>
+                    @if (day.humidity !== undefined && day.humidity !== null) {
+                        <div class="humidity">
+                            <span class="ph ph-drop"></span>
+                            <span>{{ day.humidity }}%</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>

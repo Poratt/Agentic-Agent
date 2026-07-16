@@ -1,0 +1,38 @@
+<div class="session-created-card">
+    <div class="card-header">
+        <span class="ph ph-chat-circle card-icon"></span>
+        <span class="card-title">Session נוצר</span>
+    </div>
+    <div class="card-body">
+        @if (data().id) {
+            <div class="field-row">
+                <span class="field-label">מזהה:</span>
+                <span class="field-value">{{ data().id }}</span>
+            </div>
+        }
+        @if (data().title) {
+            <div class="field-row">
+                <span class="field-label">כותרת:</span>
+                <span class="field-value">{{ data().title }}</span>
+            </div>
+        }
+        @if (data().createdAt) {
+            <div class="field-row">
+                <span class="field-label">נוצר:</span>
+                <span class="field-value">{{ data().createdAt }}</span>
+            </div>
+        }
+        @if (data().updatedAt) {
+            <div class="field-row">
+                <span class="field-label">עודכן:</span>
+                <span class="field-value">{{ data().updatedAt }}</span>
+            </div>
+        }
+    </div>
+    <div class="card-footer">
+        <span class="status-badge success">
+            <span class="ph ph-check-circle"></span>
+            Session חדש נוצר
+        </span>
+    </div>
+</div>

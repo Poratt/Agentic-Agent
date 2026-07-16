@@ -1,0 +1,31 @@
+<div class="timeline-container glass-effect fade-in">
+    @if (data().sessionId !== undefined && data().sessionId !== null) {
+        <div class="timeline-header">
+            <span class="ph ph-chat-circle"></span>
+            <span class="session-label">Session {{ data().sessionId }}</span>
+        </div>
+    }
+
+    @if (data().messages?.length) {
+        <div class="timeline-messages">
+            @for (msg of data().messages; track $index) {
+                <div class="message-row" [class.user]="isUser(msg.role)" [class.assistant]="isAssistant(msg.role)">
+                    <div class="message-bubble">
+                        <div class="message-role">
+                            @if (isUser(msg.role)) {
+                                <span class="ph ph-user"></span>
+                            } @else {
+                                <span class="ph ph-robot"></span>
+                            }
+                            <span class="role-label">{{ msg.role }}</span>
+                        </div>
+                        <p class="message-content">{{ msg.content }}</p>
+                        @if (msg.createdAt) {
+                            <span class="message-time">{{ msg.createdAt }}</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

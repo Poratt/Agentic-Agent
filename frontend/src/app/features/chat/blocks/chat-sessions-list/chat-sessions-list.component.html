@@ -1,0 +1,38 @@
+<div class="sessions-list-card">
+    <div class="card-header">
+        <span class="ph ph-chat-circle card-icon"></span>
+        <span class="card-title">Chat Sessions</span>
+    </div>
+
+    @if (sortedSessions().length === 0) {
+        <div class="empty-state">
+            <span class="ph ph-chat-circle"></span>
+            <span>No sessions found.</span>
+        </div>
+    } @else {
+        <div class="sessions-list">
+            @for (session of sortedSessions(); track session.id ?? $index) {
+                <div class="session-row">
+                    <div class="session-main">
+                        <span class="session-title">{{ session.title || 'Untitled session' }}</span>
+                        <span class="session-id">#{{ session.id }}</span>
+                    </div>
+                    <div class="session-meta">
+                        @if (session.createdAt) {
+                            <span class="meta-item">
+                                <span class="ph ph-clock"></span>
+                                {{ formatTime(session.createdAt) }}
+                            </span>
+                        }
+                        @if (session.updatedAt) {
+                            <span class="meta-item">
+                                <span class="ph ph-arrows-clockwise"></span>
+                                {{ formatTime(session.updatedAt) }}
+                            </span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

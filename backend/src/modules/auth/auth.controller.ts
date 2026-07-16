@@ -35,7 +35,6 @@ import { UserResultResponseDto } from '../users/dto/user-result-response.dto';
 import { LogoutResultResponseDto } from './dto/logout-result-response.dto';
 import { JwtPayloadResultResponseDto } from '../../core/dto/jwt-payload-result-response.dto';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
-import { GenUiSpec } from '../admin-agent/constants/gen-ui-spec.constant';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -48,7 +47,6 @@ export class AuthController {
     summary: 'Register a new user account',
     summaryHe: 'רושם חשבון משתמש חדש במערכת',
     toolIcon: 'ph-user-plus',
-    genUiSpec: GenUiSpec.REGISTER_FORM,
     description:
       'Creates a new user account. Required RegisterDto fields: fullName, email, password. ' +
       'Password must be at least 8 characters. This endpoint is public and does not require a token.',
@@ -133,8 +131,6 @@ export class AuthController {
     summary: 'Logout and invalidate session',
     summaryHe: 'מבצע התנתקות ומבטל את סשן המשתמש',
     toolIcon: 'ph-sign-out',
-    genUiSpec:
-      'After successful logout, confirm that the user was logged out and the active session was invalidated. Keep the response short.',
     description:
       'Requires a valid access token. Clears the stored refresh token hash and removes auth cookies from the response.',
   } as CustomApiOperationOptions)
@@ -161,7 +157,6 @@ export class AuthController {
     summary: 'Get current authenticated user payload',
     summaryHe: 'שולף את פרטי המשתמש המחובר מתוך הטוקן',
     toolIcon: 'ph-user-circle',
-    genUiSpec: GenUiSpec.USER_PROFILE,
     description:
       'Reads req.user as populated by JwtAuthGuard. No database query is made. ' +
       'Role is numeric: 1 = Admin, 2 = User.',

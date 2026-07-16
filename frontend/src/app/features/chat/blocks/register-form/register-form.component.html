@@ -1,0 +1,46 @@
+<div class="register-form glass-effect fade-in">
+    <div class="form-header">
+        <span class="ph ph-user-plus form-icon"></span>
+        <span class="form-title">Register</span>
+    </div>
+
+    <div class="form-fields">
+        <div class="form-field">
+            <label class="field-label">Full Name</label>
+            <div class="field-input">
+                @if (data().fullName) {
+                    <span class="field-value">{{ data().fullName }}</span>
+                } @else {
+                    <span class="field-placeholder">Enter your full name</span>
+                }
+            </div>
+        </div>
+
+        <div class="form-field">
+            <label class="field-label">Email</label>
+            <div class="field-input">
+                @if (data().email) {
+                    <span class="field-value">{{ data().email }}</span>
+                } @else {
+                    <span class="field-placeholder">Enter your email</span>
+                }
+            </div>
+        </div>
+
+        <div class="form-field">
+            <label class="field-label">Password</label>
+            <div class="field-input field-password">
+                @if (data().password) {
+                    <span class="field-value">••••••••</span>
+                } @else {
+                    <span class="field-placeholder">Enter your password</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <button class="submit-btn primary-btn" type="button">
+        <span class="ph ph-arrow-right"></span>
+        <span>Create Account</span>
+    </button>
+</div>

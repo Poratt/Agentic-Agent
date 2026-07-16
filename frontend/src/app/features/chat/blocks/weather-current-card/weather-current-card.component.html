@@ -1,0 +1,83 @@
+<div class="weather-card glass-effect">
+    <!-- Header -->
+    <div class="weather-header">
+        <span class="weather-desc">{{ data().weatherDesc || 'Current Weather' }}</span>
+        <span class="weather-time" *ngIf="data().requestLocalTime">{{ data().requestLocalTime }}</span>
+    </div>
+
+    <!-- Location -->
+    <div class="weather-location" *ngIf="data().location">
+        <span class="ph ph-map-pin"></span>
+        {{ data().location }}
+    </div>
+
+    <!-- Main temperature + emoji -->
+    <div class="weather-main">
+        <div class="weather-emoji" *ngIf="data().weatherEmoji">{{ data().weatherEmoji }}</div>
+        <div class="weather-temp-primary">
+            <span class="temp-value" *ngIf="data().tempC !== undefined && data().tempC !== null">{{ data().tempC }}°</span>
+            <span class="temp-unit">C</span>
+        </div>
+    </div>
+
+    <!-- Feels like + secondary temp -->
+    <div class="weather-secondary">
+        <span class="feels-like" *ngIf="data().feelsLikeC !== undefined && data().feelsLikeC !== null">
+            Feels like {{ data().feelsLikeC }}°C
+        </span>
+        <span class="secondary-temps" *ngIf="data().tempF !== undefined && data().tempF !== null">
+            {{ data().tempF }}°F / Feels {{ data().feelsLikeF }}°F
+        </span>
+    </div>
+
+    <!-- Detail grid -->
+    <div class="weather-details stagger stagger-up" *ngIf="hasAnyDetail()">
+        <div class="detail-chip" *ngIf="data().humidity !== undefined && data().humidity !== null">
+            <span class="ph ph-drop"></span>
+            <span class="detail-label">Humidity</span>
+            <span class="detail-value">{{ data().humidity }}%</span>
+        </div>
+
+        <div class="detail-chip" *ngIf="data().windSpeedKmph !== undefined && data().windSpeedKmph !== null">
+            <span class="ph ph-wind"></span>
+            <span class="detail-label">Wind</span>
+            <span class="detail-value">{{ data().windSpeedKmph }} km/h <span *ngIf="data().windDirection">{{ data().windDirection }}</span></span>
+        </div>
+
+        <div class="detail-chip" *ngIf="data().uvIndex !== undefined && data().uvIndex !== null">
+            <span class="ph ph-sun"></span>
+            <span class="detail-label">UV Index</span>
+            <span class="detail-value">{{ data().uvIndex }}</span>
+        </div>
+
+        <div class="detail-chip" *ngIf="data().cloudCover !== undefined && data().cloudCover !== null">
+            <span class="ph ph-cloud"></span>
+            <span class="detail-label">Cloud Cover</span>
+            <span class="detail-value">{{ data().cloudCover }}%</span>
+        </div>
+
+        <div class="detail-chip" *ngIf="data().precipitationMm !== undefined && data().precipitationMm !== null">
+            <span class="ph ph-cloud-rain"></span>
+            <span class="detail-label">Precipitation</span>
+            <span class="detail-value">{{ data().precipitationMm }} mm</span>
+        </div>
+
+        <div class="detail-chip" *ngIf="data().pressure !== undefined && data().pressure !== null">
+            <span class="ph ph-gauge"></span>
+            <span class="detail-label">Pressure</span>
+            <span class="detail-value">{{ data().pressure }} hPa</span>
+        </div>
+
+        <div class="detail-chip" *ngIf="data().visibility !== undefined && data().visibility !== null">
+            <span class="ph ph-eye"></span>
+            <span class="detail-label">Visibility</span>
+            <span class="detail-value">{{ data().visibility }} km</span>
+        </div>
+    </div>
+
+    <!-- Observation time -->
+    <div class="weather-footer" *ngIf="data().observationTime">
+        <span class="ph ph-clock"></span>
+        Observed {{ data().observationTime }}
+    </div>
+</div>

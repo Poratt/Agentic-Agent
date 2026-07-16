@@ -1,0 +1,39 @@
+<div class="role-change-card">
+    <div class="card-header">
+        <span class="ph ph-user-gear card-icon"></span>
+        <span class="card-title">שינוי תפקיד</span>
+    </div>
+    <div class="card-body">
+        @if (data().id) {
+            <div class="field-row">
+                <span class="field-label">מזהה:</span>
+                <span class="field-value">{{ data().id }}</span>
+            </div>
+        }
+        @if (data().email) {
+            <div class="field-row">
+                <span class="field-label">אימייל:</span>
+                <span class="field-value">{{ data().email }}</span>
+            </div>
+        }
+        @if (data().fullName) {
+            <div class="field-row">
+                <span class="field-label">שם מלא:</span>
+                <span class="field-value">{{ data().fullName }}</span>
+            </div>
+        }
+        @if (data().updatedAt) {
+            <div class="field-row">
+                <span class="field-label">עודכן:</span>
+                <span class="field-value">{{ data().updatedAt }}</span>
+            </div>
+        }
+    </div>
+    <div class="card-footer">
+        @if (roleLabel()) {
+            <span class="role-badge" [class.admin]="isAdmin()" [class.user]="!isAdmin()">
+                {{ roleLabel() }}
+            </span>
+        }
+    </div>
+</div>

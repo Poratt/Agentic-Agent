@@ -16,7 +16,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ChatStore } from '../../../core/store/chat.store';
 import { AuthStore } from '../../../core/store/auth.store';
-import { ChatModelSelection, IChatMessage } from '../../../core/models/chat-message.interface';
+import { ChatModelSelection, IChatMessage, IRenderBlock } from '../../../core/models/chat-message.interface';
 import { AutoScrollBottomDirective } from '../../../core/directives/auto-scroll-bottom.directive';
 import { ChatMessage, ChatMessageActionEvent, ChatMessageStreamState } from '../chat-message/chat-message';
 import { UsersStore } from '../../../core/store/users.store';
@@ -328,6 +328,21 @@ export class Chat implements OnInit, OnDestroy {
                         action: event.action,
                         target: event.target,
                         metadata: event.metadata,
+                    });
+                    return;
+                }
+
+                if (event.type === 'render' && event.component && event.data) {
+                    this.messages.update((prev) => {
+                        const updated = [...prev];
+                        const current = updated[assistantIndex];
+                        if (!current) return prev;
+                        const blocks = current.renderBlocks ?? [];
+                        updated[assistantIndex] = {
+                            ...current,
+                            renderBlocks: [...blocks, { component: event.component, data: event.data }],
+                        };
+                        return updated;
                     });
                     return;
                 }

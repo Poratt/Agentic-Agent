@@ -1,0 +1,39 @@
+<div class="delete-confirm-card">
+    <div class="card-header">
+        <span class="ph ph-trash card-icon"></span>
+        <span class="card-title">מחיקה</span>
+    </div>
+    <div class="card-body">
+        @if (data().entityType) {
+            <div class="field-row">
+                <span class="field-label">סוג ישות:</span>
+                <span class="field-value">{{ data().entityType }}</span>
+            </div>
+        }
+        @if (data().name) {
+            <div class="field-row">
+                <span class="field-label">שם:</span>
+                <span class="field-value">{{ data().name }}</span>
+            </div>
+        }
+        @if (data().id) {
+            <div class="field-row">
+                <span class="field-label">מזהה:</span>
+                <span class="field-value">{{ data().id }}</span>
+            </div>
+        }
+    </div>
+    <div class="card-footer">
+        @if (data().deleted) {
+            <span class="status-badge deleted">
+                <span class="ph ph-check-circle"></span>
+                נמחק
+            </span>
+        } @else {
+            <span class="status-badge pending">
+                <span class="ph ph-trash"></span>
+                ממתין למחיקה
+            </span>
+        }
+    </div>
+</div>

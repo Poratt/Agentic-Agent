@@ -10,9 +10,10 @@ import {
     untracked,
     ChangeDetectionStrategy,
 } from '@angular/core';
-import { IChatMessage } from '../../../core/models/chat-message.interface';
+import { IChatMessage, ChatStreamEvent, IRenderBlock } from '../../../core/models/chat-message.interface';
 import { AiFormat } from '../../../core/directives/ai-format.directive';
 import { AutoScrollBottomDirective } from '../../../core/directives/auto-scroll-bottom.directive';
+import { RenderHostComponent } from '../render-host/render-host.component';
 
 export type ChatMessageStreamState = 'idle' | 'streaming' | 'completed' | 'errored';
 export type ChatMessageAction = 'delete' | 'sendAgain' | 'copy' | 'edit';
@@ -25,8 +26,8 @@ type ChatDisplayStep = {
     icon: string;
     message: string;
     statusIcon?: string;
+    isLoading?: boolean;
 };
-
 const MIN_VISIBLE_TICK_MS = 16;
 const TINY_FLUSH_QUEUE_LENGTH = 12;
 const BASE_CHARACTER_DELAY_MS = 18;
@@ -35,7 +36,7 @@ const CHARACTER_DELAY_JITTER_MS = 17;
 @Component({
     selector: 'app-chat-message',
     standalone: true,
-    imports: [CommonModule, AiFormat, AutoScrollBottomDirective],
+    imports: [CommonModule, AiFormat, AutoScrollBottomDirective, RenderHostComponent],
     templateUrl: './chat-message.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './chat-message.css',
@@ -56,6 +57,7 @@ export class ChatMessage implements OnDestroy {
     rowState = signal<ChatMessageRowState>('idle');
     hasQueuedText = signal(false);
     copied = signal(false);
+    pendingRenderBlocks = signal<IRenderBlock[]>([]);
 
     isAssistant = computed(() => this.message().role === 'assistant');
     isUser = computed(() => this.message().role === 'user');
@@ -70,7 +72,7 @@ export class ChatMessage implements OnDestroy {
     });
     steps = computed(() => this.message().steps ?? []);
     displaySteps = computed<ChatDisplayStep[]>(() => {
-        return this.steps().reduce<ChatDisplayStep[]>((displaySteps, step) => {
+        const displaySteps = this.steps().reduce<ChatDisplayStep[]>((displaySteps, step) => {
             if (this.isStatusStep(step.icon) && displaySteps.length > 0) {
                 const previousStep = displaySteps[displaySteps.length - 1];
                 displaySteps[displaySteps.length - 1] = {
@@ -86,10 +88,20 @@ export class ChatMessage implements OnDestroy {
             });
             return displaySteps;
         }, []);
+
+        if (this.showPreparingLoader()) {
+            displaySteps.push({
+                icon: '',
+                message: '',
+                isLoading: true,
+            });
+        }
+
+        return displaySteps;
     });
     hasSteps = computed(() => this.displaySteps().length > 0);
     isThinkingVisible = computed(() => {
-        return this.isAssistant() && this.hasSteps();
+        return this.isAssistant() && (this.hasSteps() || this.showPreparingLoader());
     });
     hasActiveToolStep = computed(() => {
         const steps = this.displaySteps();
@@ -118,6 +130,24 @@ export class ChatMessage implements OnDestroy {
         return this.isActiveStream() ? this.displayedContent() : this.message().content;
     });
     roleLabel = computed(() => (this.isUser() ? '\u05d0\u05ea\u05d4' : '\u05e1\u05d5\u05db\u05df AI'));
+    renderBlocksForDisplay = computed<IRenderBlock[]>(() => {
+        if (this.isActiveStream()) {
+            return this.message().renderBlocks ?? [];
+        }
+        const memBlocks = this.message().renderBlocks;
+        if (memBlocks && memBlocks.length > 0) {
+            return memBlocks;
+        }
+        const spec = this.message().renderSpec;
+        if (spec) {
+            try {
+                return JSON.parse(spec) as IRenderBlock[];
+            } catch {
+                return [];
+            }
+        }
+        return [];
+    });
 
     private syncContent = effect(() => {
         const message = this.message();
@@ -185,6 +215,12 @@ export class ChatMessage implements OnDestroy {
         });
     }
 
+    handleStreamEvent(event: ChatStreamEvent): void {
+        if (event.type === 'render') {
+            this.pendingRenderBlocks.update((blocks) => [...blocks, { component: event.component, data: event.data }]);
+        }
+    }
+
     private resetLocalState(content: string): void {
         this.stopTyping();
         this.queuedText = '';
@@ -193,6 +229,18 @@ export class ChatMessage implements OnDestroy {
         this.currentWordDelay = this.nextCharacterDelay();
         this.displayedContent.set(content);
         this.rowState.set('idle');
+
+        const renderSpec = this.message().renderSpec;
+        if (renderSpec) {
+            try {
+                const parsed = JSON.parse(renderSpec) as IRenderBlock[];
+                this.pendingRenderBlocks.set(parsed);
+            } catch {
+                this.pendingRenderBlocks.set([]);
+            }
+        } else {
+            this.pendingRenderBlocks.set([]);
+        }
     }
 
     private scheduleTyping(): void {

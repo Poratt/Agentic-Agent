@@ -1,0 +1,73 @@
+<div class="analytics-chart-card">
+    @if (data().title) {
+        <div class="card-header">
+            <span class="ph ph-chart-bar card-icon"></span>
+            <span class="card-title">{{ data().title }}</span>
+        </div>
+    }
+
+    @if (!hasSeries()) {
+        <div class="empty-state">
+            <span class="ph ph-chart-line"></span>
+            <span>No data to display.</span>
+        </div>
+    } @else {
+        <div class="chart-area">
+            @if (chartTypeLabel() === 'bar') {
+                <svg class="bar-chart" viewBox="0 0 300 120" preserveAspectRatio="xMidYMid meet">
+                    @for (h of barHeights(); track $index) {
+                        <rect
+                            class="bar"
+                            [attr.x]="20 + $index * (260 / barHeights().length)"
+                            [attr.y]="120 - h * 1.0"
+                            [attr.width]="barWidth()"
+                            [attr.height]="h"
+                            [attr.fill]="['var(--color-table-1)', 'var(--color-table-2)', 'var(--color-table-3)', 'var(--color-table-4)', 'var(--color-table-5)', 'var(--color-table-6)'][$index % 6]"
+                        />
+                    }
+                </svg>
+            }
+
+            @if (chartTypeLabel() === 'line') {
+                <svg class="line-chart" viewBox="0 0 300 120" preserveAspectRatio="xMidYMid meet">
+                    <polyline
+                        class="line"
+                        [attr.points]="polylinePoints()"
+                        fill="none"
+                        stroke="var(--color-primary)"
+                        stroke-width="2"
+                        stroke-linejoin="round"
+                    />
+                    @for (pt of polylinePoints().split(' '); track $index) {
+                        <circle
+                            class="dot"
+                            [attr.cx]="pt.split(',')[0]"
+                            [attr.cy]="pt.split(',')[1]"
+                            r="3"
+                            fill="var(--color-primary)"
+                        />
+                    }
+                </svg>
+            }
+
+            @if (chartTypeLabel() === 'pie') {
+                <div class="pie-wrapper">
+                    <div class="pie-circle" [style.background]="pieGradient()"></div>
+                    <div class="pie-legend">
+                        @for (seg of pieSegments(); track $index) {
+                            <div class="legend-item">
+                                <span class="legend-dot" [style.background]="seg.color"></span>
+                                <span class="legend-label">{{ seg.label }}</span>
+                                <span class="legend-value">{{ seg.value }}</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (data().summary) {
+            <div class="chart-summary">{{ data().summary }}</div>
+        }
+    }
+</div>

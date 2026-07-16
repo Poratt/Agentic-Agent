@@ -1,0 +1,100 @@
+:host {
+    display: block;
+}
+
+.sessions-list-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
+    max-width: 480px;
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        margin-bottom: var(--space-5);
+
+        .card-icon {
+            color: var(--color-primary);
+            font-size: var(--font-size-lg);
+        }
+
+        .card-title {
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-primary);
+        }
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-10) 0;
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+
+        .ph {
+            font-size: var(--font-size-xl);
+        }
+    }
+
+    .sessions-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .session-row {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        padding: var(--space-4);
+        border-bottom: 1px solid var(--color-border);
+        transition: background var(--transition-fast);
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        &:hover {
+            background: var(--color-surface-hover);
+        }
+    }
+
+    .session-main {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+
+        .session-title {
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-text-primary);
+        }
+
+        .session-id {
+            font-family: var(--font-code);
+            font-size: var(--font-size-xxs);
+            color: var(--color-text-muted);
+        }
+    }
+
+    .session-meta {
+        display: flex;
+        gap: var(--space-4);
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: var(--font-size-xxs);
+            color: var(--color-text-muted);
+
+            .ph {
+                font-size: var(--font-size-xs);
+            }
+        }
+    }
+}

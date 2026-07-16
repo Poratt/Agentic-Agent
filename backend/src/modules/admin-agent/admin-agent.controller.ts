@@ -40,7 +40,6 @@ import { ChatMessageResponseDto } from './dto/chat-message-response.dto';
 import { AgentStreamEventDto } from './dto/agent-stream-event.dto';
 import { GetSessionsQueryDto } from './dto/get-sessions-query.dto';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
-import { GenUiSpec } from './constants/gen-ui-spec.constant';
 import { AgentToolExecutorService } from './services/agent-tool-executor.service';
 import { AgentAuditService } from './services/agent-audit.service';
 import { AuditAction } from './entities/agent-action-audit-log.entity';
@@ -65,7 +64,6 @@ export class AdminAgentController {
     summary: 'Get chat sessions for the authenticated user',
     summaryHe: 'שולף את סשני הצ\'אט של המשתמש המחובר',
     toolIcon: 'ph-chat-centered-text',
-    genUiSpec: GenUiSpec.CHAT_SESSIONS_LIST,
     description:
       'Returns recent chat sessions owned by the authenticated user. Sessions from other users are never returned.',
   } as CustomApiOperationOptions)
@@ -92,7 +90,6 @@ export class AdminAgentController {
     summary: 'Get session message history',
     summaryHe: 'שולף את היסטוריית ההודעות של סשן הצ\'אט (מזהה: ${id})',
     toolIcon: 'ph-chats',
-    genUiSpec: GenUiSpec.CHAT_TRANSCRIPT_TIMELINE,
     description:
       'Returns user and assistant messages for a session owned by the authenticated user. ' +
       'Internal tool messages are filtered out for normal history display. ' +
@@ -158,7 +155,6 @@ export class AdminAgentController {
     summary: 'Create a new chat session',
     summaryHe: 'מייצר סשן שיחת צ\'אט חדש',
     toolIcon: 'ph-plus-circle',
-    genUiSpec: GenUiSpec.CHAT_SESSION_CREATED,
     description: 'Creates a new empty chat session owned by the authenticated user.',
   } as CustomApiOperationOptions)
   @ApiResponse({ status: 201, description: 'Chat session created successfully.', type: SessionResponseDto })
@@ -176,8 +172,6 @@ export class AdminAgentController {
     summary: 'Delete chat session',
     summaryHe: 'מוחק לצמיתות את סשן הצ\'אט (מזהה: ${id})',
     toolIcon: 'ph-trash',
-    genUiSpec:
-      'After this tool succeeds, do not invent response data. Tell the user that the chat session was permanently deleted and mention the requested session id.',
     description:
       'Permanently deletes a session owned by the authenticated user. ' +
       'ChatMessage rows are cascade-deleted through the ChatMessage.session relation.',
@@ -201,8 +195,6 @@ export class AdminAgentController {
     summary: 'Delete a chat message and later history',
     summaryHe: 'מוחק הודעת צאט ואת כל ההודעות שאחריה',
     toolIcon: 'ph-trash',
-    genUiSpec:
-      'After this tool succeeds, do not invent response data. Tell the user that the selected chat message and later session history were permanently deleted.',
     description:
       'Permanently deletes one message owned by the authenticated user and every later message in the same session. ' +
       'This preserves conversation consistency by preventing later assistant or tool messages from remaining without their original context.',

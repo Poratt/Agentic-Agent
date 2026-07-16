@@ -1,0 +1,40 @@
+<div class="users-table-card">
+    <div class="card-header">
+        <span class="ph ph-users card-icon"></span>
+        <span class="card-title">Users</span>
+    </div>
+
+    @if (sortedUsers().length === 0) {
+        <div class="empty-state">
+            <span class="ph ph-user"></span>
+            <span>No users found.</span>
+        </div>
+    } @else {
+        <p-table [value]="sortedUsers()" [tableStyle]="{ width: '100%' }" styleClass="users-prime-table">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>ID</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Created At</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-user>
+                <tr>
+                    <td class="cell-id">{{ user.id }}</td>
+                    <td>{{ user.fullName }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        @if (user.role != null) {
+                            <span class="role-badge" [class.admin]="isAdmin(user.role)" [class.user]="!isAdmin(user.role)">
+                                {{ getRoleLabel(user.role) }}
+                            </span>
+                        }
+                    </td>
+                    <td class="cell-date">{{ formatDate(user.createdAt) }}</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    }
+</div>

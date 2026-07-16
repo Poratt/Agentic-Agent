@@ -7,7 +7,6 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { GenUiSpec } from '../admin-agent/constants/gen-ui-spec.constant';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { SystemService } from './system.service';
@@ -25,7 +24,6 @@ export class SystemController {
     summaryHe: 'שולף את מצב המערכת הכללי ומדדי הפעילות',
     toolIcon: 'ph-gauge',
     description: 'Returns activity metrics and current runtime status parameters.',
-    genUiSpec: GenUiSpec.SYSTEM_STATUS,
   } as CustomApiOperationOptions)
   @ApiOkResponse({
     description: 'System status metrics payload retrieved successfully.',

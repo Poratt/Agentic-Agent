@@ -191,9 +191,6 @@
   /* Misc */
   --grey-30: rgba(255, 255, 255, 0.02);
 
-  /* Skeleton */
-  --color-skeleton-bg: rgba(255, 255, 255, 0.08);
-  --color-skeleton-bar: rgba(255, 255, 255, 0.15);
 }
 
 [data-theme="light"] {
@@ -267,7 +264,4 @@
   /* Misc */
   --grey-30: rgba(0, 0, 0, 0.015);
 
-  /* Skeleton */
-  --color-skeleton-bg: rgba(0, 0, 0, 0.04);
-  --color-skeleton-bar: rgba(0, 0, 0, 0.10);
 }

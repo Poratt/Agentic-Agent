@@ -1,0 +1,49 @@
+<div class="llm-results-card">
+    <div class="card-header">
+        <span class="ph ph-activity card-icon"></span>
+        <span class="card-title">LLM Test Results</span>
+    </div>
+
+    @if (hasResults()) {
+        <div class="summary-row">
+            <span class="summary-text">
+                {{ activeCount() }} of {{ totalCount() }} active
+            </span>
+            <span class="pulse-dot"></span>
+        </div>
+
+        <div class="results-grid">
+            @for (result of data().results; track result.model ?? $index) {
+                <div class="model-card">
+                    <div class="model-header">
+                        <span class="model-name">{{ result.model }}</span>
+                        <span class="provider-badge">{{ result.provider }}</span>
+                    </div>
+                    <div class="model-status">
+                        @if (isModelActive(result.status)) {
+                            <span class="ph ph-check-circle status-icon active"></span>
+                            <span class="status-text active">Active</span>
+                        } @else if (isModelFailed(result.status)) {
+                            <span class="ph ph-warning-circle status-icon failed"></span>
+                            <span class="status-text failed">Failed</span>
+                        } @else {
+                            <span class="ph ph-warning-circle status-icon unknown"></span>
+                            <span class="status-text unknown">{{ result.status || 'Unknown' }}</span>
+                        }
+                    </div>
+                    @if (result.latencyMs != null) {
+                        <div class="model-latency">
+                            <span class="latency-value">{{ result.latencyMs }}</span>
+                            <span class="latency-unit">ms</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    } @else {
+        <div class="empty-state">
+            <span class="ph ph-activity"></span>
+            <span>No test results available.</span>
+        </div>
+    }
+</div>

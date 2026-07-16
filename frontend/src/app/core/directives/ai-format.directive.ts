@@ -1,18 +1,5 @@
-import { Directive, ElementRef, input, OnChanges, OnDestroy, Renderer2, inject, SecurityContext } from '@angular/core';
+import { Directive, ElementRef, input, OnChanges, Renderer2, inject, SecurityContext } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
-
-type ComponentRenderParts = {
-  before: string;
-  componentHtml: string;
-  after: string;
-};
-
-type ProgressiveComponentParts = {
-  before: string;
-  partialComponentHtml: string;
-  after: string;
-  complete: boolean;
-};
 
 const HEBREW_ROLE_LABEL = 'תפקיד';
 const HEBREW_ADMIN_LABEL = 'מנהל';
@@ -22,639 +9,34 @@ const HEBREW_USER_LABEL = 'משתמש';
   selector: '[aiFormat]',
   standalone: true,
 })
-export class AiFormat implements OnChanges, OnDestroy {
+export class AiFormat implements OnChanges {
   aiFormat = input<string>('');
 
   private el = inject<ElementRef<HTMLElement>>(ElementRef);
   private renderer = inject(Renderer2);
   private sanitizer = inject(DomSanitizer);
 
-  private skeletonVisible = false;
-  private previewHost: HTMLElement | null = null;
-  private markdownHost: HTMLElement | null = null;
-  private previewRafHandle: number | null = null;
-  private lastPreviewRaw = '';
-
   ngOnChanges() {
     const raw = this.aiFormat() ?? '';
-
-    const componentParts = this.extractComponentParts(raw);
-    if (componentParts) {
-      this.skeletonVisible = false;
-      this.cancelProgressivePreview();
-      this.renderComponentResponse(componentParts);
-      return;
-    }
-
-    if (this.isStreamingComponent(raw)) {
-      this.renderStreamingComponent(raw);
-      return;
-    }
-
-    this.cancelProgressivePreview();
-    this.skeletonVisible = false;
-    const parsedHtml = this.parse(raw);
-    const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, parsedHtml) || '';
-    this.updateDomEfficiently(sanitizedHtml);
+    const sanitized = this.sanitizeLegacyComponentBlocks(raw);
+    const parsedHtml = this.parse(sanitized);
+    const safeHtml = this.sanitizer.sanitize(SecurityContext.HTML, parsedHtml) || '';
+    this.updateDomEfficiently(safeHtml);
     this.markNewCompletedBlocks(raw);
   }
 
-  private extractComponentParts(raw: string): ComponentRenderParts | null {
-    const closedMatch = /```component\s*([\s\S]*?)```/i.exec(raw);
-    if (closedMatch) {
-      const matchStart = closedMatch.index;
-      const matchEnd = matchStart + closedMatch[0].length;
+  private sanitizeLegacyComponentBlocks(text: string): string {
+    const regex = /```component\s*([\s\S]*?)```/gi;
+    if (!regex.test(text)) return text;
 
-      return {
-        before: raw.slice(0, matchStart),
-        componentHtml: closedMatch[1].trim(),
-        after: raw.slice(matchEnd),
-      };
-    }
-
-    const trimmed = raw.trim();
-    if (!this.looksLikeRawComponentHtml(trimmed)) {
-      return null;
-    }
-
-    const stripped = trimmed.replace(/^```component\s*/i, '');
-
-    return {
-      before: '',
-      componentHtml: stripped,
-      after: '',
-    };
-  }
-
-  private looksLikeRawComponentHtml(value: string): boolean {
-    const startsWithComponent = /^```component\b/i.test(value);
-    if (startsWithComponent) return true;
-
-    const startsWithHtml = /^<style[\s>]/i.test(value) || /^<style\b/i.test(value) || /^<(div|section|article)\b/i.test(value);
-    const hasRenderableRoot = /<\/(div|section|article)>/i.test(value);
-
-    return startsWithHtml && hasRenderableRoot;
-  }
-
-  private looksLikeOpenRawComponentHtml(value: string): boolean {
-    const trimmed = value.trim();
-    const startsWithHtml = /^<style[\s>]/i.test(trimmed) || /^<style\b/i.test(trimmed) || /^<(div|section|article)\b/i.test(trimmed);
-
-    return startsWithHtml && !this.looksLikeRawComponentHtml(trimmed);
-  }
-
-  private isStreamingComponent(raw: string): boolean {
-    if (/```component\s*[\s\S]*?```/i.test(raw)) {
-      return false;
-    }
-
-    return /```component\b/i.test(raw) || this.looksLikeRawComponentHtml(raw.trim());
-  }
-
-  private renderStreamingComponent(raw: string): void {
-    const componentStart = raw.search(/```component\b/i);
-    const textBeforeComponent = componentStart >= 0 ? raw.slice(0, componentStart) : '';
-
-    const progressive = this.extractProgressiveComponentParts(raw);
-
-    if (progressive && !progressive.complete && progressive.partialComponentHtml.trim()) {
-      const sanitizedHtml = this.sanitizeProgressiveComponentHtml(progressive.partialComponentHtml);
-
-      this.el.nativeElement.innerHTML = '';
-
-      if (progressive.before.trim()) {
-        this.appendMarkdown(progressive.before);
-      }
-
-      if (sanitizedHtml) {
-        this.scheduleProgressivePreview(raw, progressive.before, sanitizedHtml);
-        return;
-      }
-    }
-
-    this.el.nativeElement.innerHTML = '';
-
-    if (textBeforeComponent.trim()) {
-      this.appendMarkdown(textBeforeComponent);
-    }
-
-    this.renderSkeletonOnce();
-  }
-
-  private extractProgressiveComponentParts(raw: string): ProgressiveComponentParts | null {
-    const openMatch = /```component\b([\s\S]*)/i.exec(raw);
-    if (!openMatch) return null;
-
-    const matchStart = openMatch.index;
-    const afterFence = openMatch[1];
-
-    const closeIdx = afterFence.search(/```(?!`)/);
-    if (closeIdx !== -1) {
-      return {
-        before: raw.slice(0, matchStart),
-        partialComponentHtml: afterFence.slice(0, closeIdx).trim(),
-        after: raw.slice(matchStart + openMatch[0].length - afterFence.length + closeIdx + 3),
-        complete: true,
-      };
-    }
-
-    const partialHtml = afterFence;
-
-    if (this.isInsideOpenTag(partialHtml)) {
-      const stablePrefix = this.findStableElementPrefix(partialHtml);
-      return {
-        before: raw.slice(0, matchStart),
-        partialComponentHtml: stablePrefix,
-        after: '',
-        complete: false,
-      };
-    }
-
-    return {
-      before: raw.slice(0, matchStart),
-      partialComponentHtml: partialHtml,
-      after: '',
-      complete: false,
-    };
-  }
-
-  private isInsideOpenTag(html: string): boolean {
-    const lastOpen = html.lastIndexOf('<');
-    const lastClose = html.lastIndexOf('>');
-    if (lastOpen === -1) return false;
-    return lastOpen > lastClose;
-  }
-
-  private findStableElementPrefix(html: string): string {
-    const lastOpen = html.lastIndexOf('<');
-    if (lastOpen === -1) return html;
-
-    const closeAfter = html.indexOf('>', lastOpen);
-    if (closeAfter === -1) {
-      return html.slice(0, lastOpen);
-    }
-
-    return html.slice(0, closeAfter + 1);
-  }
-
-  private sanitizeProgressiveComponentHtml(partialHtml: string): string {
-    if (!partialHtml.trim()) return '';
-
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(`<div id="root">${partialHtml}</div>`, 'text/html');
-
-    doc.querySelectorAll('script, iframe, object, embed').forEach((node) => {
-      node.remove();
+    return text.replace(regex, (_match, inner: string) => {
+      const stripped = inner.replace(/<script[\s\S]*?<\/script>/gi, '');
+      const trimmed = stripped.trim();
+      return `<blockquote class="legacy-component-block"><span class="legacy-component-label">Legacy Component</span>${trimmed}</blockquote>`;
     });
-
-    doc.querySelectorAll('style').forEach((style) => {
-      const sanitizedCss = this.sanitizePartialComponentCss(style.textContent ?? '');
-      if (!sanitizedCss.trim()) {
-        style.remove();
-        return;
-      }
-      style.textContent = sanitizedCss;
-    });
-
-    const rootEl = doc.getElementById('root');
-    if (!rootEl) return '';
-
-    const hasRenderableRoot = rootEl.querySelector('div, section, article');
-    if (!hasRenderableRoot) return '';
-
-    const headStyles = Array.from(doc.head.querySelectorAll('style'))
-      .map((style) => style.outerHTML)
-      .join('');
-
-    return `${headStyles}${rootEl.innerHTML}`;
-  }
-
-  private sanitizePartialComponentCss(css: string): string {
-    return this.splitCssRules(css)
-      .map((rule) => this.sanitizeCssRule(rule.selector, rule.body))
-      .filter((rule) => rule.trim())
-      .join('\n');
-  }
-
-  private scheduleProgressivePreview(raw: string, beforeMarkdown: string, sanitizedHtml: string): void {
-    this.lastPreviewRaw = raw;
-
-    if (this.previewRafHandle !== null) {
-      if (typeof requestAnimationFrame !== 'undefined') {
-        return;
-      }
-      cancelAnimationFrame(this.previewRafHandle);
-    }
-
-    const doRender = () => {
-      this.previewRafHandle = null;
-      const currentRaw = this.lastPreviewRaw;
-      if (currentRaw !== raw) return;
-
-      this.renderProgressivePreview(beforeMarkdown, sanitizedHtml);
-    };
-
-    if (typeof requestAnimationFrame !== 'undefined') {
-      this.previewRafHandle = requestAnimationFrame(doRender);
-    } else {
-      doRender();
-    }
-  }
-
-  private renderProgressivePreview(beforeMarkdown: string, sanitizedHtml: string): void {
-    const target = this.el.nativeElement;
-
-    if (!this.previewHost) {
-      this.previewHost = this.renderer.createElement('div');
-      this.renderer.appendChild(target, this.previewHost);
-    }
-
-    if (!this.markdownHost) {
-      this.markdownHost = this.renderer.createElement('div');
-      this.renderer.insertBefore(target, this.markdownHost, this.previewHost);
-    }
-
-    this.updateMarkdownHost(beforeMarkdown);
-
-    const preview = this.previewHost!;
-    const finalHtml = this.sanitizer.sanitize(SecurityContext.HTML, sanitizedHtml) || '';
-    preview.innerHTML = finalHtml;
-  }
-
-  private updateMarkdownHost(beforeMarkdown: string): void {
-    if (!this.markdownHost) return;
-
-    const parsedHtml = this.parse(beforeMarkdown);
-    const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, parsedHtml) || '';
-    this.markdownHost.innerHTML = sanitizedHtml;
-  }
-
-  private renderSkeletonOnce(): void {
-    this.ensureSkeletonStyle();
-    this.appendHtml(this.skeletonHtml());
-    this.skeletonVisible = true;
-  }
-
-  private renderComponentResponse(parts: ComponentRenderParts): void {
-    this.cancelProgressivePreview();
-
-    if (this.previewHost) {
-      const sanitizedComponentHtml = this.sanitizeComponentHtml(parts.componentHtml);
-      const finalHtml = this.sanitizer.sanitize(SecurityContext.HTML, sanitizedComponentHtml) || '';
-      this.previewHost.innerHTML = finalHtml;
-
-      if (this.markdownHost) {
-        this.updateMarkdownHost(parts.before);
-      }
-
-      if (parts.after.trim()) {
-        const afterDiv = this.renderer.createElement('div');
-        this.el.nativeElement.appendChild(afterDiv);
-        this.appendMarkdownInto(parts.after, afterDiv);
-      }
-
-      return;
-    }
-
-    this.el.nativeElement.innerHTML = '';
-    this.appendMarkdown(parts.before);
-    this.appendComponentHtml(parts.componentHtml);
-
-    if (parts.after.trim()) {
-      this.appendMarkdown(parts.after);
-    }
-  }
-
-  private appendComponentHtml(html: string): void {
-    const div = this.renderer.createElement('div');
-    this.el.nativeElement.appendChild(div);
-    div.innerHTML = this.sanitizeComponentHtml(html);
-  }
-
-  private sanitizeComponentHtml(html: string): string {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-
-    doc.querySelectorAll('script, iframe, object, embed').forEach((node) => {
-      node.remove();
-    });
-
-    doc.querySelectorAll('style').forEach((style) => {
-      const sanitizedCss = this.sanitizeComponentCss(style.textContent ?? '');
-      if (!sanitizedCss.trim()) {
-        style.remove();
-        return;
-      }
-
-      style.textContent = sanitizedCss;
-    });
-
-    const headStyles = Array.from(doc.head.querySelectorAll('style'))
-      .map((style) => {
-        return style.outerHTML;
-      })
-      .join('');
-
-    return `${headStyles}${doc.body.innerHTML}`;
-  }
-
-  private sanitizeComponentCss(css: string): string {
-    return this.splitCssRules(css)
-      .map((rule) => {
-        return this.sanitizeCssRule(rule.selector, rule.body);
-      })
-      .filter((rule) => {
-        return rule.trim();
-      })
-      .join('\n');
-  }
-
-  private splitCssRules(css: string): { selector: string; body: string }[] {
-    const rules: { selector: string; body: string }[] = [];
-    let cursor = 0;
-
-    while (cursor < css.length) {
-      const openIndex = css.indexOf('{', cursor);
-      if (openIndex === -1) break;
-
-      const selector = css.slice(cursor, openIndex).trim();
-      let depth = 1;
-      let closeIndex = openIndex + 1;
-
-      while (closeIndex < css.length && depth > 0) {
-        const char = css[closeIndex];
-        if (char === '{') depth++;
-        if (char === '}') depth--;
-        closeIndex++;
-      }
-
-      if (depth !== 0) break;
-
-      rules.push({
-        selector,
-        body: css.slice(openIndex + 1, closeIndex - 1),
-      });
-      cursor = closeIndex;
-    }
-
-    return rules;
-  }
-
-  private sanitizeCssRule(selector: string, body: string): string {
-    const normalizedSelector = selector.trim();
-    if (!normalizedSelector) return '';
-
-    if (/^@keyframes\b/i.test(normalizedSelector)) {
-      return `${normalizedSelector} {${body}}`;
-    }
-
-    if (normalizedSelector.startsWith('@')) {
-      const sanitizedNestedCss = this.sanitizeComponentCss(body);
-      return sanitizedNestedCss ? `${normalizedSelector} {\n${sanitizedNestedCss}\n}` : '';
-    }
-
-    const sanitizedSelector = this.sanitizeSelectorList(normalizedSelector);
-    if (!sanitizedSelector) return '';
-
-    const sanitizedBody = this.removeCssCustomPropertyDeclarations(body);
-    return sanitizedBody ? `${sanitizedSelector} { ${sanitizedBody} }` : '';
-  }
-
-  private removeCssCustomPropertyDeclarations(body: string): string {
-    return body
-      .split(';')
-      .map((declaration) => {
-        return declaration.trim();
-      })
-      .filter((declaration) => {
-        return declaration && !/^--[\w-]+\s*:/.test(declaration);
-      })
-      .join('; ');
-  }
-
-  private sanitizeSelectorList(selectorList: string): string {
-    return selectorList
-      .split(',')
-      .map((selector) => {
-        return selector.trim();
-      })
-      .filter((selector) => {
-        return selector && !this.isUnsafeSelector(selector);
-      })
-      .join(', ');
-  }
-
-  private isUnsafeSelector(selector: string): boolean {
-    const normalizedSelector = selector.trim().toLowerCase();
-    if (!normalizedSelector) return false;
-    if (/^(:root|html|body)(?=$|[\s.#:[>+~])/.test(normalizedSelector)) return true;
-    if (!this.containsUnsafeGlobalTarget(normalizedSelector)) return false;
-
-    return !this.startsWithLocalScope(normalizedSelector);
-  }
-
-  private containsUnsafeGlobalTarget(selector: string): boolean {
-    return selector
-      .split(/[\s>+~]+/)
-      .some((compound) => {
-        return /^(table|th|td|h1|h2|button)(?=$|[.#:[*])/.test(compound) || /^\.btn(?=$|[.#:[*])/.test(compound);
-      });
-  }
-
-  private startsWithLocalScope(selector: string): boolean {
-    const firstCompound = selector.split(/[\s>+~]+/)[0] ?? '';
-    return /^\.(?!btn(?=$|[.#:[*]))[\w-]+/.test(firstCompound);
-  }
-
-  private appendMarkdown(markdown: string): void {
-    const parsedHtml = this.parse(markdown);
-    const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, parsedHtml) || '';
-    this.appendHtml(sanitizedHtml);
-  }
-
-  private appendMarkdownInto(markdown: string, target: HTMLElement): void {
-    const parsedHtml = this.parse(markdown);
-    const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, parsedHtml) || '';
-    if (!sanitizedHtml.trim()) return;
-
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(sanitizedHtml, 'text/html');
-    Array.from(doc.body.childNodes).forEach((node) => {
-      target.appendChild(node.cloneNode(true));
-    });
-  }
-
-  private cancelProgressivePreview(): void {
-    if (this.previewRafHandle !== null) {
-      if (typeof cancelAnimationFrame !== 'undefined') {
-        cancelAnimationFrame(this.previewRafHandle);
-      }
-      this.previewRafHandle = null;
-    }
-    this.previewHost = null;
-    this.markdownHost = null;
-  }
-
-  ngOnDestroy(): void {
-    this.cancelProgressivePreview();
-  }
-
-  private appendHtml(html: string): void {
-    if (!html.trim()) return;
-
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    Array.from(doc.body.childNodes).forEach((node) => {
-      this.renderer.appendChild(this.el.nativeElement, node.cloneNode(true));
-    });
-  }
-
-  private ensureSkeletonStyle(): void {
-    // Skeleton styles are now in _utilities.css - no inline style injection needed
-  }
-
-  private skeletonHtml(): string {
-    return `
-        <div class="ai-skeleton">
-          <div class="ai-skeleton-bar"></div>
-          <div class="ai-skeleton-bar"></div>
-        </div>`;
-  }
-
-  private updateDomEfficiently(htmlContent: string): void {
-    const target = this.el.nativeElement;
-
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlContent, 'text/html');
-    const newNodes = Array.from(doc.body.childNodes);
-    const currentNodes = Array.from(target.childNodes);
-
-    const maxLen = Math.max(currentNodes.length, newNodes.length);
-    for (let i = 0; i < maxLen; i++) {
-      const current = currentNodes[i];
-      const next = newNodes[i];
-
-      if (!current && next) {
-        this.renderer.appendChild(target, next.cloneNode(true));
-        continue;
-      }
-
-      if (current && !next) {
-        this.renderer.removeChild(target, current);
-        continue;
-      }
-
-      this.morphNode(current, next);
-    }
-  }
-
-  private morphNode(current: ChildNode, newNode: ChildNode): void {
-    if (current.nodeType !== newNode.nodeType) {
-      const parent = current.parentNode!;
-      const clone = newNode.cloneNode(true);
-      this.renderer.insertBefore(parent, clone, current);
-      this.renderer.removeChild(parent, current);
-      return;
-    }
-
-    if (current.nodeType === Node.TEXT_NODE) {
-      if (current.textContent !== newNode.textContent) {
-        current.textContent = newNode.textContent;
-      }
-      return;
-    }
-
-    if (!(current instanceof HTMLElement) || !(newNode instanceof HTMLElement)) return;
-
-    if (current.tagName !== newNode.tagName) {
-      const parent = current.parentNode!;
-      const clone = newNode.cloneNode(true);
-      this.renderer.insertBefore(parent, clone, current);
-      this.renderer.removeChild(parent, current);
-      return;
-    }
-
-    this.morphAttributes(current, newNode);
-    this.morphChildren(current, newNode);
-  }
-
-  private morphAttributes(current: HTMLElement, newNode: HTMLElement): void {
-    const currentAttrs = Array.from(current.attributes);
-    const newAttrs = Array.from(newNode.attributes);
-
-    for (const attr of newAttrs) {
-      if (current.getAttribute(attr.name) !== attr.value) {
-        this.renderer.setAttribute(current, attr.name, attr.value);
-      }
-    }
-
-    for (const attr of currentAttrs) {
-      if (!newNode.hasAttribute(attr.name)) {
-        this.renderer.removeAttribute(current, attr.name);
-      }
-    }
-  }
-
-  private morphChildren(current: HTMLElement, newNode: HTMLElement): void {
-    const currentChildren = Array.from(current.childNodes);
-    const newChildren = Array.from(newNode.childNodes);
-
-    const maxLen = Math.max(currentChildren.length, newChildren.length);
-    for (let i = 0; i < maxLen; i++) {
-      const cur = currentChildren[i];
-      const nxt = newChildren[i];
-
-      if (!cur && nxt) {
-        this.renderer.appendChild(current, nxt.cloneNode(true));
-        continue;
-      }
-
-      if (cur && !nxt) {
-        this.renderer.removeChild(current, cur);
-        continue;
-      }
-
-      this.morphNode(cur, nxt);
-    }
-  }
-  private roleBadge(text: string): string {
-    const t = text.trim();
-    if (t === HEBREW_ADMIN_LABEL || t.toLowerCase() === 'admin') {
-      return `<span class="badge badge-admin"><span class="ph sm">shield</span>${HEBREW_ADMIN_LABEL}</span>`;
-    }
-    if (t === HEBREW_USER_LABEL || t.toLowerCase() === 'user') {
-      return `<span class="badge badge-info"><span class="ph sm">person</span>${HEBREW_USER_LABEL}</span>`;
-    }
-    return `<span>${t}</span>`;
-  }
-
-  private markNewCompletedBlocks(raw: string): void {
-    const blocks = Array.from(this.el.nativeElement.children) as HTMLElement[];
-    if (blocks.length === 0) return;
-
-    const lastBlock = blocks[blocks.length - 1];
-    const lastBlockIsStable = this.isLastBlockStable(raw);
-
-    blocks.forEach((block) => {
-      if (block.hasAttribute('data-ai-animated')) return;
-
-      const isLast = block === lastBlock;
-      if (isLast && !lastBlockIsStable) return;
-
-      block.setAttribute('data-ai-animated', '1');
-      this.renderer.addClass(block, 'ai-node-fade-in');
-    });
-  }
-
-  private isLastBlockStable(raw: string): boolean {
-    return /\n\s*\n$/.test(raw) || /```[\s\S]*?```\s*$/.test(raw) || /\|.+\|\s*$/.test(raw);
   }
 
   private parse(text: string): string {
-    const componentMatch = text.match(/```component\s*([\s\S]*?)```/);
-    if (componentMatch) {
-      return componentMatch[1].trim();
-    }
     const TABLE_PLACEHOLDER = 'TABLE_PLACEHOLDER_';
     const tables: string[] = [];
 
@@ -775,5 +157,135 @@ export class AiFormat implements OnChanges, OnDestroy {
       .join('')}</tbody>`;
 
     return `<div class="ai-table-wrap"><table class="ai-table">${thead}${tbody}</table></div>`;
+  }
+
+  private roleBadge(text: string): string {
+    const t = text.trim();
+    if (t === HEBREW_ADMIN_LABEL || t.toLowerCase() === 'admin') {
+      return `<span class="badge badge-admin"><span class="ph sm">shield</span>${HEBREW_ADMIN_LABEL}</span>`;
+    }
+    if (t === HEBREW_USER_LABEL || t.toLowerCase() === 'user') {
+      return `<span class="badge badge-info"><span class="ph sm">person</span>${HEBREW_USER_LABEL}</span>`;
+    }
+    return `<span>${t}</span>`;
+  }
+
+  private markNewCompletedBlocks(raw: string): void {
+    const blocks = Array.from(this.el.nativeElement.children) as HTMLElement[];
+    if (blocks.length === 0) return;
+
+    const lastBlock = blocks[blocks.length - 1];
+    const lastBlockIsStable = this.isLastBlockStable(raw);
+
+    blocks.forEach((block) => {
+      if (block.hasAttribute('data-ai-animated')) return;
+
+      const isLast = block === lastBlock;
+      if (isLast && !lastBlockIsStable) return;
+
+      block.setAttribute('data-ai-animated', '1');
+      this.renderer.addClass(block, 'ai-node-fade-in');
+    });
+  }
+
+  private isLastBlockStable(raw: string): boolean {
+    return /\n\s*\n$/.test(raw) || /```[\s\S]*?```\s*$/.test(raw) || /\|.+\|\s*$/.test(raw);
+  }
+
+  private updateDomEfficiently(htmlContent: string): void {
+    const target = this.el.nativeElement;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const newNodes = Array.from(doc.body.childNodes);
+    const currentNodes = Array.from(target.childNodes);
+
+    const maxLen = Math.max(currentNodes.length, newNodes.length);
+    for (let i = 0; i < maxLen; i++) {
+      const current = currentNodes[i];
+      const next = newNodes[i];
+
+      if (!current && next) {
+        this.renderer.appendChild(target, next.cloneNode(true));
+        continue;
+      }
+
+      if (current && !next) {
+        this.renderer.removeChild(target, current);
+        continue;
+      }
+
+      this.morphNode(current, next);
+    }
+  }
+
+  private morphNode(current: ChildNode, newNode: ChildNode): void {
+    if (current.nodeType !== newNode.nodeType) {
+      const parent = current.parentNode!;
+      const clone = newNode.cloneNode(true);
+      this.renderer.insertBefore(parent, clone, current);
+      this.renderer.removeChild(parent, current);
+      return;
+    }
+
+    if (current.nodeType === Node.TEXT_NODE) {
+      if (current.textContent !== newNode.textContent) {
+        current.textContent = newNode.textContent;
+      }
+      return;
+    }
+
+    if (!(current instanceof HTMLElement) || !(newNode instanceof HTMLElement)) return;
+
+    if (current.tagName !== newNode.tagName) {
+      const parent = current.parentNode!;
+      const clone = newNode.cloneNode(true);
+      this.renderer.insertBefore(parent, clone, current);
+      this.renderer.removeChild(parent, current);
+      return;
+    }
+
+    this.morphAttributes(current, newNode);
+    this.morphChildren(current, newNode);
+  }
+
+  private morphAttributes(current: HTMLElement, newNode: HTMLElement): void {
+    const currentAttrs = Array.from(current.attributes);
+    const newAttrs = Array.from(newNode.attributes);
+
+    for (const attr of newAttrs) {
+      if (current.getAttribute(attr.name) !== attr.value) {
+        this.renderer.setAttribute(current, attr.name, attr.value);
+      }
+    }
+
+    for (const attr of currentAttrs) {
+      if (!newNode.hasAttribute(attr.name)) {
+        this.renderer.removeAttribute(current, attr.name);
+      }
+    }
+  }
+
+  private morphChildren(current: HTMLElement, newNode: HTMLElement): void {
+    const currentChildren = Array.from(current.childNodes);
+    const newChildren = Array.from(newNode.childNodes);
+
+    const maxLen = Math.max(currentChildren.length, newChildren.length);
+    for (let i = 0; i < maxLen; i++) {
+      const cur = currentChildren[i];
+      const nxt = newChildren[i];
+
+      if (!cur && nxt) {
+        this.renderer.appendChild(current, nxt.cloneNode(true));
+        continue;
+      }
+
+      if (cur && !nxt) {
+        this.renderer.removeChild(current, cur);
+        continue;
+      }
+
+      this.morphNode(cur, nxt);
+    }
   }
 }

@@ -4,7 +4,6 @@
     "/auth/register": {
       "post": {
         "description": "Creates a new user account. Required RegisterDto fields: fullName, email, password. Password must be at least 8 characters. This endpoint is public and does not require a token.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a registration form with fields: fullName, email, password.\n        Submit button: onclick=\"window.agentPrompt('רשום משתמש חדש: שם=' + document.getElementById('reg-name').value + ' אימייל=' + document.getElementById('reg-email').value + ' סיסמה=' + document.getElementById('reg-pass').value)\"\n        - Add input styling with var(--color-input-bg), var(--color-border), var(--radius-sm)\n        - Password field type=\"password\"\n        - Validate fields are not empty before submitting\n\nNo explanations. No plain text.",
         "operationId": "AuthController_register",
         "parameters": [],
         "requestBody": {
@@ -147,7 +146,6 @@
     "/auth/logout": {
       "post": {
         "description": "Requires a valid access token. Clears the stored refresh token hash and removes auth cookies from the response.",
-        "genUiSpec": "After successful logout, confirm that the user was logged out and the active session was invalidated. Keep the response short.",
         "operationId": "AuthController_logout",
         "parameters": [],
         "responses": {
@@ -193,7 +191,6 @@
     "/auth/me": {
       "get": {
         "description": "Reads req.user as populated by JwtAuthGuard. No database query is made. Role is numeric: 1 = Admin, 2 = User.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a compact authenticated-user card from the JWT payload. Show sub, email, role, issued-at, and expiration. Make clear this is token payload data, not a full database profile.\n\nNo explanations. No plain text.",
         "operationId": "AuthController_me",
         "parameters": [],
         "responses": {
@@ -239,7 +236,6 @@
     "/users": {
       "get": {
         "description": "Returns every user in the system with public fields only: id, email, fullName, numeric role, createdAt, updatedAt, lastLoginAt. Passwords and refresh token hashes are never returned.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a styled users table with columns: ID, Full Name, Email, Role badge, Created At.\n        CSS REQUIREMENTS — these exact declarations MUST appear in the <style> block:\n        - .users-table th { font-size: var(--font-size-xs) }\n        - .users-table td { font-size: var(--font-size-xs) }\n        - .act-btn { font-size: var(--font-size-xs) }\n        - .role-badge { font-size: var(--font-size-xs) }\n        Do NOT use font-size-md or font-size-lg anywhere.\n        ICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis.\n        Action buttons: Small pill-shaped with Phosphor icon span before label. Button classes: act-btn, act-del (for delete).\n        Date: toLocaleDateString('he-IL') for DD/MM/YYYY format.\n        Role badge: var(--color-primary) for admin, var(--color-surface-elevated) for user.\n        Button actions:\n           - \"פרטים\": onclick=\"window.agentPrompt('תראה לי את פרטי המשתמש עם מזהה ' + id)\"\n           - \"מחק\" (act-del, non-admin only): onclick=\"window.agentPrompt('מחק את המשתמש עם מזהה ' + id)\"\n           - \"שנה תפקיד\": onclick=\"window.agentPrompt('שנה את תפקיד המשתמש עם מזהה ' + id)\"\n        Replace 'id' with actual user id. Use ONLY design tokens for CSS values.\n\nNo explanations. No plain text.",
         "operationId": "UsersController_list",
         "parameters": [],
         "responses": {
@@ -276,7 +272,6 @@
     "/users/me": {
       "get": {
         "description": "Returns the JWT payload decoded by JwtAuthGuard. No database query is made. Role is numeric: 1 = Admin, 2 = User.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a compact authenticated-user card from the JWT payload. Show sub, email, role, issued-at, and expiration. Make clear this is token payload data, not a full database profile.\n\nNo explanations. No plain text.",
         "operationId": "UsersController_me",
         "parameters": [],
         "responses": {
@@ -313,7 +308,6 @@
     "/users/{id}": {
       "get": {
         "description": "Fetches one user by numeric id with public fields only. Use GET /users first to discover valid IDs.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a compact authenticated-user card from the JWT payload. Show sub, email, role, issued-at, and expiration. Make clear this is token payload data, not a full database profile.\n\nNo explanations. No plain text.",
         "operationId": "UsersController_getById",
         "parameters": [
           {
@@ -361,7 +355,6 @@
       },
       "patch": {
         "description": "Updates fullName and/or email for the user identified by :id. This endpoint intentionally does not accept role changes; use PATCH /users/:id/role for role updates.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender an updated user profile card. Highlight the user id, full name, email, numeric role label, and updatedAt timestamp. Make it clear the profile fields were updated successfully.\n\nNo explanations. No plain text.",
         "operationId": "UsersController_update",
         "parameters": [
           {
@@ -423,7 +416,6 @@
       },
       "delete": {
         "description": "Hard-deletes the user record. This is irreversible and requires admin privileges.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a destructive confirmation card. Show deleted flag. Do not imply restore is possible.\n\nNo explanations. No plain text.",
         "operationId": "UsersController_delete",
         "parameters": [
           {
@@ -476,7 +468,6 @@
     "/users/{id}/role": {
       "patch": {
         "description": "Sets only the role field of the user identified by :id. IMPORTANT: role must be a NUMBER: 1 = Admin, 2 = User. Never send a string. Accepted numeric values : 1 = Admin, 2 = User. Other user fields must be updated through PATCH /users/:id.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a role-change confirmation card. Show the user id, email, full name, and new role. Translate numeric roles as 1 = Admin and 2 = User, while preserving the numeric value.\n\nNo explanations. No plain text.",
         "operationId": "UsersController_updateRole",
         "parameters": [
           {
@@ -540,7 +531,6 @@
     "/admin-agent/sessions": {
       "get": {
         "description": "Returns recent chat sessions owned by the authenticated user. Sessions from other users are never returned.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a compact chat sessions list. Show each session title, id, createdAt, and updatedAt. Sort visually by updatedAt when possible and make the session id easy to copy or reference.\n\nNo explanations. No plain text.",
         "operationId": "AdminAgentController_getSessions",
         "parameters": [
           {
@@ -584,7 +574,6 @@
       },
       "post": {
         "description": "Creates a new empty chat session owned by the authenticated user.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a small new-session confirmation card. Show the new session id, title, createdAt, and updatedAt. Keep the output concise.\n\nNo explanations. No plain text.",
         "operationId": "AdminAgentController_createSession",
         "parameters": [],
         "responses": {
@@ -615,7 +604,6 @@
     "/admin-agent/sessions/{id}/messages": {
       "get": {
         "description": "Returns user and assistant messages for a session owned by the authenticated user. Internal tool messages are filtered out for normal history display. Response header X-Has-More-Images indicates whether additional images are available via the batch endpoint.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a chat transcript timeline. Group messages by role, show user prompts and assistant replies clearly, include createdAt timestamps, and keep long message content readable with wrapping.\n\nNo explanations. No plain text.",
         "operationId": "AdminAgentController_getSessionMessages",
         "parameters": [
           {
@@ -710,7 +698,6 @@
     "/admin-agent/sessions/{id}": {
       "delete": {
         "description": "Permanently deletes a session owned by the authenticated user. ChatMessage rows are cascade-deleted through the ChatMessage.session relation.",
-        "genUiSpec": "After this tool succeeds, do not invent response data. Tell the user that the chat session was permanently deleted and mention the requested session id.",
         "operationId": "AdminAgentController_deleteSession",
         "parameters": [
           {
@@ -744,7 +731,6 @@
     "/admin-agent/sessions/{sessionId}/messages/{messageId}": {
       "delete": {
         "description": "Permanently deletes one message owned by the authenticated user and every later message in the same session. This preserves conversation consistency by preventing later assistant or tool messages from remaining without their original context.",
-        "genUiSpec": "After this tool succeeds, do not invent response data. Tell the user that the selected chat message and later session history were permanently deleted.",
         "operationId": "AdminAgentController_deleteSessionMessage",
         "parameters": [
           {
@@ -1282,7 +1268,6 @@
     "/analytics/query": {
       "post": {
         "description": "Runs a supported analytics metric from the server-side catalog and returns chart-ready data.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender an analytics chart from the tool response.\n        Rules:\n        1. Use only result.series values returned by the tool. Never invent values.\n        2. Use result.chartType to choose the chart: 1=bar, 2=line, 3=pie.\n        3. Render inline SVG only. Do not use external chart libraries.\n        4. Use a fixed SVG viewBox such as \"0 0 500 260\" and normalize numeric values against maxValue.\n        5. If result.series is empty or all values are 0, render a stable empty state that says \"No data available for the selected range\".\n        6. Include a title, summary, and accessible aria-label.\n        7. CHARTS: For pie/donut charts, avoid SVG arcs. Use CSS conic-gradient instead.\n        8. CRITICAL: Use ONLY design tokens for all CSS values. Use var(--color-surface) for backgrounds, var(--color-text-primary) for text, var(--color-primary) and var(--color-secondary) for chart colors, var(--radius-md) for border-radius, var(--space-4) for padding. NEVER use hardcoded colors or pixel values.\n\nNo explanations. No plain text.",
         "operationId": "AnalyticsController_query",
         "parameters": [],
         "requestBody": {
@@ -1333,7 +1318,6 @@
     "/currency/current": {
       "get": {
         "description": "Retrieves current exchange rates from the external exchange-rate provider.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a currency exchange component from the tool response.\n        Rules:\n        1. Use only values returned by the tool. Never invent rates, timestamps, currencies, or converted amounts.\n        2. Flag safety is strict: never draw country flags with custom SVG paths, polygons, circles, coordinates, or hand-built geometry.\n        3. Preferred flag rendering: use native Unicode flag emojis or FlagCDN image tags.\n        4. If using FlagCDN, map common currencies to these two-letter codes: USD->us, ILS->il, EUR->eu, GBP->gb, JPY->jp, CAD->ca, AUD->au, CHF->ch. URL: https://flagcdn.com/w40/{countryCode}.png\n        5. For conversion results: header with source and target currency codes, main converted result in large bold text, original amount/exchange rate/last updated in muted footer. Staggered scale/fade-in animation. Use &rarr; or → for arrows.\n        6. For rate results: render a compact rates table or grid using only the returned rates map.\n        7. If result is null or success is false, render a stable error/empty state using the response message.\n        8. CRITICAL: Use ONLY design tokens for all CSS values. Use var(--color-surface) for backgrounds, var(--color-text-primary) for text, var(--color-primary) for accent colors, var(--radius-lg) for border-radius, var(--space-4) for padding. NEVER use hardcoded colors or pixel values.\n\nNo explanations. No plain text.",
         "operationId": "CurrencyController_getRates",
         "parameters": [
           {
@@ -1385,7 +1369,6 @@
     "/currency/convert": {
       "get": {
         "description": "Converts a positive amount between two supported currencies using current exchange rates.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a currency exchange component from the tool response.\n        Rules:\n        1. Use only values returned by the tool. Never invent rates, timestamps, currencies, or converted amounts.\n        2. Flag safety is strict: never draw country flags with custom SVG paths, polygons, circles, coordinates, or hand-built geometry.\n        3. Preferred flag rendering: use native Unicode flag emojis or FlagCDN image tags.\n        4. If using FlagCDN, map common currencies to these two-letter codes: USD->us, ILS->il, EUR->eu, GBP->gb, JPY->jp, CAD->ca, AUD->au, CHF->ch. URL: https://flagcdn.com/w40/{countryCode}.png\n        5. For conversion results: header with source and target currency codes, main converted result in large bold text, original amount/exchange rate/last updated in muted footer. Staggered scale/fade-in animation. Use &rarr; or → for arrows.\n        6. For rate results: render a compact rates table or grid using only the returned rates map.\n        7. If result is null or success is false, render a stable error/empty state using the response message.\n        8. CRITICAL: Use ONLY design tokens for all CSS values. Use var(--color-surface) for backgrounds, var(--color-text-primary) for text, var(--color-primary) for accent colors, var(--radius-lg) for border-radius, var(--space-4) for padding. NEVER use hardcoded colors or pixel values.\n\nNo explanations. No plain text.",
         "operationId": "CurrencyController_convert",
         "parameters": [
           {
@@ -1456,7 +1439,6 @@
     "/system/status": {
       "get": {
         "description": "Returns activity metrics and current runtime status parameters.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a system status dashboard with:\n        1. Metric cards row: total users, active sessions, Swagger status (success=green, warning=orange).\n        2. Below the cards, render an SVG bar chart (width:100%, height:120px) showing sessions vs users as colored bars.\n        Use only inline SVG - no external libraries. Keep bars proportional to the values.\n        3. CRITICAL: Use ONLY design tokens for all CSS values. Use var(--color-surface) for card backgrounds, var(--color-text-primary) for text, var(--color-success) and var(--color-warning) for status indicators, var(--radius-lg) for card border-radius, var(--space-4) for padding, var(--shadow-soft) for card shadows. NEVER use hardcoded colors or pixel values.\n\nNo explanations. No plain text.",
         "operationId": "SystemController_getStatus",
         "parameters": [],
         "responses": {
@@ -1486,7 +1468,6 @@
     "/weather/current": {
       "get": {
         "description": "Queries an external weather service to retrieve dynamic real-time conditions.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a premium animated current-weather card from the tool response.\n        Weather emojis ARE ALLOWED here (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️).\n        Rules:\n        1. Use only values returned in result. Never invent weather values, location, timestamps, icons, or measurements.\n        2. Build a single polished weather card with an animated hero area, not a table.\n        3. Header: show the weather description and result.requestLocalTime as the current local Israel time. Do not use observationTime as the main current time.\n        4. Main metric: show tempC as the dominant animated number, with feelsLikeC and optional tempF/feelsLikeF as secondary text.\n        5. Detail grid: show humidity, windSpeedKmph + windDirection, uvIndex, cloudCover, precipitationMm, pressure, visibility, and observationTime only as \"provider observation time\" when available. Hide any row whose value is missing or empty.\n        6. ANIMATIONS (make them rich and visible):\n           - Root card: fade-in + lift (translateY(-20px) to 0) over 500ms ease-out.\n           - Weather emoji: large (48-64px), float animation (translateY oscillation 3-5s infinite ease-in-out), glow effect.\n           - Temperature number: scale from 0 to 1 over 600ms with bounce easing.\n           - Detail chips: stagger in from bottom with 80ms delay between each (opacity 0→1 + translateY).\n           - Background scene: animated sun rays rotating slowly (20s), rain drops falling (linear infinite), clouds drifting (horizontal float 8-15s), or snow particles falling.\n           - Severity pulsing: uvIndex>=6 pulse the UV chip red, precipitation>0 animate rain icon, wind>30 animate wind icon.\n        7. Keep animations smooth: use transform and opacity only, no layout thrashing.\n\nNo explanations. No plain text.",
         "operationId": "WeatherController_getWeather",
         "parameters": [
           {
@@ -1527,7 +1508,6 @@
     "/weather/forecast": {
       "get": {
         "description": "Retrieves a five-day forecast metrics grid for a specific city.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a gorgeous 5-day forecast container.\n        Weather emojis ARE ALLOWED here (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️).\n        - Header with city name + <span class=\"ph ph-calendar\"></span> icon\n        - 5 cards horizontally (flexbox), each with: day name, weather emoji, max/min temp, humidity\n        - ANIMATIONS:\n          * Container: fade-in on load 400ms\n          * Cards: stagger entrance from right (translateX(30px)→0) with 100ms delay between each\n          * Weather emoji: gentle float animation (2-4s infinite)\n          * On hover: card lifts (translateY(-4px)), border glows, emoji scales up 1.1x\n          * Temperature: number scales in on card entrance\n        - CRITICAL: Use ONLY design tokens for CSS values. NEVER use hardcoded colors or pixel values.\n\nNo explanations. No plain text.",
         "operationId": "WeatherController_getForecast",
         "parameters": [
           {
@@ -1562,7 +1542,7 @@
         "tags": [
           "weather"
         ],
-        "toolIcon": "ph-calendar-days"
+        "toolIcon": "ph-calendar"
       }
     },
     "/strain-hunter/fetch": {
@@ -2374,7 +2354,6 @@
     "/database-monitor/storage": {
       "get": {
         "description": "Returns row counts and storage sizes for all tables in the database.",
-        "genUiSpec": "After getting data, return ONLY a raw HTML block in this exact format:\n```component\n<style>...</style>\n<div style=\"...\">...</div>\n```\nFONT-SIZE RULE: Every text element (table, th, td, button, span, div, p) MUST use font-size: var(--font-size-xs). NEVER use font-size-md, font-size-lg, or font-size-xl.\nICONS: Use <span class=\"ph ph-{icon-name}\"></span> for all icons. NEVER use emojis (👁 🗑 ⭐), Unicode symbols (★ ●), or ASCII art — EXCEPT weather emojis (☀️ 🌧️ ⛅ 🌩️ ❄️ 🌬️ 🌫️ 🌙 🌪️ 🌦️) which are allowed in weather components only.\nRender a database storage maintenance dashboard from the tool response.\n        Rules:\n        1. Use only values returned by the tool. Never invent table sizes, row counts, or growth rates.\n        2. Header section: show result.databaseName, result.tableCount, result.totalRows, and result.totalSizeFormatted as summary metrics.\n        3. Render a donut/pie chart using CSS conic-gradient showing percentOfDatabase for the top 6 tables by totalSizeBytes descending.\n        4. Sort tables by totalSizeBytes descending. Show all tables in card list below the chart.\n        5. Each table card must show: tableName, rowCount, dataSizeFormatted, indexSizeFormatted, totalSizeFormatted, percentOfDatabase with a small bar.\n        6. If result.tables is empty, render a stable empty state that says \"No tables found in the database.\"\n        7. Use an operational maintenance tone, not a sales dashboard tone.\n        8. CRITICAL: Use ONLY design tokens for all CSS values. Use var(--color-surface) for card backgrounds, var(--color-text-primary) for text, var(--color-text-secondary) for muted text, var(--color-border) for borders, var(--color-primary) and var(--color-secondary) for chart segment colors, var(--radius-lg) for card border-radius, var(--space-4) for padding, var(--shadow-soft) for card shadows. NEVER use hardcoded colors or pixel values.\n\nNo explanations. No plain text.",
         "operationId": "DatabaseMonitorController_getStorage",
         "parameters": [],
         "responses": {
