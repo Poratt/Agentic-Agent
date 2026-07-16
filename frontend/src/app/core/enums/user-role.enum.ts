@@ -13,7 +13,9 @@ export const UserRoleOptions: EnumData[] = [
     description: 'Administrator with full system access and management permissions',
     icon: 'ph ph-shield ph-fill ',
     tooltip: 'Full access administrator',
-    color: '#835588'
+    color: '#A5B4FC',
+    colorDark: '#A5B4FC',
+    colorLight: '#4338CA'
   },
   {
     enumValue: UserRole.User,
@@ -22,7 +24,9 @@ export const UserRoleOptions: EnumData[] = [
     description: 'Regular user with standard access to the system',
     icon: 'ph ph-user',
     tooltip: 'Standard user account',
-    color: '#931188'
+    color: '#F0ABFC',
+    colorDark: '#F0ABFC',
+    colorLight: '#86198F'
   },
 ];
 

@@ -8,6 +8,7 @@ import { UserRole } from '../../core/enums/user-role.enum';
 import { PageStates } from '../../core/enums/page-states.enum';
 import { getUserRoleData } from '../../core/enums/user-role.enum';
 import { BadgeColor } from '../../core/directives/badge-color.directive';
+import { TooltipDirective } from '../../core/directives/tooltip.directive';
 import { User } from '../../core/models/user.interface';
 
 type UserColumn = {
@@ -23,7 +24,7 @@ type UserTableRow = User & {
 @Component({
     selector: 'app-users-management',
     standalone: true,
-    imports: [CommonModule, InputTextModule, TableModule, BadgeColor],
+    imports: [CommonModule, InputTextModule, TableModule, BadgeColor, TooltipDirective],
     changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './users-management.html',
 })

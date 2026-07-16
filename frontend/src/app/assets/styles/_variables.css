@@ -113,7 +113,7 @@
 
   /* Chart / donut colors */
   --color-table-1: #22D3EE;
-  --color-table-2: #A78BFA;
+  --color-table-2: #D946EF;
   --color-table-3: #10B981;
   --color-table-4: #FBBF24;
   --color-table-5: #F87171;
@@ -153,18 +153,18 @@
   --primary-400: #67E8F9;
   --primary-600: #0891B2;
 
-  /* Secondary */
-  --color-secondary: #A78BFA;
-  --color-secondary-glow: rgba(167, 139, 250, 0.18);
-  --color-secondary-border: rgba(167, 139, 250, 0.32);
-  --secondary-30: rgba(167, 139, 250, 0.12);
-  --secondary-300: rgba(167, 139, 250, 0.35);
-  --secondary-400: #A78BFA;
-  --secondary-600: #7C3AED;
+  /* Secondary — fuchsia-400, replaces AI-purple (#A78BFA) */
+  --color-secondary: #E879F9;
+  --color-secondary-glow: rgba(232, 121, 249, 0.18);
+  --color-secondary-border: rgba(232, 121, 249, 0.32);
+  --secondary-30: rgba(232, 121, 249, 0.12);
+  --secondary-300: rgba(232, 121, 249, 0.35);
+  --secondary-400: #E879F9;
+  --secondary-600: #C026D3;
 
   /* Glow accents */
   --color-primary-glow-bg: rgba(34, 211, 238, 0.10);
-  --color-secondary-glow-bg: rgba(167, 139, 250, 0.10);
+  --color-secondary-glow-bg: rgba(232, 121, 249, 0.10);
 
   /* Button contrast */
   --color-primary-btn-bg: var(--color-primary);
@@ -199,7 +199,7 @@
   /* Base */
   --color-bg: #F0F4F8;
   --color-bg-gradient: radial-gradient(ellipse 70% 50% at 15% 10%, rgba(2, 132, 199, 0.06) 0%, #F0F4F8 55%),
-    radial-gradient(ellipse 50% 40% at 85% 80%, rgba(109, 40, 217, 0.05) 0%, transparent 60%);
+    radial-gradient(ellipse 50% 40% at 85% 80%, rgba(162, 28, 175, 0.05) 0%, transparent 60%);
 
   /* Surfaces */
   --color-surface: #FFFFFF;
@@ -224,19 +224,19 @@
   --primary-400: #0EA5E9;
   --primary-600: #0369A1;
 
-  /* Secondary */
-  --color-secondary: #6D28D9;
-  --color-secondary-glow: rgba(109, 40, 217, 0.12);
-  --color-secondary-border: rgba(109, 40, 217, 0.28);
-  --secondary-30: rgba(109, 40, 217, 0.04);
-  --secondary-300: rgba(109, 40, 217, 0.30);
-  --secondary-400: #7C3AED;
-  --secondary-600: #431890;
+  /* Secondary — fuchsia-700, replaces AI-purple (#6D28D9) */
+  --color-secondary: #A21CAF;
+  --color-secondary-glow: rgba(162, 28, 175, 0.12);
+  --color-secondary-border: rgba(162, 28, 175, 0.28);
+  --secondary-30: rgba(162, 28, 175, 0.04);
+  --secondary-300: rgba(162, 28, 175, 0.30);
+  --secondary-400: #C026D3;
+  --secondary-600: #86198F;
 
 
   /* Glow accents */
   --color-primary-glow-bg: rgba(2, 132, 199, 0.06);
-  --color-secondary-glow-bg: rgba(109, 40, 217, 0.05);
+  --color-secondary-glow-bg: rgba(162, 28, 175, 0.05);
 
   /* Button contrast */
   --color-primary-btn-bg: var(--primary-600);

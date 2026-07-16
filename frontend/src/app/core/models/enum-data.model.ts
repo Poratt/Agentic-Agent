@@ -13,4 +13,6 @@ export type EnumData = {
   className?: string;
   severity?: Severity;
   color?: string;
+  colorDark?: string;
+  colorLight?: string;
 }

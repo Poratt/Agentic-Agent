@@ -176,7 +176,7 @@
 			.user-avatar {
 				width: var(--space-20);
 				height: var(--space-20);
-				background: var(--color-primary);
+				background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
 				color: var(--color-white);
 				border-radius: 50%;
 				display: flex;

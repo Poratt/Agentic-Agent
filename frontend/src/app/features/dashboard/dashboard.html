@@ -41,7 +41,7 @@
                     <div class="metric-details">
                         <span class="detail-item">{{ authStore.user()?.email }}</span>
                         @if (authStore.user()?.role) {
-                            <span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)?.color">
+                            <span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)">
                                 <span class="ph sm" [ngClass]="getUserRoleData(authStore.user()!.role)?.icon"></span>
                                 {{ getUserRoleData(authStore.user()!.role)?.heLabel }}
                             </span>
