@@ -209,12 +209,7 @@
     color: inherit;
     cursor: pointer;
     font: inherit;
-    transition: var(--transition-colors), box-shadow var(--transition-fast);
-
-    &:hover {
-      background: var(--primary-30);
-      color: var(--color-primary);
-    }
+    transition: var(--transition-fast);
   }
 
   /* Pin the "last updated" cell width so the pill doesn't shift between
@@ -319,15 +314,23 @@
 
   .terpene-node,
   .filter-node {
-    &.liked {
-      background: var(--secondary-30);
-      color: var(--color-secondary);
-    }
 
     &:hover {
       background: var(--primary-30);
       color: var(--color-primary);
     }
+
+    &.liked {
+      background: var(--secondary-30);
+      color: var(--color-secondary);
+
+      &:hover {
+        background: var(--color-secondary-glow);
+        color: var(--secondary-400);
+      }
+
+    }
+
   }
 
 

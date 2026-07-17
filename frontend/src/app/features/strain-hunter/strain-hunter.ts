@@ -447,6 +447,10 @@ export class StrainHunter implements OnInit {
         }
     }
 
+    resetPriceRange() {
+        this.priceRange.set([this.priceBounds()[0], this.priceBounds()[1]]);
+    }
+
     private priceRangeHydrated = false;
 
     private hydrateFilters(): void {

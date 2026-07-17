@@ -31,6 +31,18 @@
 
             <div class="header-actions">
                 <div class="action-row">
+                    @if (activeFilters().length > 0 || isPriceFilterActive()) {
+                        <button
+                            class="transparent-btn icon-only"
+                            type="button"
+                            (click)="clearAllFilters()"
+                            appTooltip
+                            text="נקה מסננים"
+                            aria-label="נקה מסננים"
+                        >
+                            <span class="ph ph-funnel-x"></span>
+                        </button>
+                    }
                     <button
                         class="primary-btn icon-only"
                         type="button"
@@ -46,6 +58,7 @@
                             <span class="icon-badge">{{ activeFilters().length + (isPriceFilterActive() ? 1 : 0) }}</span>
                         }
                     </button>
+
                     <div class="form-field-has-icon sm">
                         <span class="field-icon ph ph-magnifying-glass"></span>
                         <input
@@ -109,31 +122,36 @@
 
         <div class="collapsible-row" [class.is-open]="filtersExpanded()">
             <div class="collapsible-inner">
-                @if (priceBounds()[1] > 0) {
-                    <div class="filter-range">
-                        <div class="filter-range-header">
-                            <span class="ph ph-currency-circle-dollar"></span>
-                            <span class="filter-range-label">טווח מחירים</span>
-                            <span class="filter-range-value" dir="ltr"> ₪{{ priceRange()[0] }} — ₪{{ priceRange()[1] }} </span>
-                        </div>
-                        <div class="filter-range-slider">
-                            <p-slider
-                                [range]="true"
-                                [min]="priceBounds()[0]"
-                                [max]="priceBounds()[1]"
-                                [(ngModel)]="priceRange"
-                                (onChange)="onPriceRangeChange($event)"
-                            />
-                        </div>
-                    </div>
-                }
                 <div class="filter-bar" role="status" aria-live="polite">
-                    <!-- <span class="filter-bar-label">
-                        <span class="ph ph-funnel" aria-hidden="true"></span>
-                        <span>מסננים פעילים</span>
-                        <span class="filter-bar-count">{{ activeFilters().length + (isPriceFilterActive() ? 1 : 0) }}</span>
-                    </span> -->
                     <div class="filter-bar-list">
+                        @if (priceBounds()[1] > 0) {
+                            <div class="filter-range">
+                                <span class="chip">
+                                    <span class="filter-name">טווח מחירים</span>
+                                    <span class="chip-text" dir="ltr"> ₪{{ priceRange()[0] }} — ₪{{ priceRange()[1] }} </span>
+
+                                    <div class="filter-range-slider">
+                                        <p-slider
+                                            [range]="true"
+                                            [min]="priceBounds()[0]"
+                                            [max]="priceBounds()[1]"
+                                            [(ngModel)]="priceRange"
+                                            (onChange)="onPriceRangeChange($event)"
+                                        />
+                                    </div>
+                                    <button
+                                        class="chip-remove-btn xs"
+                                        type="button"
+                                        appTooltip
+                                        text="אפס מסנן"
+                                        [attr.aria-label]="'אפס מסנן'"
+                                        (click)="resetPriceRange()"
+                                    >
+                                        <span class="ph ph-x" aria-hidden="true"></span>
+                                    </button>
+                                </span>
+                            </div>
+                        }
                         @for (f of activeFilters(); track f.key; let i = $index) {
                             <span
                                 class="chip"
@@ -151,10 +169,6 @@
                             </span>
                         }
                     </div>
-                    <button class="clear-all-btn" type="button" (click)="clearAllFilters()">
-                        <span class="ph ph-trash" aria-hidden="true"></span>
-                        <span>ניקוי הכל</span>
-                    </button>
                 </div>
             </div>
         </div>
