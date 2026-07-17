@@ -564,7 +564,7 @@ export class StrainHunter implements OnInit {
     growTypeIconClass(value: unknown): string {
         const growType = this.formatValue(value).toLowerCase();
         if (growType.includes('אינדור')) {
-            return 'ph-storefront';
+            return 'ph-house';
         }
         if (growType.includes('חממה')) {
             return 'ph-sun';
