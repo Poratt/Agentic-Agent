@@ -44,6 +44,17 @@ const MAX_SCROLL_ATTEMPTS = 18;
 const PRODUCT_ROW_SELECTOR =
     'table[role="table"] tbody[role="rowgroup"] > tr[role="row"], table[role="table"] tbody tr';
 
+const favoritePharm = [
+    {
+        name: 'תלתן',
+        query: 'tiltan',
+    },
+    {
+        name: 'סופר-פארם אוסישקין',
+        query: 'sup-osishkin'
+    }
+]
+
 const SOURCE_URL_1 =
     'https://jane.co.il/store/' +
     'tiltan/' +

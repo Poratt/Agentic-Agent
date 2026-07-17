@@ -204,8 +204,8 @@
   .filter-node {
     padding: 1px var(--space-4);
     background: transparent;
-    border: thin solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border: none;
+    border-radius: var(--radius-xs);
     color: inherit;
     cursor: pointer;
     font: inherit;
@@ -213,7 +213,6 @@
 
     &:hover {
       background: var(--primary-30);
-      border-color: var(--color-primary);
       color: var(--color-primary);
     }
   }
@@ -327,7 +326,6 @@
 
     &:hover {
       background: var(--primary-30);
-      border-color: var(--color-primary);
       color: var(--color-primary);
     }
   }

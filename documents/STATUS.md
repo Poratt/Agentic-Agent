@@ -78,6 +78,7 @@ New planning documents should go under `documents/features/todo/` unless they ar
 
 ## Recent Status
 
+- Planned: `documents/todo/dynamic-pharm-scraping-plan.md` — minimal: loop over the existing `favoritePharm` array in the backend service, build per-pharm Jane URLs dynamically, cross-pharm merge by normalized `enName` into a `prices: Record<pharmQuery, ...>` shape, and render one price column per entry in `strain-hunter.html`. Adds a single `pharmQuery: string` column to `Strain` (no FK, no entity, no CRUD, no settings tab, no sticky columns).
 - Completed: `documents/done/llm-model-test-results-retention-plan.md`.
   - Added `deleteOldTestResults(retentionDays = 30)` to `LlmProviderService` — uses TypeORM `LessThan` on `createdAt` to delete old rows, returns affected count.
   - Added `cleanupOldLlmModelTestResults()` cron to `LlmTasksService` with `@Cron('0 0 2 * * 0')` (Sunday 02:00 server time), injecting `LlmProviderService`. Logs start, cutoff, and deleted row count. Errors are isolated to the cleanup job.

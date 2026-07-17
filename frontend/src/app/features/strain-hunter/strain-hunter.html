@@ -135,16 +135,17 @@
                     </span> -->
                     <div class="filter-bar-list">
                         @for (f of activeFilters(); track f.key; let i = $index) {
-                            <span class="chip" [style.--chip-i]="i" (click)="removeFilter(f.key)">
+                            <span
+                                class="chip"
+                                [style.--chip-i]="i"
+                                (click)="removeFilter(f.key)"
+                                appTooltip
+                                text="הסר מסנן"
+                                [attr.aria-label]="'הסר מסנן ' + f.name + ': ' + f.label"
+                            >
                                 <span class="filter-name">{{ f.name }}</span>
                                 <span class="chip-text">{{ f.label }}</span>
-                                <button
-                                    class="chip-remove-btn"
-                                    type="button"
-                                    appTooltip
-                                    text="הסר מסנן"
-                                    [attr.aria-label]="'הסר מסנן ' + f.name + ': ' + f.label"
-                                >
+                                <button class="chip-remove-btn xs" type="button">
                                     <span class="ph ph-x" aria-hidden="true"></span>
                                 </button>
                             </span>
