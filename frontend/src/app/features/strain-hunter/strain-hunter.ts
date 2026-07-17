@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { SortEvent } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
@@ -61,6 +61,14 @@ type StrainHunterFilter = {
     label: string;
     value: string;
     name: string;
+};
+
+const FILTER_STORAGE_KEY = 'strain-hunter-filters:v1';
+
+type PersistedFilterState = {
+    activeFilters: StrainHunterFilter[];
+    priceRange: [number, number];
+    activeSortField: string | null;
 };
 
 const FILTER_FIELD_NAMES: Record<string, string> = {
@@ -204,6 +212,24 @@ export class StrainHunter implements OnInit {
     activeFilters = signal<StrainHunterFilter[]>([]);
     activeSortField = signal<string | null>(null);
 
+    constructor() {
+        this.hydrateFilters();
+
+        effect(() => {
+            const snapshot: PersistedFilterState = {
+                activeFilters: this.activeFilters(),
+                priceRange: this.priceRange(),
+                activeSortField: this.activeSortField(),
+            };
+
+            try {
+                localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(snapshot));
+            } catch {
+                // Storage unavailable
+            }
+        });
+    }
+
     items = computed<StrainRow[]>(() => {
         const raw = this.rawItems();
         const filters = this.activeFilters();
@@ -309,7 +335,16 @@ export class StrainHunter implements OnInit {
                     }
                     const bounds: [number, number] = min === Infinity ? [0, 0] : [Math.floor(min), Math.ceil(max)];
                     this.priceBounds.set(bounds);
-                    this.priceRange.set([bounds[0], bounds[1]]);
+
+                    if (!this.priceRangeHydrated) {
+                        this.priceRange.set([bounds[0], bounds[1]]);
+                    } else {
+                        const [rMin, rMax] = this.priceRange();
+                        this.priceRange.set([
+                            Math.max(bounds[0], rMin),
+                            Math.min(bounds[1], rMax),
+                        ]);
+                    }
 
                     this.loading.set(false);
                     this.refreshing.set(false);
@@ -401,8 +436,41 @@ export class StrainHunter implements OnInit {
     clearAllFilters() {
         this.activeFilters.set([]);
         this.priceRange.set([this.priceBounds()[0], this.priceBounds()[1]]);
+        this.activeSortField.set(null);
         this.filtersExpanded.set(false);
         this.clearTooltip();
+
+        try {
+            localStorage.removeItem(FILTER_STORAGE_KEY);
+        } catch {
+            // Storage unavailable
+        }
+    }
+
+    private priceRangeHydrated = false;
+
+    private hydrateFilters(): void {
+        try {
+            const raw = localStorage.getItem(FILTER_STORAGE_KEY);
+            if (!raw) return;
+
+            const parsed = JSON.parse(raw) as Partial<PersistedFilterState>;
+
+            if (Array.isArray(parsed.activeFilters)) {
+                this.activeFilters.set(parsed.activeFilters);
+            }
+
+            if (Array.isArray(parsed.priceRange) && parsed.priceRange.length === 2) {
+                this.priceRange.set(parsed.priceRange);
+                this.priceRangeHydrated = true;
+            }
+
+            if (parsed.activeSortField !== undefined) {
+                this.activeSortField.set(parsed.activeSortField);
+            }
+        } catch {
+            // Storage unavailable
+        }
     }
 
     private clearTooltip() {
