@@ -114,9 +114,7 @@
                         <div class="filter-range-header">
                             <span class="ph ph-currency-circle-dollar"></span>
                             <span class="filter-range-label">טווח מחירים</span>
-                            <span class="filter-range-value" dir="ltr">
-                                ₪{{ priceRange()[0] }} — ₪{{ priceRange()[1] }}
-                            </span>
+                            <span class="filter-range-value" dir="ltr"> ₪{{ priceRange()[0] }} — ₪{{ priceRange()[1] }} </span>
                         </div>
                         <div class="filter-range-slider">
                             <p-slider
@@ -130,11 +128,11 @@
                     </div>
                 }
                 <div class="filter-bar" role="status" aria-live="polite">
-                    <span class="filter-bar-label">
+                    <!-- <span class="filter-bar-label">
                         <span class="ph ph-funnel" aria-hidden="true"></span>
                         <span>מסננים פעילים</span>
                         <span class="filter-bar-count">{{ activeFilters().length + (isPriceFilterActive() ? 1 : 0) }}</span>
-                    </span>
+                    </span> -->
                     <div class="filter-bar-list">
                         @for (f of activeFilters(); track f.key; let i = $index) {
                             <span class="chip" [style.--chip-i]="i" (click)="removeFilter(f.key)">
@@ -406,7 +404,7 @@
                                                         (mouseleave)="onTooltipLeave()"
                                                         (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.originStrain)"
                                                     >
-                                                         <span class="ph ph-dna"></span>
+                                                        <span class="ph ph-dna"></span>
                                                         {{ formatValue(item.originStrain) }}
                                                     </button>
                                                 }
@@ -419,8 +417,8 @@
                                                             (mouseleave)="onTooltipLeave()"
                                                             (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.parent1)"
                                                         >
-                                                             <span class="ph ph-dna"></span>
-                                                             {{ formatValue(item.parent1) }}
+                                                            <span class="ph ph-dna"></span>
+                                                            {{ formatValue(item.parent1) }}
                                                         </button>
                                                     }
                                                     <span></span>
@@ -432,15 +430,15 @@
                                                             (mouseleave)="onTooltipLeave()"
                                                             (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.parent2)"
                                                         >
-                                                             <span class="ph ph-dna"></span>
-                                                             {{ formatValue(item.parent2) }}
+                                                            <span class="ph ph-dna"></span>
+                                                            {{ formatValue(item.parent2) }}
                                                         </button>
                                                     }
                                                 </div>
                                             </div>
                                             @if (splitTerpenes(item.terpenes).length > 0) {
                                                 <div class="terpenes">
-                                                     <span class="ph ph-leaf"></span>
+                                                    <span class="ph ph-leaf"></span>
                                                     <div class="terpene-list stagger stagger-scale-up">
                                                         @for (terpene of splitTerpenes(item.terpenes); track terpene.label) {
                                                             <button
