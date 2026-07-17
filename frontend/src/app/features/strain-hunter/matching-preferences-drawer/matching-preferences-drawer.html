@@ -92,11 +92,15 @@
             <header class="group-header">
                 <div class="group-header-title">
                     <span class="ph group-header-icon ph-scales"></span>
-                    <h4>משקולות</h4>
+                    <h4>איזון</h4>
                 </div>
             </header>
 
-            <div class="crossfader" role="group" aria-label="איזון טרפנים מול גנטיקה">
+            <div
+                class="crossfader"
+                role="group"
+                aria-label="איזון טרפנים מול גנטיקה"
+            >
                 <div class="crossfader-end crossfader-end-terpene">
                     <span class="crossfader-end-value">{{ weights().terpene }}%</span>
                     <span class="crossfader-end-name">טרפנים</span>
@@ -109,6 +113,7 @@
                     max="100"
                     step="5"
                     [value]="crossfaderValue()"
+                    [style.accent-color]="thumbColor()"
                     (input)="onWeightChange('terpene', $event)"
                     aria-label="איזון בין טרפנים לגנטיקה"
                 />

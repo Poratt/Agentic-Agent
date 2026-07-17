@@ -78,6 +78,38 @@ export class MatchingPreferencesDrawer {
     readonly weights = this.engine.weights;
     readonly crossfaderValue = computed(() => 100 - this.weights().terpene);
 
+    /**
+     * Thumb color: fuchsia (terpene / left) → cyan (genetics / right).
+     *
+     * Pre-interpolated in sRGB rather than via `color-mix()` so the value
+     * reaches `::-webkit-slider-thumb` as a plain color — nested `var()` inside
+     * `color-mix()` does not reliably resolve through the UA shadow tree and
+     * left the thumb stuck on the fallback. Brand colors are read from the live
+     * computed style so theme switches still apply.
+     */
+    readonly thumbColor = computed(() => {
+        const t = this.crossfaderValue();
+        const root = getComputedStyle(document.documentElement);
+        const secondary = root.getPropertyValue('--color-secondary').trim();
+        const primary = root.getPropertyValue('--color-primary').trim();
+        return this.mixHex(secondary, primary, t / 100);
+    });
+
+    private mixHex(fromHex: string, toHex: string, t: number): string {
+        const [r1, g1, b1] = this.parseHex(fromHex);
+        const [r2, g2, b2] = this.parseHex(toHex);
+        return `rgb(${Math.round(r1 + (r2 - r1) * t)}, ${Math.round(g1 + (g2 - g1) * t)}, ${Math.round(b1 + (b2 - b1) * t)})`;
+    }
+
+    private parseHex(hex: string): [number, number, number] {
+        const h = hex.replace('#', '');
+        return [
+            parseInt(h.slice(0, 2), 16),
+            parseInt(h.slice(2, 4), 16),
+            parseInt(h.slice(4, 6), 16),
+        ];
+    }
+
     readonly PrefState = { Neutral: 'neutral', Like: 'like', Love: 'love', Avoid: 'avoid' } as const;
 
     constructor() {
@@ -93,7 +125,7 @@ export class MatchingPreferencesDrawer {
     }
 
     groupIcon(category: 'terpene' | 'genetics'): string {
-        return category === 'genetics' ? 'ph-tree-structure' : 'ph-leaf';
+        return category === 'genetics' ? 'ph-dna' : 'ph-leaf';
     }
 
     chipLabel(category: 'terpene' | 'genetics', name: string): string {

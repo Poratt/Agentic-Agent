@@ -406,7 +406,7 @@
                                                         (mouseleave)="onTooltipLeave()"
                                                         (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.originStrain)"
                                                     >
-                                                        <span class="ph ph-tree-evergreen"></span>
+                                                         <span class="ph ph-dna"></span>
                                                         {{ formatValue(item.originStrain) }}
                                                     </button>
                                                 }
@@ -419,8 +419,8 @@
                                                             (mouseleave)="onTooltipLeave()"
                                                             (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.parent1)"
                                                         >
-                                                            <span class="ph ph-tree"></span>
-                                                            {{ formatValue(item.parent1) }}
+                                                             <span class="ph ph-dna"></span>
+                                                             {{ formatValue(item.parent1) }}
                                                         </button>
                                                     }
                                                     <span></span>
@@ -432,15 +432,15 @@
                                                             (mouseleave)="onTooltipLeave()"
                                                             (click)="applyDataFilter(['originStrain', 'parent1', 'parent2'], item.parent2)"
                                                         >
-                                                            <span class="ph ph-tree"></span>
-                                                            {{ formatValue(item.parent2) }}
+                                                             <span class="ph ph-dna"></span>
+                                                             {{ formatValue(item.parent2) }}
                                                         </button>
                                                     }
                                                 </div>
                                             </div>
                                             @if (splitTerpenes(item.terpenes).length > 0) {
                                                 <div class="terpenes">
-                                                    <span class="ph ph-flower-lotus"></span>
+                                                     <span class="ph ph-leaf"></span>
                                                     <div class="terpene-list stagger stagger-scale-up">
                                                         @for (terpene of splitTerpenes(item.terpenes); track terpene.label) {
                                                             <button
