@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { LlmProvider, LlmProviderConfig, LlmRuntimeSelection } from '../types/llm.types';
 
-const LLM_PROVIDERS: LlmProvider[] = ['openrouter', 'nvidia', 'ollama'];
+const LLM_PROVIDERS: LlmProvider[] = ['openrouter', 'nvidia', 'ollama', 'ollama-cloud', 'agnes-ai'];
 
 /**
  * Centralizes LLM provider environment configuration and runtime model selection.
@@ -76,6 +76,24 @@ export class LlmProviderConfigService {
         apiKey: this.configService.get<string>('NVIDIA_API_KEY') ?? '',
         baseUrl: this.configService.get<string>('NVIDIA_BASE_URL') ?? '',
         model: this.configService.get<string>('NVIDIA_MODEL') ?? '',
+      };
+    }
+
+    if (provider === 'agnes-ai') {
+      return {
+        id: provider,
+        apiKey: this.configService.get<string>('AGNES_API_KEY') ?? '',
+        baseUrl: this.configService.get<string>('AGNES_BASE_URL') ?? 'https://apihub.agnes-ai.com/v1',
+        model: this.configService.get<string>('AGNES_MODEL') ?? 'agnes-2.0-flash',
+      };
+    }
+
+    if (provider === 'ollama-cloud') {
+      return {
+        id: provider,
+        apiKey: this.configService.get<string>('OLLAMA_CLOUD_API_KEY') ?? '',
+        baseUrl: this.configService.get<string>('OLLAMA_CLOUD_BASE_URL') ?? '',
+        model: this.configService.get<string>('OLLAMA_CLOUD_MODEL') ?? '',
       };
     }
 

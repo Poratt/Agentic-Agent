@@ -1,6 +1,6 @@
 import type OpenAI from 'openai';
 
-export type LlmProvider = 'openrouter' | 'nvidia' | 'ollama' | 'ollama-cloud';
+export type LlmProvider = 'openrouter' | 'nvidia' | 'ollama' | 'ollama-cloud' | 'agnes-ai';
 
 export type LlmToolSchema = {
   type: 'function';
