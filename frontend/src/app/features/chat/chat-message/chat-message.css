@@ -158,6 +158,10 @@
 		}
 	}
 
+	app-render-host + .message-body {
+		margin-block-start: var(--space-4);
+	}
+
 	.message-body {
 		font-weight: 300;
 
