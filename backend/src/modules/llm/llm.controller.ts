@@ -1,6 +1,7 @@
-import { Controller, Post, Delete, Param, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Delete, Param, UseGuards, NotFoundException, Body, BadRequestException, UnauthorizedException, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
+import { RequestWithUser } from '../../core/interfaces/request-with-user.interface';
 import { LlmHealthService } from './services/llm-health.service';
 import { LlmProviderService } from '../llm-provider/llm-provider.service';
 
@@ -35,5 +36,19 @@ export class LlmController {
   @ApiOperation({ summary: 'Delete a test result' })
   async deleteTestResult(@Param('id') id: string) {
     return this.dbProviderService.deleteTestResult(+id);
+  }
+
+  @Post('set-default-model')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Set the authenticated user\'s default LLM model' })
+  async setDefaultModel(@Body('modelId') modelId: number, @Req() req: RequestWithUser) {
+    if (!req.user) {
+      throw new UnauthorizedException();
+    }
+    if (!modelId || typeof modelId !== 'number') {
+      throw new BadRequestException('modelId is required and must be a number');
+    }
+    await this.dbProviderService.setUserDefaultModel(req.user.sub, modelId);
+    return { success: true, message: 'Default model set' };
   }
 }

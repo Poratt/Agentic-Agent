@@ -37,6 +37,8 @@ export interface LlmRequest {
   messageHistory?: LlmMessage[];
   providerOverride?: LlmProvider;
   modelOverride?: string;
+  /** Optional userId to resolve user-level default model */
+  userId?: number;
   /** Optional Base64 data URL image attached to the user turn */
   image?: string;
   /** Override the default max_tokens limit (default: 1024) */

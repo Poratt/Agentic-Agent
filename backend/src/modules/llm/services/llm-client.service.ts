@@ -17,12 +17,18 @@ export class LlmClientService {
   ) { }
 
   async generateResponse(llmRequest: LlmRequest): Promise<LlmResponse> {
-    const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools, image, maxTokens } = llmRequest;
+    const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools, image, maxTokens, userId } = llmRequest;
 
-    // 🚀 הבאת הקליינט בצורה אסינכרונית מה-DB 🚀
-    const { client, dbProvider } = await this.getClient(providerOverride);
-    const activeProvider = providerOverride || this.providerConfig.getActiveProvider();
-    const activeModel = modelOverride || this.providerConfig.getActiveModel();
+    // Resolve effective provider/model: explicit override → user default → legacy env
+    const legacyProvider = this.providerConfig.getActiveProvider();
+    const legacyModel = this.providerConfig.getActiveModel();
+    const resolved = await this.dbProviderService.resolveEffectiveModel(
+      providerOverride, modelOverride, userId, legacyProvider, legacyModel,
+    );
+
+    const { client, dbProvider } = await this.getClient(resolved.provider);
+    const activeProvider = resolved.provider;
+    const activeModel = resolved.model;
 
     if (!activeModel) {
       throw new Error('Missing active model configuration');
@@ -64,12 +70,18 @@ export class LlmClientService {
   }
 
   async *generateStream(llmRequest: LlmRequest): AsyncIterable<string> {
-    const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools, image, maxTokens } = llmRequest;
+    const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools, image, maxTokens, userId } = llmRequest;
 
-    // 🚀 הבאת הקליינט בצורה אסינכרונית מה-DB 🚀
-    const { client, dbProvider } = await this.getClient(providerOverride);
-    const activeProvider = providerOverride || this.providerConfig.getActiveProvider();
-    const activeModel = modelOverride || this.providerConfig.getActiveModel();
+    // Resolve effective provider/model: explicit override → user default → legacy env
+    const legacyProvider = this.providerConfig.getActiveProvider();
+    const legacyModel = this.providerConfig.getActiveModel();
+    const resolved = await this.dbProviderService.resolveEffectiveModel(
+      providerOverride, modelOverride, userId, legacyProvider, legacyModel,
+    );
+
+    const { client, dbProvider } = await this.getClient(resolved.provider);
+    const activeProvider = resolved.provider;
+    const activeModel = resolved.model;
 
     if (!activeModel) {
       throw new Error('Missing active model configuration');

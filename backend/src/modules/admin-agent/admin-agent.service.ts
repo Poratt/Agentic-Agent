@@ -230,6 +230,7 @@ export class AdminAgentService implements OnModuleInit {
         tools,
         providerOverride: provider,
         modelOverride: model,
+        userId,
         image: iteration === 0 ? image : undefined,
         maxTokens: 4096,
       });
@@ -341,6 +342,7 @@ export class AdminAgentService implements OnModuleInit {
             tools,
             providerOverride: provider,
             modelOverride: model,
+            userId,
             image,
             maxTokens: 4096,
           });

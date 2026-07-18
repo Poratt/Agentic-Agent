@@ -22,6 +22,87 @@ export class LlmProviderService {
     private readonly testResultRepo: Repository<LlmModelTestResultEntity>,
   ) { }
 
+  /**
+   * Resolves the effective provider and model for a request, applying user-level defaults.
+   *
+   * Resolution order:
+   *   1. Explicit providerOverride + modelOverride from the request
+   *   2. User's persisted default model (if a userId is supplied)
+   *   3. Legacy environment-backed active provider / model
+   *
+   * @param providerOverride Optional per-request provider override.
+   * @param modelOverride Optional per-request model override.
+   * @param userId Optional user id to look up user-level defaults.
+   * @param legacyProvider Fallback provider from the AI_PROVIDER env var.
+   * @param legacyModel Fallback model from the AI_PROVIDER env var.
+   * @returns Resolved provider and model.
+   */
+  async resolveEffectiveModel(
+    providerOverride: string | undefined,
+    modelOverride: string | undefined,
+    userId: number | undefined,
+    legacyProvider: string,
+    legacyModel: string,
+  ): Promise<{ provider: string; model: string }> {
+    // 1. Explicit overrides win
+    if (providerOverride && modelOverride) {
+      return { provider: providerOverride, model: modelOverride };
+    }
+
+    // 2. User-level default model
+    if (userId) {
+      const userDefault = await this.getUserDefaultModel(userId);
+      if (userDefault) {
+        return {
+          provider: userDefault.provider.key,
+          model: userDefault.key,
+        };
+      }
+    }
+
+    // 3. Partial override (only provider or only model)
+    if (providerOverride) {
+      return { provider: providerOverride, model: legacyModel };
+    }
+    if (modelOverride) {
+      return { provider: legacyProvider, model: modelOverride };
+    }
+
+    // 4. Legacy fallback
+    return { provider: legacyProvider, model: legacyModel };
+  }
+
+  /**
+   * Sets the user's default model.
+   */
+  async setUserDefaultModel(userId: number, modelId: number): Promise<void> {
+    const model = await this.modelRepo.findOne({ where: { id: modelId }, relations: ['provider'] });
+    if (!model || !model.active) {
+      throw new NotFoundException('Model not found or inactive');
+    }
+
+    await this.modelRepo.query(
+      `INSERT INTO user_llm_defaults (user_id, model_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE model_id = VALUES(model_id)`,
+      [userId, modelId],
+    );
+  }
+
+  /**
+   * Gets the user's default model entity (with provider relation).
+   */
+  async getUserDefaultModel(userId: number): Promise<LlmModelEntity | null> {
+    const result: Array<{ model_id: number }> = await this.modelRepo.query(
+      `SELECT model_id FROM user_llm_defaults WHERE user_id = ? LIMIT 1`,
+      [userId],
+    );
+    if (!result || result.length === 0) return null;
+
+    return this.modelRepo.findOne({
+      where: { id: result[0].model_id },
+      relations: ['provider'],
+    });
+  }
+
   async createProvider(dto: CreateLlmProviderDto): Promise<ServiceResultContainer<LlmProviderEntity>> {
     const provider = this.providerRepo.create(dto);
     const saved = await this.providerRepo.save(provider);
