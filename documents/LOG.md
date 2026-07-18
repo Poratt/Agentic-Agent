@@ -1,5 +1,15 @@
 # Documentation Change Log
 
+## 2026-07-18 MCP Bridge Plan — Review and Rewrite
+
+- Moved `documents/todo/add-mcp-plan.md` to `documents/features/todo/add-mcp-plan.md` per the project rule that new feature plans should go under `documents/features/`.
+- Moved remaining 3 files from `documents/todo/` to `documents/features/todo/`, deleted the empty `documents/todo/` folder, and updated `HANDOFF.md` to reflect the new structure.
+- Architectural decision: the `LlmToolSchema` extension goes on the parser's local type in `swagger-tools.parser.ts:14`, not on `llm/types/llm.types.ts`. There are two types in the codebase; the parser's is what `SwaggerToolsParser.getTools()` actually returns and the agent consumes, while `llm.types.ts` is the LLM-facing wire type. Keeping `source` off the LLM-facing type also means it cannot accidentally leak into the LLM's view of the tool list.
+- Architectural decision: the render-spec adapter uses a per-mapping `unwrapResult: boolean` flag (default `true`, `false` for MCP). The alternative — wrapping MCP results in `ServiceResultContainer` — would force every future MCP server to match the backend's wrapper shape and defeat the "generic bridge" goal. The `unwrapResult` flag keeps each mapping explicit about its input contract.
+- Architectural decision: the MCP bridge module is a top-level NestJS module under `src/modules/mcp-bridge/`, not a sub-module of `admin-agent`. Reasoning: it owns its own lifecycle (spawn/close), has no internal coupling to admin-agent types, and should be reusable in other NestJS apps. The bridge is opt-in via `MCP_ENABLED=false` default so the system boots unchanged when the bridge is off.
+- Architectural decision: the bridge's `callTool` wraps thrown errors in a `{error:true, source:'mcp', toolName, message}` JSON envelope so render-spec's existing error short-circuit handles them cleanly. Without this, a transient MCP failure bubbles into `executeToolCallSafely`'s generic catch and produces a less informative error to the user.
+- No code was changed in this session. No architecture diagram update was needed because the plan is still pre-implementation.
+
 ## 2026-07-15 Remove LLM Prose Duplication of Card Data
 
 - Added a `VISUAL RESPONSE RULE` block to `SYSTEM_CONTEXT_BASE` in `backend/src/modules/admin-agent/constants/system-context.constant.ts` that tells the LLM structured tool results are auto-rendered as visual cards and that prose should not duplicate the same numbers/rows in markdown tables, bullet lists, or inline lists.

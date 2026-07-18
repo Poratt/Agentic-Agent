@@ -13,7 +13,6 @@ documents/
   features/
     todo/
     incomplete/
-  todo/
   incomplete/
 ```
 
@@ -60,7 +59,7 @@ documents/
 - Consider adding unit tests for store merge behavior if test coverage is needed.
 
 
-- `documents/todo/` and `documents/incomplete/` remain as compatibility folders, but new work should prefer `documents/features/`.
+- `documents/incomplete/` remains as a compatibility folder, but new work should prefer `documents/features/`.
 - Do not move `documents/done/` or `documents/audit/` unless explicitly asked.
 - For code architecture changes, update `documents/architecture-diagram.md` or explicitly state that no diagram update was needed.
 - The LLM service refactor is implemented at build level. Runtime checks that require a live server, JWT, and provider credentials should still be performed manually.
@@ -578,6 +577,24 @@ documents/
 - Files touched this session: every file under `backend/src/modules/genetics/` (new), `backend/src/app.module.ts`, `backend/src/main.ts`, `backend/swagger-spec.json` (regenerated), `frontend/src/app/core/models/genetics.interface.ts`, `frontend/src/app/core/services/genetics.service.ts`, `frontend/src/app/core/store/genetics.store.ts`, `frontend/src/app/components/shared/tooltip/{tooltip.ts,tooltip.html,tooltip.css}`, `frontend/src/app/features/strain-hunter/matching-preferences-drawer/{matching-preferences-drawer.ts,html,css}`, `frontend/src/app/features/strain-hunter/strain-hunter/{strain-hunter.ts,html,css}`, deletion of `frontend/src/app/features/strain-hunter/terpene-tooltip/{terpene-tooltip.ts,html,css}` + the parent folder, deletion of `scripts/verify-genetics-seed.js`, move of `documents/features/todo/genetic-details-plan.md` to `documents/done/genetic-details-plan.md`, and updates to `documents/STATUS.md` and `documents/HANDOFF.md`.
 - Decisions made: trust file-on-disk evidence over an agent's self-report when verifying wiring changes; `nest build` is not sufficient evidence that runtime seed calls are in place. Kept the plan's "fail loudly on duplicate" rule (no try/catch around `repo.save`) even though a permissive swallow would have been simpler, because silent corruption is much worse than a noisy crash during dev bootstrap.
 - Open questions for the user: confirm whether `documents/architecture-diagram.md` should be updated now or as part of the next plan; confirm whether to run the dev-server smoke test before picking the next plan.
+
+## 2026-07-18 Session (MCP Bridge Plan — Review and Rewrite)
+
+- Reviewed `documents/todo/add-mcp-plan.md` against the actual code and rewrote it as `documents/features/todo/add-mcp-plan.md`. Old `documents/todo/add-mcp-plan.md` was removed.
+- Fixed the wrong `LlmToolSchema` target: there are two types (`llm.types.ts` and the parser's local `swagger-tools.parser.ts:14`); the plan now extends the parser's local one because that is what `SwaggerToolsParser.getTools()` actually returns, and tags every emitted tool with `source: 'swagger'`.
+- Fixed the render-spec contract mismatch: the existing transforms unwrap `data.result` (ServiceResultContainer); MCP returns a bare object. The plan now adds an `unwrapResult: boolean` flag (default `true`, `false` for MCP mappings) instead of forcing MCP to wrap into ServiceResultContainer.
+- Made the executor dispatch ordering explicit: the MCP branch MUST run before `getEndpoint`, because the existing `executeToolCall` returns `Unknown tool call` for any name not in the parser. This was the most load-bearing change in the plan and was easy to miss in the original draft.
+- Promoted the render-spec adapter test from "pinned fixture" to "pinned fixture file committed to disk" under `__fixtures__/`, so future drift is diffed against a known good output instead of asserted against an inlined string.
+- Promoted the Phase 0 `listTools()` capture from a local script to a committed `__fixtures__/weather-mcp-tools.json`, so the parser is built against the same schema the bridge will use at runtime.
+- Added a `callTool` error envelope (`{error:true, source:'mcp', toolName, message}`) so transient MCP failures are surfaced through the existing render-spec error short-circuit instead of bubbling into the generic "Tool execution failed" path.
+- Promoted `@dangahagan/weather-mcp` and `@modelcontextprotocol/sdk` to **dependencies** (not devDependencies) — they ship in prod.
+- Added a process-hygiene check (manual `Ctrl-C` on `start:dev` must not orphan MCP children) and a kill-switch (`MCP_ENABLED=false` default) so the bridge is opt-in.
+- Confirmed via grep that `WeatherService` has no cross-module imports, so Phase 4 deletion is safe (controller is the only consumer).
+- Confirmed `admin-agent.service.spec.ts` `WeatherController_*` references are loop-breaker test data only; left intact, documented in the plan so reviewers don't flag them.
+- No architecture diagram update was needed for this session because the plan is still pre-implementation.
+- Files touched this session: `documents/features/todo/add-mcp-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/todo/add-mcp-plan.md` (deleted).
+- Decisions made: keep `WeatherModule` deletion gated behind Phase 4 manual verification; do not auto-disconnect and reconnect MCP servers on every call (out of scope for v1); use `ph-gear` step icon for all MCP tools in v1 and add per-tool icons in a follow-up if needed.
+- Open questions for the user: confirm the move to `documents/features/todo/` is acceptable (project rule says "new work should prefer `documents/features/`"), and confirm the `unwrapResult` per-mapping flag is preferred over the alternative of wrapping the MCP result in `ServiceResultContainer`.
 
 ---
 

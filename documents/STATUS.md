@@ -270,6 +270,22 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: LLM providers action buttons now use `icon-only transparent-btn` / `icon-only danger-btn`, the local `.icon-btn` CSS block was removed, and the unnecessary `add-model-btn` class was replaced with `transparent-btn sm`.
 - Verified: `npm.cmd run build` from `frontend` passes. `llm-providers-management.css` budget warning remains but is reduced to 4.36 kB over the 4 kB limit.
 
+## 2026-07-18 Session (MCP Bridge Plan — Review and Rewrite)
+
+- Reviewed `documents/todo/add-mcp-plan.md` against the actual code and rewrote it as `documents/features/todo/add-mcp-plan.md`. Old `documents/todo/add-mcp-plan.md` was removed (it was the untracked draft from the previous session).
+- Key corrections applied during the review:
+  - `LlmToolSchema` extension targets the **parser's local** type in `swagger-tools.parser.ts:14`, not `llm/types/llm.types.ts` — there are two distinct types in the codebase and the parser's is what `getTools()` actually returns.
+  - The MCP dispatch branch in `AgentToolExecutorService.executeToolCall` must run **before** the existing `getEndpoint` lookup, because the current code returns `Unknown tool call` for any name not in the parser.
+  - The render-spec adapter must read MCP output directly, not unwrap `data.result` (ServiceResultContainer). The plan adds a per-mapping `unwrapResult?: boolean` flag (default `true`, `false` for MCP).
+  - `@dangahagan/weather-mcp` and `@modelcontextprotocol/sdk` go in **dependencies** (not devDependencies) because they ship in prod.
+  - Phase 0 fixture capture is committed to disk under `__fixtures__/weather-mcp-{current,forecast}.json` and `__fixtures__/weather-mcp-tools.json`, so the adapter test is diffed against a known good output.
+  - `callTool` failures return a `{error:true, source:'mcp', toolName, message}` envelope so render-spec's existing error short-circuit handles them cleanly.
+- Confirmed `WeatherService` has no cross-module imports, so the Phase 4 deletion is safe. `admin-agent.service.spec.ts` `WeatherController_*` references are loop-breaker test data only and stay as-is.
+- No code changes this session — plan only. No architecture diagram update was needed (pre-implementation).
+- Files touched: `documents/features/todo/add-mcp-plan.md`, `documents/todo/add-mcp-plan.md` (deleted), `documents/HANDOFF.md`, `documents/STATUS.md`.
+- Decisions made: prefer the `unwrapResult` flag over wrapping MCP results in `ServiceResultContainer`; ship v1 with `ph-gear` step icon for all MCP tools; keep the bridge module top-level under `src/modules/mcp-bridge/`, not as a sub-module of `admin-agent`.
+- Next exact step: implement Phase 0 of `documents/features/todo/add-mcp-plan.md` by installing `@modelcontextprotocol/sdk` and `@dangahagan/weather-mcp` (both as `dependencies`), running a scratch script to capture `listTools()` and one `callTool` per tool, and committing those outputs to the `__fixtures__/` paths before starting Phase 1.
+
 
 ## 2026-06-27 Plan Audit
 
