@@ -936,6 +936,46 @@
         ]
       }
     },
+    "/llm/set-default-model": {
+      "post": {
+        "operationId": "LlmController_setDefaultModel",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the authenticated user's default LLM model",
+        "tags": [
+          "llm"
+        ]
+      }
+    },
+    "/llm/default-model": {
+      "get": {
+        "operationId": "LlmController_getDefaultModel",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the authenticated user's default LLM model",
+        "tags": [
+          "llm"
+        ]
+      }
+    },
     "/llm-provider": {
       "post": {
         "description": "Adds a new LLM provider to the system configuration.",
@@ -1227,39 +1267,6 @@
           }
         ],
         "summary": "Get test results",
-        "tags": [
-          "LLM Provider"
-        ]
-      }
-    },
-    "/llm-provider/models/{id}/default": {
-      "post": {
-        "description": "Sets a model as the default for its provider, unsetting any previous default.",
-        "operationId": "LlmProviderController_setDefaultModel",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Model set as default"
-          },
-          "401": {
-            "description": "JWT token missing or invalid"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Set model as default",
         "tags": [
           "LLM Provider"
         ]

@@ -131,7 +131,15 @@ export async function seedLlmProviders(dataSource: DataSource): Promise<void> {
 
             agnes = await providerRepo.save(agnes);
 
-            for (const modelData of AGNES_AI_MODELS) { }
+            for (const modelData of AGNES_AI_MODELS) {
+                const model = new LlmModelEntity();
+                model.key = modelData.value;
+                model.label = modelData.label;
+                model.active = true;
+                model.providerId = agnes.id;
+                await modelRepo.save(model);
+            }
+
             console.log('[Seed] Agnes AI provider and models created.');
         } else {
             console.log('[Seed] Agnes AI provider already exists.');

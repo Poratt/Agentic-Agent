@@ -252,7 +252,7 @@
         padding: var(--space-16) var(--space-8);
         text-align: center;
 
-        .ph {
+        > .ph {
             font-size: 2rem;
             color: var(--color-text-muted);
             opacity: 0.5;
