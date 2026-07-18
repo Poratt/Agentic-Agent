@@ -150,7 +150,7 @@
       line-height: 1.1;
 
       &.package-badge {
-        background: var(--primary-30);
+        background: var(--color-primary-glow-bg);
         color: var(--color-primary);
       }
 
@@ -316,7 +316,7 @@
   .filter-node {
 
     &:hover {
-      background: var(--primary-30);
+      background: var(--color-primary-glow-bg);
       color: var(--color-primary);
     }
 
@@ -361,7 +361,7 @@
     justify-content: center;
     min-width: var(--space-16);
     min-height: var(--space-16);
-    background: var(--primary-30);
+    background: var(--color-primary-glow-bg);
     border-radius: var(--radius-sm);
     color: var(--color-primary);
 

@@ -183,14 +183,14 @@
 
 		&:focus-within {
 			background: var(--color-input-bg);
-			border-color: var(--primary-300);
+			border-color: var(--color-primary-glow);
 			box-shadow: 0 0 0 2px var(--color-primary-glow);
 		}
 
 		&:hover:not(:focus-within),
 		&:hover:not(:disabled) {
 				background: var(--color-input-bg);
-				border-color: var(--primary-300);
+				border-color: var(--color-primary-glow);
 			}
 
 			textarea {

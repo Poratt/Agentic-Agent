@@ -24,12 +24,12 @@ select {
 
   &:focus {
     background: var(--color-input-bg);
-    border-color: var(--primary-300);
+    border-color: var(--color-primary-glow);
     box-shadow: 0 0 0 2px var(--color-primary-glow);
   }
 
   &:hover:not(:focus):not(:disabled) {
-    border-color: var(--primary-300);
+    border-color: var(--color-primary-glow);
   }
 
   &:disabled {
@@ -47,7 +47,7 @@ input[type='range'] {
 }
 
 .p-inputtext.p-variant-filled:enabled:focus {
-  border-color: var(--primary-300);
+  border-color: var(--color-primary-glow);
   box-shadow: 0 0 0 2px var(--color-primary-glow);
   background: var(--color-input-bg);
 

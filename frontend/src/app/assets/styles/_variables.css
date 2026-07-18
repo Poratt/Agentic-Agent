@@ -148,8 +148,8 @@
   /* Primary */
   --color-primary: #22D3EE;
   --color-primary-glow: rgba(34, 211, 238, 0.20);
-  --primary-30: rgba(34, 211, 238, 0.14);
-  --primary-300: rgba(34, 211, 238, 0.50);
+  --primary-30: var(--color-primary-glow-bg); /* deprecated alias — use --color-primary-glow-bg */
+  --primary-300: var(--color-primary-glow); /* deprecated alias — use --color-primary-glow */
   --primary-400: #67E8F9;
   --primary-600: #0891B2;
 
@@ -219,8 +219,8 @@
   /* Primary — deeper sky for contrast on white */
   --color-primary: #0369A1;
   --color-primary-glow: rgba(3, 105, 161, 0.14);
-  --primary-30: rgba(3, 105, 161, 0.08);
-  --primary-300: rgba(3, 105, 161, 0.35);
+  --primary-30: var(--color-primary-glow-bg); /* deprecated alias — use --color-primary-glow-bg */
+  --primary-300: var(--color-primary-glow); /* deprecated alias — use --color-primary-glow */
   --primary-400: #0EA5E9;
   --primary-600: #075985;
 

@@ -155,7 +155,7 @@ button {
   color: var(--color-primary-text);
 
   &:hover:not(:disabled) {
-    background-color: var(--primary-30);
+    background-color: var(--color-primary-glow-bg);
     border-color: transparent;
   }
 
@@ -165,7 +165,7 @@ button {
     border-color: var(--primary-400);
 
     &:hover:not(:disabled) {
-      background-color: var(--primary-30);
+      background-color: var(--color-primary-glow-bg);
       border-color: var(--color-primary);
     }
   }
@@ -287,7 +287,7 @@ button.bordered {
   &:hover:not(:disabled) {
     color: var(--color-primary);
     border-color: var(--color-primary);
-    background: var(--primary-30);
+    background: var(--color-primary-glow-bg);
   }
 
   &:focus-visible {
@@ -322,7 +322,7 @@ a,
 .primary-btn,
 .transparent-btn {
   &:focus-visible {
-    outline: 2px solid var(--primary-300);
+    outline: 2px solid var(--color-primary-glow);
     outline-offset: 2px;
   }
 }

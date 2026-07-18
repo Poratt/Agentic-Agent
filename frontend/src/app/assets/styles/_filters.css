@@ -9,6 +9,13 @@
      - Icon buttons with active state and count badges
    ============================================================ */
 
+/* --- Icon-only Button Active State --- */
+.icon-only.active {
+  background: var(--color-primary-glow-bg);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
 /* --- Icon Badge (count on icon-only buttons) --- */
 .icon-badge {
   position: absolute;
@@ -86,10 +93,44 @@
     font-weight: var(--font-weight-bold);
     font-variant-numeric: tabular-nums;
     color: var(--color-primary);
-    background: var(--primary-30);
+    background: var(--color-primary-glow-bg);
     border: none;
     border-radius: var(--radius-pill);
     line-height: 1;
+  }
+}
+
+/* --- Clear-all Button --- */
+.clear-all-btn {
+  margin-right: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  transition: var(--transition-colors);
+
+  .ph {
+    font-size: var(--font-size-sm);
+    line-height: 1;
+  }
+
+  &:hover {
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+    background: var(--color-danger-glow);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
   }
 }
 
@@ -111,7 +152,7 @@
   padding: var(--space-1) 2px var(--space-1) var(--space-6);
   border: none;
   border-radius: var(--radius-xs);
-  background: var(--primary-30);
+  background: var(--color-primary-glow-bg);
   color: var(--color-primary);
   font-size: var(--font-size-xs);
   line-height: 1.4;
@@ -204,7 +245,7 @@
       font-size: var(--font-size-xxs);
       font-weight: var(--font-weight-bold);
       color: var(--color-primary);
-      background: var(--primary-30);
+      background: var(--color-primary-glow-bg);
       padding: 2px var(--space-4);
       border-radius: var(--radius-pill);
       border: none;

@@ -40,7 +40,7 @@
         justify-content: flex-end;
 
         .message-bubble {
-            background: var(--primary-30);
+            background: var(--color-primary-glow-bg);
             border-color: var(--color-primary-glow);
             border-radius: var(--radius-lg) var(--radius-lg) var(--radius-xs) var(--radius-lg);
         }
