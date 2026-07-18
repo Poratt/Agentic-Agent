@@ -422,3 +422,22 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Finding 5 (hardcoded pixels): tokenized 40px in `.theme-toggle` and `.user-avatar` to `var(--space-10)`.
 - Added `--space-10: 40px` to `_variables.css`.
 - Verified: `npx ng build` from `frontend` passes.
+
+## 2026-07-18 Session (LLM Default Model Per-User Fix)
+
+- Completed: removed the legacy global-per-provider `isDefault` logic (backend `LlmProviderService.setDefaultModel` + `POST /llm-provider/models/:id/default` endpoint) so only `user_llm_defaults` (per-user, single model) is the default source.
+- Completed: added `GET /llm/default-model` to `LlmController` for reading the authenticated user's current default model.
+- Completed: frontend `LlmProviderService` now calls the user-level endpoints (`setUserDefaultModel`, `getUserDefaultModel`); `LlmProviderStore` holds `defaultModelId` and loads/sets it.
+- Completed: chat + providers-management star buttons and dropdown default now use the per-user default; old `m.isDefault` rendering removed.
+- Completed: created the missing `user_llm_defaults` table (root cause of `GET /llm/default-model` 500 — `synchronize:true` does not create raw-SQL-migrated tables) and cleared two stale `is_default=1` rows that caused dual stars.
+- Verified: `npx ng build` (frontend) passes with existing unrelated warnings; `npx nest build` (backend) passes; user confirmed live selecting a new default works with one star only.
+- Active todo: whether to add a repeatable migration runner or convert `user_llm_defaults` to a TypeORM entity, and whether to drop the dead `is_default` column.
+- No architecture diagram update was needed (module boundaries and default-resolution path unchanged; only the dead legacy flag path was removed).
+
+## 2026-07-18 Session (follow-up) — user_llm_defaults Entity + drop is_default
+
+- Completed: `user_llm_defaults` is now a real TypeORM entity `UserLlmDefaultEntity` (registered in `LlmProviderModule.forFeature`); `LlmProviderService` reads/writes it via the repository instead of raw SQL.
+- Completed: removed the dead `isDefault` field from `LlmModelEntity`; `synchronize: true` dropped the `is_default` column (verified `SHOW COLUMNS FROM llm_models`).
+- Completed: added `migrations/DropLlmModelIsDefault1752860000000.ts` (portability only; project uses `synchronize: true`).
+- Verified: `npm run build` (backend) passes; DB state confirmed (no `is_default`; `user_llm_defaults` matches entity); no `isDefault`/`is_default` references remain in code.
+- No architecture diagram update was needed (module boundaries and default-resolution path unchanged; only the storage representation changed).

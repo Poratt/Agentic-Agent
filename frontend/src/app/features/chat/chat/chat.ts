@@ -56,15 +56,18 @@ export class Chat implements OnInit, OnDestroy {
         effect(() => {
             const groups = this.models();
             const currentSelection = this.chatForm.get('model')?.value;
+            const userDefaultId = this.llmProviderStore.defaultModelId();
 
             if (groups.length > 0 && !currentSelection) {
                 let modelToSelect = null;
 
-                for (const group of groups) {
-                    const defaultModel = group.items?.find(m => m.isDefault);
-                    if (defaultModel) {
-                        modelToSelect = defaultModel;
-                        break;
+                if (userDefaultId != null) {
+                    for (const group of groups) {
+                        const match = group.items?.find(m => m.id === userDefaultId);
+                        if (match) {
+                            modelToSelect = match;
+                            break;
+                        }
                     }
                 }
 
@@ -118,6 +121,8 @@ export class Chat implements OnInit, OnDestroy {
     private pendingAssistantIndex: number | null = null;
 
     ngOnInit() {
+        this.llmProviderStore.loadUserDefaultModel();
+
         this.promptTextarea?.nativeElement.focus();
         (window as any).agentPrompt = (prompt: string) => {
             this.chatForm.patchValue({ prompt });
@@ -589,23 +594,16 @@ export class Chat implements OnInit, OnDestroy {
     }
 
     setDefaultModel(event: Event, model: any): void {
-        if (model.isDefault) return;
+        if (this.llmProviderStore.defaultModelId() === model.id) return;
 
-        this.llmProviderService.setDefaultModel(model.id).subscribe({
-            next: () => {
-                this.chatForm.patchValue({ model: model.id });
-                this.llmProviderStore.reload();
+        this.llmProviderStore.setDefaultModel(model.id);
+        this.chatForm.patchValue({ model: model.id });
 
-                setTimeout(() => {
-                    const target = event.target as HTMLElement;
-                    const selectHost = target?.closest('p-select');
-                    const trigger = selectHost?.querySelector('.p-select-trigger') as HTMLElement | null;
-                    trigger?.blur();
-                });
-            },
-            error: (err) => {
-                console.error('Failed to set default model', err);
-            }
+        setTimeout(() => {
+            const target = event.target as HTMLElement;
+            const selectHost = target?.closest('p-select');
+            const trigger = selectHost?.querySelector('.p-select-trigger') as HTMLElement | null;
+            trigger?.blur();
         });
     }
 

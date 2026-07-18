@@ -28,6 +28,30 @@ export class LlmProviderStore {
     loading = computed(() => this.providersResource.isLoading());
     error = signal<string | null>(null);
 
+    defaultModelId = signal<number | null>(null);
+
+    loadUserDefaultModel(): void {
+        this.llmProviderService.getUserDefaultModel().subscribe({
+            next: (res) => {
+                this.defaultModelId.set(res.result?.id ?? null);
+            },
+            error: () => {
+                this.defaultModelId.set(null);
+            }
+        });
+    }
+
+    setDefaultModel(modelId: number): void {
+        this.llmProviderService.setUserDefaultModel(modelId).subscribe({
+            next: () => {
+                this.defaultModelId.set(modelId);
+            },
+            error: (err) => {
+                this.error.set(err?.error?.message ?? 'Failed to set default model');
+            }
+        });
+    }
+
     groupedProviders = computed<GroupedLlmProvider[]>(() => {
         return this.providers()
             .filter(provider => provider.active)

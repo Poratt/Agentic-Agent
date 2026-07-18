@@ -1,4 +1,4 @@
-import { Component, inject, computed, viewChild, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, inject, computed, viewChild, ChangeDetectionStrategy, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
@@ -48,7 +48,7 @@ export interface LlmProviderView extends Omit<LlmProvider, 'models'> {
     templateUrl: './llm-providers-management.html',
     styleUrl: './llm-providers-management.css'
 })
-export class LlmProvidersManagement {
+export class LlmProvidersManagement implements OnInit {
     private table = viewChild<Table>('table');
     private fb = inject(FormBuilder);
 
@@ -59,6 +59,10 @@ export class LlmProvidersManagement {
     protected messageService = inject(MessageService);
     protected readonly PageStates = PageStates;
     protected readonly globalFilterFields = ['id', 'key', 'label', 'baseUrl', 'createdAt'];
+
+    ngOnInit(): void {
+        this.llmProviderStore.loadUserDefaultModel();
+    }
 
     testingModelId = signal<number>(0);
 
@@ -388,23 +392,12 @@ export class LlmProvidersManagement {
     }
 
     setDefaultModel(model: LlmModel) {
-        if (model.isDefault) return;
-        this.llmProviderService.setDefaultModel(model.id).subscribe({
-            next: () => {
-                this.llmProviderStore.reload();
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Default Set',
-                    detail: `"${model.label}" is now the default model.`
-                });
-            },
-            error: (err) => {
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: err?.error?.message || 'Failed to set default model'
-                });
-            }
+        if (this.llmProviderStore.defaultModelId() === model.id) return;
+        this.llmProviderStore.setDefaultModel(model.id);
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Default Set',
+            detail: `"${model.label}" is now the default model.`
         });
     }
 }

@@ -20,9 +20,6 @@ export class LlmModelEntity {
   @Column({ default: 0 })
   sortOrder!: number;
 
-  @Column({ name: 'is_default', default: false })
-  isDefault!: boolean;
-
   @Column({ name: 'provider_id' })
   providerId!: number;
 

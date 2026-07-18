@@ -99,11 +99,4 @@ export class LlmProviderController {
     return this.service.findTestResults(limit ?? 50, offset ?? 0);
   }
 
-  @Post('models/:id/default')
-  @ApiOperation({ summary: 'Set model as default', description: 'Sets a model as the default for its provider, unsetting any previous default.' })
-  @ApiCreatedResponse({ description: 'Model set as default' })
-  @ApiUnauthorizedResponse({ description: 'JWT token missing or invalid' })
-  async setDefaultModel(@Param('id') id: string): Promise<ServiceResultContainer<LlmModelEntity>> {
-    return this.service.setDefaultModel(+id);
-  }
 }

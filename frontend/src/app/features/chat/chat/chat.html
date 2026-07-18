@@ -128,11 +128,11 @@
                                         <button
                                             type="button"
                                             class="star-btn"
-                                            [class.star-active]="model.isDefault"
-                                            [attr.aria-label]="model.isDefault ? 'Default model' : 'Set as default'"
+                                            [class.star-active]="llmProviderStore.defaultModelId() === model.id"
+                                            [attr.aria-label]="llmProviderStore.defaultModelId() === model.id ? 'Default model' : 'Set as default'"
                                             (click)="setDefaultModel($event, model)"
                                         >
-                                            <span [class]="model.isDefault ? 'ph ph-star ph-fill' : 'ph ph-star'"></span>
+                                            <span [class]="llmProviderStore.defaultModelId() === model.id ? 'ph ph-star ph-fill' : 'ph ph-star'"></span>
                                         </button>
                                     </div>
                                     <div class="select-option-meta">

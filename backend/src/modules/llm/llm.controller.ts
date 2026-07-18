@@ -1,4 +1,4 @@
-import { Controller, Post, Delete, Param, UseGuards, NotFoundException, Body, BadRequestException, UnauthorizedException, Req } from '@nestjs/common';
+import { Controller, Post, Delete, Get, Param, UseGuards, NotFoundException, Body, BadRequestException, UnauthorizedException, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RequestWithUser } from '../../core/interfaces/request-with-user.interface';
@@ -50,5 +50,16 @@ export class LlmController {
     }
     await this.dbProviderService.setUserDefaultModel(req.user.sub, modelId);
     return { success: true, message: 'Default model set' };
+  }
+
+  @Get('default-model')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get the authenticated user\'s default LLM model' })
+  async getDefaultModel(@Req() req: RequestWithUser) {
+    if (!req.user) {
+      throw new UnauthorizedException();
+    }
+    const model = await this.dbProviderService.getUserDefaultModel(req.user.sub);
+    return { success: true, message: 'Default model retrieved', result: model ? { id: model.id } : null };
   }
 }

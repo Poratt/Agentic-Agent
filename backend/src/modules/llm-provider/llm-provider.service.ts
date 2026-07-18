@@ -10,6 +10,7 @@ import { UpdateLlmProviderDto } from './dto/update-llm-provider.dto';
 import { LlmModelEntity } from './entities/llm-model.entity';
 import { LlmProviderEntity } from './entities/llm-provider.entity';
 import { LlmModelTestResultEntity } from './entities/llm-model-test-results.entity';
+import { UserLlmDefaultEntity } from './entities/user-llm-default.entity';
 
 @Injectable()
 export class LlmProviderService {
@@ -20,6 +21,8 @@ export class LlmProviderService {
     private readonly modelRepo: Repository<LlmModelEntity>,
     @InjectRepository(LlmModelTestResultEntity)
     private readonly testResultRepo: Repository<LlmModelTestResultEntity>,
+    @InjectRepository(UserLlmDefaultEntity)
+    private readonly userDefaultRepo: Repository<UserLlmDefaultEntity>,
   ) { }
 
   /**
@@ -81,24 +84,21 @@ export class LlmProviderService {
       throw new NotFoundException('Model not found or inactive');
     }
 
-    await this.modelRepo.query(
-      `INSERT INTO user_llm_defaults (user_id, model_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE model_id = VALUES(model_id)`,
-      [userId, modelId],
-    );
+    const existing = await this.userDefaultRepo.findOne({ where: { userId } });
+    const row = existing ?? this.userDefaultRepo.create({ userId, modelId });
+    row.modelId = modelId;
+    await this.userDefaultRepo.save(row);
   }
 
   /**
    * Gets the user's default model entity (with provider relation).
    */
   async getUserDefaultModel(userId: number): Promise<LlmModelEntity | null> {
-    const result: Array<{ model_id: number }> = await this.modelRepo.query(
-      `SELECT model_id FROM user_llm_defaults WHERE user_id = ? LIMIT 1`,
-      [userId],
-    );
-    if (!result || result.length === 0) return null;
+    const row = await this.userDefaultRepo.findOne({ where: { userId } });
+    if (!row) return null;
 
     return this.modelRepo.findOne({
-      where: { id: result[0].model_id },
+      where: { id: row.modelId },
       relations: ['provider'],
     });
   }
@@ -215,17 +215,4 @@ export class LlmProviderService {
     return { success: true, message: 'Test results retrieved', result: { results, total } };
   }
 
-  async setDefaultModel(modelId: number): Promise<ServiceResultContainer<LlmModelEntity>> {
-    const model = await this.modelRepo.findOneBy({ id: modelId });
-    if (!model) throw new NotFoundException('Model not found');
-
-    // Unset isDefault on all models for this provider
-    await this.modelRepo.update({ providerId: model.providerId }, { isDefault: false });
-
-    // Set isDefault on the target model
-    model.isDefault = true;
-    const saved = await this.modelRepo.save(model);
-
-    return { success: true, message: 'Default model updated', result: saved };
-  }
 }

@@ -72,7 +72,11 @@ export class LlmProviderService {
         return this.http.delete<ServiceResultContainer<void>>(`${environment.apiUrl}/llm/test-results/${testResultId}`);
     }
 
-    setDefaultModel(modelId: number): Observable<ServiceResultContainer<LlmModel>> {
-        return this.http.post<ServiceResultContainer<LlmModel>>(`${this.base}/models/${modelId}/default`, {});
+    setUserDefaultModel(modelId: number): Observable<{ success: boolean; message: string }> {
+        return this.http.post<{ success: boolean; message: string }>(`${environment.apiUrl}/llm/set-default-model`, { modelId });
+    }
+
+    getUserDefaultModel(): Observable<{ success: boolean; message: string; result: { id: number } | null }> {
+        return this.http.get<{ success: boolean; message: string; result: { id: number } | null }>(`${environment.apiUrl}/llm/default-model`);
     }
 }

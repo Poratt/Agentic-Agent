@@ -315,3 +315,19 @@
 - No new module imports needed — existing wiring between `LlmProviderModule`, `LlmModule`, and `LlmTasksService` already had the dependency.
 - Added `llm-provider.service.spec.ts` with 5 focused tests.
 - Decision: hardcode 30-day retention and Sunday 02:00 cron for version 1.
+
+## 2026-07-18 LLM Default Model — Per-User Fix
+
+- Removed the legacy global-per-provider `isDefault` path: deleted `LlmProviderService.setDefaultModel()` and `POST /llm-provider/models/:id/default`. The `is_default` column/entity field remains but is now dead code.
+- Added `GET /llm/default-model` to `LlmController` returning the authenticated user's current default model id from `user_llm_defaults`.
+- Architectural decision: `user_llm_defaults` (one row per `user_id`) is the single source of truth for the default model; `resolveEffectiveModel()` already reads it via `getUserDefaultModel()` before any legacy fallback, so the runtime resolution was already correct — only the write path and UI flag were inconsistent.
+- Architectural decision: created the missing `user_llm_defaults` table directly via the existing migration SQL because `synchronize:true` only auto-creates TypeORM entities, not raw-SQL-migrated tables. Left as a manual step; a repeatable migration runner or a real entity conversion is a future open question.
+- No architecture diagram update was needed: module boundaries, request flow, and the default-resolution path are unchanged; only the dead legacy flag path was removed.
+
+## 2026-07-18 user_llm_defaults Entity + drop is_default (follow-up)
+
+- Converted `user_llm_defaults` into a real TypeORM entity `UserLlmDefaultEntity` (unique `user_id`, `model_id` FK to `llm_models` with `onDelete: 'CASCADE'`) and registered it in `LlmProviderModule.forFeature`, so `synchronize:true` now owns the table instead of raw SQL.
+- Refactored `LlmProviderService.setUserDefaultModel`/`getUserDefaultModel` to use the repository (removed the `INSERT ... ON DUPLICATE KEY UPDATE` / `SELECT model_id` raw queries).
+- Removed the dead `isDefault` field from `LlmModelEntity`; under `synchronize:true` the `is_default` column was dropped from `llm_models` and verified absent.
+- Added `migrations/DropLlmModelIsDefault1752860000000.ts` for portability (the project runs `synchronize:true`, so migrations are not auto-run).
+- No architecture diagram update was needed: storage representation changed but the module boundaries and default-resolution data flow are identical.

@@ -446,6 +446,39 @@ documents/
 - Files touched this session: `C:\Users\porat\.claude\prompts\code-agent\angular-task.md`, `C:\Users\porat\.claude\rules\angular-rules.md`, `AGENTS.md`, `CLAUDE.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, and `documents/LOG.md`.
 - Decisions made: keep Hebrew guidance lightweight; focus the local agent rules on structure/CSS/DoD instead of overconstraining Hebrew writing.
 - Open questions for the user: none.
+
+## 2026-07-18 Session — LLM Default Model Per-User Fix
+
+**LLM Default Model: single per-user via user_llm_defaults**
+
+- Completed: removed the legacy global-per-provider `isDefault` concept from backend + frontend. The old `LlmProviderService.setDefaultModel()` (wrote `is_default=true` on one model per provider) and its `POST /llm-provider/models/:id/default` endpoint were deleted. The new per-user system (`user_llm_defaults` table) is now the single source of truth.
+- Completed: added `GET /llm/default-model` to `LlmController` returning the authenticated user's current default model id (reads `user_llm_defaults`).
+- Completed: `LlmProviderService.getUserDefaultModel()` already existed and is the resolution path used by `resolveEffectiveModel()` — confirmed it is the only default source at runtime.
+- Completed (frontend service): `LlmProviderService` (frontend) now exposes `setUserDefaultModel(modelId)` → `POST /llm/set-default-model` and `getUserDefaultModel()` → `GET /llm/default-model`; the old `setDefaultModel()` was removed.
+- Completed (frontend store): `LlmProviderStore` gained `defaultModelId` signal + `loadUserDefaultModel()` and `setDefaultModel(modelId)` methods that call the user-level endpoints.
+- Completed (chat): the model dropdown default-selection effect in `chat.ts` now picks the user default (`defaultModelId()`) instead of the first `m.isDefault`. The star button calls `llmProviderStore.setDefaultModel(model.id)` and the template renders the filled star by `llmProviderStore.defaultModelId() === model.id`. `ngOnInit` loads the user default.
+- Completed (providers management): `llm-providers-management.ts/html` star button now calls the store's user-level setter; template renders the filled star via `defaultModelId()`; added `ngOnInit` (with `OnInit` import) to load the user default.
+- Completed (DB): the `user_llm_defaults` table was MISSING — `synchronize:true` only auto-creates entity tables, and that table is raw-SQL-migrated, not an entity. Created it from `migrations/CreateUserLlmDefaults1752856000000.ts` SQL directly. This was the root cause of the `GET /llm/default-model` 500.
+- Completed (DB cleanup): cleared the two stale `is_default=1` rows (`Tencent Hy3 (Free)` id 101, `Agnes 2.0 Flash` id 102) that produced the duplicate-star confusion.
+- Verification: `npx ng build` from `frontend` passes (existing unrelated warnings only: `AccessToDirective`, `chat-message.css`, `explorer.css`, initial-bundle budget). `npx nest build` from `backend` passes. Live verified by user: selecting a new default model works and only one star is shown.
+- Files touched: `backend/src/modules/llm/llm.controller.ts` (modified), `backend/src/modules/llm-provider/llm-provider.service.ts` (modified — removed `setDefaultModel`), `backend/src/modules/llm-provider/llm-provider.controller.ts` (modified — removed endpoint), `frontend/src/app/core/services/llm-provider.service.ts` (modified), `frontend/src/app/core/store/llm-provider.store.ts` (modified), `frontend/src/app/features/chat/chat/chat.ts` (modified), `frontend/src/app/features/chat/chat/chat.html` (modified), `frontend/src/app/features/llm-providers-management/llm-providers-management.ts` (modified), `frontend/src/app/features/llm-providers-management/llm-providers-management.html` (modified), `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.
+- Decisions made: keep the `is_default` column/entity field in place (dead but harmless) rather than dropping it via migration; the user-level `user_llm_defaults` is the only active default source. Did not add a migration-runner script; created the missing table with raw SQL this session.
+- Open questions for the user: whether to (a) add a repeatable migration runner or convert `user_llm_defaults` into a real TypeORM entity so `synchronize` manages it, and (b) whether to drop the now-dead `is_default` column via a migration.
+- No architecture diagram update needed: module boundaries, request flow, and default-resolution path are unchanged; only the dead legacy flag path was removed.
+- Next exact step: if the user wants repeatable DB setup, add a `migrations:run` script or convert `user_llm_defaults` to a TypeORM entity; otherwise feature is complete.
+
+## 2026-07-18 Session (follow-up) — user_llm_defaults Entity + drop is_default
+
+**Both open items from the prior session are now done.**
+
+- Completed: converted `user_llm_defaults` into a real TypeORM entity `UserLlmDefaultEntity` (`backend/src/modules/llm-provider/entities/user-llm-default.entity.ts`) with columns id (PK), userId (`@Index` unique on `user_id`), modelId (`@ManyToOne` to `LlmModelEntity` with `onDelete: 'CASCADE'`), createdAt, updatedAt. Registered it in `LlmProviderModule.forFeature`.
+- Completed: refactored `LlmProviderService.setUserDefaultModel`/`getUserDefaultModel` to use the `UserLlmDefaultEntity` repository instead of raw SQL (`INSERT ... ON DUPLICATE KEY UPDATE` / `SELECT model_id`). Resolution no longer uses `modelRepo.query`.
+- Completed: removed the dead `isDefault` field from `LlmModelEntity`; `synchronize: true` dropped the `is_default` column from `llm_models` (verified via `SHOW COLUMNS`).
+- Completed: added migration `migrations/DropLlmModelIsDefault1752860000000.ts` documenting the `is_default` drop (down re-adds it). This is for portability only — the project uses `synchronize: true`, so migrations are not auto-run.
+- Verification: `npm run build` (backend `nest build`) passes. DB confirmed: `llm_models` has no `is_default`; `user_llm_defaults` columns match the entity (id, user_id UNIQUE, model_id, created_at, updated_at, FK to llm_models). No remaining `isDefault`/`is_default` references in backend or frontend code.
+- Files touched: `backend/src/modules/llm-provider/entities/user-llm-default.entity.ts` (new), `backend/src/modules/llm-provider/entities/llm-model.entity.ts` (modified), `backend/src/modules/llm-provider/llm-provider.module.ts` (modified), `backend/src/modules/llm-provider/llm-provider.service.ts` (modified), `backend/migrations/DropLlmModelIsDefault1752860000000.ts` (new), `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.
+- No architecture diagram update needed: module boundaries and default-resolution path unchanged; `user_llm_defaults` is now an entity rather than raw SQL but the data flow is identical.
+- Open questions for the user: none remaining from this feature. Optionally, a repeatable `migration:run` script could still be added for environments where `synchronize` is disabled, but not required.
 - Tightened the static-page guidance again after identifying that the local agent understood generic classes but not the required page structure.
 - `angular-task.md`, `angular-rules.md`, `AGENTS.md`, and `CLAUDE.md` now tell the local agent to copy the static placeholder page structure exactly and only replace `PAGE_TITLE`, `SECTION_TITLE`, icon class, and `PLACEHOLDER_TEXT`.
 - The rules now explicitly forbid improvising the HTML structure, moving placeholder text into the header, or using loose standalone text blocks for static placeholder content.
