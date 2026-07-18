@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ServiceResultContainer } from '../../../core/models/service-result-container.model';
 import { LlmModelCheckTarget, LlmModelTestResult, LlmProvider } from '../types/llm.types';
 import { LlmClientService } from './llm-client.service';
@@ -20,6 +20,11 @@ export class LlmHealthService {
     systemContext: string,
   ): Promise<ServiceResultContainer<{ provider: LlmProvider; model: string; available: boolean }>> {
     const runtimeSelection = this.providerConfig.getRuntimeSelection(provider, model);
+
+    const dbModel = await this.dbProviderService.findModelByKey(model);
+    if (dbModel && dbModel.capability && dbModel.capability !== 'text') {
+      throw new BadRequestException(`Model ${model} (${dbModel.capability}) does not support text chat testing`);
+    }
 
     const startTime = performance.now();
 
@@ -159,6 +164,9 @@ export class LlmHealthService {
 
         for (const model of provider.models || []) {
           if (!model.active) continue;
+
+          // Only text models participate in the chat-style connectivity health check.
+          if (model.capability && model.capability !== 'text') continue;
 
           models.push({
             provider: provider.key as any,

@@ -85,8 +85,31 @@ export class LlmProviderStore {
             .filter(provider => (provider.items?.length ?? 0) > 0);
     });
 
-    pageState = computed<PageStates>(() => {
-        if (this.loading() && this.providers().length === 0) {
+    // Chat only targets text-capability models; image/video models are surfaced
+    // elsewhere (media studio, out of scope for this change).
+    chatModels = computed<GroupedLlmProvider[]>(() => {
+        return this.groupedProviders().map(provider => ({
+            label: provider.label,
+            items: (provider.items ?? []).filter(item => item.capability === 'text'),
+        })).filter(provider => (provider.items?.length ?? 0) > 0);
+    });
+
+    // Flat lists of image/video-capable models for the media studio.
+    imageModels = computed<LlmModel[]>(() => {
+        return this.providers()
+            .filter(p => p.active)
+            .flatMap(p => p.models ?? [])
+            .filter(m => m.active && m.capability === 'image');
+    });
+
+    videoModels = computed<LlmModel[]>(() => {
+        return this.providers()
+            .filter(p => p.active)
+            .flatMap(p => p.models ?? [])
+            .filter(m => m.active && m.capability === 'video');
+    });
+
+    pageState = computed<PageStates>(() => {        if (this.loading() && this.providers().length === 0) {
             return PageStates.Loading;
         }
 

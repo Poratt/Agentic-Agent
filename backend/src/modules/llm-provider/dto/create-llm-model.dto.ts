@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsBoolean, IsOptional, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsBoolean, IsOptional, IsNumber, IsIn } from 'class-validator';
 
 export class CreateLlmModelDto {
   @ApiProperty({ description: 'Unique identifier key for the model', example: 'gpt-4o' })
@@ -22,8 +22,12 @@ export class CreateLlmModelDto {
   @IsOptional()
   sortOrder?: number;
 
-  @ApiPropertyOptional({ description: 'Mark this model as the default for this provider', default: false })
-  @IsBoolean()
+  @ApiPropertyOptional({
+    description: 'Model capability used to route requests (text chat, image, or video generation)',
+    default: 'text',
+    enum: ['text', 'image', 'video'],
+  })
+  @IsIn(['text', 'image', 'video'])
   @IsOptional()
-  isDefault?: boolean;
+  capability?: 'text' | 'image' | 'video';
 }

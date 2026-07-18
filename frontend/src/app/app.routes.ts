@@ -19,6 +19,7 @@ export const routes: Routes = [
       { path: 'chat/history', loadComponent: () => import('./features/chat/chat-history/chat-history').then(m => m.ChatHistory) },
       { path: 'design-system', loadComponent: () => import('./features/design-system/design-system').then(m => m.DesignSystem) },
       { path: 'settings', loadComponent: () => import('./features/settings/settings').then(m => m.Settings) },
+      { path: 'media', loadComponent: () => import('./features/media-studio/media-studio').then(m => m.MediaStudio) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

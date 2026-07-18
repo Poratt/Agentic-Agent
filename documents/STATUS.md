@@ -2,6 +2,15 @@
 
 Last updated: 2026-07-18
 
+## 2026-07-18 Session — Agnes AI Multimodal Plan Implemented (Phases 1-6)
+
+- Implemented the full Agnes AI multimodal plan: chat was unreachable through the DB path because the seed keyed the provider `agnes` while runtime looked up `agnes-ai`. Fixed the seed to key `agnes-ai` (apihub baseUrl) with an idempotent update-in-place reconciliation; added a `capability` enum column to `LlmModelEntity`.
+- Capability guards: chat path and the nightly/test health checks now reject or skip non-text models, so image/video models no longer pollute the test-results table.
+- Added image generation (`POST /llm/image/generate`) and async video generation (`POST /llm/video/generate`, `GET /llm/video/:videoId`) via raw `fetch` against the Agnes API, with full Swagger decorators.
+- Frontend `LlmModel` now carries `capability` (dropped stale `isDefault`); chat dropdown filters to `capability === 'text'` via `LlmProviderStore.chatModels`.
+- Verification: `npm.cmd run build` (backend) passes; `npx ng build` (frontend) passes with pre-existing unrelated warnings only.
+- Plan moved to `documents/done/agnes-ai-multimodal-plan.md`. Remaining manual work: live end-to-end image/video generation with `AGNES_API_KEY` and a visual chat-dropdown check.
+
 ## 2026-07-18 MCP Bridge — Phase 4 Complete, Hebrew UI
 
 - **Phase 4 (Remove WeatherModule):** Deleted `backend/src/modules/weather/` (controller, service, module, 4 DTOs). Removed `WeatherModule` from `AppModule`. Removed old `WeatherController_getWeather`/`getForecast` render-spec mappings. Updated `render-spec.service.spec.ts` (error tests now use Swagger tools). Verified 92/92 tests pass.
@@ -305,6 +314,22 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Files touched: `documents/features/todo/add-mcp-plan.md`, `documents/todo/add-mcp-plan.md` (deleted), `documents/HANDOFF.md`, `documents/STATUS.md`.
 - Decisions made: prefer the `unwrapResult` flag over wrapping MCP results in `ServiceResultContainer`; ship v1 with `ph-gear` step icon for all MCP tools; keep the bridge module top-level under `src/modules/mcp-bridge/`, not as a sub-module of `admin-agent`.
 - Next exact step: implement Phase 0 of `documents/features/todo/add-mcp-plan.md` by installing `@modelcontextprotocol/sdk` and `@dangahagan/weather-mcp` (both as `dependencies`), running a scratch script to capture `listTools()` and one `callTool` per tool, and committing those outputs to the `__fixtures__/` paths before starting Phase 1.
+
+## 2026-07-18 Session (Agnes AI Multimodal Plan — Review and Rewrite)
+
+- Reviewed `documents/features/todo/agnes-ai-multimodal-plan.md` against the actual codebase and rewrote it in place. No code was changed this session — plan only.
+- Verified the plan's claims against source: confirmed `LlmProviderConfigService` lists `agnes-ai` (`llm-provider-config.service.ts:5`) and the seed writes the Agnes provider with `key: 'agnes'` and `baseUrl: 'https://api.agnes.ai/v1'` (`llm-providers.seed.ts:119-146`) — the chat model is currently unreachable through the DB path.
+- Confirmed `LlmModelEntity` has no capability field, the OpenAI SDK is the only chat path, the nightly cron iterates all active models, and there is no `GET /llm/model-options` endpoint (the previous plan referenced one that does not exist).
+- Key corrections applied during the review:
+  - **Bug class A (provider wiring):** the seed must be updated-in-place (not delete+reinsert) for any pre-existing `agnes` row, to keep model FK rows intact and avoid a unique-key collision on the insert.
+  - **Bug class B (nightly cron noise):** `LlmTasksService.handleNightlyLlmHealthCheck` would mark every image/video model as failed every night. The new plan gates Phase 2 (capability guard on chat + health check) as a hard prerequisite, not a nice-to-have.
+  - **Stale `isDefault`:** the frontend `LlmModel` interface still has the dead `isDefault: boolean` field; the new Phase 6 drops it.
+  - **SDK assumption:** the OpenAI SDK has no `videos` resource — video uses raw `fetch` against `{baseUrl}/videos` and `{baseUrl}/agnesapi?video_id=...` with `Authorization: Bearer`.
+- Files touched: `documents/features/todo/agnes-ai-multimodal-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.
+- Decisions made: video polling is on-demand (no background job), capability filtering goes through the existing `findAll()` path (no new endpoint), chat dropdown filters to `capability === 'text'` in one place.
+- No architecture diagram update was needed because the new endpoints stay inside `LlmModule`.
+- Next exact step: implement Phase 1 of the rewritten plan — update the Agnes seed block (key + baseUrl + capability), add the `capability` enum to `LlmModelEntity`, and add the idempotent update-in-place reconciliation for any pre-existing `agnes` row. Verify with `npm.cmd run build` from `backend` and `SELECT key, baseUrl FROM llm_providers`.
+- Open questions: none for the plan itself. Implementation-time questions (rate limiting, free-tier cost, image upload UX) remain in the plan's "Out of Scope" section.
 
 
 ## 2026-06-27 Plan Audit

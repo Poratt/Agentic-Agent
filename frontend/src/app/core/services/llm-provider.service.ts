@@ -10,7 +10,7 @@ export interface LlmModel {
     label: string;
     active: boolean;
     sortOrder: number;
-    isDefault: boolean;
+    capability: 'text' | 'image' | 'video';
     providerId: number;
     createdAt: string;
     updatedAt: string;

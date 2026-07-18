@@ -976,6 +976,183 @@
         ]
       }
     },
+    "/llm/image/generate": {
+      "post": {
+        "description": "Sends a text prompt (optionally with input images) to an Agnes image-generation model and returns a hosted URL or Base64 JSON. Resolves the provider/model from modelId when provided, otherwise falls back to the first active image-capability model.",
+        "operationId": "LlmController_generateImage",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateImageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The generated image.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "url": "https://cdn.agnes-ai.com/img_123.png",
+                    "mimeType": "image/png",
+                    "size": "1024x768"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (e.g. model is not an image model)."
+          },
+          "401": {
+            "description": "Missing or invalid JWT."
+          },
+          "403": {
+            "description": "Not applicable for this endpoint."
+          },
+          "404": {
+            "description": "No image-capable model could be resolved."
+          },
+          "500": {
+            "description": "Upstream Agnes image generation failed."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate an image with an Agnes image model",
+        "tags": [
+          "llm"
+        ]
+      }
+    },
+    "/llm/video/generate": {
+      "post": {
+        "description": "Submits a text (or image) prompt to an Agnes video model and returns a video id immediately. Poll the status with GET /llm/video/:videoId. The HTTP create response is not blocked on generation.",
+        "operationId": "LlmController_createVideo",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVideoTaskDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Video task created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "taskId": "task_1",
+                    "videoId": "vid_1",
+                    "status": "queued",
+                    "seconds": 0,
+                    "size": ""
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (e.g. model is not a video model)."
+          },
+          "401": {
+            "description": "Missing or invalid JWT."
+          },
+          "403": {
+            "description": "Not applicable for this endpoint."
+          },
+          "404": {
+            "description": "No video-capable model could be resolved."
+          },
+          "500": {
+            "description": "Upstream Agnes video creation failed."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create an asynchronous Agnes video generation task",
+        "tags": [
+          "llm"
+        ]
+      }
+    },
+    "/llm/video/{videoId}": {
+      "get": {
+        "description": "Returns the current status of a video task. Poll until status is \"completed\" (returns a .mp4 URL) or \"failed\".",
+        "operationId": "LlmController_getVideo",
+        "parameters": [
+          {
+            "name": "videoId",
+            "required": true,
+            "in": "path",
+            "description": "Agnes video id returned by the create endpoint.",
+            "schema": {
+              "example": "vid_1",
+              "type": "string"
+            }
+          },
+          {
+            "name": "modelId",
+            "required": false,
+            "in": "query",
+            "description": "DB model id used to resolve the provider key.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current video task status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "status": "completed",
+                    "url": "https://cdn.agnes-ai.com/vid_1.mp4",
+                    "seconds": 5
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid JWT."
+          },
+          "403": {
+            "description": "Not applicable for this endpoint."
+          },
+          "500": {
+            "description": "Upstream Agnes video poll failed."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Poll an Agnes video generation task",
+        "tags": [
+          "llm"
+        ]
+      }
+    },
     "/llm-provider": {
       "post": {
         "description": "Adds a new LLM provider to the system configuration.",
@@ -2843,6 +3020,110 @@
           "prompt"
         ]
       },
+      "GenerateImageDto": {
+        "type": "object",
+        "properties": {
+          "modelId": {
+            "type": "number",
+            "description": "DB model id of an Agnes image model. Resolved automatically when omitted.",
+            "example": 12
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Text prompt for the image generation.",
+            "example": "a red apple on a wooden table"
+          },
+          "size": {
+            "type": "string",
+            "description": "Image size. For agnes-image-2.1-flash prefer tier sizes like 1K/2K/4K.",
+            "example": "1024x768"
+          },
+          "ratio": {
+            "type": "string",
+            "description": "Aspect ratio for agnes-image-2.1-flash, e.g. 16:9.",
+            "example": "16:9"
+          },
+          "image": {
+            "type": "object",
+            "description": "Input image URL(s) or Base64 Data URI(s) for image-to-image / multi-image edits."
+          },
+          "returnBase64": {
+            "type": "boolean",
+            "description": "Return the image as Base64 JSON instead of a hosted URL.",
+            "default": false
+          },
+          "providerOverride": {
+            "type": "string",
+            "description": "Explicit provider key override.",
+            "example": "agnes-ai"
+          }
+        },
+        "required": [
+          "prompt"
+        ]
+      },
+      "CreateVideoTaskDto": {
+        "type": "object",
+        "properties": {
+          "modelId": {
+            "type": "number",
+            "description": "DB model id of an Agnes video model. Resolved automatically when omitted.",
+            "example": 14
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Text prompt describing the video to generate.",
+            "example": "a calm ocean wave at sunset"
+          },
+          "image": {
+            "type": "string",
+            "description": "Input image URL or Base64 Data URI for image-to-video."
+          },
+          "mode": {
+            "type": "string",
+            "description": "Generation mode: ti2vid (text/image to video) or keyframes.",
+            "enum": [
+              "ti2vid",
+              "keyframes"
+            ],
+            "default": "ti2vid"
+          },
+          "height": {
+            "type": "number",
+            "description": "Output height in pixels."
+          },
+          "width": {
+            "type": "number",
+            "description": "Output width in pixels."
+          },
+          "numFrames": {
+            "type": "number",
+            "description": "Number of frames (<=441, 8n+1).",
+            "example": 41
+          },
+          "frameRate": {
+            "type": "number",
+            "description": "Frame rate (frames per second).",
+            "example": 24
+          },
+          "numInferenceSteps": {
+            "type": "number",
+            "description": "Number of inference steps for generation quality.",
+            "example": 30
+          },
+          "seed": {
+            "type": "number",
+            "description": "Random seed for deterministic generation."
+          },
+          "negativePrompt": {
+            "type": "string",
+            "description": "Negative prompt to steer generation away from concepts."
+          }
+        },
+        "required": [
+          "prompt"
+        ]
+      },
       "CreateLlmProviderDto": {
         "type": "object",
         "properties": {
@@ -2931,10 +3212,15 @@
             "description": "Sort hierarchy order",
             "default": 0
           },
-          "isDefault": {
-            "type": "boolean",
-            "description": "Mark this model as the default for this provider",
-            "default": false
+          "capability": {
+            "type": "string",
+            "description": "Model capability used to route requests (text chat, image, or video generation)",
+            "default": "text",
+            "enum": [
+              "text",
+              "image",
+              "video"
+            ]
           }
         },
         "required": [
@@ -2965,10 +3251,15 @@
             "description": "Sort hierarchy order",
             "default": 0
           },
-          "isDefault": {
-            "type": "boolean",
-            "description": "Mark this model as the default for this provider",
-            "default": false
+          "capability": {
+            "type": "string",
+            "description": "Model capability used to route requests (text chat, image, or video generation)",
+            "default": "text",
+            "enum": [
+              "text",
+              "image",
+              "video"
+            ]
           }
         }
       },

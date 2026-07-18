@@ -1,5 +1,17 @@
 # Documentation Change Log
 
+## 2026-07-18 Agnes AI Multimodal Plan — Review and Rewrite
+
+- Reviewed `documents/features/todo/agnes-ai-multimodal-plan.md` against the actual codebase and rewrote it in place. No code was changed in this session — plan only.
+- Architectural decision: the seed's mis-keyed provider row (`agnes` instead of `agnes-ai`) plus the legacy `baseUrl: 'https://api.agnes.ai/v1'` (instead of `https://apihub.agnes-ai.com/v1`) means the Agnes chat model is currently unreachable through the DB path even with `AGNES_API_KEY` set. The plan now mandates a single reconciliation step (update-in-place, do not delete-and-reinsert) so existing model foreign keys stay intact. This is the project's first case of "rename an existing seed key" and the plan's reconciliation must come before the insert, otherwise the unique constraint on `key` will reject the new `agnes-ai` row.
+- Architectural decision: the LlmModel `capability` field is an entity enum defaulting to `'text'`, seeded per Agnes model. The frontend `LlmModel` interface already drives the chat dropdown through the providers store; the plan filters the chat `<p-dropdown>` to `capability === 'text'` in one place, no new endpoint required.
+- Architectural decision: the previous plan's Phase 1 added `capability` and called it done, but the nightly `LlmTasksService.handleNightlyLlmHealthCheck` cron iterates **all** active models and would start failing every image/video model nightly, polluting `llm_model_test_results`. The rewritten plan gates Phase 2 on the health-check guard — a hard prerequisite, not a nice-to-have.
+- Architectural decision: video polling is on-demand per `GET /llm/video/:videoId` (not a background job) to match the project's existing "no scheduled retries for user-triggered long work" pattern. Free-tier models make abandoned `video_id`s cheap to discard.
+- Architectural decision: the previous plan referenced a `GET /llm/model-options` endpoint that does not exist (`LlmController` only exposes `models/:id/test`, `test-results/:id`, `set-default-model`, `default-model`). The new plan removes that assumption and routes frontend capability filtering through the existing `findAll()` → providers store path.
+- Architectural decision: the rewritten plan also drops the dead `isDefault: boolean` field from the frontend `LlmModel` interface (backend already removed it on 2026-07-18). Flagged as a follow-up so it does not get lost.
+- Files touched: `documents/features/todo/agnes-ai-multimodal-plan.md`, `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.
+- No architecture diagram update was needed because the new endpoints stay inside `LlmModule` — no cross-module boundary changes.
+
 ## 2026-07-18 MCP Bridge — Implementation Phases 1-3
 
 - Architectural decision: MCP tool output is markdown text (not structured JSON). `callTool` flattens `content[].text` to a string. Render-spec transforms parse key values from markdown using regex. This is more fragile than JSON key access — pinned fixtures + snapshot-style field-existence tests mitigate drift.

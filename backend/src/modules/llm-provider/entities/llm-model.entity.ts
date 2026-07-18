@@ -20,6 +20,9 @@ export class LlmModelEntity {
   @Column({ default: 0 })
   sortOrder!: number;
 
+  @Column({ type: 'enum', enum: ['text', 'image', 'video'], default: 'text' })
+  capability!: 'text' | 'image' | 'video';
+
   @Column({ name: 'provider_id' })
   providerId!: number;
 

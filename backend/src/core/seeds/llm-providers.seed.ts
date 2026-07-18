@@ -44,10 +44,10 @@ const NVIDIA_MODELS = [
 ];
 
 const AGNES_AI_MODELS = [
-    { value: 'agnes-2.0-flash', label: 'Agnes 2.0 Flash' },
-    { value: 'agnes-image-2.0-flash', label: 'Agnes Image 2.0 Flash' },
-    { value: 'agnes-image-2.1-flash', label: 'Agnes Image 2.1 Flash' },
-    { value: 'agnes-video-v2.0', label: 'Agnes Video V2.0' }
+    { value: 'agnes-2.0-flash', label: 'Agnes 2.0 Flash', capability: 'text' as const },
+    { value: 'agnes-image-2.0-flash', label: 'Agnes Image 2.0 Flash', capability: 'image' as const },
+    { value: 'agnes-image-2.1-flash', label: 'Agnes Image 2.1 Flash', capability: 'image' as const },
+    { value: 'agnes-video-v2.0', label: 'Agnes Video V2.0', capability: 'video' as const },
 ]
 
 export async function seedLlmProviders(dataSource: DataSource): Promise<void> {
@@ -116,16 +116,20 @@ export async function seedLlmProviders(dataSource: DataSource): Promise<void> {
         }
 
         // AGNES AI
+        // Reconcile in place: an old DB may have the provider keyed as the
+        // legacy 'agnes'. Update whichever row matches (agnes or agnes-ai) so
+        // the existing model FK rows stay linked and we avoid a unique-key
+        // collision on insert. A re-run after rename is a no-op.
         let agnes = await providerRepo.findOne({
-            where: { key: 'agnes' },
+            where: [{ key: 'agnes' }, { key: 'agnes-ai' }],
             relations: ['models'],
         });
 
         if (!agnes) {
             agnes = new LlmProviderEntity();
-            agnes.key = 'agnes';
+            agnes.key = 'agnes-ai';
             agnes.label = 'Agnes AI';
-            agnes.baseUrl = process.env.AGNES_BASE_URL || 'https://api.agnes.ai/v1';
+            agnes.baseUrl = process.env.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1';
             agnes.apiKey = process.env.AGNES_API_KEY || '';
             agnes.active = true;
 
@@ -135,6 +139,7 @@ export async function seedLlmProviders(dataSource: DataSource): Promise<void> {
                 const model = new LlmModelEntity();
                 model.key = modelData.value;
                 model.label = modelData.label;
+                model.capability = modelData.capability;
                 model.active = true;
                 model.providerId = agnes.id;
                 await modelRepo.save(model);
@@ -142,7 +147,32 @@ export async function seedLlmProviders(dataSource: DataSource): Promise<void> {
 
             console.log('[Seed] Agnes AI provider and models created.');
         } else {
-            console.log('[Seed] Agnes AI provider already exists.');
+            agnes.key = 'agnes-ai';
+            agnes.label = 'Agnes AI';
+            agnes.baseUrl = process.env.AGNES_BASE_URL || 'https://apihub.agnes-ai.com/v1';
+            agnes.active = true;
+            agnes = await providerRepo.save(agnes);
+
+            const existingKeys = new Set((agnes.models ?? []).map((m) => m.key));
+
+            for (const modelData of AGNES_AI_MODELS) {
+                const existing = agnes.models?.find((m) => m.key === modelData.value);
+                if (existing) {
+                    existing.capability = modelData.capability;
+                    existing.active = true;
+                    await modelRepo.save(existing);
+                } else {
+                    const model = new LlmModelEntity();
+                    model.key = modelData.value;
+                    model.label = modelData.label;
+                    model.capability = modelData.capability;
+                    model.active = true;
+                    model.providerId = agnes.id;
+                    await modelRepo.save(model);
+                }
+            }
+
+            console.log('[Seed] Agnes AI provider reconciled (key=agnes-ai, apihub baseUrl).');
         }
 
     } catch (error) {

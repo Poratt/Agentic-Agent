@@ -98,8 +98,8 @@ export class Chat implements OnInit, OnDestroy {
 
     currentUserProfile = this.userStore.currentUserProfile;
 
-    // 🚀 כאן אנחנו פשוט שואבים את הנתונים המוכנים מה-Store 🚀
-    models = this.llmProviderStore.groupedProviders;
+    // 🚀 כאן אנחנו שואבים רק מודלים עם יכולת טקסט (צ'אט) מה-Store 🚀
+    models = this.llmProviderStore.chatModels;
 
     promptText = signal('');
 

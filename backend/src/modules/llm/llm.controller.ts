@@ -1,9 +1,41 @@
-import { Controller, Post, Delete, Get, Param, UseGuards, NotFoundException, Body, BadRequestException, UnauthorizedException, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Delete,
+  Get,
+  Param,
+  Query,
+  UseGuards,
+  NotFoundException,
+  Body,
+  BadRequestException,
+  UnauthorizedException,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiBadRequestResponse,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiInternalServerErrorResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBody,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RequestWithUser } from '../../core/interfaces/request-with-user.interface';
 import { LlmHealthService } from './services/llm-health.service';
 import { LlmProviderService } from '../llm-provider/llm-provider.service';
+import { LlmClientService } from './services/llm-client.service';
+import { GenerateImageDto } from './dto/generate-image.dto';
+import { CreateVideoTaskDto } from './dto/create-video-task.dto';
+import { LlmModelEntity } from '../llm-provider/entities/llm-model.entity';
+import { LlmModelCapability } from './types/llm.types';
 
 @ApiTags('llm')
 @ApiBearerAuth()
@@ -12,6 +44,7 @@ export class LlmController {
   constructor(
     private readonly healthService: LlmHealthService,
     private readonly dbProviderService: LlmProviderService,
+    private readonly client: LlmClientService,
   ) { }
 
   @Post('models/:id/test')
@@ -61,5 +94,154 @@ export class LlmController {
     }
     const model = await this.dbProviderService.getUserDefaultModel(req.user.sub);
     return { success: true, message: 'Default model retrieved', result: model ? { id: model.id } : null };
+  }
+
+  @Post('image/generate')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Generate an image with an Agnes image model',
+    description:
+      'Sends a text prompt (optionally with input images) to an Agnes image-generation model and returns a hosted URL or Base64 JSON. Resolves the provider/model from modelId when provided, otherwise falls back to the first active image-capability model.',
+  })
+  @ApiBody({ type: GenerateImageDto })
+  @ApiOkResponse({
+    description: 'The generated image.',
+    schema: {
+      example: { url: 'https://cdn.agnes-ai.com/img_123.png', mimeType: 'image/png', size: '1024x768' },
+    },
+  })
+  @ApiBadRequestResponse({ description: 'Invalid request (e.g. model is not an image model).' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT.' })
+  @ApiForbiddenResponse({ description: 'Not applicable for this endpoint.' })
+  @ApiNotFoundResponse({ description: 'No image-capable model could be resolved.' })
+  @ApiInternalServerErrorResponse({ description: 'Upstream Agnes image generation failed.' })
+  async generateImage(@Body() dto: GenerateImageDto) {
+    const resolved = await this.resolveCapabilityModel(dto.modelId, 'image', dto.providerOverride);
+    if (!resolved) {
+      throw new NotFoundException('No active image model found');
+    }
+
+    return this.client.generateImage({
+      provider: resolved.providerKey,
+      model: resolved.model.key,
+      prompt: dto.prompt,
+      size: dto.size,
+      ratio: dto.ratio,
+      image: dto.image,
+      returnBase64: dto.returnBase64,
+    });
+  }
+
+  @Post('video/generate')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Create an asynchronous Agnes video generation task',
+    description:
+      'Submits a text (or image) prompt to an Agnes video model and returns a video id immediately. Poll the status with GET /llm/video/:videoId. The HTTP create response is not blocked on generation.',
+  })
+  @ApiBody({ type: CreateVideoTaskDto })
+  @ApiCreatedResponse({
+    description: 'Video task created.',
+    schema: { example: { taskId: 'task_1', videoId: 'vid_1', status: 'queued', seconds: 0, size: '' } },
+  })
+  @ApiBadRequestResponse({ description: 'Invalid request (e.g. model is not a video model).' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT.' })
+  @ApiForbiddenResponse({ description: 'Not applicable for this endpoint.' })
+  @ApiNotFoundResponse({ description: 'No video-capable model could be resolved.' })
+  @ApiInternalServerErrorResponse({ description: 'Upstream Agnes video creation failed.' })
+  async createVideo(@Body() dto: CreateVideoTaskDto) {
+    const resolved = await this.resolveCapabilityModel(dto.modelId, 'video');
+    if (!resolved) {
+      throw new NotFoundException('No active video model found');
+    }
+
+    return this.client.createVideoTask({
+      provider: resolved.providerKey,
+      model: resolved.model.key,
+      prompt: dto.prompt,
+      image: dto.image,
+      mode: dto.mode,
+      height: dto.height,
+      width: dto.width,
+      numFrames: dto.numFrames,
+      frameRate: dto.frameRate,
+      seed: dto.seed,
+      negativePrompt: dto.negativePrompt,
+    });
+  }
+
+  @Get('video/:videoId')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Poll an Agnes video generation task',
+    description: 'Returns the current status of a video task. Poll until status is "completed" (returns a .mp4 URL) or "failed".',
+  })
+  @ApiParam({ name: 'videoId', description: 'Agnes video id returned by the create endpoint.', example: 'vid_1' })
+  @ApiQuery({ name: 'modelId', required: false, description: 'DB model id used to resolve the provider key.', type: Number })
+  @ApiOkResponse({
+    description: 'Current video task status.',
+    schema: { example: { status: 'completed', url: 'https://cdn.agnes-ai.com/vid_1.mp4', seconds: 5 } },
+  })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT.' })
+  @ApiForbiddenResponse({ description: 'Not applicable for this endpoint.' })
+  @ApiInternalServerErrorResponse({ description: 'Upstream Agnes video poll failed.' })
+  async getVideo(
+    @Param('videoId') videoId: string,
+    @Query('modelId') modelId?: string,
+  ) {
+    const resolved = await this.resolveCapabilityModel(modelId ? +modelId : undefined, 'video');
+    if (!resolved) {
+      throw new NotFoundException('No active video model found');
+    }
+
+    return this.client.getVideoResult(videoId, resolved.providerKey);
+  }
+
+  /**
+   * Resolves the DB model for an image/video request.
+   * 1. If modelId is given, use it directly.
+   * 2. Otherwise use the user's default model if it matches the capability.
+   * 3. Otherwise pick the first active model of the requested capability.
+   *
+   * Returns the model together with its provider key, since the model row may
+   * not have its `provider` relation loaded (e.g. when resolved from the
+   * grouped providers list).
+   */
+  private async resolveCapabilityModel(
+    modelId: number | undefined,
+    capability: LlmModelCapability,
+    providerOverride?: string,
+  ): Promise<{ model: LlmModelEntity; providerKey: string } | null> {
+    if (modelId) {
+      const model = await this.dbProviderService.findModelById(modelId);
+      if (!model || !model.active) {
+        return null;
+      }
+      if (model.capability !== capability) {
+        throw new BadRequestException(`Model ${model.key} is not a ${capability} model`);
+      }
+      return { model, providerKey: model.provider.key };
+    }
+
+    const providersResult = await this.dbProviderService.findProviders();
+    if (!providersResult.success || !providersResult.result) {
+      return null;
+    }
+
+    if (providerOverride) {
+      const provider = providersResult.result.find((p) => p.key === providerOverride && p.active);
+      const match = provider?.models?.find((m) => m.active && m.capability === capability);
+      return match ? { model: match, providerKey: provider!.key } : null;
+    }
+
+    for (const provider of providersResult.result) {
+      if (!provider.active) continue;
+      const match = provider.models?.find((m) => m.active && m.capability === capability);
+      if (match) {
+        return { model: match, providerKey: provider.key };
+      }
+    }
+
+    return null;
   }
 }

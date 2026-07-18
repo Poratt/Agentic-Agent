@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import OpenAI from 'openai';
 import { LlmRequest, LlmResponse, LlmToolCall } from '../types/llm.types';
 import { LlmProviderConfigService } from './llm-provider-config.service';
@@ -33,6 +33,8 @@ export class LlmClientService {
     if (!activeModel) {
       throw new Error('Missing active model configuration');
     }
+
+    await this.assertCapability(activeProvider, activeModel, 'text');
 
     this.logger.log(`Generating response via ${activeProvider} (model: ${activeModel})`);
 
@@ -87,6 +89,8 @@ export class LlmClientService {
       throw new Error('Missing active model configuration');
     }
 
+    await this.assertCapability(activeProvider, activeModel, 'text');
+
     this.logger.log(`Streaming response via ${activeProvider} (model: ${activeModel})`);
 
     const start = Date.now();
@@ -120,6 +124,18 @@ export class LlmClientService {
     }
 
     this.logger.log(`[STREAM RESPONSE] provider=${dbProvider.key} (${dbProvider.label}) model=${activeModel}`);
+  }
+
+  private async assertCapability(provider: string, model: string, expected: 'text' | 'image' | 'video'): Promise<void> {
+    const dbModel = await this.dbProviderService.findModelByKey(model);
+    if (!dbModel) {
+      return;
+    }
+
+    if (dbModel.capability !== expected) {
+      const label = expected === 'text' ? 'text chat' : expected === 'image' ? 'image generation' : 'video generation';
+      throw new BadRequestException(`Model ${model} (${dbModel.capability}) does not support ${label}`);
+    }
   }
 
   private buildUserMessage(
@@ -200,5 +216,232 @@ export class LlmClientService {
     }
 
     return 'Unknown error';
+  }
+
+  /**
+   * Resolves the DB provider connection (base URL + API key) for a provider key.
+   * Used by the image/video raw-fetch paths that the OpenAI SDK does not cover.
+   */
+  private async getProviderConnection(providerOverride?: string): Promise<{ baseUrl: string; apiKey: string; dbProvider: Awaited<ReturnType<typeof this.dbProviderService.findProviderByKey>> }> {
+    const providerKey = providerOverride || this.providerConfig.getActiveProvider();
+    const dbProvider = await this.dbProviderService.findProviderByKey(providerKey);
+
+    if (!dbProvider) {
+      throw new Error(`LLM Provider with key '${providerKey}' was not found in the database.`);
+    }
+
+    return {
+      baseUrl: dbProvider.baseUrl.replace(/\/$/, ''),
+      apiKey: dbProvider.apiKey ? dbProvider.apiKey.trim() : '',
+      dbProvider,
+    };
+  }
+
+  /**
+   * Generates an image via the Agnes `/v1/images/generations` endpoint.
+   *
+   * The OpenAI SDK shape is compatible in theory, but Agnes requires
+   * `response_format` and image-input (`extra_body.image`) to live inside
+   * `extra_body` — a non-standard quirk that makes `client.images.generate`
+   * unreliable. We use a raw fetch against the provider base URL instead.
+   */
+  async generateImage(request: {
+    provider: string;
+    model: string;
+    prompt: string;
+    size?: string;
+    ratio?: string;
+    image?: string | string[];
+    returnBase64?: boolean;
+  }): Promise<{ url?: string; b64Json?: string; mimeType?: string; size?: string }> {
+    const { provider, model, prompt, size, ratio, image, returnBase64 } = request;
+
+    await this.assertCapability(provider, model, 'image');
+
+    const { baseUrl, apiKey } = await this.getProviderConnection(provider);
+
+    const images = Array.isArray(image) ? image : image ? [image] : [];
+
+    // `size` is required by the Agnes image API. Default to a safe 1:1 size.
+    const resolvedSize = size || '1024x1024';
+
+    const extraBody: Record<string, unknown> = {};
+    // Response format (url | b64_json) lives inside extra_body per Agnes docs.
+    extraBody.response_format = returnBase64 ? 'b64_json' : 'url';
+    if (images.length > 0) {
+      extraBody.image = images;
+    }
+    if (ratio) {
+      extraBody.ratio = ratio;
+    }
+
+    // `return_base64` is a top-level flag for text-to-image per the 2.1 docs.
+    const body: Record<string, unknown> = {
+      model,
+      prompt,
+      size: resolvedSize,
+      n: 1,
+      ...(returnBase64 ? { return_base64: true } : {}),
+      extra_body: extraBody,
+    };
+
+    const result = await this.withRetry(async () => {
+      const res = await fetch(`${baseUrl}/images/generations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(360_000),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Agnes image generation failed (${res.status}): ${text.slice(0, 500)}`);
+      }
+
+      return (await res.json()) as {
+        data?: Array<{ url?: string; b64_json?: string }>;
+        mime_type?: string;
+        size?: string;
+      };
+    }, 'generateImage');
+
+    const first = result.data?.[0];
+    if (!first) {
+      throw new Error('Agnes image generation returned no data');
+    }
+
+    return {
+      url: first.url ?? undefined,
+      b64Json: first.b64_json ?? undefined,
+      mimeType: result.mime_type,
+      size: result.size,
+    };
+  }
+
+  /**
+   * Creates an asynchronous video generation task via `POST /v1/videos`.
+   * Returns the video id immediately; the caller polls `getVideoResult`.
+   */
+  async createVideoTask(request: {
+    provider: string;
+    model: string;
+    prompt: string;
+    image?: string;
+    mode?: 'ti2vid' | 'keyframes';
+    height?: number;
+    width?: number;
+    numFrames?: number;
+    frameRate?: number;
+    numInferenceSteps?: number;
+    seed?: number;
+    negativePrompt?: string;
+  }): Promise<{ taskId?: string; videoId: string; status: 'queued' | 'in_progress' | 'completed' | 'failed'; seconds?: number | string; size?: string }> {
+    const { provider, model, prompt, image, mode, height, width, numFrames, frameRate, numInferenceSteps, seed, negativePrompt } = request;
+
+    await this.assertCapability(provider, model, 'video');
+
+    const { baseUrl, apiKey } = await this.getProviderConnection(provider);
+
+    const extraBody: Record<string, unknown> = {};
+    if (mode) {
+      extraBody.mode = mode;
+    }
+
+    const body: Record<string, unknown> = {
+      model,
+      prompt,
+      ...(image ? { image } : {}),
+      ...(height ? { height } : {}),
+      ...(width ? { width } : {}),
+      ...(numFrames ? { num_frames: numFrames } : {}),
+      ...(frameRate ? { frame_rate: frameRate } : {}),
+      ...(typeof numInferenceSteps === 'number' ? { num_inference_steps: numInferenceSteps } : {}),
+      ...(typeof seed === 'number' ? { seed } : {}),
+      ...(negativePrompt ? { negative_prompt: negativePrompt } : {}),
+      ...(Object.keys(extraBody).length > 0 ? { extra_body: extraBody } : {}),
+    };
+
+    const res = await fetch(`${baseUrl}/videos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(120_000),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Agnes video creation failed (${res.status}): ${text.slice(0, 500)}`);
+    }
+
+    const json = (await res.json()) as {
+      task_id?: string;
+      video_id?: string;
+      id?: string;
+      status?: string;
+      seconds?: number;
+      size?: string;
+    };
+
+    const videoId = json.video_id ?? json.id ?? json.task_id ?? '';
+    if (!videoId) {
+      throw new Error('Agnes video creation returned no video id');
+    }
+
+    return {
+      taskId: json.task_id,
+      videoId,
+      status: (json.status as any) ?? 'queued',
+      seconds: json.seconds,
+      size: json.size,
+    };
+  }
+
+  /**
+   * Polls the video generation status via `GET /agnesapi?video_id=<id>`.
+   */
+  async getVideoResult(
+    videoId: string,
+    provider: string,
+  ): Promise<{ status: 'queued' | 'in_progress' | 'completed' | 'failed'; url?: string; error?: string | Record<string, unknown> | null; seconds?: number | string }> {
+    const { baseUrl, apiKey } = await this.getProviderConnection(provider);
+
+    const res = await fetch(`${baseUrl}/agnesapi?video_id=${encodeURIComponent(videoId)}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+      signal: AbortSignal.timeout(60_000),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Agnes video poll failed (${res.status}): ${text.slice(0, 500)}`);
+    }
+
+    const json = (await res.json()) as {
+      status?: string;
+      video_url?: string;
+      url?: string;
+      error?: string;
+      seconds?: number;
+    };
+
+    const status = (json.status ?? 'in_progress') as 'queued' | 'in_progress' | 'completed' | 'failed';
+
+    if (status === 'failed') {
+      throw new Error(json.error ?? 'Agnes video generation failed');
+    }
+
+    return {
+      status,
+      url: json.video_url ?? json.url,
+      seconds: json.seconds,
+    };
   }
 }

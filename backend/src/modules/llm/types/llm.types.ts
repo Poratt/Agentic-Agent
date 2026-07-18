@@ -2,6 +2,56 @@ import type OpenAI from 'openai';
 
 export type LlmProvider = 'openrouter' | 'nvidia' | 'ollama' | 'ollama-cloud' | 'agnes-ai';
 
+export type LlmModelCapability = 'text' | 'image' | 'video';
+
+export type LlmImageSizeTier = '1K' | '2K' | '3K' | '4K';
+
+export interface LlmImageRequest {
+  prompt: string;
+  model?: string;
+  size?: string;
+  ratio?: string;
+  image?: string | string[];
+  returnBase64?: boolean;
+  providerOverride?: string;
+}
+
+export interface LlmImageResult {
+  url?: string;
+  b64Json?: string;
+  mimeType?: string;
+  size?: string;
+}
+
+export interface LlmVideoRequest {
+  prompt: string;
+  model?: string;
+  image?: string;
+  mode?: 'ti2vid' | 'keyframes';
+  height?: number;
+  width?: number;
+  numFrames?: number;
+  frameRate?: number;
+  numInferenceSteps?: number;
+  seed?: number;
+  negativePrompt?: string;
+}
+
+export interface LlmVideoTask {
+  taskId?: string;
+  videoId: string;
+  status: 'queued' | 'in_progress' | 'completed' | 'failed';
+  seconds?: number | string;
+  size?: string;
+}
+
+export interface LlmVideoResult {
+  status: 'queued' | 'in_progress' | 'completed' | 'failed';
+  url?: string;
+  error?: string | Record<string, unknown> | null;
+  seconds?: number | string;
+}
+
 export type LlmToolSchema = {
   type: 'function';
   function?: {
