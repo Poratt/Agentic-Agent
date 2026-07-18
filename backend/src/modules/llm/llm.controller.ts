@@ -6,6 +6,7 @@ import {
   Param,
   Query,
   UseGuards,
+  Logger,
   NotFoundException,
   Body,
   BadRequestException,
@@ -41,6 +42,8 @@ import { LlmModelCapability } from './types/llm.types';
 @ApiBearerAuth()
 @Controller('llm')
 export class LlmController {
+  private readonly logger = new Logger(LlmController.name);
+
   constructor(
     private readonly healthService: LlmHealthService,
     private readonly dbProviderService: LlmProviderService,
@@ -121,7 +124,11 @@ export class LlmController {
       throw new NotFoundException('No active image model found');
     }
 
-    return this.client.generateImage({
+    this.logger.log(
+      `generateImage resolved model=${resolved.model.key} (id=${resolved.model.id}) provider=${resolved.providerKey}${dto.modelId ? '' : ' [fallback]'}`,
+    );
+
+    const result = await this.client.generateImage({
       provider: resolved.providerKey,
       model: resolved.model.key,
       prompt: dto.prompt,
@@ -130,6 +137,8 @@ export class LlmController {
       image: dto.image,
       returnBase64: dto.returnBase64,
     });
+
+    return { ...result, model: resolved.model.key };
   }
 
   @Post('video/generate')
@@ -155,7 +164,7 @@ export class LlmController {
       throw new NotFoundException('No active video model found');
     }
 
-    return this.client.createVideoTask({
+    return this.client.createVideoTaskAndWait({
       provider: resolved.providerKey,
       model: resolved.model.key,
       prompt: dto.prompt,
@@ -167,7 +176,7 @@ export class LlmController {
       frameRate: dto.frameRate,
       seed: dto.seed,
       negativePrompt: dto.negativePrompt,
-    });
+    }).then((result) => ({ ...result, model: resolved.model.key }));
   }
 
   @Get('video/:videoId')
@@ -194,7 +203,8 @@ export class LlmController {
       throw new NotFoundException('No active video model found');
     }
 
-    return this.client.getVideoResult(videoId, resolved.providerKey);
+    const result = await this.client.getVideoResult(videoId, resolved.providerKey);
+    return { ...result, model: resolved.model.key };
   }
 
   /**
@@ -230,18 +240,33 @@ export class LlmController {
 
     if (providerOverride) {
       const provider = providersResult.result.find((p) => p.key === providerOverride && p.active);
-      const match = provider?.models?.find((m) => m.active && m.capability === capability);
+      const match = this.pickLatestModel(provider?.models ?? [], capability);
       return match ? { model: match, providerKey: provider!.key } : null;
     }
 
     for (const provider of providersResult.result) {
       if (!provider.active) continue;
-      const match = provider.models?.find((m) => m.active && m.capability === capability);
+      const match = this.pickLatestModel(provider.models ?? [], capability);
       if (match) {
         return { model: match, providerKey: provider.key };
       }
     }
 
     return null;
+  }
+
+  private pickLatestModel(
+    models: LlmModelEntity[],
+    capability: LlmModelCapability,
+  ): LlmModelEntity | undefined {
+    return models
+      .filter((m) => m.active && m.capability === capability)
+      .sort((a, b) => this.extractVersion(b.key) - this.extractVersion(a.key))[0];
+  }
+
+  private extractVersion(key: string): number {
+    const matches = key.match(/(\d+(?:\.\d+)?)/g);
+    if (!matches || matches.length === 0) return 0;
+    return Number(matches[matches.length - 1]);
   }
 }

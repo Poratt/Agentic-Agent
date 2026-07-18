@@ -16,6 +16,8 @@ export enum RenderSpecType {
   LlmTestResults = 'llm-test-results',
   DeleteConfirm = 'delete-confirm',
   RegisterForm = 'register-form',
+  AgnesImage = 'agnes-image',
+  AgnesVideo = 'agnes-video',
 }
 
 const renderSpecDiscriminatedSchema = z.discriminatedUnion('type', [
@@ -34,6 +36,8 @@ const renderSpecDiscriminatedSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal(RenderSpecType.LlmTestResults), data: z.record(z.string(), z.unknown()) }),
   z.object({ type: z.literal(RenderSpecType.DeleteConfirm), data: z.record(z.string(), z.unknown()) }),
   z.object({ type: z.literal(RenderSpecType.RegisterForm), data: z.record(z.string(), z.unknown()) }),
+  z.object({ type: z.literal(RenderSpecType.AgnesImage), data: z.record(z.string(), z.unknown()) }),
+  z.object({ type: z.literal(RenderSpecType.AgnesVideo), data: z.record(z.string(), z.unknown()) }),
 ]);
 
 export type RenderSpec = z.infer<typeof renderSpecDiscriminatedSchema>;

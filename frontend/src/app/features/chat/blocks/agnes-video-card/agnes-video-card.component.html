@@ -1,0 +1,18 @@
+<div class="agnes-video-card glass-effect">
+    <div class="agnes-video-header">
+        <span class="ph ph-video-camera"></span>
+        <span class="agnes-video-title">סרטון שנוצר</span>
+        @if (data().model) {
+            <span class="agnes-video-model">{{ data().model }}</span>
+        }
+        @if (secondsLabel()) {
+            <span class="agnes-video-seconds">{{ secondsLabel() }}</span>
+        }
+    </div>
+
+    @if (data().url) {
+        <video class="agnes-video" [src]="data().url" controls preload="metadata"></video>
+    } @else {
+        <div class="agnes-video-empty">לא התקבל קישור לסרטון</div>
+    }
+</div>

@@ -1,0 +1,20 @@
+<div class="agnes-image-card glass-effect">
+    <div class="agnes-image-header">
+        <span class="ph ph-image"></span>
+        <span class="agnes-image-title">תמונה שנוצרה</span>
+        @if (data().size) {
+            <span class="agnes-image-size">{{ data().size }}</span>
+        }
+        @if (data().model) {
+            <span class="agnes-image-model">{{ data().model }}</span>
+        }
+    </div>
+
+    @if (imageSrc()) {
+        <a class="agnes-image-link" [href]="imageSrc()" target="_blank" rel="noopener">
+            <img class="agnes-image" [src]="imageSrc()" alt="תמונה שנוצרה על ידי Agnes" loading="lazy" />
+        </a>
+    } @else {
+        <div class="agnes-image-empty">לא התקבלה תמונה</div>
+    }
+</div>

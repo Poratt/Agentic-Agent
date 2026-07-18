@@ -403,6 +403,40 @@ export class LlmClientService {
   }
 
   /**
+   * Creates a video task and polls until it completes (or fails), so callers
+   * receive a ready-to-use `.mp4` URL instead of an async job id. This avoids
+   * the agent hallucinating a link when it skips the manual poll step.
+   */
+  async createVideoTaskAndWait(
+    request: Parameters<LlmClientService['createVideoTask']>[0],
+    options: { timeoutMs?: number; pollIntervalMs?: number } = {},
+  ): Promise<{
+    taskId?: string;
+    videoId: string;
+    status: 'queued' | 'in_progress' | 'completed' | 'failed';
+    url?: string;
+    seconds?: number | string;
+    size?: string;
+  }> {
+    const { timeoutMs = 150_000, pollIntervalMs = 5_000 } = options;
+    const created = await this.createVideoTask(request);
+
+    const deadline = Date.now() + timeoutMs;
+    let latest = created;
+
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+      const status = await this.getVideoResult(created.videoId, request.provider);
+      latest = { ...created, ...status };
+      if (status.status === 'completed' || status.status === 'failed') {
+        break;
+      }
+    }
+
+    return latest;
+  }
+
+  /**
    * Polls the video generation status via `GET /agnesapi?video_id=<id>`.
    */
   async getVideoResult(

@@ -20,6 +20,8 @@ import { AnalyticsChartRenderSpecSchema } from './analytics.render-spec';
 import { SystemStatusRenderSpecSchema } from './system.render-spec';
 import { DatabaseStorageRenderSpecSchema } from './db-monitor.render-spec';
 import { LlmTestResultsRenderSpecSchema } from './llm.render-spec';
+import { AgnesImageRenderSpecSchema } from './image.render-spec';
+import { AgnesVideoRenderSpecSchema } from './video.render-spec';
 import {
   DeleteConfirmRenderSpecSchema,
   RegisterFormRenderSpecSchema,
@@ -330,6 +332,49 @@ const TOOL_RENDER_MAPPINGS: ToolRenderMapping[] = [
       return {
         results: [single],
         summary: undefined,
+      };
+    },
+  },
+  {
+    toolName: 'LlmController_generateImage',
+    renderType: RenderSpecType.AgnesImage,
+    schema: AgnesImageRenderSpecSchema,
+    transform: (data) => {
+      const r = data.result ?? data.data ?? data;
+      return {
+        url: r.url ?? undefined,
+        b64Json: r.b64Json ?? r.b64_json ?? undefined,
+        mimeType: r.mimeType ?? r.mime_type ?? undefined,
+        size: r.size ?? undefined,
+        model: r.model ?? undefined,
+      };
+    },
+  },
+  {
+    toolName: 'LlmController_getVideo',
+    renderType: RenderSpecType.AgnesVideo,
+    schema: AgnesVideoRenderSpecSchema,
+    transform: (data) => {
+      const r = data.result ?? data.data ?? data;
+      return {
+        url: r.url ?? r.video_url ?? undefined,
+        status: r.status,
+        seconds: r.seconds,
+        model: r.model ?? undefined,
+      };
+    },
+  },
+  {
+    toolName: 'LlmController_createVideo',
+    renderType: RenderSpecType.AgnesVideo,
+    schema: AgnesVideoRenderSpecSchema,
+    transform: (data) => {
+      const r = data.result ?? data.data ?? data;
+      return {
+        url: r.url ?? r.video_url ?? undefined,
+        status: r.status,
+        seconds: r.seconds,
+        model: r.model ?? undefined,
       };
     },
   },

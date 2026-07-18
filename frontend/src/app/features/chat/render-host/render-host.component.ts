@@ -14,11 +14,13 @@ import { TranscriptTimelineComponent } from '../blocks/transcript-timeline/trans
 import { SystemStatusDashboardComponent } from '../blocks/system-status-dashboard/system-status-dashboard.component';
 import { DatabaseStorageMonitorComponent } from '../blocks/database-storage-monitor/database-storage-monitor.component';
 import { RegisterFormComponent } from '../blocks/register-form/register-form.component';
+import { AgnesImageCardComponent } from '../blocks/agnes-image-card/agnes-image-card.component';
+import { AgnesVideoCardComponent } from '../blocks/agnes-video-card/agnes-video-card.component';
 
 @Component({
     selector: 'app-render-host',
     standalone: true,
-    imports: [WeatherCurrentCardComponent, CurrencyCardComponent, DeleteConfirmCardComponent, SessionCreatedCardComponent, RoleChangeCardComponent, UsersTableComponent, AnalyticsChartComponent, ChatSessionsListComponent, UserProfileCardComponent, LlmTestResultsComponent, WeatherForecastComponent, TranscriptTimelineComponent, SystemStatusDashboardComponent, DatabaseStorageMonitorComponent, RegisterFormComponent],
+    imports: [WeatherCurrentCardComponent, CurrencyCardComponent, DeleteConfirmCardComponent, SessionCreatedCardComponent, RoleChangeCardComponent, UsersTableComponent, AnalyticsChartComponent, ChatSessionsListComponent, UserProfileCardComponent, LlmTestResultsComponent, WeatherForecastComponent, TranscriptTimelineComponent, SystemStatusDashboardComponent, DatabaseStorageMonitorComponent, RegisterFormComponent, AgnesImageCardComponent, AgnesVideoCardComponent],
     template: `
         <div class="render-host-root">
             @switch (componentType()) {
@@ -66,6 +68,12 @@ import { RegisterFormComponent } from '../blocks/register-form/register-form.com
                 }
                 @case ('register-form') {
                     <app-register-form [data]="renderData()" />
+                }
+                @case ('agnes-image') {
+                    <app-agnes-image-card [data]="renderData()" />
+                }
+                @case ('agnes-video') {
+                    <app-agnes-video-card [data]="renderData()" />
                 }
                 @default {
                     <div class="render-placeholder">Component not available</div>
