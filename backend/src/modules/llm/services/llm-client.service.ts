@@ -20,7 +20,7 @@ export class LlmClientService {
     const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools, image, maxTokens } = llmRequest;
 
     // 🚀 הבאת הקליינט בצורה אסינכרונית מה-DB 🚀
-    const client = await this.getClient(providerOverride);
+    const { client, dbProvider } = await this.getClient(providerOverride);
     const activeProvider = providerOverride || this.providerConfig.getActiveProvider();
     const activeModel = modelOverride || this.providerConfig.getActiveModel();
 
@@ -59,6 +59,7 @@ export class LlmClientService {
     const toolCalls = (message.tool_calls || []) as LlmToolCall[];
 
     this.logger.log(`Response OK: content=${content?.length ?? 0} chars: ${content?.slice(0, 200)}... toolCalls=${toolCalls.length}`);
+    this.logger.log(`[RESPONSE] provider=${dbProvider.key} (${dbProvider.label}) model=${activeModel} tokens=${content?.length ?? 0}`);
     return { content, toolCalls };
   }
 
@@ -66,7 +67,7 @@ export class LlmClientService {
     const { prompt, systemContext, messageHistory, providerOverride, modelOverride, tools, image, maxTokens } = llmRequest;
 
     // 🚀 הבאת הקליינט בצורה אסינכרונית מה-DB 🚀
-    const client = await this.getClient(providerOverride);
+    const { client, dbProvider } = await this.getClient(providerOverride);
     const activeProvider = providerOverride || this.providerConfig.getActiveProvider();
     const activeModel = modelOverride || this.providerConfig.getActiveModel();
 
@@ -105,6 +106,8 @@ export class LlmClientService {
       this.logger.error(`Stream Error (after retries): ${this.getErrorMessage(error)}`);
       throw error;
     }
+
+    this.logger.log(`[STREAM RESPONSE] provider=${dbProvider.key} (${dbProvider.label}) model=${activeModel}`);
   }
 
   private buildUserMessage(
@@ -126,7 +129,7 @@ export class LlmClientService {
     ];
   }
 
-  private async getClient(providerOverride?: string): Promise<OpenAI> {
+  private async getClient(providerOverride?: string): Promise<{ client: OpenAI; dbProvider: Awaited<ReturnType<typeof this.dbProviderService.findProviderByKey>> }> {
     const providerKey = providerOverride || this.providerConfig.getActiveProvider();
 
     const dbProvider = await this.dbProviderService.findProviderByKey(providerKey);
@@ -135,16 +138,16 @@ export class LlmClientService {
       throw new Error(`LLM Provider with key '${providerKey}' was not found in the database.`);
     }
 
-    this.logger.log(`Initializing OpenAI client for ${dbProvider.label} using DB credentials.`);
+    this.logger.log(`Initializing OpenAI client for ${dbProvider.label} (${dbProvider.key}) using DB credentials.`);
 
-    // console.log(dbProvider);
-
-
-    return new OpenAI({
-      baseURL: dbProvider.baseUrl,
-      apiKey: dbProvider.apiKey ? dbProvider.apiKey.trim() : undefined,
-      defaultHeaders: this.providerConfig.getDefaultHeaders(dbProvider.key as any),
-    });
+    return {
+      client: new OpenAI({
+        baseURL: dbProvider.baseUrl,
+        apiKey: dbProvider.apiKey ? dbProvider.apiKey.trim() : undefined,
+        defaultHeaders: this.providerConfig.getDefaultHeaders(dbProvider.key as any),
+      }),
+      dbProvider,
+    };
   }
 
   private async withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
