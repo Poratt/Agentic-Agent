@@ -104,17 +104,21 @@ export class ChatMessage implements OnDestroy {
         return this.isAssistant() && (this.hasSteps() || this.showPreparingLoader());
     });
     hasActiveToolStep = computed(() => {
-        const steps = this.displaySteps();
+        const steps = this.steps();
         const lastStep = steps[steps.length - 1];
-        return !!lastStep && !lastStep.statusIcon;
+        return !!lastStep && !this.isStatusStep(lastStep.icon);
     });
+
+    private _hasNoActiveToolStep(): boolean {
+        return !this.hasActiveToolStep();
+    }
     showPreparingLoader = computed(() => {
         return (
             this.isAssistant() &&
             this.streamState() === 'streaming' &&
             !this.hasQueuedText() &&
             !this.displayedContent().trim() &&
-            !this.hasActiveToolStep()
+            this._hasNoActiveToolStep()
         );
     });
     isRenderingTemplate = computed(() => {
