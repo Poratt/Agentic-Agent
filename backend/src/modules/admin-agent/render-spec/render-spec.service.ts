@@ -331,6 +331,7 @@ const TOOL_RENDER_MAPPINGS: ToolRenderMapping[] = [
 export class RenderSpecService {
   private readonly logger = new Logger(RenderSpecService.name);
   private readonly toolMappingMap: Map<string, ToolRenderMapping>;
+  private readonly unmappedToolCounts = new Map<string, number>();
 
   constructor() {
     this.toolMappingMap = new Map(TOOL_RENDER_MAPPINGS.map((m) => [m.toolName, m]));
@@ -340,7 +341,9 @@ export class RenderSpecService {
     try {
       const mapping = this.toolMappingMap.get(toolName);
       if (!mapping) {
-        this.logger.debug(`No render mapping for tool: ${toolName}`);
+        const count = (this.unmappedToolCounts.get(toolName) ?? 0) + 1;
+        this.unmappedToolCounts.set(toolName, count);
+        this.logger.warn(`No render mapping for tool: ${toolName} (hit #${count})`);
         return null;
       }
 
@@ -381,5 +384,9 @@ export class RenderSpecService {
       this.logger.warn(`buildRenderSpec failed for ${toolName}: ${message}`);
       return null;
     }
+  }
+
+  getUnmappedToolStats(): Record<string, number> {
+    return Object.fromEntries(this.unmappedToolCounts);
   }
 }

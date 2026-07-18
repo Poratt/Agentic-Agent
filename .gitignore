@@ -61,3 +61,6 @@ coverage/
 *.log
 .tmp/
 temp/.codex/
+
+# Graphify cache
+graphify-out/
