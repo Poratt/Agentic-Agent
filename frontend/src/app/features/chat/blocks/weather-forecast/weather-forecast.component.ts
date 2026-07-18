@@ -1,4 +1,4 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface WeatherForecastRenderData {
@@ -24,4 +24,10 @@ export interface WeatherForecastRenderData {
 })
 export class WeatherForecastComponent {
     data = input<WeatherForecastRenderData>({});
+
+    cleanLocation = computed(() => {
+        const loc = this.data().location;
+        if (!loc) return '';
+        return loc.replace(/\s*\([\d.\s,]+\)\s*$/, '').trim();
+    });
 }

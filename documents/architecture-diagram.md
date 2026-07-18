@@ -7,7 +7,8 @@ The system is a full-stack admin application:
 - Angular frontend for chat, authentication, layout, and admin screens.
 - NestJS backend for REST APIs, authentication, database access, agent orchestration, and LLM access.
 - Swagger-generated tool metadata that turns backend endpoints into callable admin-agent tools.
-- External providers for LLMs, weather, currency, and local Ollama models.
+- MCP Bridge for external tool servers (weather-mcp, etc.).
+- External providers for LLMs, currency, and local Ollama models.
 
 ## System Architecture
 
@@ -34,7 +35,7 @@ flowchart TD
     AdminAgentModule[AdminAgentModule]
     LlmModule[LlmModule]
     SystemModule[SystemModule]
-    WeatherModule[WeatherModule]
+    McpBridgeModule[McpBridgeModule]
     AnalyticsModule[AnalyticsModule]
     CurrencyModule[CurrencyModule]
     StrainHunterModule[StrainHunterModule]
@@ -48,6 +49,7 @@ flowchart TD
     AgentSessionService[AgentSessionService]
     AgentToolExecutor[AgentToolExecutorService]
     SwaggerParser[SwaggerToolsParser]
+    McpBridge[McpBridgeService]
     SystemContext[SYSTEM_CONTEXT]
     GenUiSpec[GenUiSpec Constants]
   end
@@ -73,7 +75,7 @@ flowchart TD
     OpenRouter[OpenRouter API]
     Nvidia[NVIDIA API]
     Ollama[Local Ollama]
-    WeatherApi[Weather API]
+    WeatherMcp[Weather MCP Server]
     CurrencyApi[Currency API]
     JaneApi[Jane API / Store Page]
   end
@@ -87,12 +89,12 @@ flowchart TD
   AuthUI --> FrontendServices
   FrontendServices --> AuthModule & UsersModule & AdminAgentController & LlmController & TerpeneModule & GeneticsModule
 
-  AppModule --> AuthModule & UsersModule & AdminAgentModule & LlmModule & SystemModule & WeatherModule & AnalyticsModule & CurrencyModule & StrainHunterModule & TerpeneModule & GeneticsModule
+  AppModule --> AuthModule & UsersModule & AdminAgentModule & LlmModule & SystemModule & McpBridgeModule & AnalyticsModule & CurrencyModule & StrainHunterModule & TerpeneModule & GeneticsModule
 
   AdminAgentModule --> AdminAgentController
   AdminAgentController --> AdminAgentService
-  AdminAgentService --> AgentSessionService & AgentToolExecutor & SwaggerParser & SystemContext & LlmService
-  AgentToolExecutor --> SwaggerParser & AuthModule & UsersModule & SystemModule & WeatherModule & AnalyticsModule & CurrencyModule & StrainHunterModule & TerpeneModule & GeneticsModule
+  AdminAgentService --> AgentSessionService & AgentToolExecutor & SwaggerParser & McpBridge & SystemContext & LlmService
+  AgentToolExecutor --> SwaggerParser & McpBridge & AuthModule & UsersModule & SystemModule & AnalyticsModule & CurrencyModule & StrainHunterModule & TerpeneModule & GeneticsModule
   SwaggerParser --> SwaggerSpec[swagger-spec.json]
   SwaggerSpec --> GenUiSpec
 
@@ -108,7 +110,7 @@ flowchart TD
   AgentSessionService --> ChatSessionsTable & ChatMessagesTable
   AnalyticsModule --> UsersTable & ChatSessionsTable & ChatMessagesTable
 
-  WeatherModule --> WeatherApi
+  McpBridge --> WeatherMcp
   CurrencyModule --> CurrencyApi
   StrainHunterModule --> JaneApi
 ```
@@ -127,6 +129,8 @@ sequenceDiagram
   participant LLM as LlmService Facade
   participant Client as LlmClientService
   participant Tools as AgentToolExecutorService
+  participant McpBridge as McpBridgeService
+  participant McpServer as Weather MCP Server
   participant BackendTool as Backend Tool
   participant DB as Database
 
@@ -150,11 +154,20 @@ sequenceDiagram
     Agent->>Agent: Group safe GET tools
 
     par Safe tools (parallel)
-      Agent->>Tools: executeToolCall()
-      Tools->>BackendTool: Internal request
-      BackendTool->>DB: Query
-      DB-->>Tools: Result
-      Tools-->>Agent: JSON result
+      alt MCP tool (dispatch branch)
+        Agent->>Tools: executeToolCall()
+        Tools->>McpBridge: callTool()
+        McpBridge->>McpServer: stdin JSON-RPC
+        McpServer-->>McpBridge: stdout result
+        McpBridge-->>Tools: markdown text
+        Tools-->>Agent: result
+      else Swagger tool
+        Agent->>Tools: executeToolCall()
+        Tools->>BackendTool: Internal request
+        BackendTool->>DB: Query
+        DB-->>Tools: Result
+        Tools-->>Agent: JSON result
+      end
     end
 
     Agent->>Sessions: Save tool results
@@ -225,7 +238,7 @@ flowchart TB
     AdminAgent["AdminAgentModule"]
     LLM["LlmModule\nfacade, config, client, model catalog, health checks"]
     System["SystemModule"]
-    Weather["WeatherModule"]
+    McpBridge["McpBridgeModule\nMCP tool server integration\n(stdio transport, child process)"]
     Analytics["AnalyticsModule"]
     Currency["CurrencyModule"]
     StrainHunter["StrainHunterModule\nJane API fetch and normalized items"]
@@ -237,7 +250,7 @@ flowchart TB
   AdminAgent --> ChatDb[(chat_sessions\nchat_messages)]
   Analytics --> UsersDb & ChatDb
   System --> UsersDb & ChatDb
-  Weather --> WeatherApi[Weather API]
+  McpBridge --> WeatherMcp[Weather MCP Server]
   Currency --> CurrencyApi[Currency API]
   StrainHunter --> JaneApi[Jane API / Store Page]
   Terpene --> TerpenesDb[(terpenes)]
@@ -348,6 +361,7 @@ sequenceDiagram
 
 - The backend is the source of truth for available LLM models.
 - Swagger metadata is the tool catalog for the admin agent.
+- MCP Bridge integrates external tool servers (weather-mcp, etc.) via stdio transport as child processes. MCP tools are merged into the agent's tool list alongside Swagger tools.
 - `genUiSpec` is defined in shared constants and attached via Swagger decorators.
 - The agent currently runs in a single active flow.
 - Read-only tools run in parallel, mutations run sequentially.

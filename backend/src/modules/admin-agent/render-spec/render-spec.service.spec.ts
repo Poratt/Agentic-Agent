@@ -14,76 +14,19 @@ describe('RenderSpecService', () => {
       expect(result).toBeNull();
     });
 
-    it('returns null for malformed JSON strings', () => {
-      const result = service.buildRenderSpec('WeatherController_getWeather', 'not-json');
+    it('returns null for malformed JSON strings (Swagger tool)', () => {
+      const result = service.buildRenderSpec('CurrencyController_convert', 'not-json');
       expect(result).toBeNull();
     });
 
-    it('returns null when result contains error field', () => {
-      const result = service.buildRenderSpec('WeatherController_getWeather', JSON.stringify({ error: 'fail' }));
+    it('returns null when result contains error field (Swagger tool)', () => {
+      const result = service.buildRenderSpec('CurrencyController_convert', JSON.stringify({ error: 'fail' }));
       expect(result).toBeNull();
     });
 
-    it('returns null for non-object result data', () => {
-      const result = service.buildRenderSpec('WeatherController_getWeather', JSON.stringify('just a string'));
+    it('returns null for non-object result data (Swagger tool)', () => {
+      const result = service.buildRenderSpec('CurrencyController_convert', JSON.stringify('just a string'));
       expect(result).toBeNull();
-    });
-
-    it('builds a WeatherCurrent render spec', () => {
-      const data = {
-        success: true,
-        message: 'ok',
-        result: {
-          tempC: '25',
-          feelsLikeC: '23',
-          humidity: '60',
-          description: 'Partly cloudy',
-          windSpeedKmph: '10',
-          windDirection: 'N',
-          uvIndex: '5',
-          cloudCover: '20',
-          precipitationMm: '0',
-          pressure: '1013',
-          visibility: '10',
-          observationTime: '12:00',
-          requestLocalTime: '15:00',
-        },
-      };
-      const result = service.buildRenderSpec('WeatherController_getWeather', JSON.stringify(data));
-
-      expect(result).not.toBeNull();
-      expect(result!.type).toBe(RenderSpecType.WeatherCurrent);
-      expect(result!.data).toEqual(expect.objectContaining({
-        tempC: 25,
-        feelsLikeC: 23,
-        humidity: 60,
-        weatherDesc: 'Partly cloudy',
-        windSpeedKmph: 10,
-        windDirection: 'N',
-      }));
-    });
-
-    it('builds a WeatherForecast render spec', () => {
-      const data = {
-        success: true,
-        message: 'ok',
-        result: {
-          city: 'Tel Aviv',
-          forecast: [
-            { date: '2026-07-16', dayName: 'Thursday', tempMax: 30, tempMin: 22, humidity: 50, description: 'Sunny', emoji: '☀️' },
-          ],
-        },
-      };
-      const result = service.buildRenderSpec('WeatherController_getForecast', JSON.stringify(data));
-
-      expect(result).not.toBeNull();
-      expect(result!.type).toBe(RenderSpecType.WeatherForecast);
-      expect(result!.data).toEqual(expect.objectContaining({
-        location: 'Tel Aviv',
-        forecast: expect.arrayContaining([
-          expect.objectContaining({ maxTempC: 30, minTempC: 22, weatherDesc: 'Sunny', weatherEmoji: '☀️' }),
-        ]),
-      }));
     });
 
     it('builds a Currency render spec for convert', () => {
@@ -277,14 +220,14 @@ describe('RenderSpecService', () => {
           description: 'Clear',
         },
       };
-      const result = service.buildRenderSpec('WeatherController_getWeather', data);
+      const result = service.buildRenderSpec('get_current_conditions', data);
 
       expect(result).not.toBeNull();
       expect(result!.type).toBe(RenderSpecType.WeatherCurrent);
     });
 
-    it('returns null gracefully on unexpected errors', () => {
-      const result = service.buildRenderSpec('WeatherController_getWeather', null);
+    it('returns null gracefully on unexpected errors (null input)', () => {
+      const result = service.buildRenderSpec('CurrencyController_convert', null);
       expect(result).toBeNull();
     });
   });

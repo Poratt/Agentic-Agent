@@ -7,6 +7,7 @@ import { AdminAgentService } from './admin-agent.service';
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
 import { LlmModule } from '../llm/llm.module';
+import { McpBridgeModule } from '../mcp-bridge/mcp-bridge.module';
 import { ChatMessage } from './entities/chat-message.entity';
 import { ChatSession } from './entities/chat-session.entity';
 import { AgentActionAuditLog } from './entities/agent-action-audit-log.entity';
@@ -23,6 +24,7 @@ import { RenderSpecService } from './render-spec/render-spec.service';
     UsersModule,
     AuthModule,
     LlmModule,
+    McpBridgeModule,
   ],
   controllers: [AdminAgentController],
   providers: [

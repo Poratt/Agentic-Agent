@@ -5,6 +5,7 @@ import { AgentSessionService } from './services/agent-session.service';
 import { AgentToolExecutorService } from './services/agent-tool-executor.service';
 import { SwaggerToolsParser } from './services/swagger-tools.parser';
 import { RenderSpecService } from './render-spec/render-spec.service';
+import { McpBridgeService } from '../mcp-bridge/mcp-bridge.service';
 import { LlmToolCall } from '../llm/types/llm.types';
 
 function makeService(): AdminAgentService {
@@ -14,6 +15,7 @@ function makeService(): AdminAgentService {
     {} as AgentSessionService,
     {} as AgentToolExecutorService,
     new RenderSpecService(),
+    { getTools: () => [], hasTool: () => false } as unknown as McpBridgeService,
   );
 }
 

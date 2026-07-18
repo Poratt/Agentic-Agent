@@ -8,6 +8,7 @@ import { firstValueFrom } from 'rxjs';
 import { User } from '../../users/entities/user.entity';
 import { LlmToolCall } from '../../llm/types/llm.types';
 import { SwaggerToolsParser } from './swagger-tools.parser';
+import { McpBridgeService } from '../../mcp-bridge/mcp-bridge.service';
 import { AxiosRequestConfig } from 'axios';
 
 export interface PendingAction {
@@ -38,6 +39,7 @@ export class AgentToolExecutorService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly swaggerToolsParser: SwaggerToolsParser,
+    private readonly mcpBridgeService: McpBridgeService,
   ) { }
 
   private getPendingKey(sessionId: number, functionName: string, args: Record<string, any>): string {
@@ -161,7 +163,13 @@ export class AgentToolExecutorService {
       return endpointMeta.summary;
     }
 
-    return `מפעיל את כלי המערכת: ${functionName}`;
+    const mcpDescriptions: Record<string, string> = {
+      'get_current_conditions': 'מקבל מזג אוויר נוכחי',
+      'get_forecast': 'מקבל תחזית מזג אוויר',
+      'check_service_status': 'בודק סטטוס שירות',
+    };
+
+    return mcpDescriptions[functionName] ?? `מפעיל את כלי המערכת: ${functionName}`;
   }
 
   private checkActionAllowed(
@@ -213,6 +221,16 @@ export class AgentToolExecutorService {
   }
 
   async executeToolCall(call: LlmToolCall, userId: number, sessionId?: number): Promise<string> {
+    if (this.mcpBridgeService.hasTool(call.function.name)) {
+      let args: Record<string, any> = {};
+      try {
+        args = JSON.parse(call.function.arguments || '{}');
+      } catch {
+        // keep empty
+      }
+      return this.mcpBridgeService.callTool(call.function.name, args);
+    }
+
     const endpointMeta = this.swaggerToolsParser.getEndpoint(call.function.name);
     if (!endpointMeta) {
       this.logger.error(`Unknown tool call: ${call.function.name}`);

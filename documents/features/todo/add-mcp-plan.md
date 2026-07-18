@@ -4,6 +4,14 @@
 
 > Reference MCP server: https://github.com/weather-mcp/weather-mcp (`@dangahagan/weather-mcp`, stdio, 12+ weather tools, no API key required — uses Open-Meteo / NOAA).
 
+## Design principles
+
+1. **One place to add a server.** The `MCP_SERVERS` array in `mcp-bridge.config.ts` is the single source of truth. Adding a new MCP server = `npm install` + add one object to this array. No env JSON, no separate package map, no second file.
+2. **Auto-discover tools.** The bridge calls `listTools()` at connect and logs what it found. `enabledTools` is an optional filter, not a requirement. Phase 0 (manual tool inspection) becomes optional — the bridge tells you what it found.
+3. **Minimal diff to existing code.** The Swagger path is byte-for-byte unchanged. The MCP dispatch is a single `if` branch before `getEndpoint`. The render-spec `source` field is a one-line conditional, not a new abstraction layer.
+4. **Easy to read.** Flat file layout, no indirection. `mcp-bridge.config.ts` = what servers exist. `mcp-bridge.service.ts` = connect/tools/call. `mcp-server-client.ts` = SDK wrapper. That's it.
+5. **MCP output is markdown, not JSON.** `callTool` flattens `content[].text` to a string. Render-spec transforms parse key values from markdown using regex. This is more fragile than JSON key access — changes in the MCP package's markdown wording can silently break extraction. Pinned fixtures + snapshot-style field-existence tests mitigate this.
+
 ## Problem Statement
 
 Today every admin-agent tool is generated from `swagger-spec.json` by `SwaggerToolsParser`. The weather tools come from a hand-built `WeatherModule` (`WeatherController` + `WeatherService`) that calls `wttr.in` directly and post-processes/synthesizes data (the 5‑day forecast is partly random — see `backend/src/modules/weather/weather.service.ts:152-153`, the `Math.random()` and `Math.sin()` based day temps). We want to swap this for a standard MCP weather server that the agent can use, ideally in a way that lets us add _any_ MCP server later without writing a controller per tool.
@@ -20,7 +28,7 @@ Add a generic `McpBridgeModule` that:
 4. Routes tool calls for MCP-owned tools directly to the MCP client (JSON-RPC over stdio), bypassing the HTTP-back-into-backend path used for Swagger tools.
 5. Reuses the existing Angular weather cards by emitting the same `RenderSpecType` (`WeatherCurrent` / `WeatherForecast`) the frontend already renders.
 
-Weather is the first server; the design must support N servers added via config only.
+Weather is the first server; the design must support N servers added via **2 steps: install package + add array entry**.
 
 ## Scope
 
@@ -29,10 +37,20 @@ Weather is the first server; the design must support N servers added via config 
 - New `McpBridgeModule` (client manager + bridge service + config).
 - Merge MCP tools into `AdminAgentService` tool assembly (`queryDatabase` + `queryDatabaseStream`).
 - Add an MCP dispatch branch in `AgentToolExecutorService.executeToolCall`.
-- Extend the **parser's local** `LlmToolSchema` with a `source` discriminator.
+- Extend the **parser's local** `LlmToolSchema` with a `source` discriminator (observability only).
 - Add render-spec mappings for the MCP weather tool names (adapter from MCP output shape → existing `WeatherCurrentRenderData` / `WeatherForecastRenderData`).
 - Deprecate/remove the hand-built `WeatherModule` once the MCP path is verified.
 - Update `documents/architecture-diagram.md` and `documents/HANDOFF.md`.
+
+### Adding a new MCP server after this plan
+
+| Step | What | Where |
+|------|------|-------|
+| 1 | `npm install @some/mcp-server -w backend` | terminal |
+| 2 | Add one object to `MCP_SERVERS` array | `mcp-bridge.config.ts` |
+| 3 | _(Optional)_ Add render-spec adapter if custom UI needed | `render-specs/some.render-spec.ts` |
+
+That's it. 2 steps minimum. The bridge discovers tools, the executor dispatches by name, and the render-spec falls through to a generic JSON display if no adapter is registered.
 
 ### Out of scope
 
@@ -100,41 +118,55 @@ If the bridge module lives under `admin-agent` it can import this type directly.
 
 ```
 backend/src/modules/mcp-bridge/
-  mcp-bridge.module.ts
-  mcp-bridge.config.ts          # reads MCP servers from env
-  mcp-bridge.service.ts         # facade: getTools / hasTool / callTool
-  mcp-server-client.ts          # wraps SDK Client + StdioClientTransport
-  mcp-bridge.service.spec.ts
-  __fixtures__/
-    weather-mcp-current.json    # pinned MCP callTool('get_current_weather', ...) output
-    weather-mcp-forecast.json   # pinned MCP callTool('get_forecast', ...) output
+  mcp-bridge.module.ts       — NestJS module (register in AppModule)
+  mcp-bridge.config.ts       — MCP_SERVERS registry + resolveLaunchSpec
+  mcp-bridge.service.ts      — facade: getTools / hasTool / callTool / getToolIcon
+  mcp-server-client.ts       — wraps SDK Client + StdioClientTransport
+  mcp-bridge.service.spec.ts — unit tests
 ```
+
+**No `__fixtures__` in mcp-bridge.** Fixture files live in `render-spec/__fixtures__/` where they are consumed by the render-spec tests. The bridge module has no dependency on fixture data — it discovers tools at connect.
 
 The bridge module is a top-level module (`src/modules/mcp-bridge/`) — **not** a sub-module of `admin-agent`. Reasoning: (a) it owns its own lifecycle (spawn/close), (b) it has no internal coupling to admin-agent types, (c) it should be reusable in other NestJS apps. `AdminAgentModule` imports `McpBridgeModule` to access the service. NestJS resolves this through `imports`.
 
-### Config
+### Config — single source of truth
 
-`mcp-bridge.config.ts` — typed list from env, e.g.:
+`mcp-bridge.config.ts` — one file, one array. Adding a server = adding an object here.
 
 ```ts
-export interface McpServerConfig {
-  id: string; // 'weather'
-  command: string; // usually 'node' — the binary that runs the server
-  args: string[]; // resolved at runtime by mcp-bridge (see below)
-  enabled?: boolean; // default true
-  enabledTools?: string[]; // optional allowlist; omit = all
-  requiresConfirmation?: boolean; // default false (read-only servers)
-  toolIcons?: Record<string, string>; // optional tool name → phosphor class (e.g. 'get_forecast' → 'ph-calendar')
+// backend/src/modules/mcp-bridge/mcp-bridge.config.ts
+
+export interface McpServerDef {
+  id: string;                            // 'weather' — unique identifier
+  package: string;                       // npm package name, e.g. '@dangahagan/weather-mcp'
+  entry: string;                         // relative to package root, e.g. '/dist/index.js'
+  enabled?: boolean;                     // default true — set false to disable without removing
+  enabledTools?: string[];               // optional allowlist; omit = all discovered tools
+  requiresConfirmation?: boolean;        // default false (read-only servers)
+  toolIcons?: Record<string, string>;    // optional tool name → phosphor class
 }
 
+// THE registry — adding a new MCP server = adding one entry here
+export const MCP_SERVERS: McpServerDef[] = [
+  {
+    id: 'weather',
+    package: '@dangahagan/weather-mcp',
+    entry: '/dist/index.js',
+    enabledTools: ['get_forecast', 'get_current_conditions'],
+  },
+  // future servers go here
+];
+
 export interface McpBridgeConfig {
-  enabled: boolean; // MCP_ENABLED
-  connectTimeoutMs: number; // safety net for genuinely hung spawns (default 10_000)
-  servers: McpServerConfig[]; // parsed from MCP_SERVERS JSON
+  enabled: boolean;           // MCP_ENABLED env var (kill-switch, default false)
+  connectTimeoutMs: number;   // safety net for genuinely hung spawns (default 10_000)
+  servers: McpServerDef[];    // the MCP_SERVERS array above
 }
 ```
 
-**Env shape:** `MCP_ENABLED=false`, `MCP_SERVERS='[{"id":"weather","enabled":true,"enabledTools":["get_forecast","get_current_weather"]}]'`. The env intentionally does **not** carry the entry path or `args` — those are resolved at runtime from the package name (see below).
+**Why no env JSON.** The previous design carried `MCP_SERVERS` as a JSON string in env. This meant two sources of truth: the env defines which servers exist, and a separate `McpServerPackageRef` map defines how to find them. The new design puts everything in one typed array. No env parsing, no JSON fallback logic.
+
+> **Note:** `MCP_SERVERS_OVERRIDE` env (JSON string to replace the array at boot) is a natural future extension for ops flexibility, but is **not implemented in v1**. The code default (`MCP_SERVERS` array) is the only source of truth in this plan.
 
 **Pinned dependency, not `@latest` (review fix #2).** `@dangahagan/weather-mcp` is installed as a **normal dependency** in `package.json` (alongside the SDK), so:
 
@@ -144,9 +176,7 @@ export interface McpBridgeConfig {
 - Resolving the path at runtime (instead of hardcoding `'node_modules/...'` in env) is critical for two reasons:
   1. **Cross-CWD safety.** A relative path like `node_modules/...` breaks the moment `cwd` changes — `npm run start:dev` from `backend/`, PM2 from `/var/www/app`, Docker with `WORKDIR /app` — each will resolve `node_modules` differently or not at all. `require.resolve` returns the absolute path on the filesystem regardless of who launched the process.
   2. **Cross-platform safety.** The `node_modules/.bin/<name>` shim is a `.cmd` file on Windows and a bash script on POSIX; some Node `child_process` configurations do not pick the right one automatically, and shipping through the shim adds a layer of "why does this work on my Mac but not in CI". Invoking `node <absolute-entry.js>` directly sidesteps the entire shim problem — same behavior on Windows, Linux, and macOS.
-- The package's `package.json` (`main` / `bin` field) is inspected in Phase 0 to capture the actual entry path; the plan records the resolved path string in the `mcp-bridge.config.ts` comment so the reader knows what to expect.
-
-**Safe env parsing (review fix #3).** Parsing `MCP_SERVERS` JSON is wrapped in try/catch: on malformed JSON, log a warning and fall back to an **empty server list** (app still boots, Swagger-only). Consistent with the kill-switch principle — the bridge must never crash boot.
+- The package's `package.json` (`main` / `bin` field) is inspected in Phase 0 to capture the actual entry path; the plan records the resolved path string in the `MCP_SERVERS` comment so the reader knows what to expect.
 
 Global kill-switch `MCP_ENABLED` (default `false`) so the bridge is opt-in and the app boots unchanged when off.
 
@@ -159,12 +189,13 @@ Global kill-switch `MCP_ENABLED` (default `false`) so the bridge is opt-in and t
 - Keep a **connect timeout** as a safety net for a genuinely hung spawn (real failure response), not as a workaround for normal download time. 10s default is plenty for `node` to spawn a stdio child.
 - If a server dies after the initial connect, `callTool` should return a clear error string (not crash the agent loop) — the bridge must not bring down other servers. The bridge should attempt one reconnect, then mark the server as failed until the next restart. Out of scope for v1: reconnect on every call.
 
-### Spawn resolution (the only piece of `McpServerConfig` the bridge actually owns)
+### Spawn resolution
 
-The env carries `{ id, enabled, enabledTools, requiresConfirmation, toolIcons }` — no path, no `command`, no `args`. At startup, the bridge resolves the launch spec for each server from the package name alone:
+At startup, the bridge reads `MCP_SERVERS` and resolves the launch spec for each enabled server from the package name alone:
 
 ```ts
 // backend/src/modules/mcp-bridge/mcp-bridge.config.ts
+
 export interface McpServerLaunchSpec {
   id: string;
   command: 'node';          // fixed for v1 — the SDK launches the server as a child Node process
@@ -172,25 +203,15 @@ export interface McpServerLaunchSpec {
   env?: Record<string, string>;
 }
 
-export interface McpServerPackageRef {
-  id: string;                            // 'weather'
-  package: string;                       // '@dangahagan/weather-mcp'
-  entry: string;                         // '/dist/index.js' — relative to the package root
-  // Cached at startup; Phase 0 captures the right value per package.
-  static packageMap: Record<string, McpServerPackageRef> = {
-    weather: {
-      id: 'weather',
-      package: '@dangahagan/weather-mcp',
-      entry: '/dist/index.js',
-    },
-  };
-}
-
-export function resolveLaunchSpec(serverId: string): McpServerLaunchSpec | null {
-  const ref = McpServerPackageRef.static[serverId];
-  if (!ref) return null;
-  const absoluteEntryPath = require.resolve(`${ref.package}${ref.entry}`);
-  return { id: ref.id, command: 'node', args: [absoluteEntryPath] };
+export function resolveLaunchSpec(server: McpServerDef): McpServerLaunchSpec | null {
+  if (server.enabled === false) return null;
+  try {
+    const absoluteEntryPath = require.resolve(`${server.package}${server.entry}`);
+    return { id: server.id, command: 'node', args: [absoluteEntryPath] };
+  } catch (err) {
+    // MODULE_NOT_FOUND — package not installed or entry path wrong
+    return null;
+  }
 }
 ```
 
@@ -198,8 +219,8 @@ This is the **only** way the bridge spawns a server. It guarantees:
 
 - **No `npx`, no `node_modules/.bin/<name>`, no path string in env.** `require.resolve` walks up from `backend/` to find the package root and returns the absolute filesystem path. The path is correct whether the process was launched from `npm run start:dev`, PM2, Docker, or `node dist/main.js`.
 - **Same on Windows, Linux, and macOS.** `node <absolute-path>` has identical behavior on all three; the `.cmd` vs bash-script shim in `node_modules/.bin` does not come into play.
-- **One source of truth per server.** The package name + entry fragment is the only place the path lives; if the package is upgraded and the entry file moves, only `McpServerPackageRef.static[serverId].entry` changes. The env does not get a chance to drift.
-- **Failure mode is loud and early.** If the package is missing or the entry path is wrong, `require.resolve` throws `MODULE_NOT_FOUND` at `onModuleInit`, the bridge logs a warning, and the app boots Swagger-only. No silent spawn-with-stale-path surprises in prod.
+- **One source of truth per server.** The package name + entry fragment is the only place the path lives; if the package is upgraded and the entry file moves, only the `entry` field in `MCP_SERVERS` changes.
+- **Failure mode is loud and early.** If the package is missing or the entry path is wrong, `resolveLaunchSpec` returns `null`, the bridge logs a warning, and the app boots Swagger-only. No silent spawn-with-stale-path surprises in prod.
 
 ### Tool conversion (MCP → LlmToolSchema)
 
@@ -219,7 +240,15 @@ MCP `Tool` = `{ name, description, inputSchema }`. Convert:
 
 MCP `inputSchema` is already a JSON Schema object, ~identical to what the LLM expects — no translation needed (this was the key insight from the chat: MCP tools arrive pre-formatted).
 
-If the server provides an `enabledTools` allowlist, the bridge filters `listTools()` output against it before caching. Disallowed tools never appear in the merged array and never resolve in `hasTool`.
+**Auto-discovery at connect.** The bridge calls `client.listTools()` once per server at connect, converts the result, and caches it. If the server config has an `enabledTools` allowlist, the bridge filters against it before caching. Disallowed tools never appear in the merged array and never resolve in `hasTool`.
+
+The bridge logs at connect time:
+
+```
+[McpBridge] weather: 2/12 tools enabled (get_forecast, get_current_conditions)
+```
+
+This makes Phase 0 (manual tool inspection) optional — the bridge tells you what it found. The `enabledTools` list in `MCP_SERVERS` can be refined after seeing the discovery output.
 
 ### MCP `callTool` result extraction
 
@@ -232,8 +261,8 @@ async callTool(name: string, args: Record<string, unknown>): Promise<string> {
   try {
     res = await client.callTool({ name, arguments: args });
   } catch (err) {
-    // Surface the error as a JSON-encoded string the render-spec can handle
-    // (it already has the "result has error → no render block" branch).
+    // Surface the error as a JSON-encoded string the render-spec can handle.
+    // buildRenderSpec checks for JSON error envelope even for MCP source.
     return JSON.stringify({
       error: true,
       source: 'mcp',
@@ -250,7 +279,9 @@ async callTool(name: string, args: Record<string, unknown>): Promise<string> {
 }
 ```
 
-> **Decision (review fix #4):** wrap thrown errors in a `{error:true,...}` JSON envelope. The render-spec's `buildRenderSpec` (`render-spec.service.ts:362-366`) already short-circuits on `parsed.error` and returns `null` — the user sees a clean step-error event instead of an unhandled exception. Without this, a transient MCP failure bubbles into `executeToolCallSafely`'s catch (`admin-agent.service.ts:433-447`) and produces a generic "Tool execution failed" — informative but lossy.
+> **Decision (review fix #4):** wrap thrown errors in a `{error:true,...}` JSON envelope. The render-spec's `buildRenderSpec` (`render-spec.service.ts`) checks for this JSON error envelope even for MCP source (attempting `JSON.parse` on the string), and returns `null` — the user sees a clean step-error event instead of an unhandled exception. Without this, a transient MCP failure bubbles into `executeToolCallSafely`'s catch (`admin-agent.service.ts:433-447`) and produces a generic "Tool execution failed" — informative but lossy.
+
+> **Known gap (MCP isError):** `client.callTool()` can also return `{ content: [...], isError: true }` — a successful JSON-RPC response that indicates the tool itself failed. The current `callTool` flattens `content[].text` without checking `isError`, and `buildRenderSpec` only checks for the `{error:true,...}` JSON envelope (thrown errors), not the MCP-level `isError` flag. This means an MCP `isError` response flows through the regex transform, which silently produces `undefined` values for unmatchable fields. The result is a card with empty fields rather than a clean error. This is a known gap in v1; address by checking `res.isError` in `callTool` and wrapping in the error envelope.
 
 > The exact `content` shape returned by `get_forecast` / `get_current_weather` is captured in **Phase 0** and the transform in Phase 3 is written against that captured fixture — not assumed.
 
@@ -302,69 +333,93 @@ The future integration point (out of scope for weather):
 
 The frontend weather cards render by `RenderSpecType` (`WeatherCurrent` / `WeatherForecast`), not by tool name. So the MCP path can keep them working **as long as the bridge result is adapted into the existing `WeatherCurrentRenderData` / `WeatherForecastRenderData` shapes**.
 
-> **Decision (review fix #6 — render-spec contract):** the existing `TOOL_RENDER_MAPPINGS` transforms (e.g. `render-spec.service.ts:54`) read from `data.result ?? data` to handle both `ServiceResultContainer<T>` and raw objects. The MCP `callTool` returns a **bare** JSON object — there is no `ServiceResultContainer` wrapper. The MCP transform must therefore read `data` directly, never `data.result`. The cleanest way to express this is a per-mapping `unwrapResult?: boolean` flag (default `true` for existing Swagger mappings, `false` for MCP mappings). **Alternative rejected:** wrap the MCP result in `{success:true, result:...}` before returning from `callTool` — that would force every future MCP server to match the backend's `ServiceResultContainer` shape, which defeats the "generic bridge" goal.
+> **Decision (review fix #6 — render-spec contract):** the existing `TOOL_RENDER_MAPPINGS` transforms (e.g. `render-spec.service.ts:54`) read from `data.result ?? data` to handle both `ServiceResultContainer<T>` and raw objects. The MCP `callTool` returns a **bare** JSON object — there is no `ServiceResultContainer` wrapper. Instead of adding an `unwrapResult` flag to every mapping, add a `source` field to `ToolRenderMapping` and conditionally unwrap only for `source: 'swagger'`. This is a one-line conditional in `buildRenderSpec`, not a new abstraction. **Alternative rejected:** wrap the MCP result in `{success:true, result:...}` before returning from `callTool` — that would force every future MCP server to match the backend's `ServiceResultContainer` shape, which defeats the "generic bridge" goal.
 
 File: `backend/src/modules/admin-agent/render-spec/render-spec.service.ts`
 
-1. Add an optional `unwrapResult: boolean` to `ToolRenderMapping` (default `true`).
-2. Phase 0: install the package, run a sample `callTool('get_forecast', {latitude, longitude})` or `get_current_weather` to capture the exact JSON shape. Commit the result to `backend/src/modules/admin-agent/render-spec/__fixtures__/weather-mcp-current.json` and `weather-mcp-forecast.json`.
-3. Add two new `TOOL_RENDER_MAPPINGS` entries keyed by the MCP tool names (e.g. `get_forecast`, `get_current_weather` — confirm exact names from `listTools()`), with `unwrapResult: false`, whose `transform` maps the MCP JSON → `WeatherCurrentRenderData` / `WeatherForecastRenderData`, emitting `RenderSpecType.WeatherCurrent` / `WeatherForecast`.
-4. After Phase 4 removes the `WeatherController_*` operationIds, remove the now-dead `WeatherController_getWeather` / `WeatherController_getForecast` mappings.
-5. Keep `weather.render-spec.ts` (the zod schemas) — still used by the new mappings.
-6. Add a new test file `weather-mcp.render-spec.spec.ts` that loads the pinned fixtures, feeds them through the new mappings, and asserts the resulting `RenderSpecType` + data shape. This is the **most brittle code** in the plan (depends on an external package's output shape), so it gets a pinned fixture, not a live call.
+1. Add `source?: 'swagger' | 'mcp'` to `ToolRenderMapping` (default `'swagger'`).
+2. In `buildRenderSpec`, the MCP error check:
+   - For MCP source: attempt `JSON.parse` on the string. If the result is an object with `error: true`, return `null` (catches the error envelope from `callTool`).
+   - For Swagger source: unchanged (`JSON.parse` + `parsed.error` check).
+3. Phase 0: install the package, run a sample `callTool('get_forecast', {latitude, longitude})` or `get_current_conditions` to capture the exact output. Commit the results to `backend/src/modules/admin-agent/render-spec/__fixtures__/weather-mcp-current.json` and `weather-mcp-forecast.json`.
+4. Add two new `TOOL_RENDER_MAPPINGS` entries keyed by the MCP tool names (`get_forecast`, `get_current_conditions` — confirmed from `listTools()`), with `source: 'mcp'`, whose `transform` parses the **markdown text** via regex to extract key values (e.g. `\*\*Temperature:\*\*\s*(.+)` → `tempC`). MCP output is markdown, not structured JSON — the transform uses `String.match()` with labeled regex patterns, not `JSON.parse()`.
+5. After Phase 4 removes the `WeatherController_*` operationIds, remove the now-dead `WeatherController_getWeather` / `WeatherController_getForecast` mappings.
+6. Keep `weather.render-spec.ts` (the zod schemas) — still used by the new mappings.
+7. Add a new test file `weather-mcp.render-spec.spec.ts` that loads the pinned fixtures, feeds them through the new mappings, and asserts the resulting `RenderSpecType` + data shape. Includes snapshot-style field-existence tests and error-envelope tests. This is the **most brittle code** in the plan (depends on an external package's markdown wording), so it gets a pinned fixture and field-existence assertions, not just "passed/didn't pass".
 
 Fallback if the MCP output shape is awkward: keep `WeatherModule` as a thin controller that calls `McpBridgeService.callTool` internally (preserves the old operationIds/render-specs). Prefer the adapter approach; use the thin-controller fallback only if shape mapping proves brittle.
 
 ## Implementation Steps
 
-### Phase 0 — Inspect the package (before coding)
+### Pre-flight — CommonJS check
 
-1. `npm install @modelcontextprotocol/sdk --save` **and** `npm install @dangahagan/weather-mcp --save` (backend). The weather server is a pinned dependency — not `@latest`. Inspect the installed package's `package.json` to find its `bin` field / entry script and confirm the runtime-resolved path.
-2. Run `listTools()` once locally (via a scratch TS script that spawns the SDK `Client` + `StdioClientTransport` and calls `listTools()`) to capture **exact tool names** (e.g. `get_forecast`, `get_current_weather`) and their `inputSchema`. Commit this output to `backend/src/modules/mcp-bridge/__fixtures__/weather-mcp-tools.json`.
-3. Run one sample `callTool` per tool and capture the **real `content` block shape** — the JSON the text block wraps. Commit the two results to `backend/src/modules/admin-agent/render-spec/__fixtures__/weather-mcp-{current,forecast}.json`.
-4. Record the real tool names + `content` shapes in this doc (replace the `get_forecast` / `get_current_weather` placeholders above) before starting Phase 1.
+`require.resolve` requires CommonJS. Verify before coding:
+
+```bash
+grep '"type"' backend/package.json    # should be absent or "commonjs"
+grep '"module"' backend/tsconfig.json # should be "CommonJS"
+```
+
+Both confirmed as-is (`module: "CommonJS"`, no `"type": "module"` in `package.json`). If this changes in the future, use `createRequire(import.meta.url)` instead.
+
+### Phase 0 — Inspect the package (optional but recommended)
+
+1. Run `listTools()` once locally (via a scratch TS script that spawns the SDK `Client` + `StdioClientTransport` and calls `listTools()`) to capture **exact tool names** (e.g. `get_forecast`, `get_current_weather`) and their `inputSchema`. Record the exact names in the `enabledTools` array in `MCP_SERVERS`. Commit this output to `backend/src/modules/admin-agent/render-spec/__fixtures__/weather-mcp-tools.json` for reference.
+2. Run one sample `callTool` per tool and capture the **real `content` block shape** — the JSON the text block wraps. Commit the two results to `backend/src/modules/admin-agent/render-spec/__fixtures__/weather-mcp-{current,forecast}.json`.
+3. Record the real tool names + `content` shapes in this doc (replace the `get_forecast` / `get_current_weather` placeholders above) before starting Phase 1.
+
+> **Note:** Phase 0 is optional — the bridge auto-discovers tools at connect and logs them. But capturing fixtures (step 2) is required for the render-spec adapter tests. If you skip Phase 0 entirely, the bridge still works; you just won't have pinned fixtures for unit tests.
 
 ### Phase 1 — Bridge infra
 
-5. Create `mcp-bridge.config.ts` (config typing + env read, `MCP_ENABLED` kill-switch, `connectTimeoutMs`, `McpServerPackageRef` static map, `resolveLaunchSpec()` per "Spawn resolution").
-6. Create `mcp-server-client.ts` (SDK `Client` + `StdioClientTransport`, spawn with `command: 'node'` + the absolute entry path from `resolveLaunchSpec`, connect with try/catch + timeout, `listTools`, `callTool`, close, single-reconnect-on-failure). The client never receives a relative path; `require.resolve` happens before the spawn.
-7. Create `mcp-bridge.service.ts` (`onModuleInit` connect all / `onModuleDestroy` close all; `getTools()`, `hasTool(name)`, `callTool(name, args)` → flattened `content` text string per "MCP callTool result extraction"; `requiresConfirmation(name)` returns the server flag).
-8. Create `mcp-bridge.module.ts`; register in `AppModule` imports.
-9. `mcp-bridge.service.spec.ts`: mock the SDK client; assert `getTools()` returns tagged `LlmToolSchema[]`, `hasTool`/`callTool` route correctly, connect failure is swallowed, malformed `MCP_SERVERS` JSON falls back to an empty list, the error envelope is returned on `callTool` rejection, and `resolveLaunchSpec` throws on a missing package (so the boot-time path is covered even when the SDK client is mocked).
+5. Install dependencies: `npm install @modelcontextprotocol/sdk @dangahagan/weather-mcp --save -w backend`. Both are **normal dependencies** (not devDependencies — they ship in prod). The version is locked by the lockfile.
+6. Create `mcp-bridge.config.ts` (`MCP_SERVERS` registry, `McpServerDef` interface, `McpBridgeConfig`, `resolveLaunchSpec()` per "Spawn resolution", `MCP_ENABLED` kill-switch, `connectTimeoutMs`).
+7. Create `mcp-server-client.ts` (SDK `Client` + `StdioClientTransport`, spawn with `command: 'node'` + the absolute entry path from `resolveLaunchSpec`, connect with try/catch + timeout, `listTools`, `callTool`, close, single-reconnect-on-failure). The client never receives a relative path; `require.resolve` happens before the spawn.
+
+   > **SDK import gotcha:** The SDK's `exports` map has `./*` wildcard which maps `./client/stdio` → `./dist/cjs/client/stdio` (no `.js` extension). Node 24 doesn't auto-append `.js` for exports-map-resolved paths, so `import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio'` fails at runtime. Fix: resolve via the working `@modelcontextprotocol/sdk/client` subpath, navigate to `stdio.js` in the same directory:
+   > ```ts
+   > const StdioClientTransport = require(
+   >   path.join(path.dirname(require.resolve('@modelcontextprotocol/sdk/client')), 'stdio.js')
+   > ).StdioClientTransport;
+   > ```
+   > `sdk.d.ts` provides the type declarations for TS. `tsc` compiles clean; `require()` gives `any` at runtime but the actual types are correct.
+8. Create `mcp-bridge.service.ts` (`onModuleInit` connect all / `onModuleDestroy` close all; `getTools()`, `hasTool(name)`, `callTool(name, args)` → flattened `content` text string per "MCP callTool result extraction"; `getToolIcon(name)` returns per-tool icon from config; `requiresConfirmation(name)` returns the server flag). Logs tool discovery at connect: `[McpBridge] weather: 2/12 tools enabled`.
+9. Create `mcp-bridge.module.ts`; register in `AppModule` imports.
+10. `mcp-bridge.service.spec.ts`: mock the SDK client; assert `getTools()` returns tagged `LlmToolSchema[]`, `hasTool`/`callTool` route correctly, connect failure is swallowed, `resolveLaunchSpec` returns null on a missing package (so the boot-time path is covered even when the SDK client is mocked), and the error envelope is returned on `callTool` rejection.
 
 ### Phase 2 — Wire into the agent
 
-10. Extend the **parser's** `LlmToolSchema` in `swagger-tools.parser.ts:14` with `source?: 'swagger' | 'mcp'`. Initialize it on every tool the parser emits (set `source: 'swagger'`).
-11. In `AdminAgentService.queryDatabase` (`:115`) and `queryDatabaseStream` (`:207`):
+11. Extend the **parser's** `LlmToolSchema` in `swagger-tools.parser.ts:14` with `source?: 'swagger' | 'mcp'`. Initialize it on every tool the parser emits (set `source: 'swagger'`).
+12. In `AdminAgentService.queryDatabase` (`:115`) and `queryDatabaseStream` (`:207`):
     ```ts
     const tools = this.mcpEnabled
       ? [...this.swaggerToolsParser.getTools(), ...this.mcpBridgeService.getTools()]
       : this.swaggerToolsParser.getTools();
     ```
     Inject `McpBridgeService` and `ConfigService` (for `MCP_ENABLED` lookup) into `AdminAgentService`.
-12. Add the MCP dispatch branch at the **top** of `AgentToolExecutorService.executeToolCall` (before the `getEndpoint` lookup, see "Why the MCP branch must precede `getEndpoint`"); inject `McpBridgeService` there too. Add a unit test in a new `agent-tool-executor.service.spec.ts` that mocks the bridge and asserts MCP tool calls bypass the Swagger path.
-13. `admin-agent.service.spec.ts` (loop-breaker tests) still references `WeatherController_getWeather` and `WeatherController_getForecast` as test data — leave them alone. They are testing the duplicate-call breaker, not weather functionality; renaming them adds churn for no benefit. Document this in the PR description so reviewers don't flag it.
+13. Add the MCP dispatch branch at the **top** of `AgentToolExecutorService.executeToolCall` (before the `getEndpoint` lookup, see "Why the MCP branch must precede `getEndpoint`"); inject `McpBridgeService` there too. Add a unit test in a new `agent-tool-executor.service.spec.ts` that mocks the bridge and asserts MCP tool calls bypass the Swagger path.
+14. `admin-agent.service.spec.ts` (loop-breaker tests) still references `WeatherController_getWeather` and `WeatherController_getForecast` as test data — leave them alone. They are testing the duplicate-call breaker, not weather functionality; renaming them adds churn for no benefit. Document this in the PR description so reviewers don't flag it.
 
 ### Phase 3 — Render specs
 
-14. Add `unwrapResult?: boolean` to `ToolRenderMapping` (default `true`).
-15. Update `RenderSpecService.buildRenderSpec` to set `const unwrap = mapping.unwrapResult !== false;` and read `data.result ?? data` only when `unwrap` is true.
-16. Add the two new `TOOL_RENDER_MAPPINGS` entries for MCP tool names, with `unwrapResult: false`, transforms mapping the captured fixture shape to the existing `WeatherCurrentRenderData` / `WeatherForecastRenderData`.
-17. Create `weather-mcp.render-spec.spec.ts` with two cases — one per fixture — asserting the transform produces the right `RenderSpecType` and the Zod schema passes.
+15. Add `source?: 'swagger' | 'mcp'` to `ToolRenderMapping` (default `'swagger'`).
+16. Update `RenderSpecService.buildRenderSpec` to use `mapping.source === 'mcp' ? data : (data.result ?? data)` for the data unwrap.
+17. Add the two new `TOOL_RENDER_MAPPINGS` entries for MCP tool names, with `source: 'mcp'`, transforms mapping the captured fixture shape to the existing `WeatherCurrentRenderData` / `WeatherForecastRenderData`.
+18. Create `weather-mcp.render-spec.spec.ts` with two cases — one per fixture — asserting the transform produces the right `RenderSpecType` and the Zod schema passes.
 
 ### Phase 4 — Remove hand-built weather (verification-gated)
 
-18. Confirm chat weather queries render correctly via MCP end-to-end: "what's the weather in Tel Aviv?" → step event → `WeatherCurrent` render from MCP data (not `wttr.in`); "5-day forecast" → `WeatherForecast` render from MCP data.
-19. Delete `WeatherModule` (controller, service, DTOs, `weather.module.ts`), remove from `AppModule` imports (`app.module.ts:11, 46`).
-20. Regenerate `swagger-spec.json` from the controllers (the weather operationIds vanish automatically). Spot-check that `WeatherController_getWeather` / `WeatherController_getForecast` are no longer in `swagger-spec.json`.
-21. Remove the two dead `WeatherController_getWeather` / `WeatherController_getForecast` render mappings from `render-spec.service.ts`. Keep `weather.render-spec.ts` (the zod schemas) — still used by the MCP mappings.
-22. Angular weather components (`weather-current-card`, `weather-forecast`) stay — they render via `RenderSpecType`, which the adapter still emits. Confirm no other code emits those two old specs (grep `WeatherController_get` across the repo — only `render-spec.service.spec.ts` will remain, and that test will be updated by Phase 4 to cover the MCP mappings instead).
+19. Confirm chat weather queries render correctly via MCP end-to-end: "what's the weather in Tel Aviv?" → step event → `WeatherCurrent` render from MCP data (not `wttr.in`); "5-day forecast" → `WeatherForecast` render from MCP data.
+20. Delete `WeatherModule` (controller, service, DTOs, `weather.module.ts`), remove from `AppModule` imports (`app.module.ts:11, 46`).
+21. Regenerate `swagger-spec.json` from the controllers (the weather operationIds vanish automatically). Spot-check that `WeatherController_getWeather` / `WeatherController_getForecast` are no longer in `swagger-spec.json`.
+22. Remove the two dead `WeatherController_getWeather` / `WeatherController_getForecast` render mappings from `render-spec.service.ts`. Keep `weather.render-spec.ts` (the zod schemas) — still used by the MCP mappings.
+23. Angular weather components (`weather-current-card`, `weather-forecast`) stay — they render via `RenderSpecType`, which the adapter still emits. Confirm no other code emits those two old specs (grep `WeatherController_get` across the repo — only `render-spec.service.spec.ts` will remain, and that test will be updated by Phase 4 to cover the MCP mappings instead).
 
 ### Phase 5 — Docs
 
-23. Update `documents/architecture-diagram.md`: add `McpBridgeModule` + external `McpServer` node; show the MCP dispatch branch in the tool-execution flow.
-24. Update `documents/HANDOFF.md` with the session summary, exact next step, files touched, and decisions made.
-25. Update `documents/STATUS.md` to mark the plan done and surface any follow-ups (e.g. `requiresConfirmation` integration, `toolIcons` for MCP).
+24. Update `documents/architecture-diagram.md`: add `McpBridgeModule` + external `McpServer` node; show the MCP dispatch branch in the tool-execution flow.
+25. Update `documents/HANDOFF.md` with the session summary, exact next step, files touched, and decisions made.
+26. Update `documents/STATUS.md` to mark the plan done and surface any follow-ups (e.g. `requiresConfirmation` integration, `toolIcons` for MCP).
 
 ## Files
 
@@ -375,7 +430,7 @@ Fallback if the MCP output shape is awkward: keep `WeatherModule` as a thin cont
 - `backend/src/modules/mcp-bridge/mcp-bridge.service.ts`
 - `backend/src/modules/mcp-bridge/mcp-server-client.ts`
 - `backend/src/modules/mcp-bridge/mcp-bridge.service.spec.ts`
-- `backend/src/modules/mcp-bridge/__fixtures__/weather-mcp-tools.json` (Phase 0)
+- `backend/src/modules/admin-agent/render-spec/__fixtures__/weather-mcp-tools.json` (Phase 0)
 - `backend/src/modules/admin-agent/render-spec/__fixtures__/weather-mcp-current.json` (Phase 0)
 - `backend/src/modules/admin-agent/render-spec/__fixtures__/weather-mcp-forecast.json` (Phase 0)
 - `backend/src/modules/admin-agent/render-spec/weather-mcp.render-spec.spec.ts` (Phase 3)
@@ -386,7 +441,7 @@ Fallback if the MCP output shape is awkward: keep `WeatherModule` as a thin cont
 - `backend/src/modules/admin-agent/services/swagger-tools.parser.ts` — add `source` to the local `LlmToolSchema`; tag every emitted tool with `source: 'swagger'`.
 - `backend/src/modules/admin-agent/admin-agent.service.ts` — merge MCP tools (2 sites in `queryDatabase` and `queryDatabaseStream`); inject `McpBridgeService` + `ConfigService`.
 - `backend/src/modules/admin-agent/services/agent-tool-executor.service.ts` — MCP dispatch branch at the top of `executeToolCall`; inject `McpBridgeService`.
-- `backend/src/modules/admin-agent/render-spec/render-spec.service.ts` — add `unwrapResult` to `ToolRenderMapping`; add two MCP weather mappings; remove old `WeatherController_*` mappings (after Phase 4).
+- `backend/src/modules/admin-agent/render-spec/render-spec.service.ts` — add `source` to `ToolRenderMapping`; add two MCP weather mappings; remove old `WeatherController_*` mappings (after Phase 4).
 - `backend/src/modules/admin-agent/render-spec/render-spec.service.spec.ts` — swap the `WeatherController_getWeather` cases to the new MCP tool name once Phase 4 lands.
 - `backend/src/app.module.ts` — register `McpBridgeModule`; remove `WeatherModule` (Phase 4).
 - `backend/package.json` — `@modelcontextprotocol/sdk` and `@dangahagan/weather-mcp` as **dependencies** (not devDependencies — they ship in prod).
@@ -422,7 +477,7 @@ Fallback if the MCP output shape is awkward: keep `WeatherModule` as a thin cont
 
 ## Verification
 
-- **Unit — bridge**: `mcp-bridge.service.spec.ts` — mock the SDK client; assert `getTools()` returns tagged `LlmToolSchema[]`, `hasTool`/`callTool` route correctly, connect failure is swallowed, and malformed `MCP_SERVERS` JSON falls back to an empty list.
+- **Unit — bridge**: `mcp-bridge.service.spec.ts` — mock the SDK client; assert `getTools()` returns tagged `LlmToolSchema[]`, `hasTool`/`callTool` route correctly, connect failure is swallowed, and `resolveLaunchSpec` returns null on a missing package.
 - **Unit — render-spec adapter**: `weather-mcp.render-spec.spec.ts` with the **pinned MCP `content` fixtures** from Phase 0 — assert the transform maps the external shape → `WeatherCurrentRenderData` / `WeatherForecastRenderData` and that `RenderSpecType` is emitted correctly.
 - **Unit — executor dispatch** (recommended, optional): `agent-tool-executor.service.spec.ts` — mock the bridge to return true from `hasTool`, assert `executeToolCall` returns the bridge's string without ever calling `getEndpoint`.
 - **Integration (manual)**: with `MCP_ENABLED=true`, ask the chat _"what's the weather in Tel Aviv?"_ → expect a `step` event for the MCP tool, then a `WeatherCurrent` render block from MCP data (not `wttr.in`).

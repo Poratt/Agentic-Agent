@@ -2,7 +2,7 @@
     @if (data().location) {
         <div class="forecast-location">
             <span class="ph ph-map-pin"></span>
-            <span>{{ data().location }}</span>
+            <span>{{ cleanLocation() }}</span>
         </div>
     }
 

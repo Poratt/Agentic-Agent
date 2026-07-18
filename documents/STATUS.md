@@ -1,6 +1,26 @@
 # Project Documentation Status
 
-Last updated: 2026-07-15
+Last updated: 2026-07-18
+
+## 2026-07-18 MCP Bridge — Phase 4 Complete, Hebrew UI
+
+- **Phase 4 (Remove WeatherModule):** Deleted `backend/src/modules/weather/` (controller, service, module, 4 DTOs). Removed `WeatherModule` from `AppModule`. Removed old `WeatherController_getWeather`/`getForecast` render-spec mappings. Updated `render-spec.service.spec.ts` (error tests now use Swagger tools). Verified 92/92 tests pass.
+- **Hebrew UI labels:** Weather current card all labels translated to Hebrew. Weather forecast card location stripped of lat/long. Currency card "Exchange Rates" → "שערי חליפין", "Base:" → "בסיס:".
+- **MCP tool Hebrew descriptions:** Added in `agent-tool-executor.service.ts` — `get_current_conditions` → "מקבל מזג אוויר נוכחי", `get_forecast` → "מקבל תחזית מזג אוויר", `check_service_status` → "בודק סטטוס שירות".
+- **Architecture diagram:** Updated to remove WeatherModule, add McpBridgeModule, show MCP dispatch branch in tool execution flow.
+- **Live test:** Both `get_forecast` and `get_current_conditions` confirmed dispatching via MCP (no `[GET]` logs). Weather cards render with real data.
+- **Feature complete.** No further action required.
+
+## 2026-07-18 MCP Bridge — Phases 1-3 Complete
+
+- **Phase 1 (Bridge infra):** Created `mcp-bridge.config.ts` (MCP_SERVERS registry, resolveLaunchSpec), `mcp-server-client.ts` (SDK Client + StdioClientTransport), `mcp-bridge.service.ts` (getTools/hasTool/callTool), `mcp-bridge.module.ts`. SDK import fixed: Node 24 doesn't auto-append `.js` for exports-map-resolved paths; resolved via `@modelcontextprotocol/sdk/client` + navigate to `stdio.js`.
+- **Phase 2 (Wire into agent):** Added `source` field to parser's `LlmToolSchema`. MCP tools merged in `AdminAgentService.getTools()`. MCP dispatch branch in `AgentToolExecutorService.executeToolCall` before `getEndpoint`. `McpBridgeModule` imported in `AppModule` and `AdminAgentModule`.
+- **Phase 3 (Render specs):** Added `source` to `ToolRenderMapping`. `buildRenderSpec` checks JSON error envelope for MCP source. Two MCP weather mappings added (`get_current_conditions` → `WeatherCurrent`, `get_forecast` → `WeatherForecast`) with markdown regex transforms. 7 tests passing.
+- **Tool names:** Actual names from `@dangahagan/weather-mcp` are `get_current_conditions` (not `get_current_weather`) and `get_forecast`.
+- **Output format:** MCP returns markdown text, not structured JSON. Transforms parse via regex.
+- **Known gap:** MCP `isError` responses not detected in v1 (documented in plan).
+- **Verification:** 94/94 backend tests pass (1 pre-existing `app.controller.spec.ts` fail). `tsc --noEmit` clean. Backend boots successfully.
+- **Next:** Phase 4 (remove WeatherModule) gated behind manual verification. Phase 5 (docs).
 
 ## 2026-07-15 Session (continued — Remove LLM Prose Duplication of Card Data)
 

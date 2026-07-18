@@ -1,0 +1,8 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "# Current Weather Conditions\n\n**Time:** 18 ביולי 2026, 15:30\n\n**Conditions:** Clear sky\n**Temperature:** 89°F\n**Feels Like:** 95°F\n**Today's Range:** High 90°F / Low 74°F\n**Dewpoint:** 67°F\n**Humidity:** 49%\n**Wind:** 7 mph from 293°, gusting to 23 mph\n**Pressure:** 29.74 inHg\n**Cloud Cover:** 3%\n\n---\n*Data source: Open-Meteo (Global) — model-interpolated values, not station observations*\n"
+    }
+  ]
+}

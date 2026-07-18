@@ -49,6 +49,7 @@ const AGNES_AI_MODELS = [
     { value: 'agnes-image-2.1-flash', label: 'Agnes Image 2.1 Flash' },
     { value: 'agnes-video-v2.0', label: 'Agnes Video V2.0' }
 ]
+
 export async function seedLlmProviders(dataSource: DataSource): Promise<void> {
     const providerRepo = dataSource.getRepository(LlmProviderEntity);
     const modelRepo = dataSource.getRepository(LlmModelEntity);
@@ -113,6 +114,29 @@ export async function seedLlmProviders(dataSource: DataSource): Promise<void> {
         } else {
             console.log('[Seed] NVIDIA provider already exists.');
         }
+
+        // AGNES AI
+        let agnes = await providerRepo.findOne({
+            where: { key: 'agnes' },
+            relations: ['models'],
+        });
+
+        if (!agnes) {
+            agnes = new LlmProviderEntity();
+            agnes.key = 'agnes';
+            agnes.label = 'Agnes AI';
+            agnes.baseUrl = process.env.AGNES_BASE_URL || 'https://api.agnes.ai/v1';
+            agnes.apiKey = process.env.AGNES_API_KEY || '';
+            agnes.active = true;
+
+            agnes = await providerRepo.save(agnes);
+
+            for (const modelData of AGNES_AI_MODELS) { }
+            console.log('[Seed] Agnes AI provider and models created.');
+        } else {
+            console.log('[Seed] Agnes AI provider already exists.');
+        }
+
     } catch (error) {
         console.error('[Seed] Error seeding LLM providers:', error);
     }

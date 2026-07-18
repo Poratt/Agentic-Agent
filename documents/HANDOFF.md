@@ -26,6 +26,30 @@ documents/
 
 ## Notes For Next Agent
 
+**2026-07-18 MCP Bridge — Phase 4 complete, Hebrew UI labels, architecture diagram**
+- Phase 4 completed: deleted `backend/src/modules/weather/` directory (controller, service, module, 4 DTOs), removed `WeatherModule` from `AppModule`, removed old `WeatherController_getWeather`/`getForecast` render-spec mappings, updated `render-spec.service.spec.ts` (error tests now use Swagger tools since MCP path is more permissive), verified 92/92 tests pass and `tsc --noEmit` clean.
+- Live test confirmed: both `get_forecast` and `get_current_conditions` dispatch via MCP (no `[GET]` logs), weather cards render with real data.
+- Added MCP tool Hebrew descriptions in `agent-tool-executor.service.ts`: `get_current_conditions` → "מקבל מזג אוויר נוכחי", `get_forecast` → "מקבל תחזית מזג אוויר", `check_service_status` → "בודק סטטוס שירות".
+- Weather current card (`weather-current-card.component.html`): all labels translated to Hebrew (לחות, רוח, מדד UV, עננות, משקעים, לחץ אוויר, ראות, מרגיש כמו, נמדד ב-). Added `cleanLocation()` computed property that strips lat/long coordinates via regex.
+- Weather forecast card (`weather-forecast.component.ts/html`): added `cleanLocation()` to strip lat/long from location display.
+- Currency card (`currency-card.component.html`): "Exchange Rates" → "שערי חליפין", "Base:" → "בסיס:".
+- Updated `architecture-diagram.md`: removed WeatherModule, added McpBridgeModule, updated System Architecture diagram, Chat And Tool Execution Flow (added MCP dispatch branch), Backend Module Responsibilities, and Current Architecture Notes.
+- Frontend build passed (`npx ng build`). Backend tests passed (92/92).
+- Files touched: `backend/src/modules/admin-agent/services/agent-tool-executor.service.ts`, `frontend/src/app/features/chat/blocks/weather-current-card/weather-current-card.component.html`, `frontend/src/app/features/chat/blocks/weather-current-card/weather-current-card.component.ts`, `frontend/src/app/features/chat/blocks/weather-forecast/weather-forecast.component.ts`, `frontend/src/app/features/chat/blocks/weather-forecast/weather-forecast.component.html`, `frontend/src/app/features/chat/blocks/currency-card/currency-card.component.html`, `documents/architecture-diagram.md`, `documents/HANDOFF.md`.
+- Known v1 gap: MCP `isError` responses (successful JSON-RPC but tool failed) not detected — flow through regex transform producing empty fields.
+- Next exact step: feature is complete. No further action required unless user requests additional changes.
+- Open questions for the user: none.
+
+**2026-07-18 MCP Bridge — SDK import fix, error detection, plan doc update**
+- Fixed SDK runtime import: `@modelcontextprotocol/sdk/client/stdio` fails at runtime in Node 24 because the SDK's `exports` map `./*` wildcard maps to `./dist/cjs/client/stdio` (no `.js` extension) and Node 24 doesn't auto-append it. Fix: resolve via `@modelcontextprotocol/sdk/client` (which works), navigate to `stdio.js` in the same directory.
+- Fixed MCP error detection in `buildRenderSpec`: added JSON error envelope check for MCP source (attempts `JSON.parse` on the string; if the result is an object with `error: true`, returns `null`). Previously the error check was completely skipped for MCP source.
+- Added snapshot-style tests for MCP render-spec: field-existence assertions against pinned fixtures, error-envelope tests.
+- Updated `documents/features/todo/add-mcp-plan.md` with real tool names (`get_current_conditions` not `get_current_weather`), markdown-not-JSON notes, and the SDK import gotcha.
+- Files touched: `backend/src/modules/mcp-bridge/mcp-server-client.ts`, `backend/src/modules/admin-agent/render-spec/render-spec.service.ts`, `backend/src/modules/admin-agent/render-spec/weather-mcp.render-spec.spec.ts`, `documents/features/todo/add-mcp-plan.md`.
+- Remaining known gap: MCP `isError` responses (successful JSON-RPC but tool failed) are not detected — they flow through regex transform and produce empty fields. Documented in plan as known v1 gap.
+- Next exact step: Phase 4 (remove WeatherModule) gated behind manual verification, or Phase 5 (docs: architecture-diagram.md, STATUS.md).
+- Open questions for the user: none.
+
 **2026-07-03 GenUI Progressive Streaming Rendering Plan**
 - Added `documents/features/todo/genui-progressive-streaming-rendering-plan.md`.
 - What was done this session: created a focused implementation plan for progressive GenUI rendering in `AiFormat`, covering partial component extraction, partial CSS/HTML sanitization, skeleton fallback, tests, smoke testing, risks, DoD, and open decisions.

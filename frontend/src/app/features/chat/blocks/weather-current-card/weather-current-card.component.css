@@ -21,7 +21,6 @@
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
     color: var(--color-text-primary);
-    text-transform: capitalize;
 }
 
 .weather-time {
@@ -132,7 +131,6 @@
         font-size: var(--font-size-sm);
         font-weight: var(--font-weight-semibold);
         color: var(--color-text-primary);
-        font-family: var(--font-code);
     }
 }
 

@@ -1,5 +1,13 @@
 # Documentation Change Log
 
+## 2026-07-18 MCP Bridge — Implementation Phases 1-3
+
+- Architectural decision: MCP tool output is markdown text (not structured JSON). `callTool` flattens `content[].text` to a string. Render-spec transforms parse key values from markdown using regex. This is more fragile than JSON key access — pinned fixtures + snapshot-style field-existence tests mitigate drift.
+- Architectural decision: `buildRenderSpec` checks for JSON error envelope even for MCP source (attempts `JSON.parse` on the string; if the result is an object with `error: true`, returns `null`). This catches the error envelope from `callTool`'s catch block. MCP `isError` responses (successful JSON-RPC but tool failed) are a known v1 gap.
+- Architectural decision: SDK import workaround for Node 24. The SDK's `exports` map `./*` wildcard maps `./client/stdio` → `./dist/cjs/client/stdio` (no `.js` extension). Node 24 doesn't auto-append `.js` for exports-map-resolved paths. Fix: resolve via `@modelcontextprotocol/sdk/client` (which has a named export), navigate to `stdio.js` in the same directory. `sdk.d.ts` provides type declarations for TS; `require()` gives `any` at runtime but the actual types are correct.
+- Architectural decision: standardized `MCP_ENABLED` to `process.env.MCP_ENABLED` in both `mcp-bridge.config.ts` and `admin-agent.service.ts` with `'false'` default. Removed `ConfigService` from `AdminAgentService` constructor to avoid DI complexity.
+- Architectural decision: `source` field on `ToolRenderMapping` (not an `isMcp` boolean) because it's extensible if more sources appear later. Default is `'swagger'`.
+
 ## 2026-07-18 MCP Bridge Plan — Review and Rewrite
 
 - Moved `documents/todo/add-mcp-plan.md` to `documents/features/todo/add-mcp-plan.md` per the project rule that new feature plans should go under `documents/features/`.

@@ -1,0 +1,8 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "# Weather Forecast (Daily)\n\n**Location:** 32.0853, 34.7818\n**Elevation:** 56ft\n**Timezone:** Asia/Jerusalem\n**Forecast Days:** 3\n\n## יום שבת, 18 ביולי\n**Temperature:** High 90°F / Low 74°F\n**Feels Like:** High 99°F / Low 78°F\n**Sunrise:** 5:47\n**Sunset:** 19:46\n**Daylight Duration:** 13h 59m\n**Precipitation Chance:** 0%\n**Wind:** 8 mph W\n**Wind Gusts:** 23 mph\n**Conditions:** Mainly clear\n**UV Index:** 8.0\n\n## יום ראשון, 19 ביולי\n**Temperature:** High 91°F / Low 73°F\n**Feels Like:** High 100°F / Low 74°F\n**Sunrise:** 5:47\n**Sunset:** 19:46\n**Daylight Duration:** 13h 58m\n**Precipitation Chance:** 0%\n**Wind:** 7 mph NW\n**Wind Gusts:** 21 mph\n**Conditions:** Clear sky\n**UV Index:** 8.0\n\n## יום שני, 20 ביולי\n**Temperature:** High 89°F / Low 73°F\n**Feels Like:** High 99°F / Low 78°F\n**Sunrise:** 5:48\n**Sunset:** 19:46\n**Daylight Duration:** 13h 57m\n**Precipitation Chance:** 0%\n**Wind:** 8 mph NW\n**Wind Gusts:** 23 mph\n**Conditions:** Partly cloudy\n**UV Index:** 8.0\n\n---\n*Data source: Open-Meteo (Global)*\n"
+    }
+  ]
+}

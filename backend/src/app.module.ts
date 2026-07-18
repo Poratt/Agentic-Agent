@@ -8,7 +8,6 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { CurrencyModule } from './modules/currency/currency.module';
 import { LlmModule } from './modules/llm/llm.module';
 import { SystemModule } from './modules/system/system.module';
-import { WeatherModule } from './modules/weather/weather.module';
 import { LlmProviderModule } from './modules/llm-provider/llm-provider.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { StrainHunterModule } from './modules/strain-hunter/strain-hunter.module';
@@ -17,6 +16,7 @@ import { GeneticsModule } from './modules/genetics/genetics.module';
 import { WebSearchModule } from './modules/web-search/web-search.module';
 import { CannlyticsModule } from './modules/cannlytics/cannlytics.module';
 import { DatabaseMonitorModule } from './modules/database-monitor/database-monitor.module';
+import { McpBridgeModule } from './modules/mcp-bridge/mcp-bridge.module';
 
 @Module({
   imports: [
@@ -38,12 +38,12 @@ import { DatabaseMonitorModule } from './modules/database-monitor/database-monit
     }),
     AuthModule,
     UsersModule,
+    McpBridgeModule,
     AdminAgentModule,
     AnalyticsModule,
     CurrencyModule,
     LlmModule,
     SystemModule,
-    WeatherModule,
     LlmProviderModule,
     StrainHunterModule,
     TerpeneModule,

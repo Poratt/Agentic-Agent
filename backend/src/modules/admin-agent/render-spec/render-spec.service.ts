@@ -28,6 +28,7 @@ import {
 type ToolRenderMapping = {
   toolName: string;
   renderType: RenderSpecType;
+  source?: 'swagger' | 'mcp';
   schema: z.ZodObject<any>;
   transform: (resultData: any) => Record<string, unknown>;
 };
@@ -46,56 +47,76 @@ const toBool = (value: unknown): boolean | undefined => {
   return undefined;
 };
 
+const WEATHER_DESC_HE: Record<string, string> = {
+  'clear sky': 'שמים בהירים',
+  'clear': 'בהיר',
+  'mainly clear': 'בהיר בעיקר',
+  'partly cloudy': 'חלקית מעונן',
+  'cloudy': 'מעונן',
+  'overcast': 'מעונן לחלוטין',
+  'light rain': 'גשם קל',
+  'moderate rain': 'גשם בינוני',
+  'heavy rain': 'גשם חזק',
+  'rain': 'גשם',
+  'light snow': 'שלג קל',
+  'moderate snow': 'שלג בינוני',
+  'heavy snow': 'שלג חזק',
+  'snow': 'שלג',
+  'thunderstorm': 'סופת רעמים',
+  'drizzle': 'טפטוף',
+  'fog': 'ערפל',
+  'foggy': 'מעורפל',
+  'mist': 'ערפיח',
+  'haze': 'אובך',
+  'hazy': 'אובכני',
+  'windy': 'מנשב',
+  'hot': 'חם',
+  'cold': 'קר',
+  'humid': 'לח',
+  'dry': 'יבש',
+};
+
+const CITY_NAME_HE: Record<string, string> = {
+  'tel aviv': 'תל אביב',
+  'tel-aviv': 'תל אביב',
+  'jerusalem': 'ירושלים',
+  'haifa': 'חיפה',
+  'rishon lezion': 'ראשון לציון',
+  'petah tikva': 'פתח תקווה',
+  'ashdod': 'אשדוד',
+  'netanya': 'נתניה',
+  'beersheba': 'באר שבע',
+  'holon': 'חולון',
+  'bnei brak': 'בני ברק',
+  'ramat gan': 'רמת גן',
+  'herzliya': 'הרצליה',
+  'kfar saba': 'כפר סבא',
+  'raanana': 'רעננה',
+  'rehovot': 'רחובות',
+  'bat yam': 'בת ים',
+  'ashkelon': 'אשקלון',
+  'nahariya': 'נהריה',
+  'eilat': 'אילת',
+  'tiberias': 'טבריה',
+  'nazareth': 'נצרת',
+  'afula': 'עפולה',
+  'arad': 'ערד',
+  'carmiel': 'כרמיאל',
+  'dimona': 'דימונה',
+  'ynet': 'אילת',
+  'new york': 'ניו יורק',
+  'london': 'לונדון',
+  'paris': 'פריז',
+  'tokyo': 'טוקיו',
+  'berlin': 'ברלין',
+  'madrid': 'מדריד',
+  'rome': 'רומא',
+  'moscow': 'מוסקבה',
+  'beijing': 'בייג\'ין',
+  'sydney:': 'סידני',
+};
+
 const TOOL_RENDER_MAPPINGS: ToolRenderMapping[] = [
-  {
-    toolName: 'WeatherController_getWeather',
-    renderType: RenderSpecType.WeatherCurrent,
-    schema: WeatherCurrentRenderSpecSchema,
-    transform: (data) => {
-      const r = data.result ?? data;
-      return {
-        location: data.location ?? r.city ?? r.location,
-        tempC: toNumber(r.tempC),
-        feelsLikeC: toNumber(r.feelsLikeC),
-        tempF: toNumber(r.tempF),
-        feelsLikeF: toNumber(r.feelsLikeF),
-        humidity: toNumber(r.humidity),
-        windSpeedKmph: toNumber(r.windSpeedKmph ?? r.windSpeed),
-        windDirection: r.windDirection,
-        uvIndex: toNumber(r.uvIndex),
-        cloudCover: toNumber(r.cloudCover),
-        precipitationMm: toNumber(r.precipitationMm ?? r.precipitationInches),
-        pressure: toNumber(r.pressure),
-        visibility: toNumber(r.visibility),
-        weatherDesc: r.description,
-        weatherEmoji: r.weatherEmoji,
-        observationTime: r.observationTime,
-        requestLocalTime: r.requestLocalTime,
-      };
-    },
-  },
-  {
-    toolName: 'WeatherController_getForecast',
-    renderType: RenderSpecType.WeatherForecast,
-    schema: WeatherForecastRenderSpecSchema,
-    transform: (data) => {
-      const r = data.result ?? data;
-      const city = r.city ?? data.location;
-      const list = Array.isArray(r.forecast) ? r.forecast : [];
-      return {
-        location: city,
-        forecast: list.map((d: any) => ({
-          date: d.date,
-          dayName: d.dayName,
-          maxTempC: toNumber(d.tempMax ?? d.maxTempC),
-          minTempC: toNumber(d.tempMin ?? d.minTempC),
-          humidity: toNumber(d.humidity),
-          weatherDesc: d.description ?? d.weatherDesc,
-          weatherEmoji: d.emoji ?? d.weatherEmoji,
-        })),
-      };
-    },
-  },
   {
     toolName: 'CurrencyController_getRates',
     renderType: RenderSpecType.Currency,
@@ -325,6 +346,82 @@ const TOOL_RENDER_MAPPINGS: ToolRenderMapping[] = [
       };
     },
   },
+  {
+    toolName: 'get_current_conditions',
+    renderType: RenderSpecType.WeatherCurrent,
+    source: 'mcp',
+    schema: WeatherCurrentRenderSpecSchema,
+    transform: (text) => {
+      const s = String(text ?? '');
+      const get = (label: string): string | undefined => {
+        const m = s.match(new RegExp(`\\*\\*${label}:\\*\\*\\s*(.+)`, 'i'));
+        return m?.[1]?.trim();
+      };
+      const parseTemp = (raw: string | undefined): number | undefined => {
+        if (!raw) return undefined;
+        const m = raw.match(/(-?[\d.]+)/);
+        return m ? Number(m[1]) : undefined;
+      };
+      const rawLocation = s.match(/\*\*Location:\*\*\s*(.+)/)?.[1]?.trim() ?? '';
+      const cityRaw = rawLocation.split(',')[0]?.trim() ?? rawLocation;
+      const cityOnly = CITY_NAME_HE[cityRaw.toLowerCase()] ?? cityRaw;
+      const rawDesc = get('Conditions');
+      const weatherDesc = rawDesc ? (WEATHER_DESC_HE[rawDesc.toLowerCase()] ?? rawDesc) : undefined;
+      return {
+        location: cityOnly,
+        weatherDesc,
+        tempC: parseTemp(get('Temperature')),
+        feelsLikeC: parseTemp(get('Feels Like')),
+        humidity: parseTemp(get('Humidity')),
+        windSpeedKmph: parseTemp(get('Wind')),
+        cloudCover: parseTemp(get('Cloud Cover')),
+        pressure: parseTemp(get('Pressure')),
+      };
+    },
+  },
+  {
+    toolName: 'get_forecast',
+    renderType: RenderSpecType.WeatherForecast,
+    source: 'mcp',
+    schema: WeatherForecastRenderSpecSchema,
+    transform: (text) => {
+      const s = String(text ?? '');
+      const rawLocation = s.match(/\*\*Location:\*\*\s*(.+)/)?.[1]?.trim() ?? '';
+      const cityRaw = rawLocation.split(',')[0]?.trim() ?? rawLocation;
+      const cityOnly = CITY_NAME_HE[cityRaw.toLowerCase()] ?? cityRaw;
+      const dayBlocks = s.split(/^## /m).slice(1);
+      const forecast = dayBlocks.map((block) => {
+        const lines = block.split('\n');
+        const dayName = lines[0]?.replace(/\*.*$/,'').trim();
+        const get = (label: string): string | undefined => {
+          const m = block.match(new RegExp(`\\*\\*${label}:\\*\\*\\s*(.+)`, 'i'));
+          return m?.[1]?.trim();
+        };
+        const parseTemp = (raw: string | undefined): number | undefined => {
+          if (!raw) return undefined;
+          const m = raw.match(/High\s+(-?[\d.]+)/i);
+          return m ? Number(m[1]) : undefined;
+        };
+        const parseLow = (raw: string | undefined): number | undefined => {
+          if (!raw) return undefined;
+          const m = raw.match(/Low\s+(-?[\d.]+)/i);
+          return m ? Number(m[1]) : undefined;
+        };
+        const tempRaw = get('Temperature');
+        const rawDesc = get('Conditions');
+        const weatherDesc = rawDesc ? (WEATHER_DESC_HE[rawDesc.toLowerCase()] ?? rawDesc) : undefined;
+        return {
+          dayName,
+          weatherDesc,
+          maxTempC: parseTemp(tempRaw),
+          minTempC: parseLow(tempRaw),
+          humidity: undefined,
+          weatherEmoji: undefined,
+        };
+      });
+      return { location: cityOnly, forecast };
+    },
+  },
 ];
 
 @Injectable()
@@ -347,22 +444,41 @@ export class RenderSpecService {
         return null;
       }
 
+      const isMcp = mapping.source === 'mcp';
+
       let parsed: any;
-      try {
-        parsed = typeof resultData === 'string' ? JSON.parse(resultData) : resultData;
-      } catch {
-        this.logger.warn(`RenderSpec: failed to parse resultData for ${toolName}`);
-        return null;
+      if (isMcp) {
+        if (typeof resultData === 'string') {
+          try {
+            const maybeJson = JSON.parse(resultData);
+            if (maybeJson && typeof maybeJson === 'object' && maybeJson.error) {
+              this.logger.debug(`RenderSpec: MCP tool result has error for ${toolName}`);
+              return null;
+            }
+          } catch {
+            // Not JSON — it's markdown text, which is the normal MCP path
+          }
+        }
+        parsed = resultData;
+      } else {
+        try {
+          parsed = typeof resultData === 'string' ? JSON.parse(resultData) : resultData;
+        } catch {
+          this.logger.warn(`RenderSpec: failed to parse resultData for ${toolName}`);
+          return null;
+        }
       }
 
-      if (!parsed || typeof parsed !== 'object') {
-        this.logger.warn(`RenderSpec: resultData is not an object for ${toolName}`);
-        return null;
-      }
+      if (!isMcp) {
+        if (!parsed || typeof parsed !== 'object') {
+          this.logger.warn(`RenderSpec: resultData is not an object for ${toolName}`);
+          return null;
+        }
 
-      if (parsed.error) {
-        this.logger.debug(`RenderSpec: tool result has error for ${toolName}`);
-        return null;
+        if (parsed.error) {
+          this.logger.debug(`RenderSpec: tool result has error for ${toolName}`);
+          return null;
+        }
       }
 
       const data = mapping.transform(parsed);

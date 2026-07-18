@@ -5,8 +5,9 @@ import { AgentToolExecutorService } from './services/agent-tool-executor.service
 import { ChatSession } from './entities/chat-session.entity';
 import { ChatMessage } from './entities/chat-message.entity';
 import { SYSTEM_CONTEXT, buildSystemContext } from './constants/system-context.constant';
-import { SwaggerToolsParser } from './services/swagger-tools.parser';
+import { SwaggerToolsParser, type LlmToolSchema } from './services/swagger-tools.parser';
 import { RenderSpecService } from './render-spec/render-spec.service';
+import { McpBridgeService } from '../mcp-bridge/mcp-bridge.service';
 import type { LlmProvider, LlmToolCall } from '../llm/types/llm.types';
 
 const MAX_ITERATIONS = 10;
@@ -37,7 +38,18 @@ export class AdminAgentService implements OnModuleInit {
     private readonly agentSessionService: AgentSessionService,
     private readonly agentToolExecutorService: AgentToolExecutorService,
     private readonly renderSpecService: RenderSpecService,
+    private readonly mcpBridgeService: McpBridgeService,
   ) { }
+
+  private getTools(): LlmToolSchema[] {
+    const swaggerTools = this.swaggerToolsParser.getTools();
+    const mcpEnabled = (process.env.MCP_ENABLED ?? 'false') === 'true';
+    if (!mcpEnabled) {
+      return swaggerTools;
+    }
+    const mcpTools = this.mcpBridgeService.getTools();
+    return mcpTools.length > 0 ? [...swaggerTools, ...mcpTools] : swaggerTools;
+  }
 
   onModuleInit(): void {
     this.logger.log('AdminAgentService initialized. Orchestrator ready.');
@@ -61,7 +73,7 @@ export class AdminAgentService implements OnModuleInit {
           const endpoint = this.swaggerToolsParser.getEndpoint(functionName);
           const methodStr = endpoint?.method.toUpperCase();
           this.logger.log(
-            `Tool Name: "${functionName.padEnd(fnWidth)}" | ${endpoint?.path}, ${methodStr}`,
+            `Tool Name: "${functionName.padEnd(fnWidth)}" |${methodStr?.padEnd('DELETE'.length)}| ${endpoint?.path}`,
           );
         }
       });
@@ -112,7 +124,7 @@ export class AdminAgentService implements OnModuleInit {
     }
     await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt, { imageUrl: image });
 
-    const tools = this.swaggerToolsParser.getTools();
+    const tools = this.getTools();
     const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model);
     const collectedRenderBlocks: Array<{ component: string; data: Record<string, unknown> }> = [];
 
@@ -204,7 +216,7 @@ export class AdminAgentService implements OnModuleInit {
     }
     await this.agentSessionService.saveMessage(userId, session.id, 'user', prompt, { imageUrl: image });
 
-    const tools = this.swaggerToolsParser.getTools();
+    const tools = this.getTools();
     const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model);
     const collectedRenderBlocks: Array<{ component: string; data: Record<string, unknown> }> = [];
 
@@ -249,59 +261,59 @@ export class AdminAgentService implements OnModuleInit {
 
         for (const group of groups) {
           for (const call of group) {
-          const args = this.parseToolArguments(call);
-          const description = this.agentToolExecutorService.getSemanticActionDescription(call.function.name, args);
-          const endpoint = this.swaggerToolsParser.getEndpoint(call.function.name);
-          const toolIcon = endpoint?.toolIcon || STEP_ICONS.tool;
+            const args = this.parseToolArguments(call);
+            const description = this.agentToolExecutorService.getSemanticActionDescription(call.function.name, args);
+            const endpoint = this.swaggerToolsParser.getEndpoint(call.function.name);
+            const toolIcon = endpoint?.toolIcon || STEP_ICONS.tool;
 
-          this.recordToolCall(call);
+            this.recordToolCall(call);
 
-          yield JSON.stringify({ type: 'step', icon: toolIcon, message: `${description}...` }) + '\n';
-        }
+            yield JSON.stringify({ type: 'step', icon: toolIcon, message: `${description}...` }) + '\n';
+          }
 
           const results = await this.executeToolCallGroup(group, userId, session.id);
 
-        for (const { call, resultData } of results) {
-          let parsedResult: any;
-          try {
-            parsedResult = JSON.parse(resultData);
-          } catch {
-            parsedResult = null;
-          }
+          for (const { call, resultData } of results) {
+            let parsedResult: any;
+            try {
+              parsedResult = JSON.parse(resultData);
+            } catch {
+              parsedResult = null;
+            }
 
-          if (parsedResult?.error === 'CONFIRMATION_REQUIRED') {
-            yield JSON.stringify({
-              type: 'confirmation',
-              actionId: parsedResult.actionId,
-              action: parsedResult.description,
-              target: parsedResult.target,
-              metadata: parsedResult.metadata,
-              message: parsedResult.message,
-            }) + '\n';
-            return;
-          }
+            if (parsedResult?.error === 'CONFIRMATION_REQUIRED') {
+              yield JSON.stringify({
+                type: 'confirmation',
+                actionId: parsedResult.actionId,
+                action: parsedResult.description,
+                target: parsedResult.target,
+                metadata: parsedResult.metadata,
+                message: parsedResult.message,
+              }) + '\n';
+              return;
+            }
 
-          if (resultData.includes('error')) {
-            yield JSON.stringify({
-              type: 'step',
-              icon: STEP_ICONS.error,
-              message: 'ביצוע השלב נכשל עקב מגבלות אבטחה או שגיאת שרת.',
-            }) + '\n';
-          } else {
-            yield JSON.stringify({ type: 'step', icon: STEP_ICONS.success, message: 'השלב בוצע בהצלחה!' }) + '\n';
-          }
+            if (resultData.includes('error')) {
+              yield JSON.stringify({
+                type: 'step',
+                icon: STEP_ICONS.error,
+                message: 'ביצוע השלב נכשל עקב מגבלות אבטחה או שגיאת שרת.',
+              }) + '\n';
+            } else {
+              yield JSON.stringify({ type: 'step', icon: STEP_ICONS.success, message: 'השלב בוצע בהצלחה!' }) + '\n';
+            }
 
-          const renderSpec = this.renderSpecService.buildRenderSpec(call.function.name, resultData);
-          if (renderSpec) {
-            yield JSON.stringify({ type: 'render', component: renderSpec.type, data: renderSpec.data }) + '\n';
-            collectedRenderBlocks.push({ component: renderSpec.type, data: renderSpec.data });
-          }
+            const renderSpec = this.renderSpecService.buildRenderSpec(call.function.name, resultData);
+            if (renderSpec) {
+              yield JSON.stringify({ type: 'render', component: renderSpec.type, data: renderSpec.data }) + '\n';
+              collectedRenderBlocks.push({ component: renderSpec.type, data: renderSpec.data });
+            }
 
-          await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), {
-            toolCallId: call.id,
-            renderSpec: renderSpec ? JSON.stringify(renderSpec) : null,
-          });
-        }
+            await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), {
+              toolCallId: call.id,
+              renderSpec: renderSpec ? JSON.stringify(renderSpec) : null,
+            });
+          }
         }
       } else {
         if (llmResponse.content && llmResponse.content.length > 0) {

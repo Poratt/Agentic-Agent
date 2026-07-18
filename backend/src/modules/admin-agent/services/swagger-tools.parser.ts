@@ -13,6 +13,7 @@ interface LlmToolFunctionSchema {
 
 export interface LlmToolSchema {
   type: 'function';
+  source?: 'swagger' | 'mcp';
   function?: LlmToolFunctionSchema;
 }
 
@@ -369,6 +370,7 @@ export class SwaggerToolsParser {
 
           tools.push({
             type: 'function',
+            source: 'swagger',
             function: {
               name: op.operationId,
               description: [
