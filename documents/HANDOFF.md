@@ -26,6 +26,22 @@ documents/
 
 ## Notes For Next Agent
 
+## 2026-07-19 Session — Agnes GenUI render blocks + video frame-continuation
+
+**Objective:** make Agnes image/video results render inline in chat, prefer the 2.1 image model, and support "continue video from last frame".
+
+- **GenUI image block:** Added `RenderSpecType.AgnesImage` + union entry in `render-spec.interface.ts`, `image.render-spec.ts` schema (requires `url` or `b64Json`), and a `LlmController_generateImage` → `AgnesImage` mapping in `render-spec.service.ts`. Frontend: new `agnes-image-card` block (ts/html/css) registered in `render-host.component.ts` (case `agnes-image`). The controller now returns `model` and logs the resolved image model (`generateImage resolved model=... [fallback]`).
+- **Image model default:** `LlmController.resolveCapabilityModel` fallback now picks the highest-version active model of the requested capability (`pickLatestModel` + `extractVersion`), so `agnes-image-2.1-flash` is preferred over `2.0-flash` when the agent omits `modelId`. Both models stay active/selectable.
+- **GenUI video block:** Added `RenderSpecType.AgnesVideo` + `video.render-spec.ts`, mappings for `LlmController_getVideo` and `LlmController_createVideo`. Frontend: new `agnes-video-card` block (ts/html/css) registered in `render-host.component.ts` (case `agnes-video`) showing an inline `<video>` player + model/seconds pills.
+- **Video polls to completion:** `LlmClientService.createVideoTaskAndWait` submits the task then polls `getVideoResult` until `completed` (timeout 150s), so `createVideo` returns a real `.mp4` URL — the agent can no longer hallucinate a broken link. `getVideo` controller also returns `model`.
+- **Frame-continuation feature (`extendVideo`):** Added `ffmpeg-static` dependency. New `LlmClientService.extendVideo` downloads the source video (by `sourceVideoId` re-polled via `getVideoResult`, or `sourceVideoUrl`), extracts the last frame via ffmpeg (`-sseof -1 -frames:v 1`) to a PNG, base64-encodes it, and submits an image-to-video task with that frame. New `POST /llm/video/extend` (`ExtendVideoDto`) with tool name `LlmController_extendVideo`, render mapping → `AgnesVideo`. Verified empirically that Agnes accepts base64 image input for video (STATUS 200), so no external image hosting is needed. Live test: agent called `extendVideo`, rendered an inline `agnes-video` card with the real `.mp4`.
+- **Verification:** backend `npm run build` passes; frontend `npx ng build` passes (pre-existing unrelated warnings only). 
+- **Files touched:** `backend/src/modules/admin-agent/render-spec/render-spec.interface.ts`, `image.render-spec.ts` (new), `video.render-spec.ts` (new), `render-spec.service.ts`, `backend/src/modules/llm/services/llm-client.service.ts` (image logging path, `createVideoTaskAndWait`, `extendVideo`, `downloadBuffer`, ffmpeg imports), `backend/src/modules/llm/llm.controller.ts` (image model log, `getVideo`/`createVideo`/`extendVideo` return `model`, new `extendVideo` endpoint), `backend/src/modules/llm/dto/extend-video.dto.ts` (new), `backend/package.json` (`ffmpeg-static`), `frontend/src/app/features/chat/blocks/agnes-image-card/*` (new), `frontend/src/app/features/chat/blocks/agnes-video-card/*` (new), `frontend/src/app/features/chat/render-host/render-host.component.ts`.
+- **Architecture diagram updated:** added Agnes AI to External Providers, Agnes multimodal edges + `ffmpeg-static` frame-extract node in System Architecture, an `Agnes Multimodal Generation Flow` sequence diagram, an `agnes-image`/`agnes-video` RenderSpec → chat block path in GenUI Rendering Path, and Agnes notes in Current Architecture Notes.
+- **Next exact step:** feature complete; no further action unless the user requests changes (e.g. video continuation from a specific frame index, or audio). 
+- **Open questions for the user:** none.
+
+
 ## 2026-07-18 Session — Agnes AI Multimodal Plan Implemented (Phases 1-6)
 
 **Agnes AI Multimodal plan: fully implemented end-to-end.**

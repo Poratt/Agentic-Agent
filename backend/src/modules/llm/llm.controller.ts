@@ -35,6 +35,7 @@ import { LlmProviderService } from '../llm-provider/llm-provider.service';
 import { LlmClientService } from './services/llm-client.service';
 import { GenerateImageDto } from './dto/generate-image.dto';
 import { CreateVideoTaskDto } from './dto/create-video-task.dto';
+import { ExtendVideoDto } from './dto/extend-video.dto';
 import { LlmModelEntity } from '../llm-provider/entities/llm-model.entity';
 import { LlmModelCapability } from './types/llm.types';
 
@@ -204,6 +205,51 @@ export class LlmController {
     }
 
     const result = await this.client.getVideoResult(videoId, resolved.providerKey);
+    return { ...result, model: resolved.model.key };
+  }
+
+  @Post('video/extend')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Continue a generated video from its last frame',
+    description:
+      'Downloads a source video (by videoId or videoUrl), extracts its final frame, and submits a new image-to-video task using that frame. Returns the completed continuation video.',
+  })
+  @ApiBody({ type: ExtendVideoDto })
+  @ApiCreatedResponse({
+    description: 'Continuation video task completed.',
+    schema: { example: { videoId: 'vid_2', status: 'completed', url: 'https://cdn.agnes-ai.com/vid_2.mp4', seconds: 5 } },
+  })
+  @ApiBadRequestResponse({ description: 'Invalid request (e.g. missing source, unsupported image, or not a video model).' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT.' })
+  @ApiNotFoundResponse({ description: 'No video-capable model could be resolved.' })
+  @ApiInternalServerErrorResponse({ description: 'Upstream Agnes generation or frame extraction failed.' })
+  async extendVideo(@Body() dto: ExtendVideoDto) {
+    const resolved = await this.resolveCapabilityModel(dto.modelId, 'video');
+    if (!resolved) {
+      throw new NotFoundException('No active video model found');
+    }
+
+    if (!dto.sourceVideoId && !dto.sourceVideoUrl) {
+      throw new BadRequestException('extendVideo requires sourceVideoId or sourceVideoUrl');
+    }
+
+    const result = await this.client.extendVideo({
+      provider: resolved.providerKey,
+      model: resolved.model.key,
+      sourceVideoId: dto.sourceVideoId,
+      sourceVideoUrl: dto.sourceVideoUrl,
+      prompt: dto.prompt,
+      mode: dto.mode,
+      height: dto.height,
+      width: dto.width,
+      numFrames: dto.numFrames,
+      frameRate: dto.frameRate,
+      numInferenceSteps: dto.numInferenceSteps,
+      seed: dto.seed,
+      negativePrompt: dto.negativePrompt,
+    });
+
     return { ...result, model: resolved.model.key };
   }
 

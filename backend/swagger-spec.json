@@ -1153,6 +1153,61 @@
         ]
       }
     },
+    "/llm/video/extend": {
+      "post": {
+        "description": "Downloads a source video (by videoId or videoUrl), extracts its final frame, and submits a new image-to-video task using that frame. Returns the completed continuation video.",
+        "operationId": "LlmController_extendVideo",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtendVideoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Continuation video task completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "videoId": "vid_2",
+                    "status": "completed",
+                    "url": "https://cdn.agnes-ai.com/vid_2.mp4",
+                    "seconds": 5
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (e.g. missing source, unsupported image, or not a video model)."
+          },
+          "401": {
+            "description": "Missing or invalid JWT."
+          },
+          "404": {
+            "description": "No video-capable model could be resolved."
+          },
+          "500": {
+            "description": "Upstream Agnes generation or frame extraction failed."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Continue a generated video from its last frame",
+        "tags": [
+          "llm"
+        ]
+      }
+    },
     "/llm-provider": {
       "post": {
         "description": "Adds a new LLM provider to the system configuration.",
@@ -3082,6 +3137,73 @@
           "mode": {
             "type": "string",
             "description": "Generation mode: ti2vid (text/image to video) or keyframes.",
+            "enum": [
+              "ti2vid",
+              "keyframes"
+            ],
+            "default": "ti2vid"
+          },
+          "height": {
+            "type": "number",
+            "description": "Output height in pixels."
+          },
+          "width": {
+            "type": "number",
+            "description": "Output width in pixels."
+          },
+          "numFrames": {
+            "type": "number",
+            "description": "Number of frames (<=441, 8n+1).",
+            "example": 41
+          },
+          "frameRate": {
+            "type": "number",
+            "description": "Frame rate (frames per second).",
+            "example": 24
+          },
+          "numInferenceSteps": {
+            "type": "number",
+            "description": "Number of inference steps for generation quality.",
+            "example": 30
+          },
+          "seed": {
+            "type": "number",
+            "description": "Random seed for deterministic generation."
+          },
+          "negativePrompt": {
+            "type": "string",
+            "description": "Negative prompt to steer generation away from concepts."
+          }
+        },
+        "required": [
+          "prompt"
+        ]
+      },
+      "ExtendVideoDto": {
+        "type": "object",
+        "properties": {
+          "modelId": {
+            "type": "number",
+            "description": "DB model id of an Agnes video model. Resolved automatically when omitted.",
+            "example": 14
+          },
+          "sourceVideoId": {
+            "type": "string",
+            "description": "Agnes video id of a previously generated video. The last frame is extracted automatically.",
+            "example": "task_abc123"
+          },
+          "sourceVideoUrl": {
+            "type": "string",
+            "description": "Direct downloadable URL of a source video (.mp4) to extract the last frame from."
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Continuation prompt describing how the video should proceed from the last frame.",
+            "example": "the camera slowly zooms in and the waves keep rolling"
+          },
+          "mode": {
+            "type": "string",
+            "description": "Input frame is sent as image-to-video. Defaults to ti2vid.",
             "enum": [
               "ti2vid",
               "keyframes"

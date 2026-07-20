@@ -78,6 +78,7 @@ flowchart TD
     WeatherMcp[Weather MCP Server]
     CurrencyApi[Currency API]
     JaneApi[Jane API / Store Page]
+    AgnesAI[Agnes AI API\ntext / image / video]
   end
 
   User --> Shell
@@ -102,9 +103,13 @@ flowchart TD
   LlmController --> LlmService
   LlmService --> ProviderConfig & ClientService & ModelCatalog & HealthService
   ClientService --> ProviderConfig
-  ClientService --> OpenRouter & Nvidia & Ollama
+  ClientService --> OpenRouter & Nvidia & Ollama & AgnesAI
   ModelCatalog --> ProviderConfig & Ollama
   HealthService --> ClientService & ProviderConfig & ModelCatalog
+
+  LlmController -->|image / video gen| ClientService
+  ClientService -->|extendVideo| Ffmpeg[ffmpeg-static\nlast-frame extract]
+  Ffmpeg -->|base64 frame| AgnesAI
 
   AuthModule & UsersModule --> UsersTable
   AgentSessionService --> ChatSessionsTable & ChatMessagesTable
@@ -273,6 +278,12 @@ flowchart TD
   AiFormat --> ProgressivePreview[Progressive Preview\nrAF-throttled]
   AiFormat --> Skeleton[Skeleton Loader]
   AiFormat --> FinalRender[Sanitized GenUI Component]
+
+  ToolResult[Tool JSON Result] --> RenderSpec[RenderSpecService]
+  RenderSpec -->|toolName mapping| SpecType[RenderSpecType\nagnes-image / agnes-video / ...]
+  SpecType --> ChatBlock[Angular Chat Block\nagnes-image-card / agnes-video-card]
+  ChatBlock --> RenderHost[RenderHostComponent]
+  RenderHost --> ChatUI[Chat Message Bubble]
 ````
 
 ## Streaming Event Flow
@@ -357,6 +368,54 @@ sequenceDiagram
   Client->>Config: Resolve provider config
 ```
 
+## Agnes Multimodal Generation Flow
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Admin as Admin User
+  participant Chat as Angular Chat UI
+  participant API as AdminAgentController
+  participant Agent as AdminAgentService
+  participant Tools as AgentToolExecutorService
+  participant Llm as LlmController
+  participant Client as LlmClientService
+  participant Agnes as Agnes AI API
+  participant Ffmpeg as ffmpeg-static
+  participant Render as RenderSpecService
+
+  Admin->>Chat: "generate an image / video"
+  Chat->>API: POST /admin-agent/query-stream
+  API->>Agent: queryDatabaseStream(...)
+  Agent->>Tools: executeToolCall()
+
+  alt Image
+    Tools->>Llm: POST /llm/image/generate
+    Llm->>Client: generateImage()
+    Client->>Agnes: POST /images/generations
+    Agnes-->>Llm: { url | b64Json }
+  else Video (createVideo)
+    Tools->>Llm: POST /llm/video/generate
+    Llm->>Client: createVideoTaskAndWait()
+    Client->>Agnes: POST /videos + poll /agnesapi
+    Agnes-->>Llm: { status: completed, url }
+  else Video continuation (extendVideo)
+    Tools->>Llm: POST /llm/video/extend
+    Llm->>Client: extendVideo()
+    Client->>Agnes: download source .mp4
+    Client->>Ffmpeg: extract last frame -> PNG base64
+    Client->>Agnes: POST /videos (image=frame)
+    Agnes-->>Llm: { status: completed, url }
+  end
+
+  Llm-->>Tools: tool result + model
+  Tools-->>Agent: JSON result
+  Agent->>Render: buildRenderSpec(toolName, data)
+  Render-->>Agent: RenderSpecType AgnesImage / AgnesVideo
+  Agent-->>API: SSE {"type":"render", component, data}
+  API-->>Chat: render-host shows agnes-image-card / agnes-video-card
+```
+
 ## Current Architecture Notes
 
 - The backend is the source of truth for available LLM models.
@@ -374,3 +433,9 @@ sequenceDiagram
 - `AiFormat` renders progressive GenUI previews during streaming using a stable preview host element, replacing the skeleton once partial HTML is safely renderable.
 - The backend logs `[AdminAgentStream]` with time-to-first-token, total duration, token count, and component count for each stream.
 - The system context is split into `SYSTEM_CONTEXT_BASE` (tool rules, security, anti-hallucination) and `SYSTEM_CONTEXT_GENUI` (visual standard, design system). GenUI rules are only included when the prompt contains visual-trigger keywords.
+- **Agnes AI multimodal provider** (`agnes-ai` key, `https://apihub.agnes-ai.com/v1`) supports text, image, and video generation. Provider key must be `agnes-ai` (not legacy `agnes`).
+- Image generation: `LlmController_generateImage` → `LlmClientService.generateImage`, returns hosted URL or base64. `size` is required; `response_format` lives in `extra_body`.
+- Video generation: `LlmController_createVideo` → `createVideoTaskAndWait` which submits the task and polls `getVideoResult` until `completed`, returning a real `.mp4` URL (prevents the agent from hallucinating links).
+- Video continuation: `LlmController_extendVideo` → `extendVideo` downloads the source video, extracts the last frame via `ffmpeg-static` (`-sseof -1 -frames:v 1`), and submits an image-to-video task with the frame as a base64 PNG data URI (no external image hosting needed).
+- GenUI render blocks for Agnes: `agnes-image` (`agnes-image-card`) and `agnes-video` (`agnes-video-card`) are registered in `RenderHostComponent` and rendered inline in chat instead of markdown links. `RenderSpecService` maps `LlmController_generateImage`/`createVideo`/`extendVideo` to these types.
+- Image/video model fallback (`resolveCapabilityModel`) picks the highest-version active model of the requested capability when `modelId` is omitted (e.g. `agnes-image-2.1-flash` over `2.0-flash`). The resolved image model is logged by `LlmController`.

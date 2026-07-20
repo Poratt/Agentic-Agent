@@ -379,6 +379,20 @@ const TOOL_RENDER_MAPPINGS: ToolRenderMapping[] = [
     },
   },
   {
+    toolName: 'LlmController_extendVideo',
+    renderType: RenderSpecType.AgnesVideo,
+    schema: AgnesVideoRenderSpecSchema,
+    transform: (data) => {
+      const r = data.result ?? data.data ?? data;
+      return {
+        url: r.url ?? r.video_url ?? undefined,
+        status: r.status,
+        seconds: r.seconds,
+        model: r.model ?? undefined,
+      };
+    },
+  },
+  {
     toolName: 'AuthController_register',
     renderType: RenderSpecType.RegisterForm,
     schema: RegisterFormRenderSpecSchema,

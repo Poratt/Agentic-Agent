@@ -1,8 +1,16 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { promises as fs } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import ffmpegStatic from 'ffmpeg-static';
 import OpenAI from 'openai';
 import { LlmRequest, LlmResponse, LlmToolCall } from '../types/llm.types';
 import { LlmProviderConfigService } from './llm-provider-config.service';
 import { LlmProviderService } from '../../llm-provider/llm-provider.service';
+
+const execFileAsync = promisify(execFile);
 
 const MAX_RETRIES = 4;
 const BASE_DELAY_MS = 1500;
@@ -434,6 +442,101 @@ export class LlmClientService {
     }
 
     return latest;
+  }
+
+  /**
+   * Continues a generated video from its last frame:
+   * resolves the source video URL (from videoId or a direct URL), downloads it,
+   * extracts the final frame as a PNG, and submits a new image-to-video task
+   * using that frame. Returns the completed continuation video.
+   */
+  async extendVideo(params: {
+    provider: string;
+    model: string;
+    sourceVideoId?: string;
+    sourceVideoUrl?: string;
+    prompt: string;
+    mode?: 'ti2vid' | 'keyframes';
+    height?: number;
+    width?: number;
+    numFrames?: number;
+    frameRate?: number;
+    numInferenceSteps?: number;
+    seed?: number;
+    negativePrompt?: string;
+    timeoutMs?: number;
+  }): Promise<{
+    taskId?: string;
+    videoId: string;
+    status: 'queued' | 'in_progress' | 'completed' | 'failed';
+    url?: string;
+    seconds?: number | string;
+    size?: string;
+    sourceFrame?: string;
+  }> {
+    const { provider, sourceVideoId, sourceVideoUrl, timeoutMs } = params;
+
+    let sourceUrl = sourceVideoUrl;
+    if (!sourceUrl && sourceVideoId) {
+      const status = await this.getVideoResult(sourceVideoId, provider);
+      sourceUrl = status.url;
+    }
+    if (!sourceUrl) {
+      throw new BadRequestException('extendVideo requires a source videoId or videoUrl');
+    }
+
+    const videoBuf = await this.downloadBuffer(sourceUrl);
+    const videoPath = join(tmpdir(), `agnes-src-${Date.now()}.mp4`);
+    const framePath = join(tmpdir(), `agnes-frame-${Date.now()}.png`);
+    try {
+      await fs.writeFile(videoPath, videoBuf);
+      await execFileAsync(ffmpegStatic as string, [
+        '-y',
+        '-sseof',
+        '-1',
+        '-i',
+        videoPath,
+        '-vsync',
+        'vfr',
+        '-frames:v',
+        '1',
+        framePath,
+      ]);
+      const frameBuf = await fs.readFile(framePath);
+      const frameDataUri = `data:image/png;base64,${frameBuf.toString('base64')}`;
+
+      const result = await this.createVideoTaskAndWait(
+        {
+          provider,
+          model: params.model,
+          prompt: params.prompt,
+          image: frameDataUri,
+          mode: params.mode,
+          height: params.height,
+          width: params.width,
+          numFrames: params.numFrames,
+          frameRate: params.frameRate,
+          numInferenceSteps: params.numInferenceSteps,
+          seed: params.seed,
+          negativePrompt: params.negativePrompt,
+        },
+        { timeoutMs },
+      );
+
+      return { ...result, sourceFrame: frameDataUri };
+    } finally {
+      await fs.rm(videoPath, { force: true }).catch(() => undefined);
+      await fs.rm(framePath, { force: true }).catch(() => undefined);
+    }
+  }
+
+  private async downloadBuffer(url: string): Promise<Buffer> {
+    const res = await fetch(url, { signal: AbortSignal.timeout(120_000) });
+    if (!res.ok) {
+      throw new BadRequestException(`Failed to download source video (${res.status})`);
+    }
+    const arrayBuffer = await res.arrayBuffer();
+    return Buffer.from(arrayBuffer);
   }
 
   /**
