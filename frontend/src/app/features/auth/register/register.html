@@ -38,7 +38,11 @@
             </div>
 
             <button type="submit" class="primary-btn filled" [disabled]="registerForm.invalid || authStore.loading()">
-                {{ authStore.loading() ? 'טוען...' : 'הרשמה' }}
+                @if (authStore.loading()) {
+                    <span class="shimmer-text">טוען...</span>
+                } @else {
+                    הרשמה
+                }
             </button>
         </form>
 

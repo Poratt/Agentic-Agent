@@ -30,7 +30,11 @@
             </div>
 
             <button type="submit" class="primary-btn filled" [disabled]="loginForm.invalid || authStore.loading()">
-                {{ authStore.loading() ? 'טוען...' : 'כניסה' }}
+                @if (authStore.loading()) {
+                    <span class="shimmer-text">טוען...</span>
+                } @else {
+                    כניסה
+                }
             </button>
         </form>
 

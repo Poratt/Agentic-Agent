@@ -1,0 +1,113 @@
+<div class="summary-card glass-effect">
+    <!-- Location -->
+    @if (data().location) {
+        <div class="summary-location">
+            <span class="ph ph-map-pin"></span>
+            <span>{{ cleanLocation() }}</span>
+        </div>
+    }
+
+    <!-- Alerts -->
+    @if (hasAlerts()) {
+        <div class="alerts-section">
+            @for (alert of data().alerts; track $index) {
+                <div class="alert-banner" [class]="severityClass(alert.severity)">
+                    <span class="ph ph-warning"></span>
+                    <div class="alert-content">
+                        <span class="alert-event">{{ alert.event }}</span>
+                        @if (alert.headline) {
+                            <span class="alert-headline">{{ alert.headline }}</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Current conditions -->
+    @if (hasCurrent()) {
+        <div class="current-section">
+            <div class="hero-emoji">{{ heroEmoji() }}</div>
+
+            <div class="current-temp">
+                @if (data().current?.tempC !== undefined && data().current?.tempC !== null) {
+                    <span class="temp-value">{{ data().current!.tempC }}°</span>
+                    <span class="temp-unit">C</span>
+                }
+            </div>
+
+            @if (data().current?.weatherDesc) {
+                <div class="current-desc">{{ data().current!.weatherDesc }}</div>
+            }
+
+            @if (data().current?.feelsLikeC !== undefined && data().current?.feelsLikeC !== null) {
+                <div class="current-feels-like">מרגיש כמו {{ data().current!.feelsLikeC }}°C</div>
+            }
+
+            @if (hasAnyDetail()) {
+                <div class="current-details stagger stagger-up">
+                    @if (data().current?.humidity !== undefined && data().current?.humidity !== null) {
+                        <div class="detail-chip">
+                            <span class="ph ph-drop"></span>
+                            <span class="detail-label">לחות</span>
+                            <span class="detail-value">{{ data().current!.humidity }}%</span>
+                        </div>
+                    }
+                    @if (data().current?.windSpeedKmph !== undefined && data().current?.windSpeedKmph !== null) {
+                        <div class="detail-chip">
+                            <span class="ph ph-wind"></span>
+                            <span class="detail-label">רוח</span>
+                            <span class="detail-value">{{ data().current!.windSpeedKmph }} קמ״ש</span>
+                        </div>
+                    }
+                    @if (data().current?.cloudCover !== undefined && data().current?.cloudCover !== null) {
+                        <div class="detail-chip">
+                            <span class="ph ph-cloud"></span>
+                            <span class="detail-label">עננות</span>
+                            <span class="detail-value">{{ data().current!.cloudCover }}%</span>
+                        </div>
+                    }
+                    @if (data().current?.pressure !== undefined && data().current?.pressure !== null) {
+                        <div class="detail-chip">
+                            <span class="ph ph-gauge"></span>
+                            <span class="detail-label">לחץ אוויר</span>
+                            <span class="detail-value">{{ data().current!.pressure }} hPa</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (data().current?.observationTime) {
+                <div class="current-footer">
+                    <span class="ph ph-clock"></span>
+                    {{ data().current!.observationTime }}
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Forecast strip -->
+    @if (hasForecast()) {
+        <div class="forecast-section">
+            <div class="forecast-strip">
+                @for (day of data().forecast; track $index) {
+                    <div class="forecast-day" [style.animation-delay]="($index * 80) + 'ms'">
+                        <span class="day-name">{{ day.dayName }}</span>
+                        <span class="day-emoji">{{ forecastEmojis()[$index] }}</span>
+                        <div class="day-temps">
+                            @if (day.maxTempC !== undefined && day.maxTempC !== null) {
+                                <span class="temp-max">{{ day.maxTempC }}°</span>
+                            }
+                            @if (day.minTempC !== undefined && day.minTempC !== null) {
+                                <span class="temp-min">{{ day.minTempC }}°</span>
+                            }
+                        </div>
+                        @if (day.weatherDesc) {
+                            <span class="day-desc">{{ day.weatherDesc }}</span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

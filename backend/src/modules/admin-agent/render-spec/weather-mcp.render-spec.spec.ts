@@ -25,8 +25,8 @@ describe('MCP weather render-spec mappings', () => {
       expect(result!.type).toBe(RenderSpecType.WeatherCurrent);
       const data = (result as { type: RenderSpecType.WeatherCurrent; data: any }).data;
       expect(data.weatherDesc).toBe('שמים בהירים');
-      expect(data.tempC).toBe(89);
-      expect(data.feelsLikeC).toBe(95);
+      expect(data.tempC).toBe(32);
+      expect(data.feelsLikeC).toBe(35);
       expect(data.humidity).toBe(49);
       expect(data.cloudCover).toBe(3);
       expect(data.pressure).toBe(29.74);
@@ -74,8 +74,8 @@ describe('MCP weather render-spec mappings', () => {
       expect(data.forecast).toHaveLength(3);
       expect(data.forecast[0].dayName).toContain('18 ביולי');
       expect(data.forecast[0].weatherDesc).toBe('בהיר בעיקר');
-      expect(data.forecast[0].maxTempC).toBe(90);
-      expect(data.forecast[0].minTempC).toBe(74);
+      expect(data.forecast[0].maxTempC).toBe(32);
+      expect(data.forecast[0].minTempC).toBe(23);
     });
 
     it('should return null for JSON error envelope', () => {

@@ -25,11 +25,8 @@
                     @for (step of displaySteps(); track $index) {
                         <div class="step-item" [class.is-loading]="step.isLoading">
                             @if (step.isLoading) {
-                                <span class="loading-dots" aria-label="טוען תגובה">
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                </span>
+                                <span class="xs ph ph-spinner ph-spin"></span>
+                                <span class="shimmer-text">טוען...</span>
                             } @else {
                                 <span class="xs ph {{ step.icon }}"></span>
                                 <span class="step-text">{{ step.message }}</span>

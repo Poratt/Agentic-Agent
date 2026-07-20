@@ -532,3 +532,91 @@
   }
 }
 
+/* --- Shimmer Loading Primitive --- */
+.shimmer {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-text-muted) 12%, transparent);
+}
+
+.shimmer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--color-primary) 35%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.5s linear infinite;
+}
+
+[dir="rtl"] .shimmer::before {
+  animation-name: shimmer-sweep-rtl;
+}
+
+@keyframes shimmer-sweep-rtl {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer--sm {
+  width: 40px;
+  height: 6px;
+}
+
+.shimmer--md {
+  width: 120px;
+  height: 6px;
+}
+
+.shimmer--lg {
+  width: 240px;
+  height: 8px;
+}
+
+.shimmer-text {
+  color: color-mix(in srgb, var(--color-text-muted) 60%, transparent);
+  background: linear-gradient(
+    90deg,
+    var(--color-text-muted) 0%,
+    color-mix(in srgb, var(--color-text-primary) 100%, transparent) 50%,
+    var(--color-text-muted) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-sweep 1.5s linear infinite;
+}
+
+[dir="rtl"] .shimmer-text {
+  animation-name: shimmer-sweep-rtl;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer::before,
+  .shimmer-text {
+    animation: none;
+  }
+
+  .shimmer::before {
+    background: none;
+  }
+
+  .shimmer-text {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    color: color-mix(in srgb, var(--color-text-muted) 60%, transparent);
+  }
+}
+

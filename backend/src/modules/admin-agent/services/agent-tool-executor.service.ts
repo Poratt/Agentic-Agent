@@ -166,6 +166,7 @@ export class AgentToolExecutorService {
     const mcpDescriptions: Record<string, string> = {
       'get_current_conditions': 'מקבל מזג אוויר נוכחי',
       'get_forecast': 'מקבל תחזית מזג אוויר',
+      'get_weather_summary': 'מקבל סיכום מזג אוויר מלא',
       'check_service_status': 'בודק סטטוס שירות',
     };
 

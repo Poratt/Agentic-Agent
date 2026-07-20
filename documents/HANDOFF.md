@@ -26,6 +26,20 @@ documents/
 
 ## Notes For Next Agent
 
+## 2026-07-20 Session — Loader Shimmer Plan Implemented (Phases 1, 2, 3, 5, 6)
+
+**Objective:** implement the loader shimmer plan to unify inline animated loaders.
+
+- **Phase 1 (foundations):** Added `@keyframes shimmer-sweep` + `@keyframes shimmer-sweep-rtl` to `_animations.css`. Added `.shimmer`, `.shimmer--sm/md/lg`, `.shimmer-text` utility classes to `_utilities.css` with RTL mirroring, `prefers-reduced-motion` fallback, and `color-mix()` gradient over existing tokens.
+- **Phase 2 (chat step):** Replaced the three-pulse `loading-dots` in `chat-message.html:33-38` with `<span class="shimmer-text">טוען...</span>` + spinner icon. Deleted the dead `.response-loader` block (`chat-message.css:177-199`) and the `.loading-dots` block (`chat-message.css:232-252`). Removed the unused `responseLoaderPulse` keyframe and cleaned up media query references.
+- **Phase 3 (strain-hunter):** Replaced `.dots-loader` in `strain-hunter.html:110-115` with `<span class="shimmer shimmer--sm">`. Deleted `.loading-dots`, `.dots-loader` rules and the `dot-bounce` keyframe from `strain-hunter.css`.
+- **Phase 5 (text shimmer):** Wrapped `טוען...` in shimmer-text in `login.html:32`, `register.html:40`. Wrapped `מבצע העשרה...` in shimmer-text in `strain-hunter-settings.html:47,332`. Wrapped `טוען נתוני מסד נתונים...` in shimmer-text in `database-monitor-settings.html:4`.
+- **Phase 6 (verification):** Grep confirms zero matches for `loading-dots|response-loader|dots-loader|dot-bounce|responseLoaderPulse`. `custom-loader` has 7 hits (1 definition + 6 templates) as expected. `npx ng build` passes. `npx ng test --watch=false`: 120 passed, 3 pre-existing failures.
+- **Phase 4 (`.custom-loader` rebrand) remains deferred.** The duplicate in `chat.css:27-34` stays until Phase 4 unblocks.
+- **Files touched:** `_animations.css`, `_utilities.css`, `chat-message.html`, `chat-message.css`, `strain-hunter.html`, `strain-hunter.css`, `login.html`, `register.html`, `strain-hunter-settings.html`, `database-monitor-settings.html`.
+- **Next exact step:** move `loader-shimmer-plan.md` to `documents/done/` once the user confirms the shimmer looks correct in production. Phase 4 is deferred — see "Deferred work" in the plan.
+- **Open questions for the user:** none.
+
 ## 2026-07-19 Session — Agnes GenUI render blocks + video frame-continuation
 
 **Objective:** make Agnes image/video results render inline in chat, prefer the 2.1 image model, and support "continue video from last frame".

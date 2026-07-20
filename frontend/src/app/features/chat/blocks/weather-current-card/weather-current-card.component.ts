@@ -5,8 +5,6 @@ export interface WeatherCurrentRenderData {
     location?: string;
     tempC?: number;
     feelsLikeC?: number;
-    tempF?: number;
-    feelsLikeF?: number;
     humidity?: number;
     windSpeedKmph?: number;
     windDirection?: string;

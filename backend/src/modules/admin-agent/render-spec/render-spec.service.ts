@@ -4,6 +4,7 @@ import { RenderSpec, RenderSpecType, renderSpecDiscriminatedSchema } from './ren
 import {
   WeatherCurrentRenderSpecSchema,
   WeatherForecastRenderSpecSchema,
+  WeatherSummaryRenderSpecSchema,
 } from './weather.render-spec';
 import { CurrencyRenderSpecSchema } from './currency.render-spec';
 import {
@@ -53,7 +54,7 @@ const WEATHER_DESC_HE: Record<string, string> = {
   'clear sky': 'שמים בהירים',
   'clear': 'בהיר',
   'mainly clear': 'בהיר בעיקר',
-  'partly cloudy': 'חלקית מעונן',
+  'partly cloudy': 'מעונן חלקית',
   'cloudy': 'מעונן',
   'overcast': 'מעונן לחלוטין',
   'light rain': 'גשם קל',
@@ -419,7 +420,9 @@ const TOOL_RENDER_MAPPINGS: ToolRenderMapping[] = [
       const parseTemp = (raw: string | undefined): number | undefined => {
         if (!raw) return undefined;
         const m = raw.match(/(-?[\d.]+)/);
-        return m ? Number(m[1]) : undefined;
+        if (!m) return undefined;
+        const val = Number(m[1]);
+        return /°f/i.test(raw) ? Math.round((val - 32) * 5 / 9) : val;
       };
       const rawLocation = s.match(/\*\*Location:\*\*\s*(.+)/)?.[1]?.trim() ?? '';
       const cityRaw = rawLocation.split(',')[0]?.trim() ?? rawLocation;
@@ -459,12 +462,16 @@ const TOOL_RENDER_MAPPINGS: ToolRenderMapping[] = [
         const parseTemp = (raw: string | undefined): number | undefined => {
           if (!raw) return undefined;
           const m = raw.match(/High\s+(-?[\d.]+)/i);
-          return m ? Number(m[1]) : undefined;
+          if (!m) return undefined;
+          const val = Number(m[1]);
+          return /°f/i.test(raw) ? Math.round((val - 32) * 5 / 9) : val;
         };
         const parseLow = (raw: string | undefined): number | undefined => {
           if (!raw) return undefined;
           const m = raw.match(/Low\s+(-?[\d.]+)/i);
-          return m ? Number(m[1]) : undefined;
+          if (!m) return undefined;
+          const val = Number(m[1]);
+          return /°f/i.test(raw) ? Math.round((val - 32) * 5 / 9) : val;
         };
         const tempRaw = get('Temperature');
         const rawDesc = get('Conditions');
@@ -479,6 +486,96 @@ const TOOL_RENDER_MAPPINGS: ToolRenderMapping[] = [
         };
       });
       return { location: cityOnly, forecast };
+    },
+  },
+  {
+    toolName: 'get_weather_summary',
+    renderType: RenderSpecType.WeatherSummary,
+    source: 'mcp',
+    schema: WeatherSummaryRenderSpecSchema,
+    transform: (text) => {
+      const s = String(text ?? '');
+      const rawLocation = s.match(/\*\*Location:\*\*\s*(.+)/)?.[1]?.trim() ?? '';
+      const cityRaw = rawLocation.split(',')[0]?.trim() ?? rawLocation;
+      const cityOnly = CITY_NAME_HE[cityRaw.toLowerCase()] ?? cityRaw;
+
+      const get = (label: string): string | undefined => {
+        const m = s.match(new RegExp(`\\*\\*${label}:\\*\\*\\s*(.+)`, 'i'));
+        return m?.[1]?.trim();
+      };
+      const parseTemp = (raw: string | undefined): number | undefined => {
+        if (!raw) return undefined;
+        const m = raw.match(/(-?[\d.]+)/);
+        if (!m) return undefined;
+        const val = Number(m[1]);
+        return /°f/i.test(raw) ? Math.round((val - 32) * 5 / 9) : val;
+      };
+
+      const rawDesc = get('Conditions');
+      const weatherDesc = rawDesc ? (WEATHER_DESC_HE[rawDesc.toLowerCase()] ?? rawDesc) : undefined;
+
+      const current = {
+        weatherDesc,
+        tempC: parseTemp(get('Temperature')),
+        feelsLikeC: parseTemp(get('Feels Like')),
+        humidity: parseTemp(get('Humidity')),
+        windSpeedKmph: parseTemp(get('Wind')),
+        cloudCover: parseTemp(get('Cloud Cover')),
+        pressure: parseTemp(get('Pressure')),
+        observationTime: get('Time'),
+      };
+
+      const dayBlocks = s.split(/^## /m).slice(1);
+      const forecast = dayBlocks
+        .filter((block) => /\*\*Temperature:\*\*/i.test(block))
+        .map((block) => {
+          const dayName = block.split('\n')[0]?.replace(/\*.*$/, '').trim();
+          const getF = (label: string): string | undefined => {
+            const m = block.match(new RegExp(`\\*\\*${label}:\\*\\*\\s*(.+)`, 'i'));
+            return m?.[1]?.trim();
+          };
+          const parseHigh = (raw: string | undefined): number | undefined => {
+            if (!raw) return undefined;
+            const m = raw.match(/High\s+(-?[\d.]+)/i);
+            if (!m) return undefined;
+            const val = Number(m[1]);
+            return /°f/i.test(raw) ? Math.round((val - 32) * 5 / 9) : val;
+          };
+          const parseLow = (raw: string | undefined): number | undefined => {
+            if (!raw) return undefined;
+            const m = raw.match(/Low\s+(-?[\d.]+)/i);
+            if (!m) return undefined;
+            const val = Number(m[1]);
+            return /°f/i.test(raw) ? Math.round((val - 32) * 5 / 9) : val;
+          };
+          const tempRaw = getF('Temperature');
+          const fDesc = getF('Conditions');
+          const fWeatherDesc = fDesc ? (WEATHER_DESC_HE[fDesc.toLowerCase()] ?? fDesc) : undefined;
+          return {
+            dayName,
+            weatherDesc: fWeatherDesc,
+            maxTempC: parseHigh(tempRaw),
+            minTempC: parseLow(tempRaw),
+          };
+        });
+
+      const alertBlocks = s.split(/^### /m).slice(1);
+      const alerts = alertBlocks
+        .filter((b) => /alert|warning|watch|advisory/i.test(b) && !/no active|none/i.test(b))
+        .map((b) => {
+          const event = b.split('\n')[0]?.trim();
+          const sev = b.match(/\*\*Severity:\*\*\s*(.+)/i)?.[1]?.trim();
+          const head = b.match(/\*\*Headline:\*\*\s*(.+)/i)?.[1]?.trim();
+          return { event, severity: sev, headline: head };
+        })
+        .filter((a) => a.event);
+
+      return {
+        location: cityOnly,
+        current,
+        forecast,
+        alerts: alerts.length > 0 ? alerts : undefined,
+      };
     },
   },
 ];

@@ -15,7 +15,7 @@ export const MCP_SERVERS: McpServerDef[] = [
     id: 'weather',
     package: '@dangahagan/weather-mcp',
     entry: '/dist/index.js',
-    enabledTools: ['get_forecast', 'get_current_conditions', 'check_service_status'],
+    enabledTools: ['get_forecast', 'get_current_conditions', 'get_weather_summary', 'check_service_status'],
   },
 ];
 

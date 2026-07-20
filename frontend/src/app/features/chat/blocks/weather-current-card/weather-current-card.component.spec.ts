@@ -9,8 +9,6 @@ describe('WeatherCurrentCardComponent', () => {
         location: 'Tel Aviv, Israel',
         tempC: 28,
         feelsLikeC: 31,
-        tempF: 82,
-        feelsLikeF: 88,
         humidity: 65,
         windSpeedKmph: 18,
         windDirection: 'NW',

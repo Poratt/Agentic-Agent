@@ -72,7 +72,8 @@ export class ChatMessage implements OnDestroy {
     });
     steps = computed(() => this.message().steps ?? []);
     displaySteps = computed<ChatDisplayStep[]>(() => {
-        const displaySteps = this.steps().reduce<ChatDisplayStep[]>((displaySteps, step) => {
+        const rawSteps = this.steps();
+        const displaySteps = rawSteps.reduce<ChatDisplayStep[]>((displaySteps, step) => {
             if (this.isStatusStep(step.icon) && displaySteps.length > 0) {
                 const previousStep = displaySteps[displaySteps.length - 1];
                 displaySteps[displaySteps.length - 1] = {
@@ -88,6 +89,18 @@ export class ChatMessage implements OnDestroy {
             });
             return displaySteps;
         }, []);
+
+        if (displaySteps.length > 0) {
+            const lastStep = displaySteps[displaySteps.length - 1];
+            const lastRawStep = rawSteps[rawSteps.length - 1];
+            const isActiveToolStep = !this.isStatusStep(lastRawStep.icon);
+            if (isActiveToolStep && this.streamState() === 'streaming' && !lastStep.statusIcon) {
+                displaySteps[displaySteps.length - 1] = {
+                    ...lastStep,
+                    isLoading: true,
+                };
+            }
+        }
 
         if (this.showPreparingLoader()) {
             displaySteps.push({

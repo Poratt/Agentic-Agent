@@ -16,11 +16,12 @@ import { DatabaseStorageMonitorComponent } from '../blocks/database-storage-moni
 import { RegisterFormComponent } from '../blocks/register-form/register-form.component';
 import { AgnesImageCardComponent } from '../blocks/agnes-image-card/agnes-image-card.component';
 import { AgnesVideoCardComponent } from '../blocks/agnes-video-card/agnes-video-card.component';
+import { WeatherSummaryCardComponent } from '../blocks/weather-summary-card/weather-summary-card.component';
 
 @Component({
     selector: 'app-render-host',
     standalone: true,
-    imports: [WeatherCurrentCardComponent, CurrencyCardComponent, DeleteConfirmCardComponent, SessionCreatedCardComponent, RoleChangeCardComponent, UsersTableComponent, AnalyticsChartComponent, ChatSessionsListComponent, UserProfileCardComponent, LlmTestResultsComponent, WeatherForecastComponent, TranscriptTimelineComponent, SystemStatusDashboardComponent, DatabaseStorageMonitorComponent, RegisterFormComponent, AgnesImageCardComponent, AgnesVideoCardComponent],
+    imports: [WeatherCurrentCardComponent, CurrencyCardComponent, DeleteConfirmCardComponent, SessionCreatedCardComponent, RoleChangeCardComponent, UsersTableComponent, AnalyticsChartComponent, ChatSessionsListComponent, UserProfileCardComponent, LlmTestResultsComponent, WeatherForecastComponent, TranscriptTimelineComponent, SystemStatusDashboardComponent, DatabaseStorageMonitorComponent, RegisterFormComponent, AgnesImageCardComponent, AgnesVideoCardComponent, WeatherSummaryCardComponent],
     template: `
         <div class="render-host-root">
             @switch (componentType()) {
@@ -74,6 +75,9 @@ import { AgnesVideoCardComponent } from '../blocks/agnes-video-card/agnes-video-
                 }
                 @case ('agnes-video') {
                     <app-agnes-video-card [data]="renderData()" />
+                }
+                @case ('weather-summary') {
+                    <app-weather-summary-card [data]="renderData()" />
                 }
                 @default {
                     <div class="render-placeholder">Component not available</div>

@@ -18,6 +18,7 @@ export enum RenderSpecType {
   RegisterForm = 'register-form',
   AgnesImage = 'agnes-image',
   AgnesVideo = 'agnes-video',
+  WeatherSummary = 'weather-summary',
 }
 
 const renderSpecDiscriminatedSchema = z.discriminatedUnion('type', [
@@ -38,6 +39,7 @@ const renderSpecDiscriminatedSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal(RenderSpecType.RegisterForm), data: z.record(z.string(), z.unknown()) }),
   z.object({ type: z.literal(RenderSpecType.AgnesImage), data: z.record(z.string(), z.unknown()) }),
   z.object({ type: z.literal(RenderSpecType.AgnesVideo), data: z.record(z.string(), z.unknown()) }),
+  z.object({ type: z.literal(RenderSpecType.WeatherSummary), data: z.record(z.string(), z.unknown()) }),
 ]);
 
 export type RenderSpec = z.infer<typeof renderSpecDiscriminatedSchema>;

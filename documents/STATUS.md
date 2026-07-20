@@ -1,6 +1,17 @@
 # Project Documentation Status
 
-Last updated: 2026-07-19
+Last updated: 2026-07-20
+
+## 2026-07-20 Session — Loader Shimmer Implemented (Phases 1, 2, 3, 5, 6)
+
+- Implemented Phases 1, 2, 3, 5, 6 of `documents/features/todo/loader-shimmer-plan.md`.
+- **Phase 1:** `@keyframes shimmer-sweep` + RTL variant in `_animations.css`. `.shimmer`, `.shimmer--sm/md/lg`, `.shimmer-text` in `_utilities.css` with RTL, reduced-motion, and token-first gradient.
+- **Phase 2:** Chat step `loading-dots` → `<span class="shimmer-text">טוען...</span>` + spinner icon. Dead `.response-loader` removed. `responseLoaderPulse` keyframe removed.
+- **Phase 3:** Strain-hunter `.dots-loader` → `<span class="shimmer shimmer--sm">`. `.loading-dots`, `.dots-loader`, `dot-bounce` keyframe removed.
+- **Phase 5:** Text shimmer on `טוען...` in login/register, `מבצע העשרה...` in strain-hunter-settings (×2), `טוען נתוני מסד נתונים...` in database-monitor-settings.
+- **Phase 6:** Grep clean for obsolete classes. Build passes. Tests 120/3 (pre-existing).
+- **Phase 4 (`.custom-loader` rebrand) remains deferred.**
+- Architecture diagram: no update needed (CSS-only, no new components or endpoints).
 
 ## 2026-07-19 Session — Agnes GenUI render blocks + video frame-continuation
 
