@@ -9,10 +9,17 @@ export class IdeasService {
   private base = `${environment.apiUrl}/ideas`;
   private authService = inject(AuthService);
 
-  generateStream(domain: string, count: number): Observable<IdeasProgressEvent> {
+  generateStream(
+    domain: string,
+    count: number,
+    provider?: string,
+    model?: string,
+  ): Observable<IdeasProgressEvent> {
     return new Observable<IdeasProgressEvent>((observer) => {
       const controller = new AbortController();
       const params = new URLSearchParams({ domain, count: String(count) });
+      if (provider) params.set('provider', provider);
+      if (model) params.set('model', model);
 
       const attemptFetch = (isRetry: boolean) => {
         fetch(`${this.base}/generate/stream?${params.toString()}`, {
@@ -65,6 +72,8 @@ export class IdeasService {
                 for (const line of lines) {
                   const trimmed = line.trim();
                   if (!trimmed) continue;
+                  if (trimmed.startsWith('id:')) continue;
+                  if (trimmed.startsWith('event:')) continue;
                   const payload = trimmed.startsWith('data:') ? trimmed.slice(5).trim() : trimmed;
                   if (!payload) continue;
                   try {

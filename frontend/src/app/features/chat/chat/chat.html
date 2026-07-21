@@ -119,7 +119,10 @@
                             class="custom-select transparnet"
                         >
                             <ng-template let-group #group>
-                                <span class="group-label">{{ group.label }}</span>
+                                <span class="group-label">
+                                    {{ group.label }}
+                                    <span class="group-count">{{ group.count }} {{ group.count === 1 ? 'Model' : 'Models' }}</span>
+                                </span>
                             </ng-template>
                             <ng-template let-model #item>
                                 <div class="select-option">
@@ -129,10 +132,16 @@
                                             type="button"
                                             class="star-btn"
                                             [class.star-active]="llmProviderStore.defaultModelId() === model.id"
-                                            [attr.aria-label]="llmProviderStore.defaultModelId() === model.id ? 'Default model' : 'Set as default'"
+                                            [attr.aria-label]="
+                                                llmProviderStore.defaultModelId() === model.id ? 'Default model' : 'Set as default'
+                                            "
                                             (click)="setDefaultModel($event, model)"
                                         >
-                                            <span [class]="llmProviderStore.defaultModelId() === model.id ? 'ph ph-star ph-fill' : 'ph ph-star'"></span>
+                                            <span
+                                                [class]="
+                                                    llmProviderStore.defaultModelId() === model.id ? 'ph ph-star ph-fill' : 'ph ph-star'
+                                                "
+                                            ></span>
                                         </button>
                                     </div>
                                     <div class="select-option-meta">

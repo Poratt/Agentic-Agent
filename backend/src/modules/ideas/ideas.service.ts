@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { LlmClientService } from '../llm/services/llm-client.service';
 import { WebSearchService } from '../web-search/web-search.service';
 import { parseLlmJson } from '../llm/utils/llm-json-parser';
+import { LlmProvider } from '../llm/types/llm.types';
 import {
   Signal,
   RawIdea,
@@ -33,22 +34,29 @@ export class IdeasService {
     domain: string,
     count: number,
     onProgress?: (event: IdeasProgressEvent) => void,
+    userId?: number,
+    providerOverride?: string,
+    modelOverride?: string,
   ): Promise<GenerateIdeasResponse> {
     const cleanDomain = this.sanitizeDomain(domain);
     if (!cleanDomain) {
       throw new BadRequestException('התחום ריק או מכיל תווים לא חוקיים');
     }
 
+    const providerKey = providerOverride as LlmProvider | undefined;
     const deadline = Date.now() + OVERALL_TIMEOUT_MS;
 
     const { signals, groundedInSignals } = await this.gatherSignals(
       cleanDomain,
       onProgress,
       deadline,
+      userId,
+      providerKey,
+      modelOverride,
     );
 
     onProgress?.({ phase: 1, status: 'מייצר רעיונות...' });
-    const rawIdeas = await this.generateIdeasFromSignals(cleanDomain, signals, count);
+    const rawIdeas = await this.generateIdeasFromSignals(cleanDomain, signals, count, userId, providerKey, modelOverride);
 
     onProgress?.({ phase: 2, status: 'מאמת מול מתחרים...' });
     const { ideas, failedCount } = await this.validateIdeas(
@@ -56,6 +64,9 @@ export class IdeasService {
       signals,
       onProgress,
       deadline,
+      userId,
+      providerKey,
+      modelOverride,
     );
 
     const partial = failedCount > 0 || !groundedInSignals;
@@ -102,6 +113,9 @@ export class IdeasService {
     domain: string,
     onProgress: ((event: IdeasProgressEvent) => void) | undefined,
     deadline: number,
+    userId?: number,
+    providerOverride?: LlmProvider,
+    modelOverride?: string,
   ): Promise<{ signals: Signal[]; groundedInSignals: boolean }> {
     onProgress?.({ phase: 0, status: 'מחפש סיגנלים בשוק...' });
 
@@ -130,6 +144,9 @@ export class IdeasService {
         prompt,
         systemContext: SIGNAL_GATHERING_PROMPT,
         maxTokens: 1024,
+        userId,
+        providerOverride,
+        modelOverride,
       });
       const signals = parseLlmJson<Signal[]>(res.content, 'ideas-signals');
       if (!signals || !Array.isArray(signals) || signals.length === 0) {
@@ -148,6 +165,9 @@ export class IdeasService {
     domain: string,
     signals: Signal[],
     count: number,
+    userId?: number,
+    providerOverride?: LlmProvider,
+    modelOverride?: string,
   ): Promise<RawIdea[]> {
     const signalsText = signals.length
       ? signals.map((s) => `- ${s.signal} (מקור: ${s.source})`).join('\n')
@@ -159,6 +179,9 @@ export class IdeasService {
         prompt,
         systemContext: IDEA_GENERATION_PROMPT,
         maxTokens: 2048,
+        userId,
+        providerOverride,
+        modelOverride,
       });
       const ideas = parseLlmJson<RawIdea[]>(res.content, 'ideas-generation');
       if (!ideas || !Array.isArray(ideas)) {
@@ -178,6 +201,9 @@ export class IdeasService {
     signals: Signal[],
     onProgress: ((event: IdeasProgressEvent) => void) | undefined,
     deadline: number,
+    userId?: number,
+    providerOverride?: LlmProvider,
+    modelOverride?: string,
   ): Promise<{ ideas: BusinessIdea[]; failedCount: number }> {
     if (rawIdeas.length === 0) {
       return { ideas: [], failedCount: 0 };
@@ -199,7 +225,7 @@ export class IdeasService {
       }
 
       const settled = await Promise.allSettled(
-        batch.map((idea) => this.validateSingle(idea, signals)),
+        batch.map((idea) => this.validateSingle(idea, signals, userId, providerOverride, modelOverride)),
       );
 
       for (const s of settled) {
@@ -224,6 +250,9 @@ export class IdeasService {
   private async validateSingle(
     idea: RawIdea,
     signals: Signal[],
+    userId?: number,
+    providerOverride?: LlmProvider,
+    modelOverride?: string,
   ): Promise<BusinessIdea | null> {
     const searchResult = await this.webSearch.search(
       `competitors for ${idea.title} ${idea.targetMarket}`,
@@ -248,6 +277,9 @@ export class IdeasService {
         prompt,
         systemContext: VALIDATION_PROMPT,
         maxTokens: 1024,
+        userId,
+        providerOverride,
+        modelOverride,
       });
       const v = parseLlmJson<ValidationResult>(res.content, 'ideas-validation');
       if (!v) {

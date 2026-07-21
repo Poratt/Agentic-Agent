@@ -269,7 +269,18 @@
                                                                         <th>Legal/Latency</th>
                                                                         <th>Status</th>
                                                                         <th>Log output</th>
-                                                                        <th class="col-actions-xs"></th>
+                                                                        <th class="col-actions-xs">
+                                                                            <button
+                                                                                type="button"
+                                                                                class="icon-only danger-btn sm"
+                                                                                aria-label="Delete all test results"
+                                                                                appTooltip
+                                                                                [text]="'Delete all test results'"
+                                                                                (click)="deleteAllTestResults(provider.id, model.id, model.testResults.length)"
+                                                                            >
+                                                                                <i class="ph ph-trash"></i>
+                                                                            </button>
+                                                                        </th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>

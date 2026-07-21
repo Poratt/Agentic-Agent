@@ -112,7 +112,7 @@
       color: var(--color-success);
       cursor: pointer;
       font: inherit;
-      font-size: 10px;
+      font-size: var(--font-size-xxs);
       width: fit-content;
       font-weight: var(--font-weight-semibold);
       line-height: 1;
@@ -124,7 +124,7 @@
     }
 
     .strain-batch {
-      font-size: 10px;
+      font-size: var(--font-size-xxs);
       color: var(--color-text-secondary);
       text-align: center;
       line-height: 1;
@@ -253,7 +253,7 @@
       color: var(--color-primary);
       overflow-wrap: anywhere;
       white-space: normal;
-      font-size: 10px;
+      font-size: var(--font-size-xxs);
 
       .ph {
         font-size: var(--font-size-md);
@@ -403,7 +403,7 @@
     border: thin solid var(--color-danger-border);
     border-radius: var(--radius-xs);
     color: var(--color-danger);
-    font-size: 10px;
+    font-size: var(--font-size-xxs);
     font-weight: var(--font-weight-semibold);
     line-height: 1;
     width: fit-content;

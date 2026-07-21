@@ -28,4 +28,20 @@ export class GenerateIdeasDto {
   @Min(1)
   @Max(10)
   count?: number;
+
+  @ApiProperty({
+    description: 'מפתח ספק ה-LLM (לדוגמה: openrouter, openai)',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  provider?: string;
+
+  @ApiProperty({
+    description: 'מפתח המודל (לדוגמה: tencent/hy3, gpt-4o)',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  model?: string;
 }

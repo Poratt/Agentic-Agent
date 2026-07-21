@@ -32,6 +32,18 @@
   font-variant-numeric: tabular-nums;
 }
 
+.ideas-model-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ideas-model-row label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
 .ideas-submit {
   width: 100%;
   justify-content: center;

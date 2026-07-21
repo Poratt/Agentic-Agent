@@ -20,6 +20,7 @@ export const routes: Routes = [
       { path: 'design-system', loadComponent: () => import('./features/design-system/design-system').then(m => m.DesignSystem) },
       { path: 'settings', loadComponent: () => import('./features/settings/settings').then(m => m.Settings) },
       { path: 'media', loadComponent: () => import('./features/media-studio/media-studio').then(m => m.MediaStudio) },
+      { path: 'ideas', loadComponent: () => import('./features/ideas/ideas-page/ideas-page').then(m => m.IdeasPage) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

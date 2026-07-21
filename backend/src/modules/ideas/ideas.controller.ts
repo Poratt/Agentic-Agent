@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Query, Sse, ServiceUnavailableException, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, Sse, ServiceUnavailableException, UseGuards, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Observable, Subscriber } from 'rxjs';
 import { MessageEvent } from '@nestjs/common';
@@ -8,6 +8,7 @@ import { GenerateIdeasResponseDto } from './dto/idea-result.dto';
 import { GenerateIdeasResponse } from './interfaces/idea.interface';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
+import { RequestWithUser } from '../../core/interfaces/request-with-user.interface';
 
 @ApiTags('ideas')
 @Controller('ideas')
@@ -16,20 +17,10 @@ export class IdeasController {
 
   @UseGuards(JwtAuthGuard)
   @Post('generate')
-  @ApiOperation({
-    summary: 'Generate business ideas grounded in market signals',
-    summaryHe: 'מייצר רעיונות עסקיים מבוססי סיגנלי שוק אמיתיים — איסוף סיגנלים, יצירה, ואימות מול מתחרים',
-    toolIcon: 'ph-lightbulb',
-    description:
-      'Runs a short agentic loop: gathers real market signals via SearXNG, generates N ideas grounded in them, then validates each idea against competitor search and returns a ranked list. Synchronous — full response at the end.',
-  } as CustomApiOperationOptions)
-  @ApiResponse({ status: 200, description: 'Ideas generated', type: GenerateIdeasResponseDto })
-  @ApiResponse({ status: 400, description: 'Invalid domain or count' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  @ApiResponse({ status: 503, description: 'LLM or search service unavailable' })
-  async generate(@Body() dto: GenerateIdeasDto): Promise<GenerateIdeasResponse> {
+  async generate(@Req() req: RequestWithUser, @Body() dto: GenerateIdeasDto): Promise<GenerateIdeasResponse> {
     try {
-      return await this.ideasService.generateIdeas(dto.domain, dto.count ?? 5);
+      const userId = req.user?.sub;
+      return await this.ideasService.generateIdeas(dto.domain, dto.count ?? 5, undefined, userId, dto.provider, dto.model);
     } catch (error) {
       if (error instanceof Error && error.name === 'BadRequestException') {
         throw error;
@@ -49,13 +40,14 @@ export class IdeasController {
       'Same flow as POST /ideas/generate but streams progress events (phase 0 → 1 → 2) over Server-Sent Events. Final event carries the full GenerateIdeasResponse. Use this when the UI needs a real progress bar.',
   } as CustomApiOperationOptions)
   @ApiResponse({ status: 200, description: 'SSE stream of progress events' })
-  stream(@Query() dto: GenerateIdeasDto): Observable<MessageEvent> {
+  stream(@Req() req: RequestWithUser, @Query() dto: GenerateIdeasDto): Observable<MessageEvent> {
+    const userId = req.user?.sub;
     const count = dto.count ?? 5;
     return new Observable<MessageEvent>((subscriber: Subscriber<MessageEvent>) => {
       this.ideasService
         .generateIdeas(dto.domain, count, (event) => {
           subscriber.next({ data: JSON.stringify(event) });
-        })
+        }, userId, dto.provider, dto.model)
         .then(() => subscriber.complete())
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : 'Unknown error';

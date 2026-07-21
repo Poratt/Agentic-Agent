@@ -1425,6 +1425,70 @@
         "tags": [
           "LLM Provider"
         ]
+      },
+      "delete": {
+        "description": "Deletes an LLM model by ID.",
+        "operationId": "LlmProviderController_deleteModel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model deleted successfully"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete model",
+        "tags": [
+          "LLM Provider"
+        ]
+      }
+    },
+    "/llm-provider/models/{modelId}/test-results": {
+      "delete": {
+        "description": "Deletes all test results associated with the specified model.",
+        "operationId": "LlmProviderController_deleteTestResultsForModel",
+        "parameters": [
+          {
+            "name": "modelId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Number of deleted rows"
+          },
+          "401": {
+            "description": "JWT token missing or invalid"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete all test results for model",
+        "tags": [
+          "LLM Provider"
+        ]
       }
     },
     "/llm-provider/cleanup-test-results": {
@@ -2108,7 +2172,7 @@
     },
     "/web-search/search": {
       "get": {
-        "description": "Calls the Tavily API to perform a real-time web search. Returns structured results with titles, URLs, content snippets, and an optional AI-generated answer.",
+        "description": "Calls the SearXNG instance to perform a real-time web search. Returns structured results with titles, URLs, content snippets, and an optional answer.",
         "operationId": "WebSearchController_search",
         "parameters": [
           {
@@ -2508,6 +2572,90 @@
         "tags": [
           "terpenes"
         ]
+      }
+    },
+    "/ideas/generate": {
+      "post": {
+        "operationId": "IdeasController_generate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateIdeasDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ideas"
+        ]
+      }
+    },
+    "/ideas/generate/stream": {
+      "get": {
+        "description": "Same flow as POST /ideas/generate but streams progress events (phase 0 → 1 → 2) over Server-Sent Events. Final event carries the full GenerateIdeasResponse. Use this when the UI needs a real progress bar.",
+        "operationId": "IdeasController_stream",
+        "parameters": [
+          {
+            "name": "domain",
+            "required": true,
+            "in": "query",
+            "description": "תחום עסקי לגיבוש רעיונות (משמש כסקופ לחיפוש ב-SearXNG)",
+            "schema": {
+              "maxLength": 500,
+              "example": "AI-powered productivity tools for freelancers",
+              "type": "string"
+            }
+          },
+          {
+            "name": "count",
+            "required": false,
+            "in": "query",
+            "description": "מספר הרעיונות המבוקש (1–10)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 10,
+              "example": 5,
+              "type": "number"
+            }
+          },
+          {
+            "name": "provider",
+            "required": false,
+            "in": "query",
+            "description": "מפתח ספק ה-LLM (לדוגמה: openrouter, openai)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "model",
+            "required": false,
+            "in": "query",
+            "description": "מפתח המודל (לדוגמה: tencent/hy3, gpt-4o)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE stream of progress events"
+          }
+        },
+        "summary": "Generate business ideas with real-time progress (SSE)",
+        "summaryHe": "מייצר רעיונות עסקיים עם פרוגרס בזמן אמת (SSE)",
+        "tags": [
+          "ideas"
+        ],
+        "toolIcon": "ph-lightbulb"
       }
     },
     "/database-monitor/storage": {
@@ -4407,6 +4555,35 @@
             "example": "#66BB6A"
           }
         }
+      },
+      "GenerateIdeasDto": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "תחום עסקי לגיבוש רעיונות (משמש כסקופ לחיפוש ב-SearXNG)",
+            "example": "AI-powered productivity tools for freelancers",
+            "maxLength": 500
+          },
+          "count": {
+            "type": "number",
+            "description": "מספר הרעיונות המבוקש (1–10)",
+            "example": 5,
+            "minimum": 1,
+            "maximum": 10
+          },
+          "provider": {
+            "type": "string",
+            "description": "מפתח ספק ה-LLM (לדוגמה: openrouter, openai)"
+          },
+          "model": {
+            "type": "string",
+            "description": "מפתח המודל (לדוגמה: tencent/hy3, gpt-4o)"
+          }
+        },
+        "required": [
+          "domain"
+        ]
       }
     }
   }

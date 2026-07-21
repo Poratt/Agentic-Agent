@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiOkResponse, ApiCreatedResponse, ApiBadRequestResponse, ApiUnauthorizedResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { LlmProviderService } from './llm-provider.service';
 import { CreateLlmProviderDto } from './dto/create-llm-provider.dto';
@@ -61,6 +61,22 @@ export class LlmProviderController {
   @ApiUnauthorizedResponse({ description: 'JWT token missing or invalid' })
   async updateModel(@Param('id') id: string, @Body() dto: UpdateLlmModelDto): Promise<ServiceResultContainer<LlmModelEntity>> {
     return this.service.updateModel(+id, dto);
+  }
+
+  @Delete('models/:id')
+  @ApiOperation({ summary: 'Delete model', description: 'Deletes an LLM model by ID.' })
+  @ApiOkResponse({ description: 'Model deleted successfully' })
+  @ApiUnauthorizedResponse({ description: 'JWT token missing or invalid' })
+  async deleteModel(@Param('id') id: string): Promise<ServiceResultContainer<void>> {
+    return this.service.deleteModel(+id);
+  }
+
+  @Delete('models/:modelId/test-results')
+  @ApiOperation({ summary: 'Delete all test results for model', description: 'Deletes all test results associated with the specified model.' })
+  @ApiOkResponse({ description: 'Number of deleted rows' })
+  @ApiUnauthorizedResponse({ description: 'JWT token missing or invalid' })
+  async deleteTestResultsForModel(@Param('modelId') modelId: string): Promise<ServiceResultContainer<number>> {
+    return this.service.deleteTestResultsForModel(+modelId);
   }
 
   @Get(':id/models')

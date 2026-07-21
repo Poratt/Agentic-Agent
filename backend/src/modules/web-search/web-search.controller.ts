@@ -25,7 +25,7 @@ export class WebSearchController {
     summaryHe: 'מחפש מידע עדכני באינטרנט — שימושי לאימות עובדות, מציאת מקורות, או בדיקת מידע שלא נמצא במאגר המקומי',
     toolIcon: 'ph-magnifying-glass',
     description:
-      'Calls the Tavily API to perform a real-time web search. Returns structured results with titles, URLs, content snippets, and an optional AI-generated answer.',
+      'Calls the SearXNG instance to perform a real-time web search. Returns structured results with titles, URLs, content snippets, and an optional answer.',
   } as CustomApiOperationOptions)
   @ApiOkResponse({ description: 'Search results retrieved successfully.' })
   @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })

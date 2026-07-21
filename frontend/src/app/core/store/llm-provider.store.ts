@@ -13,6 +13,7 @@ export interface GroupedLlmProviderModel extends LlmModel {
 
 export interface GroupedLlmProvider {
     label: string;
+    count: number;
     items: GroupedLlmProviderModel[];
 }
 
@@ -55,43 +56,50 @@ export class LlmProviderStore {
     groupedProviders = computed<GroupedLlmProvider[]>(() => {
         return this.providers()
             .filter(provider => provider.active)
-            .map(provider => ({
-                label: provider.label,
-                items: (provider.models ?? [])
-                    .filter(model => model.active)
-                    .map(model => {
-                        const results = model.testResults || [];
-                        const totalTests = results.length;
-                        if (totalTests === 0) {
-                            return { ...model, performanceScore: -1, performancePercentage: 0, latencyAverageMs: 0 };
-                        }
-                        const successfulTests = results.filter(r => r.status === 'success').length;
-                        const successPercentage = Math.round((successfulTests / totalTests) * 100);
-                        const successfulResults = results.filter(r => r.status === 'success');
-                        let latencyAverage = 0;
-                        if (successfulResults.length > 0) {
-                            const totalLatency = successfulResults.reduce((sum, r) => sum + (r.responseTimeMs || 0), 0);
-                            latencyAverage = Math.round(totalLatency / successfulResults.length);
-                        }
-                        return {
-                            ...model,
-                            performanceScore: (successPercentage * 100000) - latencyAverage,
-                            performancePercentage: successPercentage,
-                            latencyAverageMs: latencyAverage
-                        };
-                    })
-                    .sort((a, b) => b.performanceScore - a.performanceScore)
-            }))
+            .map(provider => {
+                const activeModels = (provider.models ?? []).filter(model => model.active);
+                return {
+                    label: provider.label,
+                    count: activeModels.length,
+                    items: activeModels
+                        .map(model => {
+                            const results = model.testResults || [];
+                            const totalTests = results.length;
+                            if (totalTests === 0) {
+                                return { ...model, performanceScore: -1, performancePercentage: 0, latencyAverageMs: 0 };
+                            }
+                            const successfulTests = results.filter(r => r.status === 'success').length;
+                            const successPercentage = Math.round((successfulTests / totalTests) * 100);
+                            const successfulResults = results.filter(r => r.status === 'success');
+                            let latencyAverage = 0;
+                            if (successfulResults.length > 0) {
+                                const totalLatency = successfulResults.reduce((sum, r) => sum + (r.responseTimeMs || 0), 0);
+                                latencyAverage = Math.round(totalLatency / successfulResults.length);
+                            }
+                            return {
+                                ...model,
+                                performanceScore: (successPercentage * 100000) - latencyAverage,
+                                performancePercentage: successPercentage,
+                                latencyAverageMs: latencyAverage
+                            };
+                        })
+                        .sort((a, b) => b.performanceScore - a.performanceScore)
+                };
+            })
             .filter(provider => (provider.items?.length ?? 0) > 0);
     });
 
     // Chat only targets text-capability models; image/video models are surfaced
     // elsewhere (media studio, out of scope for this change).
     chatModels = computed<GroupedLlmProvider[]>(() => {
-        return this.groupedProviders().map(provider => ({
-            label: provider.label,
-            items: (provider.items ?? []).filter(item => item.capability === 'text'),
-        })).filter(provider => (provider.items?.length ?? 0) > 0);
+        return this.groupedProviders().map(provider => {
+            const textItems = (provider.items ?? []).filter(item => item.capability === 'text');
+            return {
+                label: provider.label,
+                count: textItems.length,
+                items: textItems,
+            };
+        }).filter(provider => (provider.items?.length ?? 0) > 0);
     });
 
     // Flat lists of image/video-capable models for the media studio.
@@ -194,6 +202,17 @@ export class LlmProviderStore {
             },
             error: (err) => {
                 this.error.set(err?.error?.message ?? 'Failed to delete test result');
+            }
+        });
+    }
+
+    deleteAllTestResults(providerId: number, modelId: number) {
+        this.llmProviderService.deleteAllTestResultsForModel(modelId).subscribe({
+            next: () => {
+                this.providersResource.reload();
+            },
+            error: (err) => {
+                this.error.set(err?.error?.message ?? 'Failed to delete test results');
             }
         });
     }

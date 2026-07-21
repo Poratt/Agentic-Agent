@@ -157,6 +157,14 @@ export class LlmProviderService {
     return { success: true, message: 'Model updated', result: saved };
   }
 
+  async deleteModel(id: number): Promise<ServiceResultContainer<void>> {
+    const model = await this.modelRepo.findOneBy({ id });
+    if (!model) throw new NotFoundException('Model not found');
+
+    await this.modelRepo.remove(model);
+    return { success: true, message: 'Model deleted', result: undefined };
+  }
+
   async findModelsByProvider(providerId: number): Promise<ServiceResultContainer<LlmModelEntity[]>> {
     const models = await this.modelRepo.find({ where: { providerId }, order: { sortOrder: 'ASC' } });
     return { success: true, message: 'Models retrieved', result: models };
@@ -196,6 +204,12 @@ export class LlmProviderService {
 
     await this.testResultRepo.remove(testResult);
     return { success: true, message: 'Test result deleted', result: undefined };
+  }
+
+  async deleteTestResultsForModel(modelId: number): Promise<ServiceResultContainer<number>> {
+    const result = await this.testResultRepo.delete({ modelId });
+    const deleted = result.affected ?? 0;
+    return { success: true, message: `Deleted ${deleted} test results`, result: deleted };
   }
 
   async deleteOldTestResults(retentionDays = 30): Promise<number> {

@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -14,6 +16,8 @@ import { StrainHunterModule } from './modules/strain-hunter/strain-hunter.module
 import { TerpeneModule } from './modules/terpene/terpene.module';
 import { GeneticsModule } from './modules/genetics/genetics.module';
 import { WebSearchModule } from './modules/web-search/web-search.module';
+import { IdeasModule } from './modules/ideas/ideas.module';
+import { IdeasThrottlerGuard } from './modules/ideas/guards/ideas-throttler.guard';
 import { CannlyticsModule } from './modules/cannlytics/cannlytics.module';
 import { DatabaseMonitorModule } from './modules/database-monitor/database-monitor.module';
 import { McpBridgeModule } from './modules/mcp-bridge/mcp-bridge.module';
@@ -22,6 +26,13 @@ import { McpBridgeModule } from './modules/mcp-bridge/mcp-bridge.module';
   imports: [
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        { name: 'ideasCostShort', limit: 30, ttl: 60_000 },
+        { name: 'ideasCostLong', limit: 150, ttl: 3_600_000 },
+      ],
+      skipIf: (ctx) => !ctx.switchToHttp().getRequest().url.startsWith('/ideas'),
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -49,8 +60,15 @@ import { McpBridgeModule } from './modules/mcp-bridge/mcp-bridge.module';
     TerpeneModule,
     GeneticsModule,
     WebSearchModule,
+    IdeasModule,
     CannlyticsModule,
-    DatabaseMonitorModule
+    DatabaseMonitorModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: IdeasThrottlerGuard,
+    },
   ],
 })
 export class AppModule {

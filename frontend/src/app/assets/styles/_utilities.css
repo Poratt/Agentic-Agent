@@ -417,6 +417,13 @@
   display: flex;
 }
 
+/* Canonical user profile — avatar + name layout */
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
 /* --- Generic Tags --- */
 .tag {
   display: inline-block;

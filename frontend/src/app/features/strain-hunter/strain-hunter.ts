@@ -609,6 +609,9 @@ export class StrainHunter implements OnInit {
         if (diffDays === 1) {
             return 'אתמול';
         }
+        if (diffDays === 2) {
+            return 'שלשום';
+        }
         if (diffDays <= 5) {
             return `${diffDays} ימים`;
         }

@@ -26,7 +26,10 @@ dist/
 .env.local
 .env.*.local
 .env.development
-.env.production          
+.env.production
+
+# Local SearXNG dev instance (bind mount, contains generated secret_key)
+searxng/          
 
 # Diagnostics and Testing
 *.log

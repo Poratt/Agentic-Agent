@@ -4,6 +4,11 @@ import { IdeasService } from '../services/ideas.service';
 import { PageStates } from '../enums/page-states.enum';
 import { BusinessIdea, GenerateIdeasResponse, IdeasProgressEvent } from '../models/idea.interface';
 
+export interface IdeasModelSelection {
+  provider: string;
+  model: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class IdeasStore {
   private ideasService = inject(IdeasService);
@@ -11,6 +16,7 @@ export class IdeasStore {
 
   domain = signal('');
   count = signal(5);
+  modelSelection = signal<IdeasModelSelection | undefined>(undefined);
   ideas = signal<BusinessIdea[]>([]);
   phase = signal<number | 'done' | 'error'>(0);
   statusText = signal('');
@@ -37,6 +43,10 @@ export class IdeasStore {
     this.count.set(value);
   }
 
+  setModel(value: IdeasModelSelection | undefined): void {
+    this.modelSelection.set(value);
+  }
+
   generate(): void {
     const domain = this.domain().trim();
     if (!domain) {
@@ -54,14 +64,17 @@ export class IdeasStore {
     this.phase.set(0);
     this.statusText.set('מתחיל...');
 
-    this.sub = this.ideasService.generateStream(domain, this.count()).subscribe({
-      next: (event: IdeasProgressEvent) => this.handleEvent(event),
-      error: (err: unknown) => {
-        const msg = err instanceof Error ? err.message : 'אירעה שגיאה ביצירת הרעיונות';
-        this.error.set(msg);
-        this.loading.set(false);
-      },
-    });
+    const selection = this.modelSelection();
+    this.sub = this.ideasService
+      .generateStream(domain, this.count(), selection?.provider, selection?.model)
+      .subscribe({
+        next: (event: IdeasProgressEvent) => this.handleEvent(event),
+        error: (err: unknown) => {
+          const msg = err instanceof Error ? err.message : 'אירעה שגיאה ביצירת הרעיונות';
+          this.error.set(msg);
+          this.loading.set(false);
+        },
+      });
   }
 
   private handleEvent(event: IdeasProgressEvent): void {

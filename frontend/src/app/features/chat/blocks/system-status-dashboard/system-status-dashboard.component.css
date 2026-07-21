@@ -52,11 +52,11 @@
     }
 
     .status-up {
-        color: var(--color-success) !important;
+        color: var(--color-success);
     }
 
     .status-down {
-        color: var(--color-danger) !important;
+        color: var(--color-danger);
     }
 }
 

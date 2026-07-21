@@ -391,6 +391,25 @@ export class LlmProvidersManagement implements OnInit {
         });
     }
 
+    deleteAllTestResults(providerId: number, modelId: number, count: number) {
+        this.confirmService.confirm({
+            message: `Are you sure you want to delete all ${count} test results for this model?`,
+            header: 'Delete All Test Results',
+            icon: 'pi pi-exclamation-triangle',
+            acceptLabel: 'Delete All',
+            rejectLabel: 'Cancel',
+            acceptButtonStyleClass: 'p-button-danger',
+            accept: () => {
+                this.llmProviderStore.deleteAllTestResults(providerId, modelId);
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Deleted',
+                    detail: 'All test results have been deleted successfully.'
+                });
+            }
+        });
+    }
+
     setDefaultModel(model: LlmModel) {
         if (this.llmProviderStore.defaultModelId() === model.id) return;
         this.llmProviderStore.setDefaultModel(model.id);

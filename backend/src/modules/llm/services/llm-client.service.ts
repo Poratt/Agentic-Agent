@@ -180,6 +180,7 @@ export class LlmClientService {
       client: new OpenAI({
         baseURL: dbProvider.baseUrl,
         apiKey: dbProvider.apiKey ? dbProvider.apiKey.trim() : undefined,
+        timeout: 60_000,
         defaultHeaders: this.providerConfig.getDefaultHeaders(dbProvider.key as any),
       }),
       dbProvider,
