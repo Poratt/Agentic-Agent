@@ -1,5 +1,20 @@
 # Documentation Handoff
 
+## 2026-07-21 Session — Business Idea Generator Closed
+
+**Objective:** verify and close the already-implemented business idea generator.
+
+- **Verification:** backend `nest build` passes (clean, no new errors). Frontend `npx ng build` passes with pre-existing warnings only (bundle budget, matching-preferences-drawer.css budget, strain-hunter.css budget). No new CSS budgets or build warnings from the ideas feature.
+- **Wiring confirmed:** `IdeasModule` is in `AppModule`. `ThrottlerModule.forRoot` is wired with two named throttlers (`ideasCostShort`: 30/60s, `ideasCostLong`: 150/3600s) scoped via `skipIf` to `/ideas` routes. `IdeasThrottlerGuard` extends `ThrottlerGuard` with weighted counting and Hebrew 429 response, applied globally as `APP_GUARD`. `/ideas` route + sidebar link exist.
+- **Backend files (8):** `ideas.module.ts`, `ideas.controller.ts` (POST `/ideas/generate` + SSE `GET /ideas/generate/stream`), `ideas.service.ts` (3-phase agentic loop: signal gathering → idea generation → validation with partial results + 60s timeout), `dto/generate-ideas.dto.ts`, `dto/idea-result.dto.ts`, `guards/ideas-throttler.guard.ts`, `interfaces/idea.interface.ts`, `constants/idea-prompts.constant.ts`.
+- **Frontend files (15):** `ideas-page` (PageStates shell), `ideas-form` (domain input + count slider), `ideas-progress` (3-segment phase bar), `ideas-grid` (responsive grid + partial banner), `idea-card` (score badge green/yellow/red, groundedInSignals tag, expandable risks/competitors/nextSteps), `ideas.store.ts` (signals + SSE stream consumption), `ideas.service.ts` (raw fetch SSE with AbortController + 401 refresh), `idea.interface.ts`.
+- **Mojibake scan:** clean — no corrupted Hebrew characters in any ideas files.
+- **Moved to done:** `business-idea-generator-plan.md`, `chat-idea.md`.
+- **Next exact step:** pick up the next active plan — either `dynamic-pharm-scraping-plan.md` (~3-4h) or `provider-and-llm-db-plan.md` (~10-14h). Or manually test `/ideas` with live SearXNG + LLM.
+- **Files touched:** `documents/done/business-idea-generator-plan.md` (moved), `documents/done/chat-idea.md` (moved), `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.
+- **Decisions made:** all implementation was pre-existing; this session was verification + documentation close-out only.
+- **Open questions for the user:** none.
+
 ## Current Structure
 
 ```txt

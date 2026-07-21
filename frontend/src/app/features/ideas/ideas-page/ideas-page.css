@@ -1,0 +1,14 @@
+.ideas-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.ideas-status-line {
+  margin: 0;
+}
+
+.ideas-message-line {
+  margin: 0;
+  color: var(--color-warning);
+}

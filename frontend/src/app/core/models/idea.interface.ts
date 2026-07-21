@@ -1,0 +1,32 @@
+export interface Signal {
+  signal: string;
+  source: string;
+}
+
+export interface BusinessIdea {
+  title: string;
+  description: string;
+  targetMarket: string;
+  validationScore: number; // 1–10
+  validationReason: string; // short Hebrew explanation
+  risks: string[];
+  competitors: string[]; // top 3–5 competitors found
+  nextSteps: string[];
+  signalsReferenced: string[]; // pain points / trends from signal gathering
+  groundedInSignals: boolean; // false if Phase 0 failed → fallback mode
+}
+
+export interface GenerateIdeasResponse {
+  success: boolean;
+  message: string;
+  partial: boolean; // true if some ideas failed due to timeout/error
+  result: BusinessIdea[];
+  failedCount?: number; // present only when partial === true
+}
+
+export type IdeasProgressEvent =
+  | { phase: 0; status: string }
+  | { phase: 1; status: string }
+  | { phase: 2; status: string; ideaIndex?: number; idea?: BusinessIdea }
+  | { phase: 'done'; result: GenerateIdeasResponse }
+  | { phase: 'error'; message: string };

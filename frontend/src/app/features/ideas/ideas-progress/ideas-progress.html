@@ -1,0 +1,11 @@
+<div class="glass-effect card ideas-progress-card">
+  <div class="ideas-segments">
+    <span class="ideas-segment" [class.active]="phaseActive(0)"></span>
+    <span class="ideas-segment" [class.active]="phaseActive(1)"></span>
+    <span class="ideas-segment" [class.active]="phaseActive(2)"></span>
+  </div>
+  <p class="ideas-progress-text">
+    <span class="ph ph-circle-notch ph-spin"></span>
+    {{ statusText() }}
+  </p>
+</div>

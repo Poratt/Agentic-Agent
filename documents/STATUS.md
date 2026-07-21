@@ -1,6 +1,16 @@
 # Project Documentation Status
 
-Last updated: 2026-07-20
+Last updated: 2026-07-21
+
+## 2026-07-21 Session — Business Idea Generator Closed
+
+- Verified the already-implemented business idea generator end-to-end.
+- Backend: `IdeasModule` wired in `AppModule`, `ThrottlerModule.forRoot` with 2 named throttlers + `IdeasThrottlerGuard` as `APP_GUARD`. Controller exposes `POST /ideas/generate` and SSE `GET /ideas/generate/stream`. Service runs 3-phase agentic loop (SearXNG signal gathering → LLM idea generation → per-idea validation) with 60s timeout + partial results.
+- Frontend: `IdeasPage` with `PageStates`, `IdeasForm` (domain + count slider), `IdeasProgress` (3-segment phase bar via SSE), `IdeasGrid` + `IdeaCard` (score badge, grounded/ungrounded tag, expandable details). Store consumes SSE stream with `AbortController`.
+- Verification: backend build passes, frontend build passes (pre-existing warnings only), mojibake scan clean.
+- Moved `business-idea-generator-plan.md` and `chat-idea.md` to `documents/done/`.
+- Active todo now: `dynamic-pharm-scraping-plan.md` and `provider-and-llm-db-plan.md`.
+- Architecture diagram: needs update — new `IdeasModule` and ideas UI flow.
 
 ## 2026-07-20 Session — Loader Shimmer Implemented (Phases 1, 2, 3, 5, 6)
 
@@ -235,17 +245,11 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: removed Angular's temporary `$safeNavigationMigration(...)` helpers from frontend templates after the Angular 22 migration review.
 - Verified: no `$safeNavigationMigration` usages remain under `frontend/src`; `npx ng test --watch=false` and `npx ng build` pass.
 - Completed: moved the Angular 22 upgrade guide to `documents/done/angular-22-update-guide.md`.
-- Remaining open work: decide how to handle PrimeNG's Angular 21 peer dependency range, clean existing frontend warnings, and continue the active feature plans under `documents/features/todo/`.
+- Remaining open work: decide how to handle PrimeNG's Angular 21 peer dependency range, clean existing frontend warnings, and continue the 2 remaining active feature plans (`dynamic-pharm-scraping-plan.md`, `provider-and-llm-db-plan.md`).
 - Completed: AiFormat Phase 2/3 now sanitize GenUI component HTML before raw rendering, removing dangerous tags, unsafe token overrides, and unscoped global selectors while preserving local scoped CSS and `@keyframes`.
 - Verified: `npx ng test --watch=false` passes 19 tests, and `npx ng build` passes after the AiFormat sanitizer update.
 - Completed: AiFormat Phase 4/5/6 finished. Skeleton rendering now goes through `renderSkeletonOnce()`, Hebrew/English role parsing is covered by tests, CSS code fences render as markdown code, and the plan moved to `documents/done/ai-format-directive-improvement-plan.md`.
 - Verified: `npx ng test --watch=false` passes 22 tests, `npx ng build` passes, and the AiFormat corrupted-character scan returned clean.
-- Active todo: `documents/features/todo/chat-stop-stream-button-plan.md` documents replacing the disabled chat submit button during streaming with a clickable stop/cancel button.
-- Completed: moved `documents/audit/backend-llm-documentation-audit.md` to `documents/done/backend-llm-documentation-audit.md`.
-- Removed: `documents/audit/phosphor-icons.web.instruction.md` because `@phosphor-icons/web` is already in active use and the file was reference material, not an audit finding.
-- Current audit folder contains only the active CSS conventions audit: `documents/audit/css-conventions-component-audit.md`.
-- Planned: `documents/features/todo/provider-and-llm-db-plan.md` now contains the full provider/model DB plan, including entities, admin endpoints, service refactor phases, Angular Settings UI phases, security notes, and verification checklist.
-- Planned: provider/model DB plan now includes scheduled/manual LLM test runs every 6 hours by default, persisted test results, model rankings, provider/model forms, and a Settings test-results table.
 - Completed: `documents/done/chat-stop-stream-button-plan.md`.
 - Completed: `documents/done/chat-message-actions-plan.md`.
 - Chat submit now becomes a clickable stop button during streaming and cancels the active fetch through the existing stream Observable teardown.
@@ -257,7 +261,8 @@ New planning documents should go under `documents/features/todo/` unless they ar
 - Completed: implemented clickable strain-symbol filters in StrainHunter table; updated items computed property to handle symbol alt-text matching.
 - Verified: frontend build passes after the strain-symbol filter update.
 - Closed: `documents/features/todo/explorer-plan.md` was not an active implementation plan; it is now `documents/done/explorer-source-reference.md`.
-- Active feature todo now contains only `documents/features/todo/database-storage-monitor-plan.md` (completed 2026-07-09).
+- Active feature todo now contains: `dynamic-pharm-scraping-plan.md` and `provider-and-llm-db-plan.md`.
+- Incomplete: `thinking-ux-cleanup.md`.
 - Completed: Chat message action buttons now render without borders; hover/focus uses tokenized color/background only.
 - Verified: `npx ng build` passes after the chat action-button border cleanup with existing warnings only.
 - Completed: Angular 22 baseline documentation was updated in `frontend/README.md`, `AGENTS.md`, `CLAUDE.md`, and `C:\Users\porat\.claude\rules\angular-rules.md`.

@@ -1,0 +1,45 @@
+<div class="page-content">
+  <header class="page-header">
+    <h2>מחולל רעיונות עסקיים</h2>
+    <p class="subtitle">איסוף סיגנלי שוק אמיתיים, יצירת רעיונות ואימות מול מתחרים</p>
+  </header>
+
+  <div class="ideas-layout">
+    <app-ideas-form />
+
+    @switch (store.pageState()) {
+      @case (PageStates.Loading) {
+        <app-ideas-progress [phase]="store.phase()" [statusText]="store.statusText()" />
+      }
+      @case (PageStates.Error) {
+        <div class="page-state error-state">
+          <span class="icon ph ph-warning"></span>
+          <h4 class="title">{{ store.error() }}</h4>
+          <button class="primary-btn filled" type="button" (click)="store.generate()">נסה שוב</button>
+        </div>
+      }
+      @case (PageStates.Empty) {
+        <div class="page-state empty-state">
+          <span class="icon ph ph-lightbulb"></span>
+          <h4 class="title">עדיין לא יצרנו רעיונות</h4>
+          <p class="subtitle">הזן תחום עסקי ולחץ "צור רעיונות" כדי להתחיל.</p>
+        </div>
+      }
+      @case (PageStates.Ready) {
+        <app-ideas-grid
+          [ideas]="store.ideas()"
+          [partial]="store.partial()"
+          [failedCount]="store.failedCount()"
+          [totalRequested]="store.totalRequested()"
+        />
+        <p class="subtitle ideas-status-line">
+          הוצגו <span dir="ltr">{{ store.ideas().length }}</span> מתוך
+          <span dir="ltr">{{ store.totalRequested() }}</span> רעיונות
+        </p>
+        @if (store.partial() && store.message()) {
+          <p class="subtitle ideas-message-line">{{ store.message() }}</p>
+        }
+      }
+    }
+  </div>
+</div>

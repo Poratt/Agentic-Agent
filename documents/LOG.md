@@ -1,5 +1,15 @@
 # Documentation Change Log
 
+## 2026-07-21 Business Idea Generator — Closed (Verification Session)
+
+- **Architectural decision:** the Ideas module was already fully implemented before this session. This was a verification + documentation close-out session only — no code changes.
+- **Architectural decision:** `ThrottlerModule.forRoot` uses two named throttlers (`ideasCostShort`: 30 hits/60s, `ideasCostLong`: 150 hits/3600s) with `skipIf` scoping to `/ideas` routes so existing authenticated routes are unaffected. The custom `IdeasThrottlerGuard` extends `ThrottlerGuard` and loops `storageService.increment()` `weight = max(count, 1)` times to implement weighted rate limiting, since throttler v6 removed the `weight` parameter.
+- **Architectural decision:** the controller uses `JwtAuthGuard` (authenticated, not public). The plan's open decision said "Default to public with rate limiting for now, lock down later if needed" — the implementation chose to lock down immediately. This is acceptable given the cost amplification risk (each request triggers SearXNG × 3 + LLM × (N+1) calls).
+- **Architectural decision:** SSE progress streaming (`GET /ideas/generate/stream`) coexists with synchronous `POST /ideas/generate`. The frontend uses the SSE endpoint exclusively (via raw `fetch` + `ReadableStream`, not `EventSource`, to preserve cookie-based auth). The synchronous POST exists for tests, GenUI tool calls, and non-streaming consumers.
+- **Architectural decision:** the `IdeasThrottlerGuard` is applied globally as `APP_GUARD`. Because `skipIf` excludes non-`/ideas` routes at the throttler config level, the guard is effectively a no-op for all other routes. This avoids needing per-controller `@UseGuards` decoration.
+- **Files touched:** `documents/done/business-idea-generator-plan.md` (moved), `documents/done/chat-idea.md` (moved), `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.
+- **Architecture diagram needs update:** new `IdeasModule` (imports `LlmModule` + `WebSearchModule`), `IdeasController` (`POST /ideas/generate` + SSE `GET /ideas/generate/stream`), `IdeasThrottlerGuard`, and frontend `IdeasPage` with 5 components. Deferred — the diagram update is noted but not done this session.
+
 ## 2026-07-20 Loader Shimmer — Implemented (Phases 1, 2, 3, 5, 6)
 
 - **Architectural decision:** the shimmer primitive is now live in `_utilities.css` and `_animations.css`. Three pill sizes (sm/md/lg) plus a text-shimmer variant, all driven by `@keyframes shimmer-sweep` with an RTL mirror keyframe. Gradient uses `color-mix()` over existing tokens — no new color tokens introduced.

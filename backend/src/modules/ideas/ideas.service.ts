@@ -1,0 +1,286 @@
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { LlmClientService } from '../llm/services/llm-client.service';
+import { WebSearchService } from '../web-search/web-search.service';
+import { parseLlmJson } from '../llm/utils/llm-json-parser';
+import {
+  Signal,
+  RawIdea,
+  ValidationResult,
+  BusinessIdea,
+  GenerateIdeasResponse,
+  IdeasProgressEvent,
+} from './interfaces/idea.interface';
+import {
+  SIGNAL_GATHERING_PROMPT,
+  IDEA_GENERATION_PROMPT,
+  VALIDATION_PROMPT,
+} from './constants/idea-prompts.constant';
+
+const MAX_DOMAIN_LENGTH = 500;
+const MAX_PARALLEL_VALIDATION = 3;
+const OVERALL_TIMEOUT_MS = 60_000;
+
+@Injectable()
+export class IdeasService {
+  private readonly logger = new Logger(IdeasService.name);
+
+  constructor(
+    private readonly llm: LlmClientService,
+    private readonly webSearch: WebSearchService,
+  ) {}
+
+  async generateIdeas(
+    domain: string,
+    count: number,
+    onProgress?: (event: IdeasProgressEvent) => void,
+  ): Promise<GenerateIdeasResponse> {
+    const cleanDomain = this.sanitizeDomain(domain);
+    if (!cleanDomain) {
+      throw new BadRequestException('התחום ריק או מכיל תווים לא חוקיים');
+    }
+
+    const deadline = Date.now() + OVERALL_TIMEOUT_MS;
+
+    const { signals, groundedInSignals } = await this.gatherSignals(
+      cleanDomain,
+      onProgress,
+      deadline,
+    );
+
+    onProgress?.({ phase: 1, status: 'מייצר רעיונות...' });
+    const rawIdeas = await this.generateIdeasFromSignals(cleanDomain, signals, count);
+
+    onProgress?.({ phase: 2, status: 'מאמת מול מתחרים...' });
+    const { ideas, failedCount } = await this.validateIdeas(
+      rawIdeas,
+      signals,
+      onProgress,
+      deadline,
+    );
+
+    const partial = failedCount > 0 || !groundedInSignals;
+    const result = this.sortByScore(ideas);
+
+    const message = !groundedInSignals
+      ? 'נוצרו רעיונות ללא עיגון במחקר שוק — התוצאות עשויות להיות פחות מבוססות'
+      : `נוצרו ${result.length} רעיונות עבור "${cleanDomain}"`;
+
+    const response: GenerateIdeasResponse = {
+      success: true,
+      message,
+      partial,
+      result,
+      ...(failedCount > 0 ? { failedCount } : {}),
+    };
+
+    onProgress?.({ phase: 'done', result: response });
+    return response;
+  }
+
+  private sanitizeDomain(domain: string): string {
+    const collapsed = domain.trim().replace(/\s+/g, ' ');
+    const stripped = collapsed
+      .replace(/[`<>"]/g, '')
+      .replace(/[\r\n]/g, ' ')
+      .trim();
+
+    if (stripped.length > MAX_DOMAIN_LENGTH) {
+      return '';
+    }
+    return stripped;
+  }
+
+  private buildSignalQueries(domain: string): string[] {
+    return [
+      `pain points in ${domain} 2024 2025`,
+      `trends in ${domain} market gaps`,
+      `challenges ${domain} freelancers businesses`,
+    ];
+  }
+
+  private async gatherSignals(
+    domain: string,
+    onProgress: ((event: IdeasProgressEvent) => void) | undefined,
+    deadline: number,
+  ): Promise<{ signals: Signal[]; groundedInSignals: boolean }> {
+    onProgress?.({ phase: 0, status: 'מחפש סיגנלים בשוק...' });
+
+    const queries = this.buildSignalQueries(domain);
+    const settled = await Promise.allSettled(
+      queries.map((q) => this.webSearch.search(q)),
+    );
+
+    const contents: string[] = [];
+    for (const s of settled) {
+      if (s.status === 'fulfilled' && s.value.success && s.value.result) {
+        for (const r of s.value.result.results) {
+          contents.push(`${r.title}: ${r.content}`);
+        }
+      }
+    }
+
+    if (contents.length === 0) {
+      this.logger.warn('Signal gathering returned no search results — fallback mode');
+      return { signals: [], groundedInSignals: false };
+    }
+
+    const prompt = `תחום: ${domain}\n\nתוצאות חיפוש:\n${contents.slice(0, 20).join('\n\n')}`;
+    try {
+      const res = await this.llm.generateResponse({
+        prompt,
+        systemContext: SIGNAL_GATHERING_PROMPT,
+        maxTokens: 1024,
+      });
+      const signals = parseLlmJson<Signal[]>(res.content, 'ideas-signals');
+      if (!signals || !Array.isArray(signals) || signals.length === 0) {
+        throw new Error('empty signals');
+      }
+      return { signals, groundedInSignals: true };
+    } catch (error) {
+      this.logger.warn(
+        `Signal extraction failed — fallback mode: ${error instanceof Error ? error.message : 'unknown'}`,
+      );
+      return { signals: [], groundedInSignals: false };
+    }
+  }
+
+  private async generateIdeasFromSignals(
+    domain: string,
+    signals: Signal[],
+    count: number,
+  ): Promise<RawIdea[]> {
+    const signalsText = signals.length
+      ? signals.map((s) => `- ${s.signal} (מקור: ${s.source})`).join('\n')
+      : '(ללא סיגנלים — השתמש בידע הכללי שלך)';
+
+    const prompt = `תחום: ${domain}\nמספר רעיונות נדרש: ${count}\n\nסיגנלים:\n${signalsText}`;
+    try {
+      const res = await this.llm.generateResponse({
+        prompt,
+        systemContext: IDEA_GENERATION_PROMPT,
+        maxTokens: 2048,
+      });
+      const ideas = parseLlmJson<RawIdea[]>(res.content, 'ideas-generation');
+      if (!ideas || !Array.isArray(ideas)) {
+        throw new Error('invalid ideas JSON');
+      }
+      return ideas.slice(0, count);
+    } catch (error) {
+      this.logger.error(
+        `Idea generation failed: ${error instanceof Error ? error.message : 'unknown'}`,
+      );
+      return [];
+    }
+  }
+
+  private async validateIdeas(
+    rawIdeas: RawIdea[],
+    signals: Signal[],
+    onProgress: ((event: IdeasProgressEvent) => void) | undefined,
+    deadline: number,
+  ): Promise<{ ideas: BusinessIdea[]; failedCount: number }> {
+    if (rawIdeas.length === 0) {
+      return { ideas: [], failedCount: 0 };
+    }
+
+    const batches: RawIdea[][] = [];
+    for (let i = 0; i < rawIdeas.length; i += MAX_PARALLEL_VALIDATION) {
+      batches.push(rawIdeas.slice(i, i + MAX_PARALLEL_VALIDATION));
+    }
+
+    const ideas: BusinessIdea[] = [];
+    let failedCount = 0;
+    let globalIndex = 0;
+
+    for (const batch of batches) {
+      if (Date.now() > deadline) {
+        failedCount += batch.length;
+        break;
+      }
+
+      const settled = await Promise.allSettled(
+        batch.map((idea) => this.validateSingle(idea, signals)),
+      );
+
+      for (const s of settled) {
+        if (s.status === 'fulfilled' && s.value) {
+          ideas.push(s.value);
+          onProgress?.({
+            phase: 2,
+            status: 'מאמת מול מתחרים...',
+            ideaIndex: globalIndex,
+            idea: s.value,
+          });
+        } else {
+          failedCount += 1;
+        }
+        globalIndex += 1;
+      }
+    }
+
+    return { ideas, failedCount };
+  }
+
+  private async validateSingle(
+    idea: RawIdea,
+    signals: Signal[],
+  ): Promise<BusinessIdea | null> {
+    const searchResult = await this.webSearch.search(
+      `competitors for ${idea.title} ${idea.targetMarket}`,
+    );
+
+    const searchText =
+      searchResult.success && searchResult.result
+        ? searchResult.result.results
+            .map((r) => `${r.title}: ${r.content}`)
+            .slice(0, 10)
+            .join('\n\n')
+        : '(ללא תוצאות חיפוש)';
+
+    const signalsText = signals.length
+      ? signals.map((s) => `- ${s.signal}`).join('\n')
+      : '(ללא סיגנלים)';
+
+    const prompt = `רעיון:\nכותרת: ${idea.title}\nתיאור: ${idea.description}\nקהל יעד: ${idea.targetMarket}\n\nתוצאות חיפוש מתחרים:\n${searchText}\n\nסיגנלים:\n${signalsText}`;
+
+    try {
+      const res = await this.llm.generateResponse({
+        prompt,
+        systemContext: VALIDATION_PROMPT,
+        maxTokens: 1024,
+      });
+      const v = parseLlmJson<ValidationResult>(res.content, 'ideas-validation');
+      if (!v) {
+        throw new Error('invalid validation JSON');
+      }
+      return {
+        title: idea.title,
+        description: idea.description,
+        targetMarket: idea.targetMarket,
+        validationScore: this.clampScore(v.validationScore),
+        validationReason: v.validationReason ?? '',
+        risks: v.risks ?? [],
+        competitors: v.competitors ?? [],
+        nextSteps: v.nextSteps ?? [],
+        signalsReferenced: v.signalsReferenced ?? [],
+        groundedInSignals: signals.length > 0,
+      };
+    } catch (error) {
+      this.logger.warn(
+        `Validation failed for "${idea.title}": ${error instanceof Error ? error.message : 'unknown'}`,
+      );
+      return null;
+    }
+  }
+
+  private clampScore(score: number): number {
+    if (typeof score !== 'number' || Number.isNaN(score)) {
+      return 1;
+    }
+    return Math.min(10, Math.max(1, Math.round(score)));
+  }
+
+  private sortByScore(ideas: BusinessIdea[]): BusinessIdea[] {
+    return [...ideas].sort((a, b) => b.validationScore - a.validationScore);
+  }
+}

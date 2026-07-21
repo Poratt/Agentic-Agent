@@ -1,0 +1,38 @@
+.ideas-form-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.ideas-count-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin-bottom: var(--space-4);
+}
+
+.ideas-count-row label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.ideas-count-row input[type='range'] {
+  flex: 1;
+  width: auto;
+}
+
+.ideas-count-value {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  min-width: 20px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.ideas-submit {
+  width: 100%;
+  justify-content: center;
+}

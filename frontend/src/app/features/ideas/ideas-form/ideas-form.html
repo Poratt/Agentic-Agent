@@ -1,0 +1,38 @@
+<div class="glass-effect card ideas-form-card">
+  <div class="form-field">
+    <label for="ideas-domain">תחום עסקי</label>
+    <input
+      id="ideas-domain"
+      type="text"
+      [value]="store.domain()"
+      (input)="onDomainInput($event)"
+      placeholder="למשל: כלי AI לפרילנסרים"
+      [disabled]="store.loading()"
+    />
+  </div>
+
+  <div class="ideas-count-row">
+    <label for="ideas-count">מספר רעיונות</label>
+    <input
+      id="ideas-count"
+      type="range"
+      min="1"
+      max="10"
+      step="1"
+      [value]="store.count()"
+      (input)="onCountInput($event)"
+      [disabled]="store.loading()"
+    />
+    <span class="ideas-count-value" dir="ltr">{{ store.count() }}</span>
+  </div>
+
+  <button
+    class="primary-btn filled ideas-submit"
+    type="button"
+    (click)="store.generate()"
+    [disabled]="store.loading() || !store.domain().trim()"
+  >
+    <span class="ph ph-lightbulb"></span>
+    צור רעיונות
+  </button>
+</div>

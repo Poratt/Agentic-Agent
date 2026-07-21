@@ -21,6 +21,7 @@ flowchart TD
     AuthUI[Auth Feature]
     ChatUI[Chat Feature]
     StrainHunterUI[StrainHunter Feature]
+    IdeasUI[Ideas Feature]
     SharedTooltip[Shared Tooltip Component]
     ChatMessage[Chat Message Renderer]
     AiFormat[AiFormat Directive]
@@ -41,6 +42,8 @@ flowchart TD
     StrainHunterModule[StrainHunterModule]
     TerpeneModule[TerpeneModule]
     GeneticsModule[GeneticsModule]
+    WebSearchModule[WebSearchModule]
+    IdeasModule[IdeasModule]
   end
 
   subgraph AgentCore["Admin Agent Core"]
@@ -82,15 +85,16 @@ flowchart TD
   end
 
   User --> Shell
-  Shell --> AuthUI & ChatUI & StrainHunterUI
+  Shell --> AuthUI & ChatUI & StrainHunterUI & IdeasUI
   ChatUI --> ChatMessage & FrontendServices
   StrainHunterUI --> SharedTooltip & FrontendServices
   StrainHunterUI --> StrainHunterModule
+  IdeasUI --> FrontendServices & FrontendStores
   ChatMessage --> AiFormat
   AuthUI --> FrontendServices
-  FrontendServices --> AuthModule & UsersModule & AdminAgentController & LlmController & TerpeneModule & GeneticsModule
+  FrontendServices --> AuthModule & UsersModule & AdminAgentController & LlmController & TerpeneModule & GeneticsModule & StrainHunterModule & IdeasModule
 
-  AppModule --> AuthModule & UsersModule & AdminAgentModule & LlmModule & SystemModule & McpBridgeModule & AnalyticsModule & CurrencyModule & StrainHunterModule & TerpeneModule & GeneticsModule
+  AppModule --> AuthModule & UsersModule & AdminAgentModule & LlmModule & SystemModule & McpBridgeModule & AnalyticsModule & CurrencyModule & StrainHunterModule & TerpeneModule & GeneticsModule & WebSearchModule & IdeasModule
 
   AdminAgentModule --> AdminAgentController
   AdminAgentController --> AdminAgentService
@@ -118,6 +122,7 @@ flowchart TD
   McpBridge --> WeatherMcp
   CurrencyModule --> CurrencyApi
   StrainHunterModule --> JaneApi
+  IdeasModule --> LlmModule & WebSearchModule
 ```
 
 ## Chat And Tool Execution Flow
@@ -249,6 +254,7 @@ flowchart TB
     StrainHunter["StrainHunterModule\nJane API fetch and normalized items"]
     Terpene["TerpeneModule\nterpene catalog with effects, role lookup"]
     Genetics["GeneticsModule\nstrain lineage catalog with parent1/parent2/origin, role lookup"]
+    Ideas["IdeasModule\nbusiness idea generator\nSearXNG signals + LLM, SSE progress"]
   end
 
   Auth & Users --> UsersDb[(users)]
@@ -416,6 +422,44 @@ sequenceDiagram
   API-->>Chat: render-host shows agnes-image-card / agnes-video-card
 ```
 
+## Ideas Generation Flow
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor User as Admin User
+  participant IdeasUI as Ideas Page
+  participant API as IdeasController
+  participant Service as IdeasService
+  participant Search as WebSearchService
+  participant LLM as LlmClientService
+
+  User->>IdeasUI: Enter domain + count, click "צור רעיונות"
+  IdeasUI->>API: GET /ideas/generate/stream?domain=...&count=...
+  API->>Service: generateIdeas(domain, count, onProgress)
+  Service->>Service: sanitizeDomain()
+  Service->>Search: search("pain points in domain") × 3 (parallel)
+  Search-->>Service: merged results
+  Service->>LLM: generateResponse(SIGNAL_GATHERING_PROMPT)
+  LLM-->>Service: Signal[]
+  Service-->>API: SSE { phase: 0, status: "מחפש סיגנלים..." }
+  API-->>IdeasUI: SSE event
+  Service->>LLM: generateResponse(IDEA_GENERATION_PROMPT + signals)
+  LLM-->>Service: RawIdea[]
+  Service-->>API: SSE { phase: 1, status: "מייצר רעיונות..." }
+  API-->>IdeasUI: SSE event
+  loop Per idea (max 3 parallel)
+    Service->>Search: search("competitors for idea")
+    Search-->>Service: results
+    Service->>LLM: generateResponse(VALIDATION_PROMPT + results)
+    LLM-->>Service: ValidationResult
+  end
+  Service->>Service: merge + sort by score
+  Service-->>API: SSE { phase: 'done', result: BusinessIdea[] }
+  API-->>IdeasUI: SSE event
+  IdeasUI->>IdeasUI: render idea cards
+```
+
 ## Current Architecture Notes
 
 - The backend is the source of truth for available LLM models.
@@ -439,3 +483,4 @@ sequenceDiagram
 - Video continuation: `LlmController_extendVideo` → `extendVideo` downloads the source video, extracts the last frame via `ffmpeg-static` (`-sseof -1 -frames:v 1`), and submits an image-to-video task with the frame as a base64 PNG data URI (no external image hosting needed).
 - GenUI render blocks for Agnes: `agnes-image` (`agnes-image-card`) and `agnes-video` (`agnes-video-card`) are registered in `RenderHostComponent` and rendered inline in chat instead of markdown links. `RenderSpecService` maps `LlmController_generateImage`/`createVideo`/`extendVideo` to these types.
 - Image/video model fallback (`resolveCapabilityModel`) picks the highest-version active model of the requested capability when `modelId` is omitted (e.g. `agnes-image-2.1-flash` over `2.0-flash`). The resolved image model is logged by `LlmController`.
+- **Ideas module** (`IdeasModule`) is a business idea generator: `POST /ideas/generate` (sync) and `GET /ideas/generate/stream` (SSE progress). The service runs a 3-phase agentic loop — SearXNG signal gathering → LLM idea generation → per-idea validation — with 60s overall timeout, partial results via `Promise.allSettled`, and weighted rate limiting via `IdeasThrottlerGuard` (extends `ThrottlerGuard`, loops `increment()` `max(count,1)` times). The frontend `IdeasPage` uses `PageStates` and consumes the SSE stream via raw `fetch` + `AbortController`.

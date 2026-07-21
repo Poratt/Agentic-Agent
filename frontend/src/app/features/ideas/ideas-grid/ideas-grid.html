@@ -1,0 +1,13 @@
+@if (partial()) {
+  <div class="badge badge-default ideas-partial-banner">
+    <span class="ph ph-warning"></span>
+    הוצגו <span dir="ltr">{{ ideas().length }}</span> מתוך
+    <span dir="ltr">{{ totalRequested() }}</span> רעיונות (חלק מהרעיונות נכשלו)
+  </div>
+}
+
+<div class="grid-3">
+  @for (idea of ideas(); track $index) {
+    <app-idea-card [idea]="idea" />
+  }
+</div>
