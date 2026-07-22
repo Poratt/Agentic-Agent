@@ -419,6 +419,17 @@ export class LlmProvidersManagement implements OnInit {
             detail: `"${model.label}" is now the default model.`
         });
     }
+
+    copyModelKey(event: Event, key: string): void {
+        event.stopPropagation();
+        navigator.clipboard.writeText(key).then(() => {
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Copied',
+                detail: 'Model key copied to clipboard.'
+            });
+        });
+    }
 }
 
 // Laguna M.1 - poolside/laguna-m.1:free

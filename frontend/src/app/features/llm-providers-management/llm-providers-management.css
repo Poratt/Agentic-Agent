@@ -1,8 +1,11 @@
 /* llm-providers-management.css */
 
-:host { display: block; }
+:host {
+    display: block;
+}
 
 :host {
+
     .subtable,
     .inner-table {
         width: 100%;
@@ -46,6 +49,15 @@
         text-align: center;
     }
 
+    .col-expand {
+        padding: 0;
+        padding-left: var(--space-4);
+
+        &.xs {
+            padding-left: var(--space-16);
+        }
+    }
+
     .col-status {
         width: 100px;
     }
@@ -80,6 +92,23 @@
     .row-subtitle {
         width: 200px;
         flex-grow: 1;
+    }
+
+    .row-subtitle-inline {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-5);
+        width: 200px;
+        flex-grow: 1;
+
+        button {
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+    }
+
+    td.clickable:hover .row-subtitle-inline button {
+        opacity: 1;
     }
 
     .status-indicator {
@@ -252,7 +281,7 @@
         padding: var(--space-16) var(--space-8);
         text-align: center;
 
-        > .ph {
+        >.ph {
             font-size: 2rem;
             color: var(--color-text-muted);
             opacity: 0.5;

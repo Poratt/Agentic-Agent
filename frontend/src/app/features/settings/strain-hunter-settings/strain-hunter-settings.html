@@ -114,7 +114,8 @@
                                     class="icon-only transparent-btn"
                                     [disabled]="isEnriching('g-' + g.id)"
                                     (click)="onRowRegenerateGenetics(g)"
-                                    pTooltip="Regenerate"
+                                    appTooltip
+                                    [text]="'Regenerate'"
                                 >
                                     @if (isEnriching('g-' + g.id)) {
                                         <i class="ph ph-spinner ph-spin"></i>
@@ -406,7 +407,8 @@
                                     class="icon-only transparent-btn"
                                     [disabled]="isEnriching('t-' + t.id)"
                                     (click)="onRowRegenerate(t)"
-                                    pTooltip="Regenerate"
+                                    appTooltip
+                                    [text]="'Regenerate'"
                                 >
                                     @if (isEnriching('t-' + t.id)) {
                                         <i class="ph ph-spinner ph-spin"></i>

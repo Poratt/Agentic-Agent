@@ -114,11 +114,7 @@
                                         <div class="empty-state">
                                             <span class="ph ph-cube-simple"></span>
                                             <p>No models configured for this provider.</p>
-                                            <button
-                                                type="button"
-                                                class="primary-btn filled sm"
-                                                (click)="openAddModelDialog(provider.id)"
-                                            >
+                                            <button type="button" class="primary-btn filled sm" (click)="openAddModelDialog(provider.id)">
                                                 <i class="ph ph-plus"></i>
                                                 Add Model
                                             </button>
@@ -150,9 +146,11 @@
                                         >
                                             <ng-template pTemplate="header">
                                                 <tr>
-                                                    <th class="col-expand-xs"></th>
+                                                    <th class="col-expand xs"></th>
                                                     <th pSortableColumn="label">Model <p-sortIcon field="label" /></th>
-                                                    <th class="col-status" pSortableColumn="active">Active <p-sortIcon field="active" /></th>
+                                                    <th class="col-status" pSortableColumn="active">
+                                                        Active <p-sortIcon field="active" />
+                                                    </th>
                                                     <th class="col-perf" pSortableColumn="performanceScore">
                                                         Performance <p-sortIcon field="performanceScore" />
                                                     </th>
@@ -163,7 +161,7 @@
 
                                             <ng-template pTemplate="body" let-model>
                                                 <tr>
-                                                    <td class="col-expand-xs">
+                                                    <td class="col-expand xs">
                                                         @if (model.hasTests) {
                                                             <button
                                                                 type="button"
@@ -181,7 +179,19 @@
                                                     <td class="clickable" (click)="toggleModel(model.id)">
                                                         <div class="row-title">
                                                             <span class="row-label">{{ model.label }}</span>
-                                                            <span class="row-subtitle">{{ model.key }}</span>
+                                                            <div class="row-subtitle-inline">
+                                                                <span class="row-subtitle">{{ model.key }}</span>
+                                                                <button
+                                                                    type="button"
+                                                                    class="icon-only transparent-btn xs"
+                                                                    aria-label="Copy model key"
+                                                                    appTooltip
+                                                                    [text]="'Copy key'"
+                                                                    (click)="copyModelKey($event, model.key)"
+                                                                >
+                                                                    <i class="ph ph-copy"></i>
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </td>
                                                     <td class="col-status">
@@ -230,10 +240,20 @@
                                                                 type="button"
                                                                 class="icon-only accent-btn sm"
                                                                 appTooltip
-                                                                [text]="llmProviderStore.defaultModelId() === model.id ? 'Default model' : 'Set as default'"
+                                                                [text]="
+                                                                    llmProviderStore.defaultModelId() === model.id
+                                                                        ? 'Default model'
+                                                                        : 'Set as default'
+                                                                "
                                                                 (click)="setDefaultModel(model)"
                                                             >
-                                                                <i [class]="llmProviderStore.defaultModelId() === model.id ? 'ph-fill ph-star' : 'ph ph-star'"></i>
+                                                                <i
+                                                                    [class]="
+                                                                        llmProviderStore.defaultModelId() === model.id
+                                                                            ? 'ph-fill ph-star'
+                                                                            : 'ph ph-star'
+                                                                    "
+                                                                ></i>
                                                             </button>
                                                             <button
                                                                 type="button"
@@ -276,7 +296,13 @@
                                                                                 aria-label="Delete all test results"
                                                                                 appTooltip
                                                                                 [text]="'Delete all test results'"
-                                                                                (click)="deleteAllTestResults(provider.id, model.id, model.testResults.length)"
+                                                                                (click)="
+                                                                                    deleteAllTestResults(
+                                                                                        provider.id,
+                                                                                        model.id,
+                                                                                        model.testResults.length
+                                                                                    )
+                                                                                "
                                                                             >
                                                                                 <i class="ph ph-trash"></i>
                                                                             </button>
@@ -314,7 +340,9 @@
                                                                                     aria-label="Delete test result"
                                                                                     appTooltip
                                                                                     [text]="'Delete test result'"
-                                                                                    (click)="deleteTestResult(provider.id, model.id, result.id)"
+                                                                                    (click)="
+                                                                                        deleteTestResult(provider.id, model.id, result.id)
+                                                                                    "
                                                                                 >
                                                                                     <i class="ph ph-trash"></i>
                                                                                 </button>

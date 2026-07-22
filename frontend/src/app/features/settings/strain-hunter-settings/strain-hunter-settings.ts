@@ -15,11 +15,12 @@ import { TerpeneService } from '../../../core/services/terpene.service';
 import { IGenetics } from '../../../core/models/genetics.interface';
 import { ITerpene } from '../../../core/models/terpene.interface';
 import { confirmationDialogSettings } from '../../../core/config/confirmation-dialog-settings';
+import { TooltipDirective } from '../../../core/directives/tooltip.directive';
 
 @Component({
     selector: 'app-strain-hunter-settings',
     standalone: true,
-    imports: [CommonModule, FormsModule, TableModule, Tabs, TabList, Tab, TabPanels, TabPanel, InputTextModule, ToastModule, ConfirmDialogModule],
+    imports: [CommonModule, FormsModule, TableModule, Tabs, TabList, Tab, TabPanels, TabPanel, InputTextModule, ToastModule, ConfirmDialogModule, TooltipDirective],
     templateUrl: './strain-hunter-settings.html',
     styleUrls: ['./strain-hunter-settings.css'],
     changeDetection: ChangeDetectionStrategy.Eager,
