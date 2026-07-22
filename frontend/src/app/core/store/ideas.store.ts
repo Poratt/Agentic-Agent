@@ -70,11 +70,33 @@ export class IdeasStore {
       .subscribe({
         next: (event: IdeasProgressEvent) => this.handleEvent(event),
         error: (err: unknown) => {
+          if (err instanceof DOMException && err.name === 'AbortError') {
+            return;
+          }
           const msg = err instanceof Error ? err.message : 'אירעה שגיאה ביצירת הרעיונות';
           this.error.set(msg);
           this.loading.set(false);
         },
       });
+  }
+
+  stopGenerating(): void {
+    if (!this.sub) {
+      return;
+    }
+
+    this.sub.unsubscribe();
+    this.sub = null;
+    this.loading.set(false);
+    this.phase.set('done');
+    this.statusText.set('היצירה הופסקה');
+
+    if (this.ideas().length === 0) {
+      return;
+    }
+
+    this.partial.set(true);
+    this.message.set('היצירה הופסקה על ידי המשתמש');
   }
 
   private handleEvent(event: IdeasProgressEvent): void {

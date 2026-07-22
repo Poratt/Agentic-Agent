@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, effect } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Select } from 'primeng/select';
@@ -25,6 +25,8 @@ export class IdeasForm {
     count: [5, []],
     model: ['', []],
   });
+
+  canGenerate = computed(() => this.store.domain().trim().length > 0);
 
   constructor() {
     effect(() => {
@@ -83,10 +85,17 @@ export class IdeasForm {
   }
 
   onGenerate(): void {
+    if (this.store.loading()) {
+      return;
+    }
     const selectedModelId = Number(this.ideasForm.value.model);
     const modelSelection = this.getModelSelection(selectedModelId);
     this.store.setModel(modelSelection);
     this.store.generate();
+  }
+
+  onStopGenerate(): void {
+    this.store.stopGenerating();
   }
 
   private getModelSelection(selectedModelId?: number): { provider: string; model: string } | undefined {

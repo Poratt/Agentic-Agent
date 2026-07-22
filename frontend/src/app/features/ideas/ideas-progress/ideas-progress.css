@@ -13,11 +13,26 @@
   height: 4px;
   border-radius: var(--radius-pill);
   background: var(--color-border);
-  transition: background-color var(--transition-standard);
-}
+  position: relative;
+  overflow: hidden;
 
-.ideas-segment.active {
-  background: var(--color-primary);
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: scaleX(0);
+    transform-origin: left;
+    height: 100%;
+    border-radius: var(--radius-pill);
+    background: var(--color-primary);
+    transition: transform var(--transition-standard);
+  }
+
+  &.active {
+    &::after {
+      transform: scaleX(1);
+    }
+  }
 }
 
 .ideas-progress-text {
@@ -27,8 +42,8 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   margin: 0;
-}
 
-.ideas-progress-text .ph {
-  color: var(--color-primary);
+  .ph {
+    color: var(--color-primary);
+  }
 }

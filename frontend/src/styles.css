@@ -6,5 +6,6 @@
 @import './app/assets/styles/_layout.css';
 @import './app/assets/styles/_utilities.css';
 @import './app/assets/styles/_filters.css';
+@import './app/assets/styles/_composer.css';
 @import './app/assets/styles/_primeng-overrides.css';
 @import './app/assets/styles/_animations.css';

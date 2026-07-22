@@ -13,6 +13,13 @@
 
   <p class="idea-card-desc">{{ idea().description }}</p>
 
+  @if (idea().targetMarket) {
+    <div class="idea-card-market">
+      <span class="ph ph-users"></span>
+      <span>{{ idea().targetMarket }}</span>
+    </div>
+  }
+
   <div class="idea-card-tags">
     @if (idea().groundedInSignals) {
       <span class="tag tag-primary"><span class="ph ph-check"></span> מבוסס על סיגנלים</span>

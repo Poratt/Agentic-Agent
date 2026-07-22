@@ -1,102 +1,108 @@
-<div class="glass-effect card ideas-form-card">
-  <div class="form-field">
-    <label for="ideas-domain">תחום עסקי</label>
-    <input
-      id="ideas-domain"
-      type="text"
-      [value]="store.domain()"
-      (input)="onDomainInput($event)"
-      placeholder="למשל: כלי AI לפרילנסרים"
-      [disabled]="store.loading()"
-    />
-  </div>
+<div class="composer-area">
+    <form [formGroup]="ideasForm" (ngSubmit)="onGenerate()">
+        <div class="composer-field">
+            <input
+                id="ideas-domain"
+                type="text"
+                formControlName="domain"
+                [value]="store.domain()"
+                (input)="onDomainInput($event)"
+                placeholder="תחום עסקי (למשל: כלי AI לפרילנסרים)"
+                [disabled]="store.loading()"
+                autocomplete="off"
+            />
 
-  <div class="ideas-count-row">
-    <label for="ideas-count">מספר רעיונות</label>
-    <input
-      id="ideas-count"
-      type="range"
-      min="1"
-      max="10"
-      step="1"
-      [value]="store.count()"
-      (input)="onCountInput($event)"
-      [disabled]="store.loading()"
-    />
-    <span class="ideas-count-value" dir="ltr">{{ store.count() }}</span>
-  </div>
+            <div class="composer-meta-row">
+                <div class="composer-count">
+                    <label for="ideas-count">מספר רעיונות</label>
+                    <input
+                        id="ideas-count"
+                        type="number"
+                        min="1"
+                        max="10"
+                        step="1"
+                        [value]="store.count()"
+                        (input)="onCountInput($event)"
+                        [disabled]="store.loading()"
+                    />
+                </div>
 
-  <form [formGroup]="ideasForm">
-    <div class="ideas-model-row">
-      <label>מודל</label>
-      <p-select
-        [options]="models()"
-        formControlName="model"
-        [group]="true"
-        optionGroupLabel="label"
-        optionLabel="label"
-        optionValue="id"
-        placeholder="בחר מודל"
-        appendTo="body"
-        size="small"
-        class="custom-select transparnet"
-      >
-        <ng-template let-group #group>
-          <span class="group-label">
-            {{ group.label }}
-            <span class="group-count">{{ group.count }} {{ group.count === 1 ? 'Model' : 'Models' }}</span>
-          </span>
-        </ng-template>
-        <ng-template let-model #item>
-          <div class="select-option">
-            <div class="select-option-main">
-              <span class="model-name">{{ model.label }}</span>
-              <button
-                type="button"
-                class="star-btn"
-                [class.star-active]="llmProviderStore.defaultModelId() === model.id"
-                [attr.aria-label]="
-                  llmProviderStore.defaultModelId() === model.id ? 'Default model' : 'Set as default'
-                "
-                (click)="setDefaultModel($event, model)"
-              >
-                <span
-                  [class]="
-                    llmProviderStore.defaultModelId() === model.id ? 'ph ph-star ph-fill' : 'ph ph-star'
-                  "
-                ></span>
-              </button>
+                <div class="composer-actions">
+                    <p-select
+                        [options]="models()"
+                        formControlName="model"
+                        [group]="true"
+                        optionGroupLabel="label"
+                        optionLabel="label"
+                        optionValue="id"
+                        placeholder="בחר מודל"
+                        appendTo="body"
+                        size="small"
+                        class="custom-select transparnet"
+                    >
+                        <ng-template let-group #group>
+                            <span class="group-label">
+                                {{ group.label }}
+                                <span class="group-count">{{ group.count }} {{ group.count === 1 ? 'Model' : 'Models' }}</span>
+                            </span>
+                        </ng-template>
+                        <ng-template let-model #item>
+                            <div class="select-option">
+                                <div class="select-option-main">
+                                    <span class="model-name">{{ model.label }}</span>
+                                    <button
+                                        type="button"
+                                        class="star-btn"
+                                        [class.star-active]="llmProviderStore.defaultModelId() === model.id"
+                                        [attr.aria-label]="
+                                            llmProviderStore.defaultModelId() === model.id ? 'Default model' : 'Set as default'
+                                        "
+                                        (click)="setDefaultModel($event, model)"
+                                    >
+                                        <span
+                                            [class]="
+                                                llmProviderStore.defaultModelId() === model.id ? 'ph ph-star ph-fill' : 'ph ph-star'
+                                            "
+                                        ></span>
+                                    </button>
+                                    <div class="select-option-meta">
+                                        <span
+                                            class="perf-badge"
+                                            [class.perf-good]="model.performancePercentage >= 80"
+                                            [class.perf-warn]="model.performancePercentage >= 50 && model.performancePercentage < 80"
+                                            [class.perf-bad]="model.performancePercentage < 50"
+                                            >{{ model.performancePercentage }}%
+                                        </span>
+                                        <span class="latency-pill">
+                                            <span class="ph ph-timer"></span>
+                                            {{
+                                                model.latencyAverageMs > 1000
+                                                    ? (model.latencyAverageMs / 1000 | number: '1.1-1') + 's'
+                                                    : model.latencyAverageMs + 'ms'
+                                            }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </p-select>
+
+                    <button
+                        [type]="store.loading() ? 'button' : 'submit'"
+                        class="composer-submit"
+                        [class.stop]="store.loading()"
+                        [disabled]="store.loading() || !canGenerate()"
+                        [attr.aria-label]="store.loading() ? 'עצור יצירה' : 'צור רעיונות'"
+                        (click)="store.loading() ? onStopGenerate() : null"
+                    >
+                        @if (store.loading()) {
+                            <span class="ph ph-stop sm"></span>
+                        } @else {
+                            <span class="ph ph-arrow-up sm"></span>
+                        }
+                    </button>
+                </div>
             </div>
-            <div class="select-option-meta">
-              <span
-                class="perf-badge"
-                [class.perf-good]="model.performancePercentage >= 80"
-                [class.perf-warn]="model.performancePercentage >= 50 && model.performancePercentage < 80"
-                [class.perf-bad]="model.performancePercentage < 50"
-                >{{ model.performancePercentage }}%
-              </span>
-              <span class="latency-pill">
-                <span class="ph ph-timer"></span>
-                {{
-                  model.latencyAverageMs > 1000
-                    ? (model.latencyAverageMs / 1000 | number: '1.1-1') + 's'
-                    : model.latencyAverageMs + 'ms'
-                }}
-              </span>
-            </div>
-          </div>
-        </ng-template>
-      </p-select>
-    </div>
-  </form>
-
-  <button
-    class="primary-btn filled ideas-submit"
-    type="button"
-    (click)="onGenerate()"
-    [disabled]="store.loading() || !store.domain().trim()"
-  >
-    <span class="ph ph-lightbulb"></span>
-    צור רעיונות
-  </button>
+        </div>
+    </form>
 </div>

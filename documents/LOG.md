@@ -1,5 +1,12 @@
 # Documentation Change Log
 
+## 2026-07-22 Ideas Page — Chat-Style Composer Layout
+
+- **Architectural decision:** lifted the shared composer shell (bottom-docked `.composer-area`, focus-glow `.composer-field`, circular send/stop `.composer-submit`) into a new global partial `frontend/src/app/assets/styles/_composer.css`, and refactored both chat and ideas to use it. This honors the project's CSS rule that reusable patterns belong in global files, not per-component copies, and prevents drift if a third "composer" UI is built later.
+- **Architectural decision:** stop-while-loading on the ideas page is implemented entirely on the existing `controller.abort()` Observable teardown path inside `IdeasService.generateStream`. No new HTTP plumbing, no new API; the store simply unsubscribes the SSE subscription. The store filters `AbortError` from the error path so clean stops do not surface as a page error, matching the chat page's behavior.
+- **Architectural decision:** ideas-form structure changed from a top-down `glass-effect card` (domain field, count slider, model select, submit stacked vertically) to a single bottom-docked composer-field with a top-aligned domain input and a meta row that splits the count slider (left) from the model select + circular submit (right). The model `<p-select>` template is unchanged because the group/item content is already component-local convention.
+- **Files touched:** `frontend/src/app/assets/styles/_composer.css` (new), `frontend/src/styles.css`, `frontend/src/app/features/chat/chat/chat.html`, `frontend/src/app/features/chat/chat/chat.css`, `frontend/src/app/features/ideas/ideas-page/ideas-page.html`, `frontend/src/app/features/ideas/ideas-page/ideas-page.css`, `frontend/src/app/features/ideas/ideas-form/ideas-form.html`, `frontend/src/app/features/ideas/ideas-form/ideas-form.css`, `frontend/src/app/features/ideas/ideas-form/ideas-form.ts`, `frontend/src/app/core/store/ideas.store.ts`, `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.
+
 ## 2026-07-21 Business Idea Generator — Closed (Verification Session)
 
 - **Architectural decision:** the Ideas module was already fully implemented before this session. This was a verification + documentation close-out session only — no code changes.

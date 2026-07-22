@@ -65,12 +65,12 @@
         </div>
     }
 
-    <div class="chat-input-area">
+    <div class="composer-area">
         @if (actionError()) {
             <div class="chat-action-error" role="alert">{{ actionError() }}</div>
         }
         <form [formGroup]="chatForm" (ngSubmit)="sendMessage()">
-            <div class="chat-prompt-field">
+            <div class="composer-field">
                 @if (selectedImagePreview(); as preview) {
                     <div class="chat-image-preview">
                         <img [src]="preview" alt="תצוגה מקדימה של תמונה מצורפת" />
@@ -143,23 +143,23 @@
                                                 "
                                             ></span>
                                         </button>
-                                    </div>
-                                    <div class="select-option-meta">
-                                        <span
-                                            class="perf-badge"
-                                            [class.perf-good]="model.performancePercentage >= 80"
-                                            [class.perf-warn]="model.performancePercentage >= 50 && model.performancePercentage < 80"
-                                            [class.perf-bad]="model.performancePercentage < 50"
-                                            >{{ model.performancePercentage }}%
-                                        </span>
-                                        <span class="latency-pill">
-                                            <span class="ph ph-timer"></span>
-                                            {{
-                                                model.latencyAverageMs > 1000
-                                                    ? (model.latencyAverageMs / 1000 | number: '1.1-1') + 's'
-                                                    : model.latencyAverageMs + 'ms'
-                                            }}
-                                        </span>
+                                        <div class="select-option-meta">
+                                            <span
+                                                class="perf-badge"
+                                                [class.perf-good]="model.performancePercentage >= 80"
+                                                [class.perf-warn]="model.performancePercentage >= 50 && model.performancePercentage < 80"
+                                                [class.perf-bad]="model.performancePercentage < 50"
+                                                >{{ model.performancePercentage }}%
+                                            </span>
+                                            <span class="latency-pill">
+                                                <span class="ph ph-timer"></span>
+                                                {{
+                                                    model.latencyAverageMs > 1000
+                                                        ? (model.latencyAverageMs / 1000 | number: '1.1-1') + 's'
+                                                        : model.latencyAverageMs + 'ms'
+                                                }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </ng-template>
@@ -167,7 +167,7 @@
 
                         <button
                             [type]="loading() ? 'button' : 'submit'"
-                            class="chat-send-btn"
+                            class="composer-submit"
                             [class.stop]="loading()"
                             [disabled]="!loading() && (!canSend() || historyLoading())"
                             [attr.aria-label]="loading() ? 'Stop response' : 'Send message'"

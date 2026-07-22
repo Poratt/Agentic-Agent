@@ -1,50 +1,47 @@
-.ideas-form-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
+.composer-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-6);
+    flex-wrap: wrap;
 }
 
-.ideas-count-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-6);
-  margin-bottom: var(--space-4);
+.composer-count {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    flex: 1 1 220px;
+    min-width: 0;
 }
 
-.ideas-count-row label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-  white-space: nowrap;
+.composer-count label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    white-space: nowrap;
 }
 
-.ideas-count-row input[type='range'] {
-  flex: 1;
-  width: auto;
+.composer-count input[type='number'] {
+    width: 64px;
+    min-width: 64px;
+    padding: var(--space-2) var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+
+    &:focus {
+        border-color: var(--color-primary-glow);
+        box-shadow: 0 0 0 2px var(--color-primary-glow);
+        outline: none;
+    }
 }
 
-.ideas-count-value {
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  min-width: 20px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-
-.ideas-model-row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.ideas-model-row label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-}
-
-.ideas-submit {
-  width: 100%;
-  justify-content: center;
+.composer-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex-shrink: 0;
 }
