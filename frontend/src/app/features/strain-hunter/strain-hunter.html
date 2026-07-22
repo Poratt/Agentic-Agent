@@ -1,4 +1,4 @@
-<svg width="0" height="0" style="position: absolute">
+<svg width="0" height="0" class="gradient-defs-svg">
     <defs>
         <linearGradient id="ringGradientSuccess" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stop-color="var(--color-success)" />
@@ -285,7 +285,7 @@
                                                 }
 
                                                 @if (item.penalty === true && hasDisplayValue(item.penaltyIngredient)) {
-                                                    <span class="strain-penalty-badge">
+                                                    <span class="badge badge-danger badge-compact">
                                                         <span class="ph ph-prohibit"></span>
                                                         <span>{{ formatValue(item.penaltyIngredient) }}</span>
                                                     </span>
@@ -555,9 +555,9 @@
     (onHide)="closeImageDialog()"
     class="image-dialog"
 >
-    <div class="image-dialog-content" style="text-align: center">
+    <div class="image-dialog-content">
         @if (selectedImageUrl()) {
-            <img [src]="selectedImageUrl()" alt="Strain" style="max-width: 100%; border-radius: var(--radius-md)" />
+            <img [src]="selectedImageUrl()" alt="Strain" class="full-image" />
         }
     </div>
 </p-dialog>

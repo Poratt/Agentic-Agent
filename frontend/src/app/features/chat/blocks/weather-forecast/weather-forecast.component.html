@@ -9,7 +9,7 @@
     @if (data().forecast?.length) {
         <div class="forecast-list">
             @for (day of data().forecast; track $index) {
-                <div class="forecast-card" [style.animation-delay]="($index * 80) + 'ms'">
+                <div class="forecast-tile" [style.animation-delay]="($index * 80) + 'ms'">
                     <span class="day-name">{{ day.dayName }}</span>
                     <span class="weather-emoji">{{ day.weatherEmoji }}</span>
                     <div class="temp-range">

@@ -9,8 +9,16 @@ export interface RawIdea {
   targetMarket: string;
 }
 
+export interface ValidationBreakdown {
+  competition: number;  // 0-3
+  signalFit: number;    // 0-3
+  feasibility: number;  // 0-2
+  marketSize: number;   // 0-2
+}
+
 export interface ValidationResult {
-  validationScore: number;
+  validationScore?: number;
+  validationBreakdown?: ValidationBreakdown;
   validationReason: string;
   risks: string[];
   competitors: string[];
@@ -23,6 +31,7 @@ export interface BusinessIdea {
   description: string;
   targetMarket: string;
   validationScore: number; // 1–10
+  validationBreakdown?: ValidationBreakdown;
   validationReason: string; // short Hebrew explanation
   risks: string[];
   competitors: string[]; // top 3–5 competitors found

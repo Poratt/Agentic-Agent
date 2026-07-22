@@ -1,4 +1,4 @@
-import { Component, input, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BusinessIdea } from '../../../core/models/idea.interface';
 
@@ -12,7 +12,8 @@ import { BusinessIdea } from '../../../core/models/idea.interface';
 })
 export class IdeaCard {
   idea = input.required<BusinessIdea>();
-  expanded = signal(false);
+  expanded = input(false);
+  toggled = output<void>();
 
   scoreVariant(score: number): 'success' | 'warning' | 'danger' {
     if (score >= 7) return 'success';
@@ -21,6 +22,6 @@ export class IdeaCard {
   }
 
   toggle(): void {
-    this.expanded.update((v) => !v);
+    this.toggled.emit();
   }
 }

@@ -2,6 +2,8 @@
     display: block;
 }
 
+/* Card-like container for weather summary — intentionally no ::after accent
+   or box-shadow (glass-effect handles the surface). Scoped via Angular encapsulation. */
 .summary-card {
     padding: var(--space-8);
     border-radius: var(--radius-lg);
@@ -145,7 +147,7 @@
     width: 100%;
 }
 
-.detail-chip {
+.detail-tile {
     display: flex;
     flex-direction: column;
     align-items: center;

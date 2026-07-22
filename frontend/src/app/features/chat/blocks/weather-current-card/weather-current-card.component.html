@@ -29,43 +29,43 @@
 
     <!-- Detail grid -->
     <div class="weather-details stagger stagger-up" *ngIf="hasAnyDetail()">
-        <div class="detail-chip" *ngIf="data().humidity !== undefined && data().humidity !== null">
+        <div class="detail-tile" *ngIf="data().humidity !== undefined && data().humidity !== null">
             <span class="ph ph-drop"></span>
             <span class="detail-label">לחות</span>
             <span class="detail-value">{{ data().humidity }}%</span>
         </div>
 
-        <div class="detail-chip" *ngIf="data().windSpeedKmph !== undefined && data().windSpeedKmph !== null">
+        <div class="detail-tile" *ngIf="data().windSpeedKmph !== undefined && data().windSpeedKmph !== null">
             <span class="ph ph-wind"></span>
             <span class="detail-label">רוח</span>
             <span class="detail-value">{{ data().windSpeedKmph }} קמ״ש <span *ngIf="data().windDirection">{{ data().windDirection }}</span></span>
         </div>
 
-        <div class="detail-chip" *ngIf="data().uvIndex !== undefined && data().uvIndex !== null">
+        <div class="detail-tile" *ngIf="data().uvIndex !== undefined && data().uvIndex !== null">
             <span class="ph ph-sun"></span>
             <span class="detail-label">מדד UV</span>
             <span class="detail-value">{{ data().uvIndex }}</span>
         </div>
 
-        <div class="detail-chip" *ngIf="data().cloudCover !== undefined && data().cloudCover !== null">
+        <div class="detail-tile" *ngIf="data().cloudCover !== undefined && data().cloudCover !== null">
             <span class="ph ph-cloud"></span>
             <span class="detail-label">עננות</span>
             <span class="detail-value">{{ data().cloudCover }}%</span>
         </div>
 
-        <div class="detail-chip" *ngIf="data().precipitationMm !== undefined && data().precipitationMm !== null">
+        <div class="detail-tile" *ngIf="data().precipitationMm !== undefined && data().precipitationMm !== null">
             <span class="ph ph-cloud-rain"></span>
             <span class="detail-label">משקעים</span>
             <span class="detail-value">{{ data().precipitationMm }} מ״מ</span>
         </div>
 
-        <div class="detail-chip" *ngIf="data().pressure !== undefined && data().pressure !== null">
+        <div class="detail-tile" *ngIf="data().pressure !== undefined && data().pressure !== null">
             <span class="ph ph-gauge"></span>
             <span class="detail-label">לחץ אוויר</span>
             <span class="detail-value">{{ data().pressure }} hPa</span>
         </div>
 
-        <div class="detail-chip" *ngIf="data().visibility !== undefined && data().visibility !== null">
+        <div class="detail-tile" *ngIf="data().visibility !== undefined && data().visibility !== null">
             <span class="ph ph-eye"></span>
             <span class="detail-label">ראות</span>
             <span class="detail-value">{{ data().visibility }} ק״מ</span>

@@ -61,7 +61,7 @@
     flex: 1;
 }
 
-.summary-card {
+.summary-row {
     display: flex;
     align-items: center;
     gap: var(--space-3);

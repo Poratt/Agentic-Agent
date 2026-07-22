@@ -80,7 +80,7 @@
                             </td>
                             <td class="row-label clickable" (click)="toggleProvider(provider.id)">{{ provider.label }}</td>
                             <td class="row-meta row-meta--mono">{{ provider.baseUrl }}</td>
-                            <td class="col-count count-badge">{{ provider.modelsCount }}</td>
+                            <td class="col-count count-value">{{ provider.modelsCount }}</td>
                             <td class="col-actions">
                                 <div class="row-actions">
                                     <button
@@ -120,11 +120,11 @@
                                             </button>
                                         </div>
                                     } @else {
-                                        <div class="panel-header">
-                                            <span class="panel-title">Models</span>
+                                        <div class="panel-header compact">
+                                            <span class="panel-title muted">Models</span>
                                             <button
                                                 type="button"
-                                                class="transparent-btn sm"
+                                                class="primary-btn filled sm"
                                                 (click)="openAddModelDialog(provider.id)"
                                                 aria-label="Add model"
                                                 appTooltip
@@ -180,7 +180,7 @@
                                                         <div class="row-title">
                                                             <span class="row-label">{{ model.label }}</span>
                                                             <div class="row-subtitle-inline">
-                                                                <span class="row-subtitle">{{ model.key }}</span>
+                                                                <span class="row-subtitle row-subtitle--flex">{{ model.key }}</span>
                                                                 <button
                                                                     type="button"
                                                                     class="icon-only transparent-btn xs"
@@ -196,7 +196,7 @@
                                                     </td>
                                                     <td class="col-status">
                                                         <span
-                                                            class="status-indicator"
+                                                            class="status-dot"
                                                             [class.status-active]="model.active"
                                                             [class.status-inactive]="!model.active"
                                                         >

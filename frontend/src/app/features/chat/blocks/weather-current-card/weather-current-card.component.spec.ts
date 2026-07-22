@@ -60,7 +60,7 @@ describe('WeatherCurrentCardComponent', () => {
 
     it('should render detail chips', () => {
         const el = fixture.nativeElement as HTMLElement;
-        const chips = el.querySelectorAll('.detail-chip');
+        const chips = el.querySelectorAll('.detail-tile');
         expect(chips.length).toBe(7);
     });
 
@@ -73,7 +73,7 @@ describe('WeatherCurrentCardComponent', () => {
         fixture.componentRef.setInput('data', { tempC: 20 });
         fixture.detectChanges();
         const el = fixture.nativeElement as HTMLElement;
-        const chips = el.querySelectorAll('.detail-chip');
+        const chips = el.querySelectorAll('.detail-tile');
         expect(chips.length).toBe(0);
         expect(el.querySelector('.weather-location')).toBeNull();
     });

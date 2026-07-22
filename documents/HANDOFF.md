@@ -1,5 +1,36 @@
 # Documentation Handoff
 
+## 2026-07-22 Session — Main Sidebar Chat History Dropdown Fix
+
+**Objective:** fix 3 issues with the chat history dropdown in the main sidebar — missing blur/glass-effect, feather button not navigating, and click event bubbling to the parent chat button.
+
+- **Root cause:** `<app-dropdown>` was nested inside `<button routerLink="/chat">` (invalid HTML). Buttons create an opaque rendering context that breaks `backdrop-filter`, and click events bubble to the parent `routerLink`.
+- **Fix:** Moved `<app-dropdown>` outside the chat `<button>` into a `.nav-item-chat` wrapper div. The chat button and feather button are now siblings, not nested.
+- **Layout fix:** Added `.nav-item-chat` CSS inside `.nav-list` with `::ng-deep` to override the dropdown component's `width: 100%` / `display: grid` on `.dropdown-wrapper`, preventing layout breakage.
+- **Event fix:** Added `$event.stopPropagation()` to the feather button `(click)` handler to prevent bubbling to the parent `routerLink="/chat"`.
+- **Tooltip:** Added `appTooltip text="היסטוריית שיחות"` to the feather button, imported `TooltipDirective`.
+- **Files touched:** `main-sidebar.html` (restructured chat button + dropdown), `main-sidebar.ts` (added `TooltipDirective` import), `main-sidebar.css` (added `.nav-item-chat` layout rules with `::ng-deep` dropdown override).
+- **Verification:** `npx ng build` passes. No new warnings beyond pre-existing ones.
+- **Decisions made:** Kept `.nav-sub-list` wrapper inside dropdown content for CSS selector matching; used `::ng-deep` to pierce Angular emulated encapsulation for dropdown width override. The `.nav-item-chat` pattern (hover-to-reveal history button with dropdown) is reusable — when adding history to Ideas and Media Studio, extract into a shared component or global CSS pattern.
+- **Next exact step:** visual regression check on sidebar across all pages, then git diff review and commit.
+- **Open questions for the user:** none.
+
+## 2026-07-22 Session — CSS Overriding Remediation
+
+**Objective:** remediate 27 class-name violations found in the CSS overriding audit, applying the principle: structural overlap → merge with modifier; no overlap or different element → independent name (rename if misleading).
+
+- **Rule A (exact match) — llm-providers-management:** `.row-subtitle` → new `.row-subtitle--flex` modifier in `_utilities.css`; `.status-indicator` → renamed `.status-dot`; `.panel-header.compact` and `.panel-title.muted` deleted (exact global duplicates). `.col-expand` kept (complementary, not conflicting).
+- **Rule A (duplicates) — `.fade-in` ×5 + `.form-field` + `.metric-card`:** All deleted from component files; resolved from global `_animations.css`, `_forms.css`, `_layout.css`.
+- **Badges:** `.flag-badge` kept (false positive — compound element). `.count-badge` → renamed `.count-value`. `.strain-penalty-badge` → merged into `badge badge-danger badge-compact` (new `badge-compact` modifier in `_utilities.css`).
+- **Chips:** `.detail-chip` ×2 → renamed `.detail-tile`. `.db-chip` → renamed `.db-stat-pill`. `.terpene-chip`/`.genetics-chip` → merged into `.chip` with 4 state modifiers (`chip-neutral`, `chip-like`, `chip-love`, `chip-avoid`) in `_filters.css`. Local CSS keeps scoped `border`/`radius-xl` override + `.chip-name`/`.chip-state` child styles. `chipClass()` updated to return `chip chip-${state}`.
+- **Cards:** `.summary-card` (db-storage) → renamed `.summary-row`. `.forecast-card` → renamed `.forecast-tile`. `.summary-card` (weather-summary) kept with explanatory comment (intentionally no accent, glass-effect handles surface).
+- **Bonus fixes:** "Add Model" button changed from `transparent-btn sm` to `primary-btn filled sm`; `.panel-header.compact` `justify-content: flex-start` override removed.
+- **Files touched:** 21 files — 2 global CSS (`_utilities.css`, `_filters.css`), 10 component CSS, 7 HTML, 1 TS, 3 spec files.
+- **Verification:** `npx ng build` passes. No stale references. Summary saved to `documents/done/css-overriding-search-remediation.md`.
+- **Decisions made:** principle documented ("structural overlap → merge, else → independent name"); `.card--flat` modifier rejected (redundant with `.glass-effect`); `.status-dot` chosen over `.status-indicator--compact` (different component, not a variant).
+- **Open questions for the user:** visual regression check needed across all 8 changed pages before commit.
+- **Next exact step:** visual regression on llm-providers, strain-hunter, database-storage-monitor, weather-current/summary/forecast, database-monitor-settings, matching-preferences-drawer. Then git diff review and commit.
+
 ## 2026-07-22 Session — Ideas Page Chat-Style Layout
 
 **Objective:** make the ideas page (Business Idea Generator) look and feel like the chat page — full-height flex column with the form docked at the bottom and results scrolling above it — and lift the shared composer shell to a global partial so chat and ideas share one CSS source.

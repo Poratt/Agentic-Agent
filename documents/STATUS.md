@@ -2,6 +2,30 @@
 
 Last updated: 2026-07-22
 
+## 2026-07-22 Session — Main Sidebar Chat History Dropdown Fix
+
+- Fixed 3 issues with the chat history dropdown in the main sidebar: missing blur/glass-effect, feather button not navigating, and click event bubbling to the parent chat button.
+- Root cause: `<app-dropdown>` was nested inside `<button routerLink="/chat">` — invalid HTML that breaks `backdrop-filter` and causes event bubbling.
+- Fix: moved `<app-dropdown>` outside the chat `<button>` into a `.nav-item-chat` wrapper div. Chat button and feather button are now siblings.
+- Added `.nav-item-chat` CSS with `::ng-deep` to override the dropdown's `width: 100%` / `display: grid` and prevent layout breakage.
+- Added `$event.stopPropagation()` to the feather button click to prevent bubbling to `routerLink="/chat"`.
+- Added `appTooltip` to the feather button with `TooltipDirective` import.
+- Files: `main-sidebar.html`, `main-sidebar.ts`, `main-sidebar.css`.
+- Verification: `npx ng build` passes.
+
+## 2026-07-22 Session — CSS Overriding Remediation
+
+- Remediated all 27 violations from the CSS overriding audit across Rule A (exact match), Rule B (suspicious suffix), and Rule C (duplicate) categories.
+- Applied principle: structural overlap (display/align/gap) + visual differences → merge with modifier; no structural overlap → independent name.
+- Created 6 new global modifiers: `.row-subtitle--flex`, `.badge-compact`, `.chip-neutral`, `.chip-like`, `.chip-love`, `.chip-avoid`.
+- Renamed 8 misleading class names: `.status-indicator` → `.status-dot`, `.count-badge` → `.count-value`, `.detail-chip` → `.detail-tile` (×2), `.db-chip` → `.db-stat-pill`, `.summary-card` (db) → `.summary-row`, `.forecast-card` → `.forecast-tile`.
+- Merged 2 components into globals: `.strain-penalty-badge` → `.badge.badge-danger.badge-compact`, `.terpene-chip`/`.genetics-chip` → `.chip.chip-${state}`.
+- Deleted 10 duplicate rules: `.fade-in` ×5, `.form-field`, `.metric-card`, `.panel-header.compact`, `.panel-title.muted`, `.row-subtitle` (local).
+- Kept 3 as documented false positives: `.flag-badge`, `.col-expand`, `.summary-card` (weather-summary).
+- Bonus fixes: "Add Model" button styling, `.panel-header.compact` justify-content.
+- Verification: `npx ng build` passes. Summary at `documents/done/css-overriding-search-remediation.md`.
+- Remaining: visual regression check across 8 pages, then git commit.
+
 ## 2026-07-22 Session — Ideas Page Chat-Style Layout
 
 - Restructured `/ideas` to match the chat page layout: full-height flex column with a scrollable middle region (header + results) and a bottom-docked composer.

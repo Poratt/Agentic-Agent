@@ -190,7 +190,7 @@
         gap: var(--space-4);
         margin-top: var(--space-2);
 
-        .db-chip {
+        .db-stat-pill {
             display: inline-flex;
             align-items: center;
             gap: var(--space-4);

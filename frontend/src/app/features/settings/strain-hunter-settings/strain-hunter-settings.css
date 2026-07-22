@@ -36,29 +36,29 @@
     }
 
     /* ── Panel header ─────────────────────────────────────────────────────── */
-    .panel-header {
+    .panel-header.section {
         gap: var(--space-4);
         padding-bottom: var(--space-4);
         margin-bottom: var(--space-6);
         border-bottom-color: color-mix(in srgb, var(--color-border) 40%, transparent);
         flex-wrap: wrap;
+    }
 
-        .panel-title {
-            font-weight: var(--font-weight-bold);
-            color: var(--color-primary);
-            min-width: 0;
-            word-break: break-word;
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-4);
-        }
+    .panel-title.primary {
+        font-weight: var(--font-weight-bold);
+        color: var(--color-primary);
+        min-width: 0;
+        word-break: break-word;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-4);
+    }
 
-        .panel-actions {
-            display: flex;
-            align-items: center;
-            gap: var(--space-4);
-            flex-shrink: 0;
-        }
+    .panel-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        flex-shrink: 0;
     }
 
     /* ── Panel body ───────────────────────────────────────────────────────── */

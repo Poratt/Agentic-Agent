@@ -76,10 +76,10 @@
                             <div class="db-bar-fill" [style.width]="getBarWidth(table.percentOfDatabase)"></div>
                         </div>
                         <div class="db-table-chips">
-                            <span class="db-chip tag-muted"><i class="ph ph-rows"></i> {{ table.rowCount | number }} שורות</span>
-                            <span class="db-chip tag-muted"><i class="ph ph-hard-drives"></i> {{ table.dataSizeFormatted }}</span>
-                            <span class="db-chip tag-muted"><i class="ph ph-sort-ascending"></i> {{ table.indexSizeFormatted }}</span>
-                            <span class="db-chip db-pct">{{ table.percentOfDatabase }}%</span>
+                            <span class="db-stat-pill tag-muted"><i class="ph ph-rows"></i> {{ table.rowCount | number }} שורות</span>
+                            <span class="db-stat-pill tag-muted"><i class="ph ph-hard-drives"></i> {{ table.dataSizeFormatted }}</span>
+                            <span class="db-stat-pill tag-muted"><i class="ph ph-sort-ascending"></i> {{ table.indexSizeFormatted }}</span>
+                            <span class="db-stat-pill db-pct">{{ table.percentOfDatabase }}%</span>
                         </div>
                     </div>
                 }

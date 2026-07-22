@@ -1,79 +1,83 @@
-<div class="glass-effect card idea-card">
-  <div class="idea-card-head">
-    <h3 class="idea-card-title">{{ idea().title }}</h3>
-    <span
-      class="score-badge"
-      [class.score-success]="scoreVariant(idea().validationScore) === 'success'"
-      [class.score-warning]="scoreVariant(idea().validationScore) === 'warning'"
-      [class.score-danger]="scoreVariant(idea().validationScore) === 'danger'"
-    >
-      <span dir="ltr">{{ idea().validationScore }}/10</span>
-    </span>
-  </div>
+<div class="idea-card-wrapper">
+    <div class="glass-effect card idea-card">
+        <div class="idea-card-head">
+            <h3 class="idea-card-title">{{ idea().title }}</h3>
+            <span
+                class="score-badge"
+                [class.score-success]="scoreVariant(idea().validationScore) === 'success'"
+                [class.score-warning]="scoreVariant(idea().validationScore) === 'warning'"
+                [class.score-danger]="scoreVariant(idea().validationScore) === 'danger'"
+            >
+                <span dir="ltr">{{ idea().validationScore }}/10</span>
+            </span>
+        </div>
 
-  <p class="idea-card-desc">{{ idea().description }}</p>
+        <p class="idea-card-desc">{{ idea().description }}</p>
 
-  @if (idea().targetMarket) {
-    <div class="idea-card-market">
-      <span class="ph ph-users"></span>
-      <span>{{ idea().targetMarket }}</span>
+        @if (idea().targetMarket) {
+            <div class="idea-card-market">
+                <span class="ph ph-users"></span>
+                <span>{{ idea().targetMarket }}</span>
+            </div>
+        }
+
+        <div class="idea-card-tags">
+            @if (idea().groundedInSignals) {
+                <span class="tag tag-primary"><span class="ph ph-check"></span> מבוסס על סיגנלים</span>
+            } @else {
+                <span class="tag tag-muted"><span class="ph ph-warning"></span> ללא עיגון מלא</span>
+            }
+            @if (idea().competitors.length) {
+                <span class="tag tag-muted">{{ idea().competitors.length }} מתחרים נמצאו</span>
+            }
+        </div>
+
+        <div class="idea-card-actions">
+            <button class="primary-btn xs" type="button" (click)="toggle()">
+                <span class="ph" [class.ph-caret-down]="expanded()" [class.ph-caret-left]="!expanded()"></span>
+                {{ expanded() ? 'הסתר פרטים' : 'פרטים נוספים' }}
+            </button>
+        </div>
+
+        @if (expanded()) {
+            <div class="idea-card-details" [class.expanded]="expanded()">
+                @if (idea().validationReason) {
+                    <div class="idea-card-section">
+                        <h4 class="idea-card-section-title">הסבר הציון</h4>
+                        <p class="idea-card-section-text">{{ idea().validationReason }}</p>
+                    </div>
+                }
+                @if (idea().risks.length) {
+                    <div class="idea-card-section">
+                        <h4 class="idea-card-section-title">סיכונים</h4>
+                        <ul class="idea-card-list">
+                            @for (r of idea().risks; track r) {
+                                <li>{{ r }}</li>
+                            }
+                        </ul>
+                    </div>
+                }
+                @if (idea().competitors.length) {
+                    <div class="idea-card-section">
+                        <h4 class="idea-card-section-title">מתחרים</h4>
+                        <ul class="idea-card-list">
+                            @for (c of idea().competitors; track c) {
+                                <li>{{ c }}</li>
+                            }
+                        </ul>
+                    </div>
+                }
+                @if (idea().nextSteps.length) {
+                    <div class="idea-card-section">
+                        <h4 class="idea-card-section-title">צעדי המשך</h4>
+                        <ul class="idea-card-list">
+                            @for (s of idea().nextSteps; track s) {
+                                <li>{{ s }}</li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        }
     </div>
-  }
-
-  <div class="idea-card-tags">
-    @if (idea().groundedInSignals) {
-      <span class="tag tag-primary"><span class="ph ph-check"></span> מבוסס על סיגנלים</span>
-    } @else {
-      <span class="tag tag-muted"><span class="ph ph-warning"></span> ללא עיגון מלא</span>
-    }
-    @if (idea().competitors.length) {
-      <span class="tag tag-muted">{{ idea().competitors.length }} מתחרים נמצאו</span>
-    }
-  </div>
-
-  <button class="idea-card-toggle transparent-btn" type="button" (click)="toggle()">
-    <span class="ph" [class.ph-caret-down]="expanded()" [class.ph-caret-left]="!expanded()"></span>
-    {{ expanded() ? 'הסתר פרטים' : 'פרטים נוספים' }}
-  </button>
-
-  @if (expanded()) {
-    <div class="idea-card-details">
-      @if (idea().validationReason) {
-        <div class="idea-card-section">
-          <h4 class="idea-card-section-title">הסבר הציון</h4>
-          <p class="idea-card-section-text">{{ idea().validationReason }}</p>
-        </div>
-      }
-      @if (idea().risks.length) {
-        <div class="idea-card-section">
-          <h4 class="idea-card-section-title">סיכונים</h4>
-          <ul class="idea-card-list">
-            @for (r of idea().risks; track r) {
-              <li>{{ r }}</li>
-            }
-          </ul>
-        </div>
-      }
-      @if (idea().competitors.length) {
-        <div class="idea-card-section">
-          <h4 class="idea-card-section-title">מתחרים</h4>
-          <ul class="idea-card-list">
-            @for (c of idea().competitors; track c) {
-              <li>{{ c }}</li>
-            }
-          </ul>
-        </div>
-      }
-      @if (idea().nextSteps.length) {
-        <div class="idea-card-section">
-          <h4 class="idea-card-section-title">צעדי המשך</h4>
-          <ul class="idea-card-list">
-            @for (s of idea().nextSteps; track s) {
-              <li>{{ s }}</li>
-            }
-          </ul>
-        </div>
-      }
-    </div>
-  }
 </div>

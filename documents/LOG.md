@@ -1,5 +1,11 @@
 # Documentation Change Log
 
+## 2026-07-22 Main Sidebar — Chat History Dropdown Fix
+
+- **Architectural decision:** the `.nav-item-chat` pattern (hover-to-reveal history button with dropdown, absolute positioning, RTL-aware `inset-inline-end`) is reusable. When adding history to Ideas (`/ideas`) and Media Studio (`/media`), extract this into a shared component or a shared CSS pattern in `_utilities.css` rather than duplicating per-page.
+- **Architectural decision:** `<app-dropdown>` must sit outside `<button>` elements — `backdrop-filter` (glass-effect) does not work inside buttons due to opaque rendering context, and click events bubble to the parent `routerLink`.
+- **Files touched:** `main-sidebar.html`, `main-sidebar.ts` (added `TooltipDirective`), `main-sidebar.css` (`.nav-item-chat` with absolute-positioned dropdown).
+
 ## 2026-07-22 Ideas Page — Chat-Style Composer Layout
 
 - **Architectural decision:** lifted the shared composer shell (bottom-docked `.composer-area`, focus-glow `.composer-field`, circular send/stop `.composer-submit`) into a new global partial `frontend/src/app/assets/styles/_composer.css`, and refactored both chat and ideas to use it. This honors the project's CSS rule that reusable patterns belong in global files, not per-component copies, and prevents drift if a third "composer" UI is built later.

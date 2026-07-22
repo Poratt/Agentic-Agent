@@ -38,7 +38,7 @@ describe('WeatherForecastComponent', () => {
 
     it('should render all forecast cards', () => {
         const el = fixture.nativeElement as HTMLElement;
-        const cards = el.querySelectorAll('.forecast-card');
+        const cards = el.querySelectorAll('.forecast-tile');
         expect(cards.length).toBe(5);
     });
 

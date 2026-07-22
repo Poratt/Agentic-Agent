@@ -11,7 +11,7 @@ This audit covers every CSS file under `frontend/src/app/`:
 
 It is graded against the `css-conventions` skill (`~/.claude/skills/css-conventions/SKILL.md`) plus the project-level `css-rules.md` and `angular-rules.md` (the project rules supersede on conflict, and the prior audit is kept as historical context).
 
-The previous audit (`documents/audit/css-conventions-component-audit.md`) is superseded by this report. The diff between the two is summarized in the **Status vs Previous Audit** section.
+The previous audit (`documents/audit/css-conventions-component-audit.md`) is superseded by this report. The `css-duplicate-styles-report.md` (2026-07-09) has been merged into this report (findings #14–#20). The diff between the two is summarized in the **Status vs Previous Audit** section.
 
 ## What the rules actually require
 
@@ -258,6 +258,91 @@ Beyond finding #7 above: the file uses `:host` with no component, which is a no-
 9. **Refactor `animation-delay` enumeration to `--i` custom property** (finding #11) — template change, not a CSS violation.
 10. **Convert `transition: var(--transition-standard)` to explicit property list** (finding #12) — two-file change.
 11. **Remove `::ng-deep` from `strain-hunter.css`** (finding #9) — set `styleClass` on `<p-dialog>` and target via the component class.
+
+## Merged from `css-duplicate-styles-report.md` (2026-07-09)
+
+The following findings were unique to the duplicate-styles report and not covered by the original 13 findings above.
+
+### 14. Duplicated selectors across files — Medium
+
+12 selectors are defined in multiple files with conflicting or redundant values:
+
+| Selector | Files | Issue |
+|---|---|---|
+| `.row-label` | `_utilities.css`, `database-monitor-settings.css`, `llm-providers-management.css` | Conflicting font-weight |
+| `.row-meta` | `_utilities.css`, `database-monitor-settings.css`, `llm-providers-management.css` | Conflicting font-size, font-family |
+| `.row-title` + `.row-subtitle` | `strain-hunter-settings.css`, `llm-providers-management.css` | Duplicate definitions |
+| `.error-text` | `_layout.css`, `_forms.css` | Near-identical, extra margin in one |
+| `.panel-header` + `.panel-title` | `strain-hunter-settings.css`, `llm-providers-management.css` | Duplicate (also finding #5) |
+| `.expand-panel-row .expand-panel-cell` | `strain-hunter-settings.css`, `llm-providers-management.css` | Different opacity values (2% vs 4%) |
+| `.status-indicator` | `_utilities.css`, `llm-providers-management.css` | Different implementations (child element vs `::before`) |
+| `.delete-confirmation` + `.warning-text` + `.action-btns` | `main-sidebar.css`, `chat-history.css` | Duplicate |
+| `.user-profile` + `.user-avatar` + `.user-info` + `.user-name` | `header.css`, `main-sidebar.css` | Duplicate |
+| `.custom-loader` | `_utilities.css` (global), `chat.css` | Full copy — global already exists |
+| `.badge` | `_utilities.css`, `strain-hunter.css` | Redefined with different shape |
+| `.tag` | `_utilities.css`, `database-monitor-settings.css` | Redefined with different layout |
+
+**Fix:** Extract shared patterns to `_utilities.css` with modifiers. Rename component-specific variants (`.provider-status`, `.db-chip`, `.family-badge`).
+
+### 15. Glass-effect pattern duplication — 9 locations — Low
+
+The `::before` glass backdrop pattern is copy-pasted in 9 places instead of reusing `.glass-effect`:
+
+1. `_utilities.css:92-100` — `.glass-effect::before` (canonical)
+2. `_layout.css:117-125` — `.card::before`
+3. `_layout.css:160-168` — `.metric-card::before`
+4. `_layout.css:253-261` — `.table-container::before`
+5. `_primeng-overrides.css:31-39` — `.p-datatable-thead::before`
+6. `tooltip.css:33-41` — `.tooltip-card::before`
+7. `score-tooltip.css:33-41` — `.score-card::before`
+8. `_primeng-overrides.css:165-177` — `.p-tooltip .p-tooltip-text::before`
+9. `_utilities.css:450-458` — `.app-tooltip::before`
+
+**Fix:** `.card`, `.metric-card`, `.table-container` should use the `.glass-effect` class instead of re-implementing the `::before` pattern inline.
+
+### 16. Hardcoded colors in non-token files — Low
+
+| File | Line | Value | Suggested Token |
+|---|---|---|---|
+| `_layout.css` | 135 | `rgba(255, 255, 255, 0.12)` | `var(--color-border)` |
+| `chat-message.css` | 164 | `rgba(255, 255, 255, 0.03)` | `var(--glass-bg)` |
+| `chat-message.css` | 182 | `rgba(0, 212, 255, 0.02)` | `var(--color-primary-glow-bg)` |
+| `database-monitor-settings.css` | 6-12 | `--color-table-1` through `--color-table-7` hardcoded | Use global tokens |
+| `_buttons.css` | 173 | `rgba(0, 0, 0, 0.2)` | `var(--shadow-soft)` |
+| `_utilities.css` | 373 | `rgba(0, 0, 0, 0.25)` | Shadow token |
+
+### 17. Hardcoded `blur(8px)` — Low
+
+| File | Line | Rule |
+|---|---|---|
+| `_forms.css` | 18-19 | `input, textarea, select` |
+| `_layout.css` | 303 | `.error-badge` |
+
+**Fix:** Replace with `blur(var(--glass-blur))`.
+
+### 18. `!important` declarations — 35 total — Info
+
+- **Acceptable (PrimeNG overrides): 25** — `_primeng-overrides.css:12`, `strain-hunter.css:5`, `_utilities.css:5`, `_reset.css:3`
+- **Review needed: 10** — `_reset.css:8` (`.no-transitions`), `_reset.css:201` (scrollbar), `strain-hunter-settings.css:222` (responsive), `database-monitor-settings.css:226` (`.db-pct`)
+
+### 19. Flat selectors (missing `:host` wrapper) — Low
+
+| File | Issue |
+|---|---|
+| `database-monitor-settings.css` | All selectors flat except `:host` for variables |
+| `llm-providers-management.css` | All selectors flat, no `:host` at all |
+| `chat-history.css` | `.sessions-list` at top level (children nested correctly) |
+
+**Fix:** Wrap all component selectors inside `:host { ... }`.
+
+### 20. Duplicate keyframes — Low
+
+| File | Keyframe |
+|---|---|
+| `tooltip.css:123-131` | `tooltipFadeIn` |
+| `score-tooltip.css:172-179` | `tooltipReveal` |
+
+Both are identical (`opacity: 0 → 1`). **Fix:** Consolidate to `fadeIn` in `_animations.css`.
 
 ## Files inspected (full list)
 

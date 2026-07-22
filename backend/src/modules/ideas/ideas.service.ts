@@ -7,6 +7,7 @@ import {
   Signal,
   RawIdea,
   ValidationResult,
+  ValidationBreakdown,
   BusinessIdea,
   GenerateIdeasResponse,
   IdeasProgressEvent,
@@ -258,19 +259,22 @@ export class IdeasService {
       `competitors for ${idea.title} ${idea.targetMarket}`,
     );
 
-    const searchText =
-      searchResult.success && searchResult.result
-        ? searchResult.result.results
-            .map((r) => `${r.title}: ${r.content}`)
-            .slice(0, 10)
-            .join('\n\n')
-        : '(ללא תוצאות חיפוש)';
+    const searchResults = searchResult.success && searchResult.result
+      ? searchResult.result.results
+      : [];
+
+    const competitorCount = searchResults.length;
+
+    const searchText = searchResults
+      .map((r) => `${r.title}: ${r.content}`)
+      .slice(0, 10)
+      .join('\n\n') || '(ללא תוצאות חיפוש)';
 
     const signalsText = signals.length
       ? signals.map((s) => `- ${s.signal}`).join('\n')
       : '(ללא סיגנלים)';
 
-    const prompt = `רעיון:\nכותרת: ${idea.title}\nתיאור: ${idea.description}\nקהל יעד: ${idea.targetMarket}\n\nתוצאות חיפוש מתחרים:\n${searchText}\n\nסיגנלים:\n${signalsText}`;
+    const prompt = `רעיון:\nכותרת: ${idea.title}\nתיאור: ${idea.description}\nקהל יעד: ${idea.targetMarket}\n\nתוצאות חיפוש מתחרים (${competitorCount} תוצאות):\n${searchText}\n\nסיגנלים:\n${signalsText}`;
 
     try {
       const res = await this.llm.generateResponse({
@@ -285,11 +289,26 @@ export class IdeasService {
       if (!v) {
         throw new Error('invalid validation JSON');
       }
+
+      const breakdown: ValidationBreakdown | undefined = v.validationBreakdown
+        ? {
+            competition: this.clampBreakdownScore(v.validationBreakdown.competition, 3),
+            signalFit: this.clampBreakdownScore(v.validationBreakdown.signalFit, 3),
+            feasibility: this.clampBreakdownScore(v.validationBreakdown.feasibility, 2),
+            marketSize: this.clampBreakdownScore(v.validationBreakdown.marketSize, 2),
+          }
+        : undefined;
+
+      const computedScore = breakdown
+        ? breakdown.competition + breakdown.signalFit + breakdown.feasibility + breakdown.marketSize
+        : this.clampScore(v.validationScore);
+
       return {
         title: idea.title,
         description: idea.description,
         targetMarket: idea.targetMarket,
-        validationScore: this.clampScore(v.validationScore),
+        validationScore: computedScore,
+        validationBreakdown: breakdown,
         validationReason: v.validationReason ?? '',
         risks: v.risks ?? [],
         competitors: v.competitors ?? [],
@@ -310,6 +329,13 @@ export class IdeasService {
       return 1;
     }
     return Math.min(10, Math.max(1, Math.round(score)));
+  }
+
+  private clampBreakdownScore(score: number, max: number): number {
+    if (typeof score !== 'number' || Number.isNaN(score)) {
+      return 0;
+    }
+    return Math.min(max, Math.max(0, Math.round(score)));
   }
 
   private sortByScore(ideas: BusinessIdea[]): BusinessIdea[] {

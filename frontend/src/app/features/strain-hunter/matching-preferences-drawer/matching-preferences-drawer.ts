@@ -121,7 +121,7 @@ export class MatchingPreferencesDrawer {
 
     chipClass(category: 'terpene' | 'genetics', name: string): string {
         const state = this.engine.prefState(`${category}:${name}`);
-        return `${category}-chip chip-${state}`;
+        return `chip chip-${state}`;
     }
 
     groupIcon(category: 'terpene' | 'genetics'): string {

@@ -180,6 +180,35 @@
 		max-width: max-content;
 		text-align: right;
 
+		&[open] > .thinking-chevron {
+			transform: rotate(180deg);
+		}
+
+		.thinking-summary {
+			display: flex;
+			align-items: center;
+			gap: var(--space-2);
+			cursor: pointer;
+			list-style: none;
+			color: var(--color-text-secondary);
+			font-size: var(--font-size-xs);
+			user-select: none;
+
+			&::-webkit-details-marker {
+				display: none;
+			}
+
+			&::marker {
+				display: none;
+				content: '';
+			}
+		}
+
+		.thinking-chevron {
+			transition: transform var(--transition-fast);
+			margin-inline-start: auto;
+		}
+
 		.steps-list {
 			display: flex;
 			flex-direction: column;

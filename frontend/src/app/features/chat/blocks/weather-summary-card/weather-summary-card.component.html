@@ -47,28 +47,28 @@
             @if (hasAnyDetail()) {
                 <div class="current-details stagger stagger-up">
                     @if (data().current?.humidity !== undefined && data().current?.humidity !== null) {
-                        <div class="detail-chip">
+                        <div class="detail-tile">
                             <span class="ph ph-drop"></span>
                             <span class="detail-label">לחות</span>
                             <span class="detail-value">{{ data().current!.humidity }}%</span>
                         </div>
                     }
                     @if (data().current?.windSpeedKmph !== undefined && data().current?.windSpeedKmph !== null) {
-                        <div class="detail-chip">
+                        <div class="detail-tile">
                             <span class="ph ph-wind"></span>
                             <span class="detail-label">רוח</span>
                             <span class="detail-value">{{ data().current!.windSpeedKmph }} קמ״ש</span>
                         </div>
                     }
                     @if (data().current?.cloudCover !== undefined && data().current?.cloudCover !== null) {
-                        <div class="detail-chip">
+                        <div class="detail-tile">
                             <span class="ph ph-cloud"></span>
                             <span class="detail-label">עננות</span>
                             <span class="detail-value">{{ data().current!.cloudCover }}%</span>
                         </div>
                     }
                     @if (data().current?.pressure !== undefined && data().current?.pressure !== null) {
-                        <div class="detail-chip">
+                        <div class="detail-tile">
                             <span class="ph ph-gauge"></span>
                             <span class="detail-label">לחץ אוויר</span>
                             <span class="detail-value">{{ data().current!.pressure }} hPa</span>

@@ -2,7 +2,8 @@
 .link {
   color: var(--color-text-secondary);
   text-decoration: none;
-  transition: var(--transition-standard);
+  transition:
+    color var(--transition-fast);
   cursor: pointer;
 
   &:hover {
@@ -160,6 +161,14 @@
     background: color-mix(in srgb, var(--color-warning) 15%, transparent);
     color: var(--color-warning);
     border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
+  }
+
+  &.badge-compact {
+    padding: 2px var(--space-4);
+    border-radius: var(--radius-xs);
+    font-size: var(--font-size-xxs);
+    line-height: 1;
+    width: fit-content;
   }
 }
 
@@ -389,17 +398,58 @@
   text-overflow: ellipsis;
 }
 
+.row-subtitle--flex {
+  width: 200px;
+  flex-grow: 1;
+}
+
 /* Canonical panel header/title — used in expand panels */
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--color-border);
+
+  &.section {
+    gap: var(--space-4);
+    padding-bottom: var(--space-4);
+    margin-bottom: var(--space-6);
+    border-bottom-color: color-mix(in srgb, var(--color-border) 40%, transparent);
+    flex-wrap: wrap;
+  }
+
+  &.compact {
+    padding: var(--space-6) var(--space-8);
+  }
 }
 
 .panel-title {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
+
+  &.muted {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &.primary {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    min-width: 0;
+    word-break: break-word;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+}
+
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-shrink: 0;
 }
 
 /* Canonical delete confirmation strip — used in sidebar + chat history */

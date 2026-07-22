@@ -9,23 +9,23 @@
             </div>
         </div>
 
-        <div class="summary-cards">
+        <div class="summary-rows">
             @if (data().databaseName) {
-                <div class="summary-card">
+                <div class="summary-row">
                     <span class="ph ph-database summary-icon"></span>
                     <span class="summary-value">{{ data().databaseName }}</span>
                     <span class="summary-label">Database</span>
                 </div>
             }
             @if (data().tableCount !== undefined && data().tableCount !== null) {
-                <div class="summary-card">
+                <div class="summary-row">
                     <span class="ph ph-table summary-icon"></span>
                     <span class="summary-value">{{ data().tableCount }}</span>
                     <span class="summary-label">Tables</span>
                 </div>
             }
             @if (data().totalRows !== undefined && data().totalRows !== null) {
-                <div class="summary-card">
+                <div class="summary-row">
                     <span class="ph ph-rows summary-icon"></span>
                     <span class="summary-value">{{ data().totalRows | number }}</span>
                     <span class="summary-label">Total Rows</span>

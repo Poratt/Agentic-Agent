@@ -7,7 +7,7 @@
 }
 
 <div class="grid-3">
-  @for (idea of ideas(); track $index) {
-    <app-idea-card [idea]="idea" />
+  @for (idea of ideas(); track $index; let i = $index) {
+    <app-idea-card [idea]="idea" [expanded]="expandedIndex() === i" (toggled)="onToggle(i)" />
   }
 </div>

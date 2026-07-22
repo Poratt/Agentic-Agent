@@ -30,7 +30,7 @@
     padding-bottom: var(--space-2);
 }
 
-.forecast-card {
+.forecast-tile {
     flex: 0 0 auto;
     min-width: 100px;
     display: flex;
@@ -135,7 +135,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .forecast-card {
+    .forecast-tile {
         animation: none;
     }
 
