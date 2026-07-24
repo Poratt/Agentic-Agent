@@ -10,6 +10,7 @@
                 placeholder="תחום עסקי (למשל: כלי AI לפרילנסרים)"
                 [disabled]="store.loading()"
                 autocomplete="off"
+                (keydown.enter)="$event.preventDefault(); onGenerate()"
             />
 
             <div class="composer-meta-row">
@@ -38,7 +39,7 @@
                         placeholder="בחר מודל"
                         appendTo="body"
                         size="small"
-                        class="custom-select transparnet"
+                        class="custom-select transparent"
                     >
                         <ng-template let-group #group>
                             <span class="group-label">
@@ -49,7 +50,7 @@
                         <ng-template let-model #item>
                             <div class="select-option">
                                 <div class="select-option-main">
-                                    <span class="model-name">{{ model.label }}</span>
+                                    <span class="item-name">{{ model.label }}</span>
                                     <button
                                         type="button"
                                         class="star-btn"
@@ -60,9 +61,7 @@
                                         (click)="setDefaultModel($event, model)"
                                     >
                                         <span
-                                            [class]="
-                                                llmProviderStore.defaultModelId() === model.id ? 'ph ph-star ph-fill' : 'ph ph-star'
-                                            "
+                                            [class]="llmProviderStore.defaultModelId() === model.id ? 'ph ph-star ph-fill' : 'ph ph-star'"
                                         ></span>
                                     </button>
                                     <div class="select-option-meta">

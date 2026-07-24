@@ -1,6 +1,6 @@
 <div class="page-content chat-root-container" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
     @if (isDragging()) {
-        <div class="chat-drop-overlay" aria-hidden="true">
+        <div class="drop-overlay" aria-hidden="true">
             <span class="ph ph-cloud-arrow-up xl"></span>
             <p>שחרר את התמונה כאן</p>
         </div>
@@ -35,7 +35,7 @@
                 }
 
                 @if (messages().length === 0) {
-                    <div class="empty-chat-state">
+                    <div class="page-empty-state">
                         <span class="ph ph-chat-circle-text xl"></span>
                         <h3 class="">שלום {{ currentUserProfile()?.fullName || authStore.user()?.email }}!</h3>
                         <p>כתוב הודעה למטה כדי להתחיל להתייעץ עם סוכן ה-AI שלך.</p>
@@ -72,11 +72,11 @@
         <form [formGroup]="chatForm" (ngSubmit)="sendMessage()">
             <div class="composer-field">
                 @if (selectedImagePreview(); as preview) {
-                    <div class="chat-image-preview">
+                    <div class="image-preview">
                         <img [src]="preview" alt="תצוגה מקדימה של תמונה מצורפת" />
                         <button
                             type="button"
-                            class="transparent-btn icon-only xs chat-image-preview-close"
+                            class="transparent-btn icon-only xs image-preview-close"
                             aria-label="Remove image"
                             (click)="clearSelectedImage()"
                         >
@@ -95,10 +95,10 @@
                     (paste)="onPaste($event)"
                 ></textarea>
                 <div class="chat-prompt-actions">
-                    <input #fileInput type="file" accept="image/*" class="chat-file-input" (change)="onFileSelected($event)" />
+                    <input #fileInput type="file" accept="image/*" class="file-input-hidden" (change)="onFileSelected($event)" />
                     <button
                         type="button"
-                        class="transparent-btn icon-only sm chat-upload-btn"
+                        class="transparent-btn icon-only sm file-attach-btn"
                         aria-label="Attach image"
                         (click)="openFilePicker()"
                     >
@@ -116,7 +116,7 @@
                             placeholder="בחר מודל"
                             appendTo="body"
                             size="small"
-                            class="custom-select transparnet"
+                            class="custom-select transparent"
                         >
                             <ng-template let-group #group>
                                 <span class="group-label">
@@ -127,7 +127,7 @@
                             <ng-template let-model #item>
                                 <div class="select-option">
                                     <div class="select-option-main">
-                                        <span class="model-name">{{ model.label }}</span>
+                                        <span class="item-name">{{ model.label }}</span>
                                         <button
                                             type="button"
                                             class="star-btn"

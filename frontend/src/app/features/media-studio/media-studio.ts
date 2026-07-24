@@ -1,25 +1,30 @@
-import { Component, OnInit, OnDestroy, signal, computed, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, signal, computed, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Select } from 'primeng/select';
-import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
-import { ProgressSpinner } from 'primeng/progressspinner';
+import { TooltipDirective } from '../../core/directives/tooltip.directive';
 import { LlmProviderStore } from '../../core/store/llm-provider.store';
 import { MediaService, MediaImageResult, MediaVideoTask, MediaVideoResult } from '../../core/services/media.service';
 
 @Component({
     selector: 'app-media-studio',
     standalone: true,
-    imports: [CommonModule, FormsModule, Select, Tabs, TabList, Tab, TabPanels, TabPanel, ProgressSpinner],
+    imports: [CommonModule, FormsModule, Select, TooltipDirective],
     templateUrl: './media-studio.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './media-studio.css',
 })
 export class MediaStudio implements OnInit, OnDestroy {
+    @ViewChild('fileInput')
+    private fileInput?: ElementRef<HTMLInputElement>;
+
     protected llmProviderStore = inject(LlmProviderStore);
     private mediaService = inject(MediaService);
 
     activeTab = signal<'image' | 'video'>('image');
+
+    isDragging = signal(false);
+    selectedImagePreview = signal<string | null>(null);
 
     imageModels = this.llmProviderStore.imageModels;
     videoModels = this.llmProviderStore.videoModels;
@@ -50,14 +55,94 @@ export class MediaStudio implements OnInit, OnDestroy {
 
     private videoPollTimer: ReturnType<typeof setInterval> | null = null;
 
+    // Active tab (composer toggle) — drives which prompt/model is shown in the shared composer
+    setActiveTab(tab: 'image' | 'video'): void {
+        this.activeTab.set(tab);
+    }
+
+    activePrompt = computed(() =>
+        this.activeTab() === 'image' ? this.imagePrompt() : this.videoPrompt(),
+    );
+
+    setActivePrompt(value: string): void {
+        if (this.activeTab() === 'image') {
+            this.imagePrompt.set(value);
+        } else {
+            this.videoPrompt.set(value);
+        }
+    }
+
+    activeModels = computed(() =>
+        this.activeTab() === 'image' ? this.imageModels() : this.videoModels(),
+    );
+
+    activeModelId = computed(() =>
+        this.activeTab() === 'image' ? this.imageModelId() : this.videoModelId(),
+    );
+
+    setActiveModelId(id: number | null): void {
+        if (this.activeTab() === 'image') {
+            this.imageModelId.set(id);
+        } else {
+            this.videoModelId.set(id);
+        }
+    }
+
+    activePromptPlaceholder = computed(() =>
+        this.activeTab() === 'image'
+            ? 'תאר את התמונה שברצונך ליצור...'
+            : 'תאר את הווידאו שברצונך ליצור...',
+    );
+
+    isLoading = computed(() => this.imageLoading() || this.videoPolling());
+
+    showEmptyState = computed(
+        () =>
+            !this.imageLoading() &&
+            !this.imageResult() &&
+            !this.imageError() &&
+            !this.videoLoading() &&
+            !this.videoResult() &&
+            !this.videoTask() &&
+            !this.videoError(),
+    );
+
+    canSubmit = computed(
+        () =>
+            this.activePrompt().trim().length > 0 &&
+            this.activeModelId() != null &&
+            !this.isLoading(),
+    );
+
     imageSizeOptions = [
-        { label: '1024x1024 (1:1)', value: '1024x1024' },
-        { label: '1024x768', value: '1024x768' },
-        { label: '768x1024', value: '768x1024' },
-        { label: '2K · 16:9', value: '2K' },
-        { label: '2K · 1:1', value: '2K' },
-        { label: '1K · 16:9', value: '1K' },
-        { label: '4K · 16:9', value: '4K' },
+        {
+            label: '1024',
+            items: [
+                { label: '1024x1024 (1:1)', value: '1024x1024' },
+                { label: '1024x768', value: '1024x768' },
+                { label: '768x1024', value: '768x1024' },
+            ],
+        },
+        {
+            label: '2K',
+            items: [
+                { label: '16:9', value: '2K' },
+                { label: '1:1', value: '2K' },
+            ],
+        },
+        {
+            label: '1K',
+            items: [{ label: '16:9', value: '1K' }],
+        },
+        {
+            label: '4K',
+            items: [{ label: '16:9', value: '4K' }],
+        },
+    ];
+
+    videoModeOptions = [
+        { label: 'טקסט/תמונה לווידאו', value: 'ti2vid' as const },
+        { label: 'מסגרות מפתח', value: 'keyframes' as const },
     ];
 
     imageTier = computed(() => ['1K', '2K', '3K', '4K'].includes(this.imageSize()));
@@ -187,6 +272,77 @@ export class MediaStudio implements OnInit, OnDestroy {
         }
     }
 
+    openFilePicker(): void {
+        this.fileInput?.nativeElement.click();
+    }
+
+    onFileSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (file && file.type.startsWith('image/')) {
+            this.processFile(file);
+        }
+        input.value = '';
+    }
+
+    onDragOver(event: DragEvent): void {
+        event.preventDefault();
+        this.isDragging.set(true);
+        if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = 'copy';
+        }
+    }
+
+    onDragLeave(event: DragEvent): void {
+        this.isDragging.set(false);
+    }
+
+    onDrop(event: DragEvent): void {
+        event.preventDefault();
+        this.isDragging.set(false);
+
+        const file = event.dataTransfer?.files[0];
+        if (file && file.type.startsWith('image/')) {
+            this.processFile(file);
+        }
+    }
+
+    processFile(file: File): void {
+        if (file.size > 8 * 1024 * 1024) {
+            const error = 'התמונה גדולה מדי (מקסימום 8MB).';
+            if (this.activeTab() === 'image') {
+                this.imageError.set(error);
+            } else {
+                this.videoError.set(error);
+            }
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = reader.result as string;
+            this.selectedImagePreview.set(result);
+            if (this.activeTab() === 'image') {
+                this.imageInputUrl.set(result);
+            } else {
+                this.videoInputUrl.set(result);
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    clearSelectedImage(): void {
+        this.selectedImagePreview.set(null);
+        if (this.activeTab() === 'image') {
+            this.imageInputUrl.set('');
+        } else {
+            this.videoInputUrl.set('');
+        }
+        if (this.fileInput) {
+            this.fileInput.nativeElement.value = '';
+        }
+    }
+
     clearImageResult(): void {
         this.imageResult.set(null);
     }
@@ -195,5 +351,46 @@ export class MediaStudio implements OnInit, OnDestroy {
         this.stopVideoPolling();
         this.videoResult.set(null);
         this.videoTask.set(null);
+    }
+
+    onPromptKeydown(event: KeyboardEvent): void {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            this.onSubmit();
+        }
+    }
+
+    onSubmit(): void {
+        if (this.isLoading()) return;
+        if (this.activeTab() === 'image') {
+            this.generateImage();
+        } else {
+            this.createVideo();
+        }
+    }
+
+    onStop(): void {
+        // Image generation has no in-flight cancellation today; only video can be stopped.
+        if (this.activeTab() === 'video') {
+            this.stopVideoPolling();
+        }
+    }
+
+    setDefaultModel(event: Event, model: { id: number }): void {
+        if (this.llmProviderStore.defaultModelId() === model.id) return;
+
+        this.llmProviderStore.setDefaultModel(model.id);
+        if (this.activeTab() === 'image') {
+            this.imageModelId.set(model.id);
+        } else {
+            this.videoModelId.set(model.id);
+        }
+
+        setTimeout(() => {
+            const target = event.target as HTMLElement;
+            const selectHost = target?.closest('p-select');
+            const trigger = selectHost?.querySelector('.p-select-trigger') as HTMLElement | null;
+            trigger?.blur();
+        });
     }
 }

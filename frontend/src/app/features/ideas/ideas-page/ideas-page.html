@@ -1,10 +1,5 @@
 <div class="page-content ideas-root">
-    <div class="ideas-scroll">
-        <header class="page-header">
-            <h2>מחולל רעיונות עסקיים</h2>
-            <p class="subtitle">איסוף סיגנלי שוק אמיתיים, יצירת רעיונות ואימות מול מתחרים</p>
-        </header>
-
+    <div class="page-scroll">
         @switch (store.pageState()) {
             @case (PageStates.Loading) {
                 <app-ideas-progress [phase]="store.phase()" [statusText]="store.statusText()" />
@@ -17,10 +12,10 @@
                 </div>
             }
             @case (PageStates.Empty) {
-                <div class="empty-ideas-state">
+                <div class="page-empty-state">
                     <span class="ph ph-lightbulb xl"></span>
-                    <h3 class="title">עדיין לא יצרנו רעיונות</h3>
-                    <p class="subtitle">הזן תחום עסקי ולחץ "צור רעיונות" כדי להתחיל.</p>
+                    <h3>עדיין לא יצרנו רעיונות</h3>
+                    <p>הזן תחום עסקי ולחץ "צור רעיונות" כדי להתחיל.</p>
                 </div>
             }
             @case (PageStates.Ready) {

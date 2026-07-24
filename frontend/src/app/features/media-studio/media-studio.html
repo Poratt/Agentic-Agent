@@ -1,215 +1,272 @@
-<div class="page-content">
-    <header class="page-header">
-        <h2>סטודיו מדיה</h2>
-    </header>
+<div class="page-content" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+    @if (isDragging()) {
+        <div class="drop-overlay" aria-hidden="true">
+            <span class="ph ph-cloud-arrow-up xl"></span>
+            <p>שחרר את התמונה כאן</p>
+        </div>
+    }
 
-    <p-tabs [(value)]="activeTab">
-        <p-tablist>
-            <p-tab value="image">יצירת תמונה</p-tab>
-            <p-tab value="video">יצירת וידאו</p-tab>
-        </p-tablist>
+    <div class="media-mode-toggle" [class.video-active]="activeTab() === 'video'">
+        <button type="button" [class.active]="activeTab() === 'image'" (click)="setActiveTab('image')" appTooltip text="תמונה">
+            <span class="ph ph-image"></span>
+        </button>
+        <button type="button" [class.active]="activeTab() === 'video'" (click)="setActiveTab('video')" appTooltip text="וידאו">
+            <span class="ph ph-video-camera"></span>
+        </button>
+    </div>
 
-        <p-tabpanels>
-            <!-- ===================== IMAGE ===================== -->
-            <p-tabpanel value="image">
-                <section class="glass-effect card media-card">
-                    <div class="card-header">
-                        <span class="ph ph-image"></span>
-                        <h3>יצירת תמונה עם Agnes</h3>
-                    </div>
+    <div class="media-scroll">
+        <div class="media-results">
+            @if (imageError()) {
+                <div class="media-item">
+                    <div class="media-item-prompt">{{ imagePrompt() }}</div>
+                    <div class="media-item-meta" role="alert"><span class="ph ph-warning-circle"></span> {{ imageError() }}</div>
+                </div>
+            }
 
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>מודל</label>
-                            <p-select
-                                [options]="imageModels()"
-                                [(ngModel)]="imageModelId"
-                                optionLabel="label"
-                                optionValue="id"
-                                placeholder="בחר מודל תמונה"
-                                appendTo="body"
-                            />
-                        </div>
-
-                        <div class="form-group">
-                            <label>גודל</label>
-                            <p-select
-                                [options]="imageSizeOptions"
-                                [(ngModel)]="imageSize"
-                                optionLabel="label"
-                                optionValue="value"
-                                appendTo="body"
-                            />
-                        </div>
-
-                        <div class="form-group" *ngIf="imageTier()">
-                            <label>יחס תצוגה (ratio)</label>
-                            <input
-                                type="text"
-                                class="text-input"
-                                [(ngModel)]="imageRatio"
-                                placeholder="לדוגמה 16:9"
-                            />
-                        </div>
-
-                        <div class="form-group">
-                            <label>תמונת מקור (image-to-image, URL)</label>
-                            <input
-                                type="text"
-                                class="text-input"
-                                [(ngModel)]="imageInputUrl"
-                                placeholder="https://example.com/input.png"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>פרומפט</label>
-                        <textarea
-                            class="text-input"
-                            rows="3"
-                            [(ngModel)]="imagePrompt"
-                            placeholder="תאר את התמונה שברצונך ליצור..."
-                        ></textarea>
-                    </div>
-
-                    <div class="form-row-inline">
-                        <label class="checkbox-row">
-                            <input type="checkbox" [(ngModel)]="imageReturnBase64" />
-                            <span>החזר כ-Base64</span>
-                        </label>
-                        <button
-                            type="button"
-                            class="primary-btn"
-                            [disabled]="imageLoading()"
-                            (click)="generateImage()"
-                        >
-                            @if (imageLoading()) {
-                                <span class="ph ph-circle-notch ph-spin"></span> יוצר...
-                            } @else {
-                                <span class="ph ph-wand"></span> צור תמונה
-                            }
-                        </button>
-                    </div>
-
-                    @if (imageError()) {
-                        <div class="media-error" role="alert">{{ imageError() }}</div>
-                    }
-
+            @let result = imageResult();
+            @if (imageLoading() || result) {
+                <div class="media-item">
+                    <div class="media-item-prompt">{{ imagePrompt() }}</div>
                     @if (imageLoading()) {
-                        <div class="media-loading">
-                            <p-progressSpinner [style]="{ width: '32px', height: '32px' }" strokeWidth="4" />
-                            <span>מבצע יצירת תמונה...</span>
-                        </div>
-                    }
-
-                    @if (imageResult(); as result) {
-                        <div class="media-result">
-                            @if (result.url) {
-                                <img [src]="result.url" alt="תוצאת תמונה" class="media-image" />
-                            } @else if (result.b64Json) {
-                                <img [src]="'data:' + (result.mimeType || 'image/png') + ';base64,' + result.b64Json" alt="תוצאת תמונה" class="media-image" />
-                            }
-                            <div class="media-result-meta">
-                                @if (result.size) { <span>גודל: {{ result.size }}</span> }
-                                @if (result.url) {
-                                    <a [href]="result.url" target="_blank" rel="noopener" class="transparent-btn sm">פתח במקור</a>
+                        <div class="media-item-meta"><span class="ph ph-circle-notch ph-spin"></span> יוצר תמונה...</div>
+                    } @else if (result) {
+                        @if (result.url) {
+                            <img [src]="result.url" alt="תוצאת תמונה" class="media-item-image" />
+                            <div class="media-item-meta">
+                                @if (result.size) {
+                                    <span>גודל: {{ result.size }}</span>
                                 }
+                                <a [href]="result.url" target="_blank" rel="noopener" class="link">פתח במקור</a>
                             </div>
-                        </div>
-                    }
-                </section>
-            </p-tabpanel>
-
-            <!-- ===================== VIDEO ===================== -->
-            <p-tabpanel value="video">
-                <section class="glass-effect card media-card">
-                    <div class="card-header">
-                        <span class="ph ph-video-camera"></span>
-                        <h3>יצירת וידאו עם Agnes</h3>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>מודל</label>
-                            <p-select
-                                [options]="videoModels()"
-                                [(ngModel)]="videoModelId"
-                                optionLabel="label"
-                                optionValue="id"
-                                placeholder="בחר מודל וידאו"
-                                appendTo="body"
+                        } @else if (result.b64Json) {
+                            <img
+                                [src]="'data:' + (result.mimeType || 'image/png') + ';base64,' + result.b64Json"
+                                alt="תוצאת תמונה"
+                                class="media-item-image"
                             />
-                        </div>
-
-                        <div class="form-group">
-                            <label>מצב</label>
-                            <p-select
-                                [options]="[{ label: 'טקסט/תמונה לווידאו', value: 'ti2vid' }, { label: 'מסגרות מפתח', value: 'keyframes' }]"
-                                [(ngModel)]="videoMode"
-                                optionLabel="label"
-                                optionValue="value"
-                                appendTo="body"
-                            />
-                        </div>
-
-                        <div class="form-group">
-                            <label>מספר פריימים (≤441, 8n+1)</label>
-                            <input type="number" class="text-input" [(ngModel)]="videoNumFrames" />
-                        </div>
-
-                        <div class="form-group">
-                            <label>קצב פריימים (fps)</label>
-                            <input type="number" class="text-input" [(ngModel)]="videoFrameRate" />
-                        </div>
-
-                        <div class="form-group">
-                            <label>תמונת מקור (image-to-video, URL)</label>
-                            <input type="text" class="text-input" [(ngModel)]="videoInputUrl" placeholder="https://example.com/input.png" />
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>פרומפט</label>
-                        <textarea class="text-input" rows="3" [(ngModel)]="videoPrompt" placeholder="תאר את הווידאו שברצונך ליצור..."></textarea>
-                    </div>
-
-                    <div class="form-row-inline">
-                        <button type="button" class="primary-btn" [disabled]="videoLoading()" (click)="createVideo()">
-                            @if (videoLoading()) {
-                                <span class="ph ph-circle-notch ph-spin"></span> יוצר...
-                            } @else {
-                                <span class="ph ph-play"></span> צור וידאו
-                            }
-                        </button>
-                    </div>
-
-                    @if (videoError()) {
-                        <div class="media-error" role="alert">{{ videoError() }}</div>
+                        }
                     }
+                </div>
+            }
 
+            @if (videoError()) {
+                <div class="media-item">
+                    <div class="media-item-prompt">{{ videoPrompt() }}</div>
+                    <div class="media-item-meta" role="alert"><span class="ph ph-warning-circle"></span> {{ videoError() }}</div>
+                </div>
+            }
+
+            @if (videoLoading() || videoTask() || videoResult()) {
+                <div class="media-item">
+                    <div class="media-item-prompt">{{ videoPrompt() }}</div>
                     @if (videoTask(); as task) {
-                        <div class="media-status">
-                            <span class="status-pill" [class.done]="videoResult()?.status === 'completed'" [class.fail]="videoResult()?.status === 'failed'">
-                                {{ videoStatusLabel(videoResult()?.status ?? task.status) }}
-                            </span>
-                            @if (task.videoId) { <span class="status-id">ID: {{ task.videoId }}</span> }
-                            @if (videoPolling()) { <span class="ph ph-circle-notch ph-spin"></span> }
+                        <div class="media-item-meta">
+                            <span class="ph ph-video-camera"></span>
+                            <span>{{ videoStatusLabel(videoResult()?.status ?? task.status) }}</span>
+                            @if (task.videoId) {
+                                <span>ID: {{ task.videoId }}</span>
+                            }
+                            @if (videoPolling()) {
+                                <span class="ph ph-circle-notch ph-spin"></span>
+                            }
                         </div>
                     }
-
                     @if (videoResult()?.url) {
-                        <div class="media-result">
-                            <video [src]="videoResult()!.url" controls class="media-video"></video>
-                            <div class="media-result-meta">
-                                <a [href]="videoResult()!.url" target="_blank" rel="noopener" class="transparent-btn sm">פתח במקור</a>
-                            </div>
+                        <video [src]="videoResult()!.url" controls class="media-item-video"></video>
+                        <div class="media-item-meta">
+                            <a [href]="videoResult()!.url" target="_blank" rel="noopener" class="link">פתח במקור</a>
                         </div>
                     } @else if (videoResult()?.error) {
-                        <div class="media-error" role="alert">שגיאה ביצירת הווידאו: {{ videoResult()?.error | json }}</div>
+                        <div class="media-item-meta" role="alert">שגיאה ביצירת הווידאו: {{ videoResult()?.error | json }}</div>
                     }
-                </section>
-            </p-tabpanel>
-        </p-tabpanels>
-    </p-tabs>
+                </div>
+            }
+
+            @if (showEmptyState()) {
+                <div class="page-empty-state">
+                    <span class="ph ph-aperture xl"></span>
+                    <h3>ברוך הבא לסטודיו מדיה!</h3>
+                    <p>צור תמונות וסרטונים בעזרת AI — כתוב פרומפט למטה והתחל.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="composer-area">
+        <form (ngSubmit)="onSubmit()">
+            <div class="composer-field">
+                @if (selectedImagePreview(); as preview) {
+                    <div class="image-preview">
+                        <img [src]="preview" alt="תצוגה מקדימה של תמונה מצורפת" />
+                        <button
+                            type="button"
+                            class="transparent-btn icon-only xs image-preview-close"
+                            aria-label="הסר תמונה"
+                            (click)="clearSelectedImage()"
+                        >
+                            <i class="ph ph-x"></i>
+                        </button>
+                    </div>
+                }
+
+                <textarea
+                    [ngModel]="activePrompt()"
+                    (ngModelChange)="setActivePrompt($event)"
+                    [placeholder]="activePromptPlaceholder()"
+                    rows="1"
+                    name="prompt"
+                    autocomplete="off"
+                    (keydown)="onPromptKeydown($event)"
+                ></textarea>
+
+                <input #fileInput type="file" accept="image/*" class="file-input-hidden" (change)="onFileSelected($event)" />
+
+                <div class="composer-meta-row">
+                    <div class="composer-actions">
+                        <button
+                            type="button"
+                            class="transparent-btn icon-only sm file-attach-btn"
+                            aria-label="צרף תמונה"
+                            (click)="openFilePicker()"
+                        >
+                            <i class="ph ph-image"></i>
+                        </button>
+                        @if (activeTab() === 'image') {
+                            <label class="base64-toggle" for="image-base64">
+                                <input
+                                    id="image-base64"
+                                    class="hidden"
+                                    type="checkbox"
+                                    [ngModel]="imageReturnBase64()"
+                                    (ngModelChange)="imageReturnBase64.set($event)"
+                                    name="imageReturnBase64"
+                                />
+                                <span class="base64-toggle-label">Base64</span>
+                            </label>
+                            <label class="option-label-sm" for="image-size">גודל</label>
+                            <p-select
+                                id="image-size"
+                                [options]="imageSizeOptions"
+                                [ngModel]="imageSize()"
+                                (ngModelChange)="imageSize.set($event)"
+                                [group]="true"
+                                optionGroupLabel="label"
+                                optionLabel="label"
+                                optionValue="value"
+                                appendTo="body"
+                                size="small"
+                                class="custom-select transparent"
+                                name="imageSize"
+                            >
+                                <ng-template let-group #group>
+                                    <span class="group-label">{{ group.label }}</span>
+                                </ng-template>
+                                <ng-template let-item #item>
+                                    <div class="select-option">
+                                        <div class="select-option-main">
+                                            <span class="item-name">{{ item.label }}</span>
+                                        </div>
+                                    </div>
+                                </ng-template>
+                            </p-select>
+                            @if (imageTier()) {
+                                <label class="option-label-sm" for="image-ratio">יחס</label>
+                                <input
+                                    id="image-ratio"
+                                    type="text"
+                                    class="compact-input"
+                                    [ngModel]="imageRatio()"
+                                    (ngModelChange)="imageRatio.set($event)"
+                                    name="imageRatio"
+                                    placeholder="לדוגמה 16:9"
+                                />
+                            }
+                        } @else {
+                            <div class="options-row">
+                                <label class="option-label-sm" for="video-mode">מצב</label>
+                                <p-select
+                                    id="video-mode"
+                                    [options]="videoModeOptions"
+                                    [ngModel]="videoMode()"
+                                    (ngModelChange)="videoMode.set($event)"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    appendTo="body"
+                                    size="small"
+                                    class="custom-select transparent"
+                                    name="videoMode"
+                                >
+                                    <ng-template let-item #item>
+                                        <div class="select-option rtl">
+                                            <span class="item-name">{{ item.label }}</span>
+                                        </div>
+                                    </ng-template>
+                                </p-select>
+                                <label class="option-label-sm" for="video-frames">פריימים</label>
+                                <input
+                                    id="video-frames"
+                                    type="number"
+                                    class="compact-input compact-num"
+                                    [ngModel]="videoNumFrames()"
+                                    (ngModelChange)="videoNumFrames.set($event)"
+                                    name="videoNumFrames"
+                                    min="1"
+                                    max="441"
+                                />
+                                <label class="option-label-sm" for="video-fps">fps</label>
+                                <input
+                                    id="video-fps"
+                                    type="number"
+                                    class="compact-input compact-num"
+                                    [ngModel]="videoFrameRate()"
+                                    (ngModelChange)="videoFrameRate.set($event)"
+                                    name="videoFrameRate"
+                                    min="1"
+                                />
+                            </div>
+                        }
+                    </div>
+
+                    <div class="composer-actions">
+                        <p-select
+                            [options]="activeModels()"
+                            [ngModel]="activeModelId()"
+                            (ngModelChange)="setActiveModelId($event)"
+                            optionLabel="label"
+                            optionValue="id"
+                            placeholder="בחר מודל"
+                            appendTo="body"
+                            size="small"
+                            class="custom-select transparent"
+                            name="model"
+                        >
+                            <ng-template let-item #item>
+                                <div class="select-option">
+                                    <div class="select-option-main">
+                                        <span class="item-name">{{ item.label }}</span>
+                                    </div>
+                                </div>
+                            </ng-template>
+                        </p-select>
+
+                        <button
+                            [type]="isLoading() ? 'button' : 'submit'"
+                            class="composer-submit"
+                            [class.stop]="isLoading()"
+                            [disabled]="!isLoading() && !canSubmit()"
+                            [attr.aria-label]="isLoading() ? 'עצור' : 'צור'"
+                            (click)="isLoading() ? onStop() : null"
+                        >
+                            @if (isLoading()) {
+                                <span class="ph ph-stop sm"></span>
+                            } @else {
+                                <span class="ph ph-arrow-up sm"></span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>

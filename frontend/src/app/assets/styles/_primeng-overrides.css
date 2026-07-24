@@ -105,12 +105,13 @@
 p-select.p-select.custom-select {
   width: fit-content;
 
-  &.transparnet {
+  &.transparent {
     background: transparent;
     border: 0;
     box-shadow: none;
-
   }
+
+
 
   .p-select-label {
     font-size: var(--font-size-xxs);
@@ -159,9 +160,9 @@ p-select.p-select.custom-select {
   } */
 }
 
-.p-select-list {
+/* .p-select-list {
   padding: 0 !important;
-}
+} */
 
 .p-select-option-group {
   direction: ltr;
@@ -214,17 +215,20 @@ li.p-select-option {
   padding: 0 var(--space-2) 0 0 !important;
   margin: var(--space-1) 0;
 
-  &:not(.p-select-option-selected):not(.p-disabled).p-focus {
-    background: transparent;
+  &:not(.p-select-option-selected):not(.p-disabled) {
+
+    &:hover,
+    &.p-focus {
+      background: var(--color-surface-hover);
+    }
   }
 
-  &:not(.p-select-option-selected):not(.p-disabled):hover {
-    background: transparent;
-  }
 
   &.p-select-option-selected,
   &.p-select-option-selected.p-focus {
-    background: transparent;
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    box-shadow: 0 0 0 1px var(--color-primary);
+
   }
 
   .select-option {
@@ -232,21 +236,20 @@ li.p-select-option {
     flex-direction: column;
     gap: var(--space-2);
     width: 100%;
-    padding: var(--space-3) var(--space-6);
+    padding: var(--space-3) var(--space-2);
     border-radius: var(--radius-xs);
-    background: var(--color-surface);
+    font-size: var(--font-size-xxs);
+
     transition: border-color var(--transition-fast), background var(--transition-fast);
+
+    &.rtl {
+      direction: rtl;
+    }
   }
 
-  &:hover .select-option {
-    border-color: var(--color-primary);
-    background: var(--color-surface-hover);
-  }
+  &:hover .select-option {}
 
-  &.p-highlight .select-option {
-    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-    box-shadow: 0 0 0 1px var(--color-primary);
-  }
+  &.p-highlight .select-option {}
 
   .select-option-main {
     display: grid;
@@ -254,12 +257,11 @@ li.p-select-option {
     align-items: center;
     gap: var(--space-2);
 
-    .model-name {
+    .item-name {
       flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      font-size: var(--font-size-xs);
       font-weight: var(--font-weight-medium);
       color: var(--color-text-primary);
     }

@@ -6,9 +6,7 @@
 
     @if (hasResults()) {
         <div class="summary-row">
-            <span class="summary-text">
-                {{ activeCount() }} of {{ totalCount() }} active
-            </span>
+            <span class="summary-text"> {{ activeCount() }} of {{ totalCount() }} active </span>
             <span class="pulse-dot"></span>
         </div>
 
@@ -16,7 +14,7 @@
             @for (result of data().results; track result.model ?? $index) {
                 <div class="model-card">
                     <div class="model-header">
-                        <span class="model-name">{{ result.model }}</span>
+                        <span class="item-name">{{ result.model }}</span>
                         <span class="provider-badge">{{ result.provider }}</span>
                     </div>
                     <div class="model-status">
