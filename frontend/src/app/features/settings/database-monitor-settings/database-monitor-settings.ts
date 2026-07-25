@@ -61,7 +61,7 @@ export class DatabaseMonitorSettings implements OnInit {
             accumulated += t.percentOfDatabase;
             const end = (accumulated / total) * 100;
             const colorIdx = tables.indexOf(t) + 1;
-            segments.push(`var(--color-table-${colorIdx}) ${start.toFixed(2)}% ${end.toFixed(2)}%`);
+            segments.push(`var(--color-chart-${colorIdx}) ${start.toFixed(2)}% ${end.toFixed(2)}%`);
         }
         return `conic-gradient(${segments.join(', ')})`;
     }
@@ -71,6 +71,6 @@ export class DatabaseMonitorSettings implements OnInit {
     }
 
     getChartColor(index: number): string {
-        return `var(--color-table-${index + 1})`;
+        return `var(--color-chart-${index + 1})`;
     }
 }

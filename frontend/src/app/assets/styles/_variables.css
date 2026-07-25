@@ -23,6 +23,15 @@
   --color-info-bg: rgba(96, 165, 250, 0.10);
   --color-info-border: rgba(96, 165, 250, 0.25);
 
+  /* Chart palette — database monitor donut/legend segments */
+  --color-chart-1: #6366f1;
+  --color-chart-2: #3b82f6;
+  --color-chart-3: #10b981;
+  --color-chart-4: #f59e0b;
+  --color-chart-5: #ec4899;
+  --color-chart-6: #8b5cf6;
+  --color-chart-7: #06b6d4;
+
   /* Typography */
   --font-main: 'Heebo', 'Inter', sans-serif;
   --font-family: var(--font-main);

@@ -3,16 +3,6 @@
     width: 100%;
     box-sizing: border-box;
 
-    --color-table-1: #6366f1;
-    --color-table-2: #3b82f6;
-    --color-table-3: #10b981;
-    --color-table-4: #f59e0b;
-    --color-table-5: #ec4899;
-    --color-table-6: #8b5cf6;
-    --color-table-7: #06b6d4;
-}
-
-:host {
     .db-monitor {
         display: flex;
         flex-direction: column;

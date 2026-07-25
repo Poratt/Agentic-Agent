@@ -36,23 +36,9 @@
     }
 
     /* ── Panel header ─────────────────────────────────────────────────────── */
-    .panel-header.section {
-        gap: var(--space-4);
-        padding-bottom: var(--space-4);
-        margin-bottom: var(--space-6);
-        border-bottom-color: color-mix(in srgb, var(--color-border) 40%, transparent);
-        flex-wrap: wrap;
-    }
-
-    .panel-title.primary {
-        font-weight: var(--font-weight-bold);
-        color: var(--color-primary);
-        min-width: 0;
-        word-break: break-word;
-        display: inline-flex;
-        align-items: center;
-        gap: var(--space-4);
-    }
+    /* NOTE: .panel-header.section and .panel-title.primary are provided by the
+       global .panel-header / .panel-title utilities in _utilities.css — removed
+       the local duplicates to avoid the class-name overlap flagged in the audit. */
 
     .panel-actions {
         display: flex;
@@ -99,7 +85,7 @@
     .detail-item {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: var(--space-1);
         min-width: 0;
         overflow: hidden;
 
@@ -137,7 +123,7 @@
         word-break: break-word;
 
         .badge {
-            padding: 2px var(--space-4);
+            padding: var(--space-1) var(--space-4);
             font-size: var(--font-size-xxs);
         }
     }
