@@ -69,6 +69,22 @@ export class IdeasForm {
     this.ideasForm.patchValue({ count: value });
   }
 
+  incrementCount(): void {
+    const current = this.store.count();
+    if (current < 10) {
+      this.store.setCount(current + 1);
+      this.ideasForm.patchValue({ count: current + 1 });
+    }
+  }
+
+  decrementCount(): void {
+    const current = this.store.count();
+    if (current > 1) {
+      this.store.setCount(current - 1);
+      this.ideasForm.patchValue({ count: current - 1 });
+    }
+  }
+
   setDefaultModel(event: Event, model: any): void {
     if (this.llmProviderStore.defaultModelId() === model.id) return;
 

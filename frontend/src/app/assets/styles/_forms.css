@@ -40,10 +40,130 @@ select {
   &.form-control {
     padding: var(--space-4) var(--field-icon-padding) var(--space-4) var(--space-8);
   }
+
+  &[type='range'] {
+    accent-color: var(--color-primary);
+  }
+
+  &[type='number'] {
+    -moz-appearance: textfield;
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
 }
 
-input[type='range'] {
-  accent-color: var(--color-primary);
+
+/* ── Compact Input (inline toolbar inputs) ───────────────────────────────── */
+.compact-input {
+  min-height: 0;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-main);
+  transition: border-color var(--transition-fast);
+
+  &::placeholder {
+    color: var(--color-text-disabled);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary-glow);
+    box-shadow: 0 0 0 2px var(--color-primary-glow);
+  }
+
+  &.xs {
+    width: 48px;
+    padding: 0 var(--space-2);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &.sm {
+    width: 64px;
+    padding: var(--space-2) var(--space-4);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &.md {
+    width: 160px;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  &.lg {
+    width: 220px;
+    padding: var(--space-3) var(--space-6);
+  }
+
+}
+
+/* ── Number Stepper (custom increment/decrement buttons) ─────────────────── */
+.number-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+
+  input[type='number'] {
+    width: 64px;
+    min-width: 64px;
+    padding: 1px var(--space-4);
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-family: var(--font-main);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    transition: border-color var(--transition-fast);
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary-glow);
+      box-shadow: 0 0 0 2px var(--color-primary-glow);
+    }
+  }
+
+  .stepper-btns {
+    display: flex;
+    flex-direction: column;
+    margin-inline-start: var(--space-1);
+  }
+
+  .stepper-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 14px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    border-radius: var(--radius-xs);
+    transition: color var(--transition-fast), background var(--transition-fast);
+
+    &:hover {
+      color: var(--color-text-primary);
+      background: var(--color-surface-hover);
+    }
+
+    &:active {
+      color: var(--color-primary);
+    }
+
+    .ph {
+      font-size: 10px;
+    }
+  }
 }
 
 .p-inputtext.p-variant-filled:enabled:focus {
@@ -64,7 +184,7 @@ input[type='range'] {
   padding-bottom: var(--space-8);
 }
 
-.form-group .error-text {
+.error-text {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -149,12 +269,6 @@ input[type='range'] {
     padding-bottom: 0;
   }
 
-  label {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-primary);
-  }
-
   .field-hint {
     font-size: var(--font-size-xs);
     color: var(--color-text-muted);
@@ -164,20 +278,4 @@ input[type='range'] {
     color: var(--color-danger);
   }
 
-}
-
-.error-text {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--space-2) * -1);
-  display: inline-block;
-  font-size: var(--font-size-xs);
-  color: var(--color-danger);
-  margin-top: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  max-width: max-content;
-  animation: typewriter 1.2s steps(36, end) forwards;
 }

@@ -1,5 +1,13 @@
 # Documentation Change Log
 
+## 2026-07-25 CSS Cleanup — Labels, Compact Inputs, Number Steppers
+
+- **Architectural decision:** consolidated bare `label` styles into one global rule in `_typography.css` (font-size sm, font-weight medium, color text-primary). Component-scoped label overrides (like `.composer-count label { white-space: nowrap }`) stay local for context-specific needs.
+- **Architectural decision:** created global `.compact-input` class with `xs`/`sm`/`md`/`lg` size variants in `_forms.css` for inline toolbar inputs. This replaces duplicated input styles that existed in both `_composer.css` and `media-studio.css`.
+- **Architectural decision:** number spinner hiding is now global for all `input[type='number']` via `_forms.css`. Custom `.number-stepper` with `ph-caret-up`/`ph-caret-down` buttons replaces native spinners.
+- **No architecture diagram update needed** (CSS-only, no new components or endpoints).
+- **Files touched:** `_typography.css`, `_forms.css`, `_composer.css`, `media-studio.css`, `media-studio.html`, `media-studio.ts`, `ideas-form.html`, `ideas-form.ts`.
+
 ## 2026-07-22 Main Sidebar — Chat History Dropdown Fix
 
 - **Architectural decision:** the `.nav-item-chat` pattern (hover-to-reveal history button with dropdown, absolute positioning, RTL-aware `inset-inline-end`) is reusable. When adding history to Ideas (`/ideas`) and Media Studio (`/media`), extract this into a shared component or a shared CSS pattern in `_utilities.css` rather than duplicating per-page.

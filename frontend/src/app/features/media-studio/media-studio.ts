@@ -60,6 +60,26 @@ export class MediaStudio implements OnInit, OnDestroy {
         this.activeTab.set(tab);
     }
 
+    incrementNumFrames(): void {
+        const current = this.videoNumFrames() ?? 81;
+        if (current < 441) this.videoNumFrames.set(current + 1);
+    }
+
+    decrementNumFrames(): void {
+        const current = this.videoNumFrames() ?? 81;
+        if (current > 1) this.videoNumFrames.set(current - 1);
+    }
+
+    incrementFrameRate(): void {
+        const current = this.videoFrameRate() ?? 24;
+        if (current < 60) this.videoFrameRate.set(current + 1);
+    }
+
+    decrementFrameRate(): void {
+        const current = this.videoFrameRate() ?? 24;
+        if (current > 1) this.videoFrameRate.set(current - 1);
+    }
+
     activePrompt = computed(() =>
         this.activeTab() === 'image' ? this.imagePrompt() : this.videoPrompt(),
     );

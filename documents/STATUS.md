@@ -1,6 +1,17 @@
 # Project Documentation Status
 
-Last updated: 2026-07-22
+Last updated: 2026-07-25
+
+## 2026-07-25 Session — CSS Cleanup: Labels, Compact Inputs, Number Steppers
+
+- Consolidated duplicated CSS patterns across composer inputs.
+- Moved bare `label` styles to `_typography.css` with `color: var(--color-text-primary)`. Removed duplicates from `_forms.css` and `_composer.css`.
+- Created global `.compact-input` class with `xs`/`sm`/`md`/`lg` variants in `_forms.css`. Removed duplicated input styles from `_composer.css` and `media-studio.css`.
+- Added global number spinner hiding for all `input[type='number']` in `_forms.css`.
+- Created `.number-stepper` CSS with custom `ph-caret-up`/`ph-caret-down` buttons. Added increment/decrement methods to `IdeasForm` and `MediaStudio`.
+- Moved `media-mode-toggle` inside `composer-field`, made it smaller, positioned at top-left.
+- Files: `_typography.css`, `_forms.css`, `_composer.css`, `media-studio.css`, `media-studio.html`, `media-studio.ts`, `ideas-form.html`, `ideas-form.ts`.
+- Verification: CSS-only changes, no logic to test. No build verification performed.
 
 ## 2026-07-22 Session — Main Sidebar Chat History Dropdown Fix
 

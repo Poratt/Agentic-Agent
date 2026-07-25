@@ -1,5 +1,21 @@
 # Documentation Handoff
 
+## 2026-07-25 Session — CSS Cleanup: Labels, Compact Inputs, Number Steppers
+
+**Objective:** consolidate duplicated CSS patterns across composer inputs — label styles, compact input styles, and native number spinners.
+
+- **Label consolidation:** moved bare `label` styles to `_typography.css` with `color: var(--color-text-primary)`. Removed duplicate nested `.form-field label` from `_forms.css` and bare `label` from `_forms.css`. Simplified `.composer-count label` in `_composer.css` to only `white-space: nowrap`. Now all labels get styling from one global bare `label` rule.
+- **Global `.compact-input` class:** created in `_forms.css` with size variants (`xs`, `sm`, `md`, `lg`). Removed duplicated input styles from `_composer.css` (`.composer-count input[type='number']`) and `media-studio.css` (`.compact-input`). Updated HTML templates to use the new classes.
+- **Native number spinner hiding:** added global `input[type='number']` spinner hiding in `_forms.css` (`-moz-appearance: textfield` + webkit pseudo-element reset).
+- **Custom number stepper:** created `.number-stepper` CSS in `_forms.css` with `ph-caret-up`/`ph-caret-down` buttons. Added `incrementCount()`/`decrementCount()` to `IdeasForm` (bounds 1-10) and `incrementNumFrames()`/`decrementNumFrames()` + `incrementFrameRate()`/`decrementFrameRate()` to `MediaStudio` (bounds 1-441, 1-60). Updated HTML templates with `.number-stepper` wrapper.
+- **Media mode toggle:** moved `media-mode-toggle` inside `composer-field`, made it smaller (22px buttons, xxs icons), positioned at `left: var(--space-2)` (ignoring padding). Added `position: relative` to `.composer-field` in `_composer.css`.
+- **Files touched:** `frontend/src/app/assets/styles/_typography.css` (modified), `frontend/src/app/assets/styles/_forms.css` (modified — label cleanup, compact-input class, number-stepper, spinner hiding), `frontend/src/app/assets/styles/_composer.css` (modified — removed duplicated input styles, added position relative), `frontend/src/app/features/media-studio/media-studio.css` (modified — removed .compact-input styles, updated media-mode-toggle), `frontend/src/app/features/media-studio/media-studio.html` (modified — stepper buttons, toggle moved), `frontend/src/app/features/media-studio/media-studio.ts` (modified — increment/decrement methods), `frontend/src/app/features/ideas/ideas-form/ideas-form.html` (modified — stepper buttons), `frontend/src/app/features/ideas/ideas-form/ideas-form.ts` (modified — increment/decrement methods).
+- **Verification:** `npx ng lint` not configured; CSS-only changes, no logic to test.
+- **Decisions made:** label styles consolidated to one global bare `label` in `_typography.css`; `.compact-input` variants use `xs`/`sm`/`md`/`lg` naming; number stepper uses `ph-caret-up`/`ph-caret-down` icons; media-mode-toggle repositioned to top-left of composer-field.
+- **Open questions for the user:** none.
+- **Next exact step:** visual check of the number steppers in ideas and media-studio pages, then commit.
+- No architecture diagram update needed (CSS-only, no new components or endpoints).
+
 ## 2026-07-22 Session — Main Sidebar Chat History Dropdown Fix
 
 **Objective:** fix 3 issues with the chat history dropdown in the main sidebar — missing blur/glass-effect, feather button not navigating, and click event bubbling to the parent chat button.
