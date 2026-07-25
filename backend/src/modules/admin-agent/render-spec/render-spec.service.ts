@@ -61,6 +61,7 @@ const WEATHER_DESC_HE: Record<string, string> = {
   'moderate rain': 'גשם בינוני',
   'heavy rain': 'גשם חזק',
   'rain': 'גשם',
+  'slight rain showers': 'מטרות גשם קלות',
   'light snow': 'שלג קל',
   'moderate snow': 'שלג בינוני',
   'heavy snow': 'שלג חזק',
@@ -342,6 +343,7 @@ const TOOL_RENDER_MAPPINGS: ToolRenderMapping[] = [
     schema: AgnesImageRenderSpecSchema,
     transform: (data) => {
       const r = data.result ?? data.data ?? data;
+      console.log(`[AgnesImage transform] raw=${JSON.stringify(data).slice(0, 400)} | size=${r.size} | model=${r.model}`);
       return {
         url: r.url ?? undefined,
         b64Json: r.b64Json ?? r.b64_json ?? undefined,

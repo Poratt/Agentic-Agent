@@ -326,7 +326,7 @@ export class LlmClientService {
       url: first.url ?? undefined,
       b64Json: first.b64_json ?? undefined,
       mimeType: result.mime_type,
-      size: result.size,
+      size: result.size ?? resolvedSize,
     };
   }
 
