@@ -11,7 +11,6 @@ import { IdeasGrid } from '../ideas-grid/ideas-grid';
   standalone: true,
   imports: [CommonModule, IdeasForm, IdeasProgress, IdeasGrid],
   templateUrl: './ideas-page.html',
-  styleUrl: './ideas-page.css',
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class IdeasPage {

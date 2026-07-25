@@ -19,7 +19,7 @@
         position: absolute;
         inset: 0;
         transform: scaleX(0);
-        transform-origin: left;
+        transform-origin: right;
         height: 100%;
         border-radius: var(--radius-pill);
         background: var(--color-primary);

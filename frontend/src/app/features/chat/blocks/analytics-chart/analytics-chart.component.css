@@ -104,12 +104,12 @@
                 color: var(--color-text-secondary);
             }
 
-            .legend-value {
-                color: var(--color-text-primary);
-                font-weight: var(--font-weight-semibold);
-                font-family: var(--font-code);
-                margin-left: auto;
-            }
+        .legend-value {
+            color: var(--color-text-primary);
+            font-weight: var(--font-weight-semibold);
+            font-family: var(--font-code);
+            margin-inline-start: auto;
+        }
         }
     }
 

@@ -10,7 +10,6 @@ import { LlmProviderStore } from '../../../core/store/llm-provider.store';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, Select],
   templateUrl: './ideas-form.html',
-  styleUrl: './ideas-form.css',
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class IdeasForm {

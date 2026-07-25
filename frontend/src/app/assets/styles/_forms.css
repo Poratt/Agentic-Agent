@@ -164,19 +164,20 @@ input[type='range'] {
     color: var(--color-danger);
   }
 
-  .error-text {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    bottom: calc(var(--space-2) * -1);
-    display: inline-block;
-    font-size: var(--font-size-xs);
-    color: var(--color-danger);
-    margin-top: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    max-width: max-content;
-    animation: typewriter 1.2s steps(36, end) forwards;
-  }
+}
+
+.error-text {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--space-2) * -1);
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+  margin-top: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: max-content;
+  animation: typewriter 1.2s steps(36, end) forwards;
 }

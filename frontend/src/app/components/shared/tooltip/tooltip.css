@@ -7,8 +7,6 @@
     .tooltip-card {
         --tooltip-color: var(--color-text-muted);
 
-        position: relative;
-        isolation: isolate;
         min-width: calc(var(--space-32) * 3);
         max-width: calc(var(--space-32) * 4);
         max-height: 80vh;
@@ -22,23 +20,10 @@
 
         padding: var(--space-6) var(--space-8);
         border-radius: var(--radius-md);
-        background: var(--glass-bg);
-        border: 1px solid var(--glass-border);
-        box-shadow: var(--glass-shadow, var(--shadow-soft));
         display: flex;
         flex-direction: column;
         gap: var(--space-4);
         animation: fadeIn var(--transition-fast) ease-out forwards;
-
-        &::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            backdrop-filter: blur(var(--glass-blur, 8px));
-            -webkit-backdrop-filter: blur(var(--glass-blur, 8px));
-            z-index: -1;
-        }
 
         .tooltip-card-header {
             display: flex;
@@ -64,8 +49,8 @@
 
             .tooltip-card-badge {
                 margin-right: auto;
-                font-size: 10px;
-                padding: 2px 6px;
+                font-size: var(--font-size-xxs);
+                padding: var(--space-1) var(--space-3);
                 border-radius: var(--radius-pill);
                 background: var(--tooltip-color);
                 color: var(--color-bg);

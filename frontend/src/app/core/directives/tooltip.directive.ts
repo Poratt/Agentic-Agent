@@ -12,6 +12,7 @@ export class TooltipDirective implements OnDestroy {
 
     text = input<string>('');
     imageUrl = input<string>('');
+    position = input<'above' | 'below'>('above');
 
     private el = inject(ElementRef<HTMLElement>);
     private renderer = inject(Renderer2);
@@ -68,12 +69,17 @@ export class TooltipDirective implements OnDestroy {
         const viewportW = window.innerWidth;
         const viewportH = window.innerHeight;
 
-        // Try above first; if not enough space, flip below
-        let top = hostRect.top - tooltipRect.height - GAP;
+        // Position based on input
         let flipped = false;
-        if (top < 0) {
+        let top: number;
+        if (this.position() === 'below') {
             top = hostRect.bottom + GAP;
-            flipped = true;
+        } else {
+            top = hostRect.top - tooltipRect.height - GAP;
+            if (top < 0) {
+                top = hostRect.bottom + GAP;
+                flipped = true;
+            }
         }
 
         // Clamp vertically if it still overflows

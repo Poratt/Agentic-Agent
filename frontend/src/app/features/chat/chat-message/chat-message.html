@@ -20,12 +20,7 @@
         }
 
         @if (isThinkingVisible()) {
-            <details class="thinking-process-box" open>
-                <summary class="thinking-summary">
-                    <span class="ph ph-list-bullets"></span>
-                    <span>פעולות שבוצעו</span>
-                    <span class="ph ph-caret-down thinking-chevron"></span>
-                </summary>
+            <div class="thinking-process-box">
                 <div class="steps-list" [autoScrollBottom]="true">
                     @for (step of displaySteps(); track $index) {
                         <div class="step-item" [class.is-loading]="step.isLoading">
@@ -42,7 +37,7 @@
                         </div>
                     }
                 </div>
-            </details>
+            </div>
         }
 
         @if (renderBlocksForDisplay().length > 0) {

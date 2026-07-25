@@ -9,12 +9,12 @@
     display: grid;
     gap: var(--space-2);
 
-    /* ה-Container החיצוני: ממוקם בצמוד לכפתור ומייצר גשר ריחוף באמצעות Padding */
+    /* Outer container: positioned flush against the button, creates hover bridge via padding */
     .dropdown-container {
         position: absolute;
         z-index: 100;
 
-        /* למטה - ימין */
+        /* Bottom - Right */
         &.bottom-right {
             top: 100%;
             right: 0;
@@ -24,7 +24,7 @@
             transform-origin: top right;
         }
 
-        /* למטה - שמאל */
+        /* Bottom - Left */
         &.bottom-left {
             top: 100%;
             left: 0;
@@ -34,7 +34,7 @@
             transform-origin: top left;
         }
 
-        /* למטה - מרכז */
+        /* Bottom - Center */
         &.bottom-center {
             top: 100%;
             left: 50%;
@@ -45,7 +45,7 @@
             transform-origin: top center;
         }
 
-        /* למעלה - ימין */
+        /* Top - Right */
         &.top-right {
             bottom: 100%;
             right: 0;
@@ -55,7 +55,7 @@
             transform-origin: bottom right;
         }
 
-        /* למעלה - שמאל */
+        /* Top - Left */
         &.top-left {
             bottom: 100%;
             left: 0;
@@ -65,7 +65,7 @@
             transform-origin: bottom left;
         }
 
-        /* למעלה - מרכז */
+        /* Top - Center */
         &.top-center {
             bottom: 100%;
             left: 50%;
@@ -76,7 +76,7 @@
             transform-origin: bottom center;
         }
 
-        /* שמאל - מרכז גובה */
+        /* Left - Vertical center */
         &.left-center {
             right: 100%;
             top: 50%;
@@ -87,7 +87,7 @@
             transform-origin: right center;
         }
 
-        /* ימין - מרכז גובה */
+        /* Right - Vertical center */
         &.right-center {
             left: 100%;
             top: 50%;
@@ -99,7 +99,7 @@
         }
     }
 
-    /* התיבה הפנימית: מכילה את אפקט הזכוכית ומריצה אנימציית Scale נקייה שאינה פוגעת ב-Blur */
+    /* Inner box: contains glass effect and runs clean Scale animation without affecting Blur */
     .dropdown-content {
         padding: var(--space-4);
         border-radius: var(--radius-md);

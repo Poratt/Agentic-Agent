@@ -1,20 +1,33 @@
 <div class="agnes-image-card glass-effect">
-    <div class="agnes-image-header">
-        <span class="ph ph-image"></span>
-        <span class="agnes-image-title">תמונה שנוצרה</span>
-        @if (data().size) {
-            <span class="agnes-image-size">{{ data().size }}</span>
-        }
-        @if (data().model) {
-            <span class="agnes-image-model">{{ data().model }}</span>
-        }
-    </div>
-
     @if (imageSrc()) {
         <a class="agnes-image-link" [href]="imageSrc()" target="_blank" rel="noopener">
             <img class="agnes-image" [src]="imageSrc()" alt="תמונה שנוצרה על ידי Agnes" loading="lazy" />
         </a>
     } @else {
         <div class="agnes-image-empty">לא התקבלה תמונה</div>
+    }
+
+    @if (data().size) {
+        <div class="agnes-image-meta">
+            <div class="agnes-image-size-group">
+                <span class="agnes-image-size">{{ displaySize() }}</span>
+                <button
+                    class="transparent-btn icon-only sm"
+                    (click)="downloadImage()"
+                    type="button"
+                    aria-label="הורדת תמונה"
+                    appTooltip text="הורדת תמונה" position="below"
+                >
+                    <span class="ph ph-download-simple"></span>
+                </button>
+            </div>
+            @if (data().model) {
+                <span class="agnes-image-model">{{ data().model }}<span class="ph ph-aperture"></span></span>
+            }
+        </div>
+    } @else if (data().model) {
+        <div class="agnes-image-meta">
+            <span class="agnes-image-model">{{ data().model }}<span class="ph ph-aperture"></span></span>
+        </div>
     }
 </div>

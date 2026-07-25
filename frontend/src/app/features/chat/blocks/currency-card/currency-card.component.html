@@ -4,12 +4,12 @@
         <!-- Header with flags + codes -->
         <div class="currency-header">
             <div class="currency-flag-pair">
-                <div class="flag-badge" *ngIf="data().sourceCurrency">
+                <div class="currency-flag-badge" *ngIf="data().sourceCurrency">
                     <img [src]="flagUrl(data().sourceCurrency!)" [alt]="data().sourceCurrency" class="flag-img" />
                     <span class="currency-code">{{ data().sourceCurrency }}</span>
                 </div>
                 <span class="ph ph-arrow-right"></span>
-                <div class="flag-badge" *ngIf="data().targetCurrency">
+                <div class="currency-flag-badge" *ngIf="data().targetCurrency">
                     <img [src]="flagUrl(data().targetCurrency!)" [alt]="data().targetCurrency" class="flag-img" />
                     <span class="currency-code">{{ data().targetCurrency }}</span>
                 </div>

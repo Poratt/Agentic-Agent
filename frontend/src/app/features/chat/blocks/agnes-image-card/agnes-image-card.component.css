@@ -5,52 +5,52 @@
     padding: var(--space-8);
     border-radius: var(--radius-lg);
     max-width: 420px;
-}
 
-.agnes-image-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-}
+    .agnes-image-link {
+        display: block;
+        line-height: 0;
 
-.agnes-image-header .ph {
-    color: var(--color-primary);
-}
+        .agnes-image {
+            width: 100%;
+            height: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
+        }
+    }
 
-.agnes-image-size {
-    margin-inline-start: auto;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--color-text-secondary);
-}
+    .agnes-image-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-4);
 
-.agnes-image-model {
-    font-size: 0.7rem;
-    font-weight: 500;
-    color: var(--color-primary);
-    background: var(--color-primary-bg, var(--color-surface-hover));
-    padding: var(--space-2) var(--space-4);
-    border-radius: var(--radius-pill);
-}
+        .agnes-image-size {
+            display: inline-flex;
+            align-items: center;
+            font-size: var(--font-size-xs);
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            line-height: 1;
+        }
 
-.agnes-image-link {
-    display: block;
-    line-height: 0;
-}
+        .agnes-image-model {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            font-size: var(--font-size-xxs);
+            font-weight: 500;
+            color: var(--color-primary);
+            background: var(--color-primary-bg, var(--color-surface-hover));
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-pill);
+            line-height: 1;
+        }
+    }
 
-.agnes-image {
-    width: 100%;
-    height: auto;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
-}
-
-.agnes-image-empty {
-    padding: var(--space-8);
-    text-align: center;
-    color: var(--color-text-secondary);
-    font-size: 0.85rem;
+    .agnes-image-empty {
+        padding: var(--space-8);
+        text-align: center;
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-sm);
+    }
 }

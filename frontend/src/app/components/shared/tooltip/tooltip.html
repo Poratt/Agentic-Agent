@@ -1,7 +1,7 @@
 @switch (category()) {
     @case ('terpene') {
         @if (terpene(); as t) {
-            <div class="tooltip-card" [style.--tooltip-color]="tooltipColor()">
+            <div class="tooltip-card glass-effect" [style.--tooltip-color]="tooltipColor()">
                 <header class="tooltip-card-header">
                     <span class="tooltip-card-dot"></span>
                     <h4 class="tooltip-card-name">{{ t.name }}</h4>
@@ -29,14 +29,14 @@
                 </div>
             </div>
         } @else {
-            <div class="tooltip-card tooltip-card-empty">
+            <div class="tooltip-card tooltip-card-empty glass-effect">
                 <span>אין מידע זמין</span>
             </div>
         }
     }
     @case ('genetics') {
         @if (genetics(); as g) {
-            <div class="tooltip-card" [style.--tooltip-color]="tooltipColor()">
+            <div class="tooltip-card glass-effect" [style.--tooltip-color]="tooltipColor()">
                 <header class="tooltip-card-header">
                     <span class="tooltip-card-dot"></span>
                     <h4 class="tooltip-card-name">{{ g.name }}</h4>
@@ -104,7 +104,7 @@
                 </div>
             </div>
         } @else {
-            <div class="tooltip-card tooltip-card-empty">
+            <div class="tooltip-card tooltip-card-empty glass-effect">
                 <span>אין מידע זמין</span>
             </div>
         }

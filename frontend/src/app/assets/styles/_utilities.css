@@ -452,19 +452,38 @@
   flex-shrink: 0;
 }
 
-/* Canonical delete confirmation strip — used in sidebar + chat history */
+
+
 .delete-confirmation {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
 
-.warning-text {
-  color: var(--color-danger);
-}
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-8);
+  width: 100%;
+  height: calc(40px + var(--space-6) * 2);
 
-.action-btns {
-  display: flex;
+  .warning-text {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-4);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+    color: var(--color-danger);
+
+    flex: 1;
+
+    .ph {
+      font-size: var(--font-size-md);
+    }
+  }
+
+  .action-btns {
+    display: inline-flex;
+    gap: var(--space-4);
+    flex: 0 0 auto;
+  }
 }
 
 /* Canonical user profile — avatar + name layout */
@@ -602,12 +621,10 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    color-mix(in srgb, var(--color-primary) 35%, transparent) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--color-primary) 35%, transparent) 50%,
+      transparent 100%);
   background-size: 200% 100%;
   animation: shimmer-sweep 1.5s linear infinite;
 }
@@ -643,12 +660,10 @@
 
 .shimmer-text {
   color: color-mix(in srgb, var(--color-text-muted) 60%, transparent);
-  background: linear-gradient(
-    90deg,
-    var(--color-text-muted) 0%,
-    color-mix(in srgb, var(--color-text-primary) 100%, transparent) 50%,
-    var(--color-text-muted) 100%
-  );
+  background: linear-gradient(90deg,
+      var(--color-text-muted) 0%,
+      color-mix(in srgb, var(--color-text-primary) 100%, transparent) 50%,
+      var(--color-text-muted) 100%);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -661,6 +676,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .shimmer::before,
   .shimmer-text {
     animation: none;
@@ -676,4 +692,3 @@
     color: color-mix(in srgb, var(--color-text-muted) 60%, transparent);
   }
 }
-

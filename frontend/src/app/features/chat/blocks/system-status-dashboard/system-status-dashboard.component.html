@@ -1,6 +1,6 @@
 <div class="status-dashboard glass-effect fade-in">
     <div class="metrics-row">
-        <div class="metric-card">
+        <div class="metric-card metric-card-row">
             <span class="ph ph-users metric-icon"></span>
             <div class="metric-info">
                 <span class="metric-value">{{ data().totalUsers ?? '—' }}</span>
@@ -8,7 +8,7 @@
             </div>
         </div>
 
-        <div class="metric-card">
+        <div class="metric-card metric-card-row">
             <span class="ph ph-chart-bar metric-icon"></span>
             <div class="metric-info">
                 <span class="metric-value">{{ data().activeSessions ?? '—' }}</span>
@@ -16,7 +16,7 @@
             </div>
         </div>
 
-        <div class="metric-card">
+        <div class="metric-card metric-card-row">
             <span class="ph ph-check-circle metric-icon" [class.status-up]="isSwaggerUp()" [class.status-down]="!isSwaggerUp()"></span>
             <div class="metric-info">
                 <span class="metric-value" [class.status-up]="isSwaggerUp()" [class.status-down]="!isSwaggerUp()">{{ data().swaggerStatus ?? '—' }}</span>
