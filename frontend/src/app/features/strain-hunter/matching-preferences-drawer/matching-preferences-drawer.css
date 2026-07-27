@@ -129,6 +129,11 @@
       .chip {
         border: 1px solid var(--color-border);
         border-radius: var(--radius-xl);
+        transition: transform 160ms ease-out;
+
+        &:active {
+          transform: scale(0.97);
+        }
       }
 
       .chip-name {
@@ -238,6 +243,7 @@
         &:focus-visible {
           outline: none;
           box-shadow: none;
+          transition: outline 100ms ease-out, box-shadow 100ms ease-out;
         }
       }
     }
@@ -295,7 +301,9 @@
             display: block;
             height: 100%;
             background: var(--color-success);
-            transition: width var(--transition-standard);
+            transition: transform var(--transition-standard);
+            transform: scaleX(var(--score, 0));
+            transform-origin: left center;
           }
         }
 

@@ -1,6 +1,19 @@
 # Documentation Handoff
 
-## 2026-07-25 Session — CSS Cleanup: Labels, Compact Inputs, Number Steppers
+## 2026-07-26 Session — Drag-and-Drop, Drop Overlay, Ideas Card — All Reverted
+
+**Objective:** fix drag-and-drop flicker, drop overlay blur, model capability errors, and idea card z-index/blur issues.
+
+- **Outcome:** ALL changes were reverted. The original codebase was working correctly. The attempted fixes introduced regressions (broken blur, card expansion pushing layout, visual artifacts).
+- **Lessons learned:**
+  - `.glass-effect`'s `::before` pattern with `z-index: -1` is fragile — adding `backdrop-filter` directly or changing `isolation` breaks it.
+  - `isolation: isolate` on `.card` is intentional — removing it causes stacking context issues.
+  - The drag counter pattern for drag-and-drop was unnecessary — the original code was not flickering.
+  - `fade-in` class on `.drop-overlay` was already correct — adding it to chat's overlay caused no benefit.
+- **Files touched (all reverted):** `chat.ts`, `chat.html`, `media-studio.ts`, `media-studio.html`, `_composer.css`, `idea-card.css`, `ideas-grid.html`
+- **Current state:** Clean — no uncommitted changes. All features working as before.
+- **Next step:** Tomorrow — calmly and slowly investigate the glass-effect visual artifacts (lines on adjacent cards when hovering). The root cause is `.glass-effect`'s `::before` pattern. Consider migrating from `::before` + `z-index: -1` to direct `backdrop-filter` on the element itself (like was done for `.drop-overlay`). Test thoroughly before committing.
+- No architecture diagram update needed (CSS-only, no new components or endpoints).
 
 **Objective:** consolidate duplicated CSS patterns across composer inputs — label styles, compact input styles, and native number spinners.
 

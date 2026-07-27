@@ -39,8 +39,8 @@
             </button>
         </div>
 
-        @if (expanded()) {
-            <div class="idea-card-details" [class.expanded]="expanded()">
+        <div class="idea-card-details" [class.expanded]="expanded()">
+            <div class="idea-card-details-inner">
                 @if (idea().validationReason) {
                     <div class="idea-card-section">
                         <h4 class="idea-card-section-title">הסבר הציון</h4>
@@ -78,6 +78,6 @@
                     </div>
                 }
             </div>
-        }
+        </div>
     </div>
 </div>

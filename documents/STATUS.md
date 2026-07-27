@@ -1,6 +1,15 @@
 # Project Documentation Status
 
-Last updated: 2026-07-25
+Last updated: 2026-07-26
+
+## 2026-07-26 Session — Drag-and-Drop, Drop Overlay, Ideas Card — All Reverted
+
+- Attempted fixes for drag-and-drop flicker, drop overlay blur, model capability errors, and idea card z-index/blur issues.
+- ALL changes were reverted — original code was working correctly.
+- Key lesson: `.glass-effect`'s `::before` pattern is fragile; do not modify `isolation`, `z-index`, or `backdrop-filter` without testing all adjacent cards.
+- Files touched (all reverted): `chat.ts`, `chat.html`, `media-studio.ts`, `media-studio.html`, `_composer.css`, `idea-card.css`, `ideas-grid.html`
+- Current state: Clean — no uncommitted changes. All features working.
+- Next: Tomorrow — investigate glass-effect artifacts slowly and carefully.
 
 ## 2026-07-25 Session — CSS Cleanup: Labels, Compact Inputs, Number Steppers
 

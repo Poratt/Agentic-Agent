@@ -147,7 +147,7 @@
                                 <span class="preview-score">{{ entry.score }}</span>
                             </div>
                             <div class="preview-bar">
-                                <span class="preview-bar-fill" [style.width.%]="entry.score"></span>
+                                <span class="preview-bar-fill" [style.--score]="entry.score / 100"></span>
                             </div>
                             @if (entry.penalty && entry.penaltyIngredient) {
                                 <span class="preview-penalty">⛔ {{ entry.penaltyIngredient }}</span>

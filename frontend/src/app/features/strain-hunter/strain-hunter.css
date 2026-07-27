@@ -18,6 +18,10 @@
       margin-top: auto;
       cursor: pointer;
       transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+
+      &:active {
+        transform: scale(0.97);
+      }
     }
 
     .left-side,
@@ -148,6 +152,11 @@
       font-weight: var(--font-weight-semibold);
       cursor: pointer;
       line-height: 1.1;
+      transition: transform 160ms ease-out;
+
+      &:active {
+        transform: scale(0.97);
+      }
 
       &.package-badge {
         background: var(--color-primary-glow-bg);
@@ -209,7 +218,11 @@
     color: inherit;
     cursor: pointer;
     font: inherit;
-    transition: var(--transition-fast);
+    transition: var(--transition-fast), transform 160ms ease-out;
+
+    &:active {
+      transform: scale(0.97);
+    }
   }
 
   /* Pin the "last updated" cell width so the pill doesn't shift between
@@ -332,11 +345,7 @@
     animation: spin 0.8s linear infinite;
   }
 
-  .match-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
+
 
   .score-ring-wrapper {
     position: relative;
