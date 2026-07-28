@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, effect, computed } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, effect, computed, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Select } from 'primeng/select';
@@ -12,7 +12,10 @@ import { LlmProviderStore } from '../../../core/store/llm-provider.store';
   templateUrl: './ideas-form.html',
   changeDetection: ChangeDetectionStrategy.Eager,
 })
-export class IdeasForm {
+export class IdeasForm implements OnInit {
+  @ViewChild('domainInput', { static: true })
+  private domainInput?: ElementRef<HTMLInputElement>;
+
   protected store = inject(IdeasStore);
   protected llmProviderStore = inject(LlmProviderStore);
   private fb = inject(FormBuilder);
@@ -26,6 +29,10 @@ export class IdeasForm {
   });
 
   canGenerate = computed(() => this.store.domain().trim().length > 0);
+
+  ngOnInit(): void {
+    this.domainInput?.nativeElement.focus();
+  }
 
   constructor() {
     effect(() => {

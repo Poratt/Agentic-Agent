@@ -29,7 +29,7 @@
                             @if (hasCategoryPreferences(group.category)) {
                                 <button
                                     type="button"
-                                    class="button icon-only md bordered"
+                                    class="button icon-only sm transparent-btn reset-btn"
                                     (click)="resetCategory(group.category)"
                                     [attr.aria-label]="'איפוס ' + group.title"
                                     appTooltip
@@ -131,9 +131,15 @@
                     <h4>5 מובילים</h4>
                 </div>
                 @if (hasPreferences()) {
-                    <button class="transparent-btn bordered" type="button" (click)="reset()">
+                    <button
+                        class="button icon-only sm transparent-btn reset-btn"
+                        type="button"
+                        (click)="reset()"
+                        aria-label="איפוס הכל"
+                        appTooltip
+                        text="איפוס הכל"
+                    >
                         <span class="ph ph-arrow-counter-clockwise"></span>
-                        איפוס
                     </button>
                 }
             </header>

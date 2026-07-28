@@ -5,11 +5,14 @@ import { Select } from 'primeng/select';
 import { TooltipDirective } from '../../core/directives/tooltip.directive';
 import { LlmProviderStore } from '../../core/store/llm-provider.store';
 import { MediaService, MediaImageResult, MediaVideoTask, MediaVideoResult } from '../../core/services/media.service';
+import { FloatLabelModule } from 'primeng/floatlabel';
+
+
 
 @Component({
     selector: 'app-media-studio',
     standalone: true,
-    imports: [CommonModule, FormsModule, Select, TooltipDirective],
+    imports: [CommonModule, FormsModule, Select, FloatLabelModule, TooltipDirective],
     templateUrl: './media-studio.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './media-studio.css',
@@ -17,6 +20,8 @@ import { MediaService, MediaImageResult, MediaVideoTask, MediaVideoResult } from
 export class MediaStudio implements OnInit, OnDestroy {
     @ViewChild('fileInput')
     private fileInput?: ElementRef<HTMLInputElement>;
+    @ViewChild('promptTextarea', { static: true })
+    private promptTextarea?: ElementRef<HTMLTextAreaElement>;
 
     protected llmProviderStore = inject(LlmProviderStore);
     private mediaService = inject(MediaService);
@@ -24,6 +29,7 @@ export class MediaStudio implements OnInit, OnDestroy {
     activeTab = signal<'image' | 'video'>('image');
 
     isDragging = signal(false);
+    private dragCounter = 0;
     selectedImagePreview = signal<string | null>(null);
 
     imageModels = this.llmProviderStore.imageModels;
@@ -168,6 +174,7 @@ export class MediaStudio implements OnInit, OnDestroy {
     imageTier = computed(() => ['1K', '2K', '3K', '4K'].includes(this.imageSize()));
 
     ngOnInit(): void {
+        this.promptTextarea?.nativeElement.focus();
         this.llmProviderStore.reload();
         const imgs = this.imageModels();
         if (imgs.length > 0 && this.imageModelId() == null) {
@@ -307,6 +314,7 @@ export class MediaStudio implements OnInit, OnDestroy {
 
     onDragOver(event: DragEvent): void {
         event.preventDefault();
+        this.dragCounter++;
         this.isDragging.set(true);
         if (event.dataTransfer) {
             event.dataTransfer.dropEffect = 'copy';
@@ -314,11 +322,16 @@ export class MediaStudio implements OnInit, OnDestroy {
     }
 
     onDragLeave(event: DragEvent): void {
-        this.isDragging.set(false);
+        this.dragCounter--;
+        if (this.dragCounter <= 0) {
+            this.dragCounter = 0;
+            this.isDragging.set(false);
+        }
     }
 
     onDrop(event: DragEvent): void {
         event.preventDefault();
+        this.dragCounter = 0;
         this.isDragging.set(false);
 
         const file = event.dataTransfer?.files[0];

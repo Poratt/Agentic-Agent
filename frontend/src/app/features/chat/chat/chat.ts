@@ -91,6 +91,7 @@ export class Chat implements OnInit, OnDestroy {
     activeAssistantIndex = signal<number | null>(null);
     activeStreamState = signal<ChatMessageStreamState>('idle');
     isDragging = signal<boolean>(false);
+    private dragCounter = 0;
     selectedImageBase64 = signal<string | null>(null);
     selectedImagePreview = signal<string | null>(null);
 
@@ -177,6 +178,7 @@ export class Chat implements OnInit, OnDestroy {
 
     onDragOver(event: DragEvent): void {
         event.preventDefault();
+        this.dragCounter++;
         this.isDragging.set(true);
         if (event.dataTransfer) {
             event.dataTransfer.dropEffect = 'copy';
@@ -184,11 +186,16 @@ export class Chat implements OnInit, OnDestroy {
     }
 
     onDragLeave(event: DragEvent): void {
-        this.isDragging.set(false);
+        this.dragCounter--;
+        if (this.dragCounter <= 0) {
+            this.dragCounter = 0;
+            this.isDragging.set(false);
+        }
     }
 
     onDrop(event: DragEvent): void {
         event.preventDefault();
+        this.dragCounter = 0;
         this.isDragging.set(false);
 
         const file = event.dataTransfer?.files[0];

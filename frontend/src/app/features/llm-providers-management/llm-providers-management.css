@@ -98,7 +98,11 @@
 
         button {
             opacity: 0;
-            transition: opacity 0.15s ease;
+            transition: opacity 0.15s ease, transform 160ms ease-out;
+
+            &:active {
+                transform: scale(0.97);
+            }
         }
     }
 

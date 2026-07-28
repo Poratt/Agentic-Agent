@@ -1,7 +1,7 @@
 # CSS Files List
 
-| #   |          | Name                                                                                                    | find-animation-opportunities | emil-design-eng |
-| --- | -------- | ------------------------------------------------------------------------------------------------------- | ---------------------------- | --------------- |
+| #   |          | Name                                                                                                    | find-animation-opportunities | emil-design-eng | button overrides |
+| --- | -------- | ------------------------------------------------------------------------------------------------------- | ---------------------------- | --------------- | ---------------- |
 | 1   |          | `frontend/src/styles.css`                                                                               |
 | 2   | assets   | `frontend/src/app/assets/styles/_variables.css`                                                         |
 | 3   | assets   | `frontend/src/app/assets/styles/_utilities.css`                                                         |
@@ -20,40 +20,40 @@
 | 16  | features | `frontend/src/app/features/strain-hunter/strain-hunter.css`                                             | ✅                           | ✅              |
 | 17  | features | `frontend/src/app/features/strain-hunter/matching-preferences-drawer/matching-preferences-drawer.css`   | ✅                           | ✅              |
 | 18  | features | `frontend/src/app/features/ideas/idea-card/idea-card.css`                                               | ✅                           | ✅              |
-| 19  | features | `frontend/src/app/features/design-system/_design-system-tokens.css`                                     |
-| 20  | features | `frontend/src/app/features/design-system/_design-system-swatches.css`                                   |
-| 21  | features | `frontend/src/app/features/design-system/_design-system-showcase.css`                                   |
-| 22  | features | `frontend/src/app/features/design-system/_design-system-buttons.css`                                    |
-| 23  | features | `frontend/src/app/features/design-system/design-system.css`                                             |
-| 24  | features | `frontend/src/app/features/settings/strain-hunter-settings/strain-hunter-settings.css`                  |
-| 25  | features | `frontend/src/app/features/chat/render-host/render-host.component.css`                                  |
-| 26  | features | `frontend/src/app/features/chat/chat/chat.css`                                                          |
-| 27  | features | `frontend/src/app/features/llm-providers-management/llm-providers-management.css`                       |
-| 28  | features | `frontend/src/app/features/settings/database-monitor-settings/database-monitor-settings.css`            |
-| 29  | features | `frontend/src/app/features/chat/chat-message/chat-message.css`                                          |
-| 30  | features | `frontend/src/app/features/media-studio/media-studio.css`                                               |
-| 31  | features | `frontend/src/app/features/chat/chat-history/chat-history.css`                                          |
-| 32  | features | `frontend/src/app/features/chat/blocks/weather-summary-card/weather-summary-card.component.css`         |
-| 33  | features | `frontend/src/app/features/ideas/ideas-progress/ideas-progress.css`                                     |
-| 34  | features | `frontend/src/app/features/chat/blocks/weather-forecast/weather-forecast.component.css`                 |
-| 35  | features | `frontend/src/app/features/chat/blocks/weather-current-card/weather-current-card.component.css`         |
-| 36  | features | `frontend/src/app/features/chat/blocks/users-table/users-table.component.css`                           |
-| 37  | features | `frontend/src/app/features/chat/blocks/user-profile-card/user-profile-card.component.css`               |
-| 38  | features | `frontend/src/app/features/layout/main-sidebar/main-sidebar.css`                                        |
-| 39  | features | `frontend/src/app/features/chat/blocks/transcript-timeline/transcript-timeline.component.css`           |
-| 40  | features | `frontend/src/app/features/chat/blocks/role-change-card/role-change-card.component.css`                 |
-| 41  | features | `frontend/src/app/features/chat/blocks/register-form/register-form.component.css`                       |
-| 42  | features | `frontend/src/app/features/chat/blocks/system-status-dashboard/system-status-dashboard.component.css`   |
-| 43  | features | `frontend/src/app/features/layout/header/header.css`                                                    |
-| 44  | features | `frontend/src/app/features/chat/blocks/session-created-card/session-created-card.component.css`         |
-| 45  | features | `frontend/src/app/features/chat/blocks/llm-test-results/llm-test-results.component.css`                 |
-| 46  | features | `frontend/src/app/features/chat/blocks/analytics-chart/analytics-chart.component.css`                   |
-| 47  | features | `frontend/src/app/features/chat/blocks/agnes-image-card/agnes-image-card.component.css`                 |
-| 48  | features | `frontend/src/app/features/chat/blocks/delete-confirm-card/delete-confirm-card.component.css`           |
-| 49  | features | `frontend/src/app/features/chat/blocks/chat-sessions-list/chat-sessions-list.component.css`             |
-| 50  | features | `frontend/src/app/features/chat/blocks/currency-card/currency-card.component.css`                       |
-| 51  | features | `frontend/src/app/features/chat/blocks/agnes-video-card/agnes-video-card.component.css`                 |
-| 52  | features | `frontend/src/app/features/chat/blocks/database-storage-monitor/database-storage-monitor.component.css` |
+| 19  | features | `frontend/src/app/features/design-system/_design-system-tokens.css`                                     | ✅                           | ✅              |
+| 20  | features | `frontend/src/app/features/design-system/_design-system-swatches.css`                                   | ✅                           | ✅              |
+| 21  | features | `frontend/src/app/features/design-system/_design-system-showcase.css`                                   | ✅                           | ✅              |
+| 22  | features | `frontend/src/app/features/design-system/_design-system-buttons.css`                                    | ✅                           | ✅              |
+| 23  | features | `frontend/src/app/features/design-system/design-system.css`                                             | ✅                           | ✅              |
+| 24  | features | `frontend/src/app/features/settings/strain-hunter-settings/strain-hunter-settings.css`                  | ✅                           | ✅              |
+| 25  | features | `frontend/src/app/features/chat/render-host/render-host.component.css`                                  | ✅                           | ✅              |
+| 26  | features | `frontend/src/app/features/chat/chat/chat.css`                                                          | ✅                           | ✅              |
+| 27  | features | `frontend/src/app/features/llm-providers-management/llm-providers-management.css`                       | ✅                           | ✅              |
+| 28  | features | `frontend/src/app/features/settings/database-monitor-settings/database-monitor-settings.css`            | ✅                           | ✅              |
+| 29  | features | `frontend/src/app/features/chat/chat-message/chat-message.css`                                          | ✅                           | ✅              |
+| 30  | features | `frontend/src/app/features/media-studio/media-studio.css`                                               | ✅                           | ✅              |
+| 31  | features | `frontend/src/app/features/chat/chat-history/chat-history.css`                                          | ✅                           | ✅              |
+| 32  | features | `frontend/src/app/features/chat/blocks/weather-summary-card/weather-summary-card.component.css`         | ✅                           | ✅              |
+| 33  | features | `frontend/src/app/features/ideas/ideas-progress/ideas-progress.css`                                     | ✅                           | ✅              |
+| 34  | features | `frontend/src/app/features/chat/blocks/weather-forecast/weather-forecast.component.css`                 | ✅                           | ✅              |
+| 35  | features | `frontend/src/app/features/chat/blocks/weather-current-card/weather-current-card.component.css`         | ✅                           | ✅              |
+| 36  | features | `frontend/src/app/features/chat/blocks/users-table/users-table.component.css`                           | ✅                           | ✅              |
+| 37  | features | `frontend/src/app/features/chat/blocks/user-profile-card/user-profile-card.component.css`               | ✅                           | ✅              |
+| 38  | features | `frontend/src/app/features/layout/main-sidebar/main-sidebar.css`                                        | ✅                           | ✅              |
+| 39  | features | `frontend/src/app/features/chat/blocks/transcript-timeline/transcript-timeline.component.css`           | ✅                           | ✅              |
+| 40  | features | `frontend/src/app/features/chat/blocks/role-change-card/role-change-card.component.css`                 | ✅                           | ✅              |
+| 41  | features | `frontend/src/app/features/chat/blocks/register-form/register-form.component.css`                       | ✅                           | ✅              |
+| 42  | features | `frontend/src/app/features/chat/blocks/system-status-dashboard/system-status-dashboard.component.css`   | ✅                           | ✅              |
+| 43  | features | `frontend/src/app/features/layout/header/header.css`                                                    | ✅                           | ✅              |
+| 44  | features | `frontend/src/app/features/chat/blocks/session-created-card/session-created-card.component.css`         | ✅                           | ✅              |
+| 45  | features | `frontend/src/app/features/chat/blocks/llm-test-results/llm-test-results.component.css`                 | ✅                           | ✅              |
+| 46  | features | `frontend/src/app/features/chat/blocks/analytics-chart/analytics-chart.component.css`                   | ✅                           | ✅              |
+| 47  | features | `frontend/src/app/features/chat/blocks/agnes-image-card/agnes-image-card.component.css`                 | ✅                           | ✅              |
+| 48  | features | `frontend/src/app/features/chat/blocks/delete-confirm-card/delete-confirm-card.component.css`           | ✅                           | ✅              |
+| 49  | features | `frontend/src/app/features/chat/blocks/chat-sessions-list/chat-sessions-list.component.css`             | ✅                           | ✅              |
+| 50  | features | `frontend/src/app/features/chat/blocks/currency-card/currency-card.component.css`                       | ✅                           | ✅              |
+| 51  | features | `frontend/src/app/features/chat/blocks/agnes-video-card/agnes-video-card.component.css`                 | ✅                           | ✅              |
+| 52  | features | `frontend/src/app/features/chat/blocks/database-storage-monitor/database-storage-monitor.component.css` | ✅                           | ✅              |
 
 ---
 
@@ -101,7 +101,7 @@
 
 ---
 
-| 18  | features | `frontend/src/app/features/ideas/idea-card/idea-card.css` |
+| 18 | features | `frontend/src/app/features/ideas/idea-card/idea-card.css` |
 
 ### #18 — `idea-card.css`
 
@@ -123,6 +123,7 @@
 - `.tag` stagger — rejected: information-dense; handled by global `stagger` class if desired, out of scope for this file
 
 **Applied:**
+
 - `idea-card.css` — kept `.idea-card-wrapper` (re-added with the corrected `.idea-card` positioning: `top/left/right` + `width:100%`, **no `bottom`**) and the original `:has(.expanded)` `z-index`/`box-shadow` transitions unchanged · restructured `.idea-card .idea-card-details` from `display: flex` to `display: grid; grid-template-rows: 0fr; opacity: 0; overflow: hidden` with `&.expanded { 1fr; opacity: 1 }` and `var(--transition-standard)` on both properties · added `.idea-card-details-inner` flex column carrying `border-top`/`padding-top`/`gap`/`min-height: 0` (the inner wrapper, not the grid container)
 - `idea-card.html` — replaced `@if (expanded()) { <div .idea-card-details>… }` with always-rendered `<div .idea-card-details [class.expanded]="expanded()"><div .idea-card-details-inner>…</div></div>`
 

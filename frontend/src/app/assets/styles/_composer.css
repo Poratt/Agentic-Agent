@@ -9,6 +9,7 @@
  */
 
 .composer-area {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -190,19 +191,22 @@
  */
 .drop-overlay {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: var(--space-6);
-    background: color-mix(in srgb, var(--glass-bg) 80%, transparent);
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
     border: 2px dashed var(--color-primary);
     border-radius: var(--radius-lg);
     color: var(--color-primary);
     font-size: var(--font-size-md);
     font-weight: var(--font-weight-medium);
-    z-index: 5;
+    z-index: 15;
     pointer-events: none;
 
     &::before {

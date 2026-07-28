@@ -1,5 +1,27 @@
 # Documentation Handoff
 
+## 2026-07-28 Session — CSS Animation Audit, Page Layout Unification, Drag-and-Drop Fix
+
+**CSS Animation Audit (files #16-52):** All feature CSS files audited with `find-animation-opportunities` and `emil-design-eng` skills. Key fixes: `:active scale(0.97)` on buttons/interactive elements; GPU-accelerated `scaleX()` replacing `width` transitions on progress bars (chat system-status, database-monitor-settings, database-storage-monitor, media-studio); grid-rows expand/collapse animation on idea-card; `.preview-bar-fill` transform-origin fixed to `right center` for RTL; removed dead `.match-btn` rule; theme toggle transition added; `prefers-reduced-motion` verified in multiple files; removed `scale(0.97)` from `.session-row` (looked bad on list items); added `slide-up` class to ideas-form and media-studio composer areas.
+
+**Settings Design System tab:** Added `DesignSystem` component import to `settings.ts`, added tab `value="3"` with Hebrew label "מערכת עיצוב" to `settings.html`.
+
+**Matching preferences drawer reset buttons:** Changed all3 reset buttons to `button icon-only sm transparent-btn reset-btn`, removed text label from third button, added tooltip to third button.
+
+**Page layout unification:** Made all3 composer pages (chat, ideas, media-studio) use `page-content flush`. Added `overflow: hidden` to `.page-content.flush` to prevent scrollbar flash during `slideUp` animation. Removed duplicate layout overrides from `chat.css` (`.chat-root-container`) and `media-studio.css` (`.page-content`). Added `position: relative` to `.composer-area`.
+
+**Drag-and-drop fix:** Moved drag handlers to root `page-content`, visual overlay into `composer-area`. Added drag counter pattern to prevent flickering. Fixed `z-index` (5→15) and background opacity. Applied user's preferred `.drop-overlay` CSS with `top:0; left:4px; right:4px; bottom:4px`.
+
+**Auto-focus:** Added auto-focus to ideas-form domain input and media-studio textarea via `@ViewChild` + `ngOnInit`.
+
+- **Completed:** CSS animation audit #16-52, Settings Design System tab, matching-preferences-drawer reset buttons, page layout unification, drag-and-drop fix, auto-focus for ideas/media-studio
+- **Files touched:** `_layout.css` (modified), `_composer.css` (modified), `chat.html` (modified), `chat.css` (modified), `chat.ts` (modified), `media-studio.html` (modified), `media-studio.css` (modified), `media-studio.ts` (modified), `ideas-form.html` (modified), `ideas-form.ts` (modified), `settings.ts` (modified), `settings.html` (modified), `matching-preferences-drawer.html` (modified), `matching-preferences-drawer.css` (modified)
+- **Verification:** no build/lint/test verification performed this session (CSS/HTML/TS changes only)
+- **Decisions made:** `.flush` class is necessary (5 pages use `page-content` without it); drop overlay covers only composer area (user confirmed); all3 composer pages share same layout via `.flush`; drag counter pattern for flickering prevention; auto-focus on primary input for all composer pages
+- **Open questions for the user:** none
+- **Next exact step:** pick up the next active plan from `documents/features/todo/` — either `dynamic-pharm-scraping-plan.md` or `provider-and-llm-db-plan.md`
+- No architecture diagram update needed (CSS/layout-only, no new components or endpoints)
+
 ## 2026-07-26 Session — Drag-and-Drop, Drop Overlay, Ideas Card — All Reverted
 
 **Objective:** fix drag-and-drop flicker, drop overlay blur, model capability errors, and idea card z-index/blur issues.

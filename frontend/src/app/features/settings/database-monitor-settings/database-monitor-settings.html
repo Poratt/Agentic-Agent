@@ -16,12 +16,15 @@
 } @else if (data(); as d) {
     <div class="db-monitor">
         <div class="db-metrics">
-            @for (m of [
-                { icon: 'ph-database', value: d.totalSizeFormatted, label: 'גודל כולל' },
-                { icon: 'ph-table', value: d.tableCount, label: 'טבלאות' },
-                { icon: 'ph-rows', value: (d.totalRows | number), label: 'שורות כולל' },
-                { icon: 'ph-arrows-out-simple', value: d.largestTableName, label: 'הטבלה הגדולה ביותר', truncate: true }
-            ]; track m.label) {
+            @for (
+                m of [
+                    { icon: 'ph-database', value: d.totalSizeFormatted, label: 'גודל כולל' },
+                    { icon: 'ph-table', value: d.tableCount, label: 'טבלאות' },
+                    { icon: 'ph-rows', value: (d.totalRows | number), label: 'שורות כולל' },
+                    { icon: 'ph-arrows-out-simple', value: d.largestTableName, label: 'הטבלה הגדולה ביותר', truncate: true },
+                ];
+                track m.label
+            ) {
                 @if (m.value) {
                     <div class="glass-effect card db-metric">
                         <span class="ph {{ m.icon }} icon-tile metric-icon"></span>
@@ -73,7 +76,7 @@
                             <span class="row-meta row-meta--xs">{{ table.totalSizeFormatted }}</span>
                         </div>
                         <div class="db-bar-track">
-                            <div class="db-bar-fill" [style.width]="getBarWidth(table.percentOfDatabase)"></div>
+                            <div class="db-bar-fill" [style.--bar-width]="getBarWidth(table.percentOfDatabase)"></div>
                         </div>
                         <div class="db-table-chips">
                             <span class="db-stat-pill tag-muted"><i class="ph ph-rows"></i> {{ table.rowCount | number }} שורות</span>

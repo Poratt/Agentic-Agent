@@ -169,7 +169,9 @@
         .percent-fill {
             height: 100%;
             border-radius: var(--radius-pill);
-            transition: width 0.5s ease-out;
+            transform-origin: left;
+            transform: scaleX(var(--bar-width, 0));
+            transition: transform 0.5s ease-out;
         }
 
         .percent-value {

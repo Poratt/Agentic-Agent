@@ -72,12 +72,6 @@ select {
     color: var(--color-text-disabled);
   }
 
-  &:focus {
-    outline: none;
-    border-color: var(--color-primary-glow);
-    box-shadow: 0 0 0 2px var(--color-primary-glow);
-  }
-
   &.xs {
     width: 48px;
     padding: 0 var(--space-2);

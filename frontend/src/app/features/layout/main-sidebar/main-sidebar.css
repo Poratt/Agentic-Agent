@@ -50,19 +50,23 @@
 				}
 			}
 
-			.hidden-btn {
-				flex: 0 0 auto;
-				opacity: 0;
-				scale: 0;
-				transition:
-					opacity var(--transition-fast),
-					transform var(--transition-fast),
-					scale var(--transition-fast);
+		.hidden-btn {
+			flex: 0 0 auto;
+			opacity: 0;
+			scale: 0;
+			transition:
+				opacity var(--transition-fast),
+				transform var(--transition-fast),
+				scale var(--transition-fast);
 
-				&.color-danger:hover {
-					color: var(--color-danger)
-				}
+			&:active {
+				transform: scale(0.97);
 			}
+
+			&.color-danger:hover {
+				color: var(--color-danger)
+			}
+		}
 
 			&:is(:hover) {
 				background: var(--color-surface-hover);
@@ -168,9 +172,14 @@
 			color: var(--color-text-secondary);
 			transition:
 				background-color var(--transition-fast),
-				color var(--transition-fast);
+				color var(--transition-fast),
+				transform 160ms ease-out;
 			cursor: pointer;
 			text-align: start;
+
+			&:active {
+				transform: scale(0.97);
+			}
 
 			.nav-label {
 				flex: 1;

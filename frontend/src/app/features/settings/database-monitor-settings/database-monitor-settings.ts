@@ -67,7 +67,7 @@ export class DatabaseMonitorSettings implements OnInit {
     }
 
     getBarWidth(percent: number): string {
-        return `${Math.max(1, percent)}%`;
+        return `${Math.max(1, percent) / 100}`;
     }
 
     getChartColor(index: number): string {

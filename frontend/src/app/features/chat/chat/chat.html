@@ -1,11 +1,4 @@
-<div class="page-content chat-root-container" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
-    @if (isDragging()) {
-        <div class="drop-overlay" aria-hidden="true">
-            <span class="ph ph-cloud-arrow-up xl"></span>
-            <p>שחרר את התמונה כאן</p>
-        </div>
-    }
-
+<div class="page-content flush chat-root-container" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
     @if (historyLoading()) {
         <div class="chat-history-loader">
             <span class="custom-loader"></span>
@@ -65,7 +58,13 @@
         </div>
     }
 
-    <div class="composer-area">
+    <div class="composer-area slide-up">
+        @if (isDragging()) {
+            <div class="drop-overlay" aria-hidden="true">
+                <span class="ph ph-cloud-arrow-up xl"></span>
+                <p>שחרר את התמונה כאן</p>
+            </div>
+        }
         @if (actionError()) {
             <div class="chat-action-error" role="alert">{{ actionError() }}</div>
         }

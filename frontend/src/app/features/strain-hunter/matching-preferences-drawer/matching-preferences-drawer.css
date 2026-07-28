@@ -9,6 +9,10 @@
   }
 }
 
+.reset-btn {
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
 .drawer-body {
   display: flex;
   flex-direction: column;
@@ -303,7 +307,7 @@
             background: var(--color-success);
             transition: transform var(--transition-standard);
             transform: scaleX(var(--score, 0));
-            transform-origin: left center;
+            transform-origin: right center;
           }
         }
 

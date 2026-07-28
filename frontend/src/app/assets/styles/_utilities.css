@@ -121,10 +121,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  padding: 3px var(--space-6);
+  gap: var(--space-1);
+  padding: 2px var(--space-4);
   border-radius: var(--radius-pill);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-xxs);
   font-weight: var(--font-weight-semibold);
   border: 1px solid transparent;
   letter-spacing: 0.01em;

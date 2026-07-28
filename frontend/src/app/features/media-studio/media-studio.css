@@ -1,9 +1,4 @@
 .page-content {
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-	padding: 0;
-	position: relative;
 
 	.media-results {
 		display: flex;
@@ -103,7 +98,7 @@
 			font-size: var(--font-size-xxs);
 			border-radius: var(--radius-pill);
 			cursor: pointer;
-			transition: color 220ms ease;
+			transition: color 220ms ease, transform 160ms ease-out;
 
 			.ph {
 				font-size: var(--font-size-xs);
@@ -111,6 +106,10 @@
 
 			&:hover {
 				color: var(--color-text-primary);
+			}
+
+			&:active {
+				transform: scale(0.97);
 			}
 
 			&.active {
@@ -142,6 +141,11 @@
 		display: inline-flex;
 		align-items: center;
 		cursor: pointer;
+		transition: transform 160ms ease-out;
+
+		&:active {
+			transform: scale(0.97);
+		}
 
 		input.hidden {
 			display: none;

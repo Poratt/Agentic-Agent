@@ -52,7 +52,7 @@
                     <span class="table-size">{{ table.totalSizeFormatted }}</span>
                     <div class="table-percent">
                         <div class="percent-bar">
-                            <div class="percent-fill" [style.width.%]="barWidth(table)" [style.background]="tableColor($index)"></div>
+                            <div class="percent-fill" [style.--bar-width]="barWidth(table) / 100" [style.background]="tableColor($index)"></div>
                         </div>
                         <span class="percent-value">{{ table.percentOfDatabase }}%</span>
                     </div>

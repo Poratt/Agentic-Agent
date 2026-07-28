@@ -171,7 +171,9 @@
         border-radius: var(--radius-pill);
         background: var(--color-primary);
         min-width: 1px;
-        transition: width var(--transition-standard);
+        transform-origin: left;
+        transform: scaleX(var(--bar-width, 0));
+        transition: transform var(--transition-standard);
     }
 
     .db-table-chips {

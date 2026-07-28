@@ -1,6 +1,21 @@
 # Project Documentation Status
 
-Last updated: 2026-07-26
+Last updated: 2026-07-28
+
+## 2026-07-28 Session — CSS Animation Audit, Page Layout Unification, Drag-and-Drop Fix
+
+- Completed: CSS animation audit for all feature CSS files (#16-52) with `find-animation-opportunities` and `emil-design-eng` skills
+- Completed: `:active scale(0.97)` on buttons/interactive elements in multiple files
+- Completed: GPU-accelerated `scaleX()` replacing `width` transitions on progress bars (system-status, database-monitor-settings, database-storage-monitor, media-studio)
+- Completed: grid-rows expand/collapse animation on idea-card, `.preview-bar-fill` RTL transform-origin fix
+- Completed: Settings Design System tab (tab value="3", Hebrew label "מערכת עיצוב")
+- Completed: matching-preferences-drawer reset buttons — all3 changed to `button icon-only sm transparent-btn reset-btn`
+- Completed: page layout unification — all3 composer pages use `page-content flush`, removed duplicate layout overrides from `chat.css` and `media-studio.css`
+- Completed: drag-and-drop fix — drag counter pattern, overlay moved to composer-area, z-index/background fixes
+- Completed: auto-focus for ideas-form domain input and media-studio textarea
+- Files: `_layout.css`, `_composer.css`, `chat.html`, `chat.css`, `chat.ts`, `media-studio.html`, `media-studio.css`, `media-studio.ts`, `ideas-form.html`, `ideas-form.ts`, `settings.ts`, `settings.html`, `matching-preferences-drawer.html`, `matching-preferences-drawer.css`
+- Current state: no build verification performed this session (CSS/HTML/TS changes only)
+- Next: pick up active plans from `documents/features/todo/`
 
 ## 2026-07-26 Session — Drag-and-Drop, Drop Overlay, Ideas Card — All Reverted
 

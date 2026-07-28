@@ -1,7 +1,8 @@
-<div class="composer-area">
+<div class="composer-area slide-up">
     <form [formGroup]="ideasForm" (ngSubmit)="onGenerate()">
         <div class="composer-field">
             <input
+                #domainInput
                 id="ideas-domain"
                 type="text"
                 formControlName="domain"

@@ -46,7 +46,7 @@
                 <div class="bar-row">
                     <span class="bar-label">{{ bar.label }}</span>
                     <div class="bar-track">
-                        <div class="bar-fill" [style.width.%]="(bar.value / maxValue()) * 100" [style.background]="bar.color"></div>
+                        <div class="bar-fill" [style.--bar-width]="bar.value / maxValue()" [style.background]="bar.color"></div>
                     </div>
                     <span class="bar-value">{{ bar.value }}</span>
                 </div>
