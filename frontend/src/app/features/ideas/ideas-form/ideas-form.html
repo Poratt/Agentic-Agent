@@ -16,8 +16,9 @@
 
             <div class="composer-meta-row">
                 <div class="composer-count">
-                    <label for="ideas-count">מספר רעיונות</label>
-                    <div class="number-stepper">
+                    <div class="form-group-float">
+                        <label class="float-label">כמות</label>
+                        <div class="number-stepper">
                         <input
                             id="ideas-count"
                             type="number"
@@ -38,21 +39,24 @@
                             </button>
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <div class="composer-actions">
-                    <p-select
-                        [options]="models()"
-                        formControlName="model"
-                        [group]="true"
-                        optionGroupLabel="label"
-                        optionLabel="label"
-                        optionValue="id"
-                        placeholder="בחר מודל"
-                        appendTo="body"
-                        size="small"
-                        class="custom-select transparent"
-                    >
+                    <div class="form-group-float">
+                        <label class="float-label">מודל</label>
+                        <p-select
+                            [options]="models()"
+                            formControlName="model"
+                            [group]="true"
+                            optionGroupLabel="label"
+                            optionLabel="label"
+                            optionValue="id"
+                            placeholder="בחר מודל"
+                            appendTo="body"
+                            size="small"
+                            class="custom-select transparent"
+                        >
                         <ng-template let-group #group>
                             <span class="group-label">
                                 {{ group.label }}
@@ -97,6 +101,7 @@
                             </div>
                         </ng-template>
                     </p-select>
+                    </div>
 
                     <button
                         [type]="store.loading() ? 'button' : 'submit'"

@@ -25,7 +25,7 @@ select {
   &:focus {
     background: var(--color-input-bg);
     border-color: var(--color-primary-glow);
-    box-shadow: 0 0 0 2px var(--color-primary-glow);
+    box-shadow: 0 0 0 1px var(--color-primary-glow);
   }
 
   &:hover:not(:focus):not(:disabled) {
@@ -121,7 +121,7 @@ select {
     &:focus {
       outline: none;
       border-color: var(--color-primary-glow);
-      box-shadow: 0 0 0 2px var(--color-primary-glow);
+      box-shadow: 0 0 0 1px var(--color-primary-glow);
     }
   }
 
@@ -162,12 +162,54 @@ select {
 
 .p-inputtext.p-variant-filled:enabled:focus {
   border-color: var(--color-primary-glow);
-  box-shadow: 0 0 0 2px var(--color-primary-glow);
+  box-shadow: 0 0 0 1px var(--color-primary-glow);
   background: var(--color-input-bg);
 
 }
 
 /* ── Utilities ───────────────────────────────────────────────────────────── */
+.form-group-float {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
+  .float-label {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0 var(--space-2);
+    font-size: 9px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: 0.03em;
+    line-height: 1;
+    color: var(--color-text-secondary);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid transparent;
+    border-radius: var(--radius-xs);
+    z-index: 1;
+    pointer-events: none;
+    transform: translateY(-50%);
+    transition:
+      color 280ms cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 280ms cubic-bezier(0.4, 0, 0.2, 1),
+      background 280ms cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &:focus-within .float-label {
+    color: var(--color-primary);
+    background: color-mix(in srgb, var(--glass-bg) 95%, var(--color-primary) 5%);
+    box-shadow: 0 0 8px -2px var(--color-primary-glow);
+  }
+
+  &:focus-within .float-label {
+    color: var(--color-primary);
+    background: color-mix(in srgb, var(--glass-bg) 95%, var(--color-primary) 5%);
+    box-shadow: 0 0 8px -2px var(--color-primary-glow);
+  }
+}
 
 .form-group {
   display: flex;

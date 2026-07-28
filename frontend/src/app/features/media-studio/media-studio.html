@@ -143,24 +143,136 @@
                                 />
                                 <span class="base64-toggle-label">Base64</span>
                             </label>
-                            <label class="option-label-sm" for="image-size">גודל</label>
+                            <div class="form-group-float">
+                                <label class="float-label" for="image-size">גודל</label>
+                                <p-select
+                                    id="image-size"
+                                    [options]="imageSizeOptions"
+                                    [ngModel]="imageSize()"
+                                    (ngModelChange)="imageSize.set($event)"
+                                    [group]="true"
+                                    optionGroupLabel="label"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    appendTo="body"
+                                    size="small"
+                                    class="custom-select transparent"
+                                    name="imageSize"
+                                >
+                                    <ng-template let-group #group>
+                                        <span class="group-label">{{ group.label }}</span>
+                                    </ng-template>
+                                    <ng-template let-item #item>
+                                        <div class="select-option">
+                                            <div class="select-option-main">
+                                                <span class="item-name">{{ item.label }}</span>
+                                            </div>
+                                        </div>
+                                    </ng-template>
+                                </p-select>
+                            </div>
+                            @if (imageTier()) {
+                                <div class="form-group-float">
+                                    <label class="float-label" for="image-ratio">יחס</label>
+                                    <input
+                                        id="image-ratio"
+                                        type="text"
+                                        class="compact-input md"
+                                        [ngModel]="imageRatio()"
+                                        (ngModelChange)="imageRatio.set($event)"
+                                        name="imageRatio"
+                                        placeholder="לדוגמה 16:9"
+                                    />
+                                </div>
+                            }
+                        } @else {
+                            <div class="options-row">
+                                <div class="form-group-float">
+                                    <label class="float-label" for="video-mode">מצב</label>
+                                    <p-select
+                                        id="video-mode"
+                                        [options]="videoModeOptions"
+                                        [ngModel]="videoMode()"
+                                        (ngModelChange)="videoMode.set($event)"
+                                        optionLabel="label"
+                                        optionValue="value"
+                                        appendTo="body"
+                                        size="small"
+                                        class="custom-select transparent"
+                                        name="videoMode"
+                                    >
+                                        <ng-template let-item #item>
+                                            <div class="select-option rtl">
+                                                <span class="item-name">{{ item.label }}</span>
+                                            </div>
+                                        </ng-template>
+                                    </p-select>
+                                </div>
+
+                                <div class="form-group-float">
+                                    <label class="float-label" for="video-frames">פריימים</label>
+                                    <div class="number-stepper">
+                                        <input
+                                            id="video-frames"
+                                            type="number"
+                                            class="compact-input xs"
+                                            [ngModel]="videoNumFrames()"
+                                            (ngModelChange)="videoNumFrames.set($event)"
+                                            name="videoNumFrames"
+                                            min="1"
+                                            max="441"
+                                        />
+                                        <div class="stepper-btns">
+                                            <button type="button" class="stepper-btn" (click)="incrementNumFrames()">
+                                                <span class="ph ph-caret-up"></span>
+                                            </button>
+                                            <button type="button" class="stepper-btn" (click)="decrementNumFrames()">
+                                                <span class="ph ph-caret-down"></span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group-float">
+                                    <label class="float-label" for="video-fps">fps</label>
+                                    <div class="number-stepper">
+                                        <input
+                                            id="video-fps"
+                                            type="number"
+                                            class="compact-input xs"
+                                            [ngModel]="videoFrameRate()"
+                                            (ngModelChange)="videoFrameRate.set($event)"
+                                            name="videoFrameRate"
+                                            min="1"
+                                        />
+                                        <div class="stepper-btns">
+                                            <button type="button" class="stepper-btn" (click)="incrementFrameRate()">
+                                                <span class="ph ph-caret-up"></span>
+                                            </button>
+                                            <button type="button" class="stepper-btn" (click)="decrementFrameRate()">
+                                                <span class="ph ph-caret-down"></span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="composer-actions">
+                        <div class="form-group-float">
+                            <label class="float-label">מודל</label>
                             <p-select
-                                id="image-size"
-                                [options]="imageSizeOptions"
-                                [ngModel]="imageSize()"
-                                (ngModelChange)="imageSize.set($event)"
-                                [group]="true"
-                                optionGroupLabel="label"
+                                [options]="activeModels()"
+                                [ngModel]="activeModelId()"
+                                (ngModelChange)="setActiveModelId($event)"
                                 optionLabel="label"
-                                optionValue="value"
+                                optionValue="id"
+                                placeholder="בחר מודל"
                                 appendTo="body"
                                 size="small"
                                 class="custom-select transparent"
-                                name="imageSize"
+                                name="model"
                             >
-                                <ng-template let-group #group>
-                                    <span class="group-label">{{ group.label }}</span>
-                                </ng-template>
                                 <ng-template let-item #item>
                                     <div class="select-option">
                                         <div class="select-option-main">
@@ -169,106 +281,7 @@
                                     </div>
                                 </ng-template>
                             </p-select>
-                            @if (imageTier()) {
-                                <label class="option-label-sm" for="image-ratio">יחס</label>
-                                <input
-                                    id="image-ratio"
-                                    type="text"
-                                    class="compact-input md"
-                                    [ngModel]="imageRatio()"
-                                    (ngModelChange)="imageRatio.set($event)"
-                                    name="imageRatio"
-                                    placeholder="לדוגמה 16:9"
-                                />
-                            }
-                        } @else {
-                            <div class="options-row">
-                                <label class="option-label-sm" for="video-mode">מצב</label>
-                                <p-select
-                                    id="video-mode"
-                                    [options]="videoModeOptions"
-                                    [ngModel]="videoMode()"
-                                    (ngModelChange)="videoMode.set($event)"
-                                    optionLabel="label"
-                                    optionValue="value"
-                                    appendTo="body"
-                                    size="small"
-                                    class="custom-select transparent"
-                                    name="videoMode"
-                                >
-                                    <ng-template let-item #item>
-                                        <div class="select-option rtl">
-                                            <span class="item-name">{{ item.label }}</span>
-                                        </div>
-                                    </ng-template>
-                                </p-select>
-
-                                <label class="option-label-sm" for="video-frames">פריימים</label>
-                                <div class="number-stepper">
-                                    <input
-                                        id="video-frames"
-                                        type="number"
-                                        class="compact-input xs"
-                                        [ngModel]="videoNumFrames()"
-                                        (ngModelChange)="videoNumFrames.set($event)"
-                                        name="videoNumFrames"
-                                        min="1"
-                                        max="441"
-                                    />
-                                    <div class="stepper-btns">
-                                        <button type="button" class="stepper-btn" (click)="incrementNumFrames()">
-                                            <span class="ph ph-caret-up"></span>
-                                        </button>
-                                        <button type="button" class="stepper-btn" (click)="decrementNumFrames()">
-                                            <span class="ph ph-caret-down"></span>
-                                        </button>
-                                    </div>
-                                </div>
-                                <label class="option-label-sm" for="video-fps">fps</label>
-                                <div class="number-stepper">
-                                    <input
-                                        id="video-fps"
-                                        type="number"
-                                        class="compact-input xs"
-                                        [ngModel]="videoFrameRate()"
-                                        (ngModelChange)="videoFrameRate.set($event)"
-                                        name="videoFrameRate"
-                                        min="1"
-                                    />
-                                    <div class="stepper-btns">
-                                        <button type="button" class="stepper-btn" (click)="incrementFrameRate()">
-                                            <span class="ph ph-caret-up"></span>
-                                        </button>
-                                        <button type="button" class="stepper-btn" (click)="decrementFrameRate()">
-                                            <span class="ph ph-caret-down"></span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-
-                    <div class="composer-actions">
-                        <p-select
-                            [options]="activeModels()"
-                            [ngModel]="activeModelId()"
-                            (ngModelChange)="setActiveModelId($event)"
-                            optionLabel="label"
-                            optionValue="id"
-                            placeholder="בחר מודל"
-                            appendTo="body"
-                            size="small"
-                            class="custom-select transparent"
-                            name="model"
-                        >
-                            <ng-template let-item #item>
-                                <div class="select-option">
-                                    <div class="select-option-main">
-                                        <span class="item-name">{{ item.label }}</span>
-                                    </div>
-                                </div>
-                            </ng-template>
-                        </p-select>
+                        </div>
 
                         <button
                             [type]="isLoading() ? 'button' : 'submit'"
