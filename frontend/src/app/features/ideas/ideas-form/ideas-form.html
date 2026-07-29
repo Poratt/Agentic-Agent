@@ -43,20 +43,18 @@
                 </div>
 
                 <div class="composer-actions">
-                    <div class="form-group-float">
-                        <label class="float-label">מודל</label>
-                        <p-select
-                            [options]="models()"
-                            formControlName="model"
-                            [group]="true"
-                            optionGroupLabel="label"
-                            optionLabel="label"
-                            optionValue="id"
-                            placeholder="בחר מודל"
-                            appendTo="body"
-                            size="small"
-                            class="custom-select transparent"
-                        >
+                    <p-select
+                        [options]="models()"
+                        formControlName="model"
+                        [group]="true"
+                        optionGroupLabel="label"
+                        optionLabel="label"
+                        optionValue="id"
+                        placeholder="בחר מודל"
+                        appendTo="body"
+                        size="small"
+                        class="custom-select transparent"
+                    >
                         <ng-template let-group #group>
                             <span class="group-label">
                                 {{ group.label }}
@@ -101,7 +99,6 @@
                             </div>
                         </ng-template>
                     </p-select>
-                    </div>
 
                     <button
                         [type]="store.loading() ? 'button' : 'submit'"

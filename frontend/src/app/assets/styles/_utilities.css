@@ -206,6 +206,17 @@
     border-radius: 50%;
     box-shadow: 0 0 8px var(--color-success-glow);
     animation: pulse 2s infinite;
+    will-change: transform, opacity;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot {
+    animation: none;
+  }
+
+  .page-state {
+    animation: none;
   }
 }
 
@@ -241,6 +252,7 @@
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-sizing: border-box;
+  animation: fadeIn 200ms ease-out;
 
   .icon {
     font-size: var(--font-size-huge);

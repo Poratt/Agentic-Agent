@@ -26,9 +26,9 @@
                 track m.label
             ) {
                 @if (m.value) {
-                    <div class="glass-effect card db-metric">
+                    <div class="glass-effect card metric-card sm">
                         <span class="ph {{ m.icon }} icon-tile metric-icon"></span>
-                        <div class="db-metric-details">
+                        <div class="metric-details">
                             <div class="metric-value" [class.db-truncate]="m.truncate">{{ m.value }}</div>
                             <div class="metric-label">{{ m.label }}</div>
                         </div>

@@ -75,6 +75,8 @@
   flex-direction: column;
   gap: var(--space-4);
   margin-bottom: var(--space-12);
+  opacity: 0;
+  animation: fadeIn 300ms var(--ease-out) forwards;
 
   .header-row {
     display: flex;
@@ -165,6 +167,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  gap: var(--space-4);
   min-height: 200px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -172,40 +175,35 @@
   border-radius: var(--radius-lg);
   position: relative;
   isolation: isolate;
-  overflow: hidden;
+  opacity: 0;
+  animation: card-enter 400ms var(--ease-out) forwards;
+  transition: box-shadow 200ms ease-out;
 
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 50%;
-    width: 100%;
-    max-width: 30%;
-    height: calc(var(--space-2) / 2);
-    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
-    border-radius: var(--radius-lg);
-    transform: translateX(50%);
-    transition: max-width var(--transition-fast);
+  &:nth-child(1) {
+    animation-delay: 0ms;
   }
 
-  &:hover {
-    border: 1px solid var(--color-primary-glow);
+  &:nth-child(2) {
+    animation-delay: 80ms;
+  }
 
-    &::after {
-      max-width: 35%;
-    }
+  &:nth-child(3) {
+    animation-delay: 160ms;
+  }
+
+  &:active {
+    box-shadow: var(--glass-shadow), inset 0 2px 4px rgba(0, 0, 0, 0.06);
   }
 
   .metric-header {
     display: flex;
     align-items: center;
     gap: var(--space-8);
-    margin-bottom: var(--space-12);
+    margin-bottom: var(--space-4);
     color: var(--color-text-secondary);
 
     .metric-icon {
       color: var(--color-primary);
-      filter: drop-shadow(0 0 8px var(--color-primary-glow));
     }
   }
 
@@ -215,7 +213,7 @@
     font-weight: var(--font-weight-bold);
     color: var(--color-primary);
     text-align: center;
-    text-shadow: 0 0 20px var(--color-primary-glow);
+    font-variant-numeric: tabular-nums;
   }
 
   .metric-details {
@@ -238,6 +236,45 @@
       color: var(--color-text-secondary);
       border: 1px solid var(--color-border);
     }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+  }
+
+  &.sm {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-8);
+    padding: var(--space-8);
+    min-height: 0;
+    min-width: 0;
+
+    &::after {
+      display: none;
+    }
+
+    .metric-icon {
+      font-size: var(--font-size-md);
+      width: var(--space-16);
+      height: var(--space-16);
+      border-radius: var(--radius-sm);
+    }
+
+    .metric-value {
+      font-size: var(--font-size-md);
+    }
+
+    .metric-label {
+      font-size: var(--font-size-xs);
+    }
+
+    .metric-details {
+      align-items: flex-start;
+      text-align: left;
+    }
   }
 
   &.metric-card-row {
@@ -257,10 +294,6 @@
       display: none;
     }
 
-    &:hover {
-      border: 1px solid var(--color-border);
-    }
-
     .metric-icon {
       color: var(--color-primary);
       filter: none;
@@ -277,6 +310,11 @@
       text-shadow: none;
     }
 
+    .metric-details {
+      align-items: flex-start;
+      text-align: left;
+    }
+
     .metric-label {
       font-size: var(--font-size-xxs);
       color: var(--color-text-muted);
@@ -291,6 +329,19 @@
     .status-down {
       color: var(--color-danger);
     }
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .metric-card {
+    animation: none;
+    opacity: 1;
+  }
+
+  .page-header {
+    animation: none;
+    opacity: 1;
   }
 }
 

@@ -259,29 +259,26 @@
                     </div>
 
                     <div class="composer-actions">
-                        <div class="form-group-float">
-                            <label class="float-label">מודל</label>
-                            <p-select
-                                [options]="activeModels()"
-                                [ngModel]="activeModelId()"
-                                (ngModelChange)="setActiveModelId($event)"
-                                optionLabel="label"
-                                optionValue="id"
-                                placeholder="בחר מודל"
-                                appendTo="body"
-                                size="small"
-                                class="custom-select transparent"
-                                name="model"
-                            >
-                                <ng-template let-item #item>
-                                    <div class="select-option">
-                                        <div class="select-option-main">
-                                            <span class="item-name">{{ item.label }}</span>
-                                        </div>
+                        <p-select
+                            [options]="activeModels()"
+                            [ngModel]="activeModelId()"
+                            (ngModelChange)="setActiveModelId($event)"
+                            optionLabel="label"
+                            optionValue="id"
+                            placeholder="בחר מודל"
+                            appendTo="body"
+                            size="small"
+                            class="custom-select transparent"
+                            name="model"
+                        >
+                            <ng-template let-item #item>
+                                <div class="select-option">
+                                    <div class="select-option-main">
+                                        <span class="item-name">{{ item.label }}</span>
                                     </div>
-                                </ng-template>
-                            </p-select>
-                        </div>
+                                </div>
+                            </ng-template>
+                        </p-select>
 
                         <button
                             [type]="isLoading() ? 'button' : 'submit'"
