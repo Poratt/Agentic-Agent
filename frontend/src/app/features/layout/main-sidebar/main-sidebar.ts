@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthStore } from '../../../core/store/auth.store';
@@ -23,6 +23,8 @@ export class MainSidebar implements OnInit {
     protected router = inject(Router);
     protected themeService = inject(ThemeService);
 
+    @ViewChild('chatDropdown') chatDropdown?: Dropdown;
+
     protected readonly getUserRoleData = getUserRoleData;
     public pendingDeleteSessionId = signal<number | null>(null);
 
@@ -42,10 +44,12 @@ export class MainSidebar implements OnInit {
         event.preventDefault();
         event.stopPropagation();
         this.pendingDeleteSessionId.set(sessionId);
+        this.chatDropdown?.showDropdown();
     }
 
     cancelDelete() {
         this.pendingDeleteSessionId.set(null);
+        this.chatDropdown?.hideDropdown();
     }
 
     confirmDelete() {
@@ -54,6 +58,7 @@ export class MainSidebar implements OnInit {
 
         this.chatStore.deleteSession(sessionId);
         this.pendingDeleteSessionId.set(null);
+        this.chatDropdown?.hideDropdown();
     }
 
     navigateTo(sessionId?: number) {

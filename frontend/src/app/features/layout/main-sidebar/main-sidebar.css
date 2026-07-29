@@ -50,6 +50,10 @@
 				}
 			}
 
+			.hover-reveal-btn {
+				translate: 12px 0;
+			}
+
 			&:is(:hover) {
 				background: var(--color-surface-hover);
 
@@ -60,6 +64,8 @@
 				.hover-reveal-btn {
 					opacity: 1;
 					scale: 1;
+					transform: translateX(var(--space-8));
+
 				}
 			}
 

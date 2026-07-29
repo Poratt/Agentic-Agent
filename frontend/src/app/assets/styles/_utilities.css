@@ -170,6 +170,30 @@
     line-height: 1;
     width: fit-content;
   }
+
+  &.role-admin {
+    background: var(--color-primary-glow-bg);
+    color: var(--color-primary);
+    border-color: var(--color-primary-glow);
+  }
+
+  &.role-user {
+    background: var(--grey-30);
+    color: var(--color-text-secondary);
+    border-color: var(--color-border);
+  }
+
+  &.badge-success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border-color: var(--color-success-border);
+  }
+
+  &.badge-warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+    border-color: var(--color-warning-border);
+  }
 }
 
 /* --- Screen Reader Only (accessible, hidden visually) --- */
@@ -523,6 +547,23 @@
 .tag-muted {
   background: color-mix(in srgb, var(--color-text-muted) 10%, transparent);
   color: var(--color-text-secondary);
+}
+
+/* --- Field Row --- */
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--font-size-xs);
+
+  .field-label {
+    color: var(--color-text-muted);
+  }
+
+  .field-value {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+  }
 }
 
 /* --- Generic Dot --- */

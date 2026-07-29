@@ -14,6 +14,16 @@
         position: absolute;
         z-index: 100;
 
+        /* Hover bridge: invisible pseudo-element that connects wrapper to content */
+        &::before {
+            content: '';
+            position: absolute;
+            top: calc(-1 * var(--space-4));
+            left: 0;
+            right: 0;
+            height: var(--space-4);
+        }
+
         /* Bottom - Right */
         &.bottom-right {
             top: 100%;

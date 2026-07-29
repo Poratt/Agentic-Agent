@@ -41,27 +41,6 @@
         }
     }
 
-    .role-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: var(--space-2) var(--space-4);
-        border-radius: var(--radius-pill);
-        font-size: var(--font-size-xxs);
-        font-weight: var(--font-weight-semibold);
-
-        &.admin {
-            background: var(--color-primary-glow-bg);
-            color: var(--color-primary);
-            border: 1px solid var(--color-primary-glow);
-        }
-
-        &.user {
-            background: var(--grey-30);
-            color: var(--color-text-secondary);
-            border: 1px solid var(--color-border);
-        }
-    }
-
     .cell-id {
         font-family: var(--font-code);
         color: var(--color-text-muted);

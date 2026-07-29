@@ -19,7 +19,7 @@
         @if (roleLabel()) {
             <div class="field-row">
                 <span class="field-label">Role:</span>
-                <span class="role-badge" [class.admin]="isAdmin()" [class.user]="!isAdmin()">
+                <span class="badge" [class.role-admin]="isAdmin()" [class.role-user]="!isAdmin()">
                     {{ roleLabel() }}
                 </span>
             </div>

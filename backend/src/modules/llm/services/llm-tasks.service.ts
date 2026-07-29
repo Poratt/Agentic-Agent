@@ -6,6 +6,7 @@ import { LlmProviderService } from '../../llm-provider/llm-provider.service';
 @Injectable()
 export class LlmTasksService {
     private readonly logger = new Logger(LlmTasksService.name);
+    private readonly LLM_HEALTH_CHECK_ENABLED = false;
 
     constructor(
         private readonly healthService: LlmHealthService,
@@ -15,6 +16,7 @@ export class LlmTasksService {
     // 🚀 הרצה כל שעתיים 🚀
     @Cron('0 0 */2 * * *')
     async handleNightlyLlmHealthCheck() {
+        if (!this.LLM_HEALTH_CHECK_ENABLED) return;
         this.logger.log('--- Starting Nightly LLM Auto-Health Check Cron Job ---');
 
         try {

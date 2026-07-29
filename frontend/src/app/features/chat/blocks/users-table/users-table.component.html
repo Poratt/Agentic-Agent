@@ -27,7 +27,7 @@
                     <td>{{ user.email }}</td>
                     <td>
                         @if (user.role != null) {
-                            <span class="role-badge" [class.admin]="isAdmin(user.role)" [class.user]="!isAdmin(user.role)">
+                            <span class="badge" [class.role-admin]="isAdmin(user.role)" [class.role-user]="!isAdmin(user.role)">
                                 {{ getRoleLabel(user.role) }}
                             </span>
                         }

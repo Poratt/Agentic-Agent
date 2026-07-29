@@ -31,7 +31,7 @@
     </div>
     <div class="card-footer">
         @if (roleLabel()) {
-            <span class="role-badge" [class.admin]="isAdmin()" [class.user]="!isAdmin()">
+            <span class="badge" [class.role-admin]="isAdmin()" [class.role-user]="!isAdmin()">
                 {{ roleLabel() }}
             </span>
         }

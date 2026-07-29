@@ -19,12 +19,12 @@
 | 13  | shared   | `tooltip.css`                            |      |      |                                    | tooltip-card ≈ score-card                           |
 | 14  | shared   | `score-tooltip.css`                      |      |      |                                    | score-card ≈ tooltip-card                           |
 | 15  | shared   | `dropdown.css`                           |      |      |                                    |                                                     |
-| 16  | features | `strain-hunter.css`                      | ✅   | ✅   | primary-btn responsive ✅ OK      |                                                     |
-| 17  | features | `matching-preferences-drawer.css`        | ✅   | ✅   | reset-btn transition ✅ OK        |                                                     |
+| 16  | features | `strain-hunter.css`                      | ✅   | ✅   | primary-btn responsive ✅ OK       |                                                     |
+| 17  | features | `matching-preferences-drawer.css`        | ✅   | ✅   | reset-btn transition ✅ OK         |                                                     |
 | 18  | features | `idea-card.css`                          | ✅   | ✅   |                                    |                                                     |
 | 19  | features | `_design-system-tokens.css`              | ✅   | ✅   |                                    |                                                     |
 | 20  | features | `_design-system-swatches.css`            | ✅   | ✅   |                                    |                                                     |
-| 21  | features | `_design-system-showcase.css`            | ✅   | ✅   | primary-btn demo ✅ OK            |                                                     |
+| 21  | features | `_design-system-showcase.css`            | ✅   | ✅   | primary-btn demo ✅ OK             |                                                     |
 | 22  | features | `_design-system-buttons.css`             | ✅   | ✅   |                                    |                                                     |
 | 23  | features | `design-system.css`                      | ✅   | ✅   |                                    |                                                     |
 | 24  | features | `strain-hunter-settings.css`             | ✅   | ✅   |                                    | badge scoped                                        |
@@ -61,30 +61,30 @@
 
 ## Button Overrides
 
-| Priority   | #   | Class          | Issue                                                      | Status     |
-| ---------- | --- | -------------- | ---------------------------------------------------------- | ---------- |
-| ~~High~~   | 41  | `.submit-btn`  | Redefines button basics — should use `.primary-btn.filled` | ✅ Done    |
-| ~~High~~   | 38  | `.hidden-btn`  | Hover-reveal icon button — duplicates `.delete-btn` #31    | ✅ Done    |
-| ~~Medium~~ | 31  | `.delete-btn`  | Custom hover-reveal icon button                            | ✅ Done    |
-| Low        | 16  | `.primary-btn` | Responsive width:100% override (scoped to @media)          | ✅ OK      |
-| Low        | 17  | `.reset-btn`   | Transition-only override                                   | ✅ OK      |
-| Low        | 21  | `.primary-btn` | Demo width:auto override (sandbox-only)                    | ✅ OK      |
+| Priority   | #   | Class          | Issue                                                      | Status  |
+| ---------- | --- | -------------- | ---------------------------------------------------------- | ------- |
+| ~~High~~   | 41  | `.submit-btn`  | Redefines button basics — should use `.primary-btn.filled` | ✅ Done |
+| ~~High~~   | 38  | `.hidden-btn`  | Hover-reveal icon button — duplicates `.delete-btn` #31    | ✅ Done |
+| ~~Medium~~ | 31  | `.delete-btn`  | Custom hover-reveal icon button                            | ✅ Done |
+| Low        | 16  | `.primary-btn` | Responsive width:100% override (scoped to @media)          | ✅ OK   |
+| Low        | 17  | `.reset-btn`   | Transition-only override                                   | ✅ OK   |
+| Low        | 21  | `.primary-btn` | Demo width:auto override (sandbox-only)                    | ✅ OK   |
 
 ---
 
 ## Inner Class → Global Variant Opportunities
 
-| Priority | #             | Class             | Opportunity                                                       |
-| -------- | ------------- | ----------------- | ----------------------------------------------------------------- |
-| High     | 36,37,40      | `.role-badge`     | Identical across 3 files → global `.badge.role-admin/.role-user`  |
-| High     | 37,40,44,48   | `.field-row`      | Identical across 4 files → global `.field-row` utility            |
-| High     | 36,46,48,52+4 | `.card-header`    | Identical across 8 chat blocks → global `.card-header` pattern    |
-| Medium   | 40,44,48      | `.status-badge`   | Similar to global `.badge` → `.badge.badge-danger/.badge-success` |
-| Medium   | 45            | `.provider-badge` | Similar to global `.badge` → `.badge.badge-admin`                 |
-| Medium   | 42            | `.info-chip`      | Could use global `.badge` or `.tag`                               |
-| Medium   | 27            | `.col-expand`     | Shadows global `.col-expand` from `_utilities.css`                |
-| Low      | 13,14         | `.tooltip-card`   | Similar fixed-position tooltip containers                         |
-| Low      | 30            | `.page-content`   | Angular encapsulation safe but confusing                          |
+| Priority | #             | Class             | Opportunity                                                       | Status      |
+| -------- | ------------- | ----------------- | ----------------------------------------------------------------- | ----------- |
+| ~~High~~ | 36,37,40      | `.role-badge`     | Identical across 3 files → global `.badge.role-admin/.role-user`  | ✅ Done     |
+| ~~High~~ | 37,40,44,48   | `.field-row`      | Identical across 4 files → global `.field-row` utility            | ✅ Done     |
+| High     | 36,46,48,52+4 | `.card-header`    | Identical across 8 chat blocks → global `.card-header` pattern    | ⏭️ Skip    |
+| ~~Medium~~ | 40,44,48      | `.status-badge`   | Similar to global `.badge` → `.badge.badge-danger/.badge-success` | ✅ Done     |
+| ~~Medium~~ | 45            | `.provider-badge` | Similar to global `.badge` → `.badge.badge-admin`                 | ✅ Done     |
+| Medium   | 42            | `.info-chip`      | Could use global `.badge` or `.tag`                               | ⏭️ Skip    |
+| Medium   | 27            | `.col-expand`     | Shadows global `.col-expand` from `_utilities.css`                | ⏭️ Skip    |
+| Low      | 13,14         | `.tooltip-card`   | Similar fixed-position tooltip containers                         | —           |
+| Low      | 30            | `.page-content`   | Angular encapsulation safe but confusing                          | —           |
 
 ---
 

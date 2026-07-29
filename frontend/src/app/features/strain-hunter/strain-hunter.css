@@ -4,6 +4,34 @@
   /* Active filters row is split into _strain-hunter-filters.css to keep this
      file under the component-style budget. */
 
+  /* ── Smooth accordion for filter panel ── */
+  .collapsible-row {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--transition-normal);
+    overflow: hidden;
+
+    &.is-open {
+      grid-template-rows: 1fr;
+    }
+
+    .collapsible-inner {
+      min-height: 0;
+    }
+  }
+
+  /* ── Dialog entry animation ── */
+  ::ng-deep .image-dialog .p-dialog {
+    transform: scale(0.96);
+    opacity: 0;
+    transition: transform var(--transition-normal), opacity var(--transition-normal) !important;
+  }
+
+  ::ng-deep .image-dialog .p-dialog-mask-active .p-dialog {
+    transform: scale(1);
+    opacity: 1;
+  }
+
   .strain-main-details {
     display: flex;
     align-items: center;

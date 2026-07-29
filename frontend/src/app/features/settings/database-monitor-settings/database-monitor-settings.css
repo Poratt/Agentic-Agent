@@ -3,6 +3,10 @@
     width: 100%;
     box-sizing: border-box;
 
+    --ease-out-fluid: cubic-bezier(0.23, 1, 0.32, 1);
+    --transition-fast: 160ms var(--ease-out-fluid);
+    --transition-normal: 250ms var(--ease-out-fluid);
+
     .db-monitor {
         display: flex;
         flex-direction: column;
@@ -15,6 +19,15 @@
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: var(--space-8);
         width: 100%;
+    }
+
+    .metric-card {
+        transition: transform var(--transition-fast), border-color var(--transition-fast);
+        cursor: pointer;
+
+        &:active {
+            transform: scale(0.97);
+        }
     }
 
     .db-truncate {
@@ -36,16 +49,49 @@
         width: 180px;
         height: 180px;
         flex-shrink: 0;
+        position: relative;
         aspect-ratio: 1 / 1;
     }
 
-    .db-donut {
+    .db-donut-svg {
         width: 100%;
         height: 100%;
-        border-radius: 50%;
-        position: relative;
-        overflow: hidden;
-        aspect-ratio: 1 / 1;
+        overflow: visible;
+    }
+
+    .db-donut-bg-track {
+        opacity: 0.15;
+    }
+
+    .db-donut-hit {
+        transform-origin: center;
+        transform: rotate(var(--seg-rotation, 0deg));
+        cursor: pointer;
+        pointer-events: stroke;
+        /* stroke transparent אבל עדיין לוכד mouse events */
+    }
+
+    .db-donut-segment {
+        transform-origin: center;
+        transform: rotate(var(--seg-rotation, 0deg));
+        transition: transform var(--transition-normal),
+                    stroke-width var(--transition-normal),
+                    opacity var(--transition-normal);
+        cursor: pointer;
+        stroke-dashoffset: 0;
+        animation: drawDonut 650ms var(--ease-out-fluid) forwards;
+        /* הפלח הגלוי לא לוכד אירועים — ה-hit area עושה את זה */
+        pointer-events: none;
+    }
+
+    .db-donut-segment.is-active {
+        stroke-width: 10;
+        transform: rotate(var(--seg-rotation, 0deg)) scale(1.05);
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.12));
+    }
+
+    .db-donut-segment.is-dimmed {
+        opacity: 0.25;
     }
 
     .db-donut-hole {
@@ -62,6 +108,32 @@
         justify-content: center;
         gap: var(--space-2);
         z-index: 2;
+        pointer-events: none;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .db-center-value {
+        font-size: var(--font-size-lg);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-text-primary);
+        transition: color var(--transition-fast);
+        text-align: center;
+        width: 90%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .db-center-label {
+        font-size: var(--font-size-xs);
+        color: var(--color-text-secondary);
+        transition: color var(--transition-fast);
+        text-align: center;
+        max-width: 85%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .db-legend {
@@ -78,6 +150,25 @@
         align-items: center;
         gap: var(--space-6);
         font-size: var(--font-size-sm);
+        padding: var(--space-4) var(--space-6);
+        border-radius: var(--radius-sm);
+        transition: background-color var(--transition-fast),
+                    opacity var(--transition-fast),
+                    transform var(--transition-fast);
+        cursor: pointer;
+
+        * {
+            pointer-events: none;
+        }
+
+        &.is-active {
+            background-color: var(--color-surface-hover);
+            transform: translateX(-4px);
+        }
+
+        &.is-dimmed {
+            opacity: 0.35;
+        }
     }
 
     .db-legend-dot {
@@ -85,6 +176,11 @@
         height: 12px;
         border-radius: var(--radius-sm);
         flex-shrink: 0;
+        transition: transform var(--transition-fast);
+    }
+
+    .db-legend-row.is-active .db-legend-dot {
+        transform: scale(1.2);
     }
 
     .db-legend-name {
@@ -135,7 +231,7 @@
         min-width: 1px;
         transform-origin: left;
         transform: scaleX(var(--bar-width, 0));
-        transition: transform var(--transition-standard);
+        transition: transform var(--transition-normal);
     }
 
     .db-table-chips {
@@ -143,25 +239,30 @@
         flex-wrap: wrap;
         gap: var(--space-4);
         margin-top: var(--space-2);
+    }
 
-        .db-stat-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-4);
-            font-size: var(--font-size-xs);
-            padding: var(--space-2) var(--space-4);
-            border-radius: var(--radius-sm);
-            background: var(--color-surface-hover);
-
-            i {
-                font-size: 0.85rem;
-            }
+    @keyframes drawDonut {
+        from {
+            stroke-dashoffset: var(--circumference, 251.327);
+        }
+        to {
+            stroke-dashoffset: 0;
         }
     }
 
-    .db-pct {
-        color: var(--color-primary);
-        background: var(--color-primary-glow-bg);
-        font-weight: var(--font-weight-bold);
+    @media (prefers-reduced-motion: reduce) {
+        .db-donut-segment {
+            animation: none !important;
+            transition: opacity var(--transition-fast) !important;
+            transform: none !important;
+        }
+
+        .metric-card:active {
+            transform: none !important;
+        }
+
+        .db-legend-row.is-active {
+            transform: none !important;
+        }
     }
 }

@@ -20,12 +20,12 @@
                 m of [
                     { icon: 'ph-database', value: d.totalSizeFormatted, label: 'גודל כולל' },
                     { icon: 'ph-table', value: d.tableCount, label: 'טבלאות' },
-                    { icon: 'ph-rows', value: (d.totalRows | number), label: 'שורות כולל' },
+                    { icon: 'ph-rows', value: totalRowsFormatted(), label: 'שורות כולל' },
                     { icon: 'ph-arrows-out-simple', value: d.largestTableName, label: 'הטבלה הגדולה ביותר', truncate: true },
                 ];
                 track m.label
             ) {
-                @if (m.value) {
+                @if (m.value != null) {
                     <div class="glass-effect card metric-card sm">
                         <span class="ph {{ m.icon }} icon-tile metric-icon"></span>
                         <div class="metric-details">
@@ -45,19 +45,79 @@
                 </div>
                 <div class="db-chart-row">
                     <div class="db-donut-wrap">
-                        <div class="db-donut" [style.background]="getDonutGradient()">
-                            <div class="db-donut-hole">
-                                <span class="metric-value">{{ d.totalSizeFormatted }}</span>
-                                <span class="metric-label">סך הכל</span>
-                            </div>
+                        <svg
+                            viewBox="0 0 100 100"
+                            class="db-donut-svg"
+                            role="img"
+                            [attr.aria-label]="'תרשים עוגה התפלגות גודל מסד נתונים, סה״כ ' + d.totalSizeFormatted"
+                        >
+                            <!-- מסילה אחורית למראה חצי שקוף -->
+                            <circle
+                                cx="50"
+                                cy="50"
+                                r="40"
+                                fill="transparent"
+                                stroke="var(--color-border)"
+                                stroke-width="7"
+                                class="db-donut-bg-track"
+                            ></circle>
+
+                            <!-- פלחי ה-Donut הדינמיים -->
+                            @for (seg of chartSegments(); track seg.index) {
+                                <!-- Hit area רחב ושקוף ללכידת hover בכל נקודה על הפלח -->
+                                <circle
+                                    cx="50"
+                                    cy="50"
+                                    r="40"
+                                    fill="transparent"
+                                    stroke="transparent"
+                                    stroke-width="22"
+                                    [attr.stroke-dasharray]="seg.strokeDashArray"
+                                    [style.--seg-rotation]="seg.rotation"
+                                    class="db-donut-hit"
+                                    (mouseenter)="setActiveSegment(seg.index)"
+                                    (mouseleave)="clearActiveSegment()"
+                                ></circle>
+                                <!-- הפלח הגלוי -->
+                                <circle
+                                    cx="50"
+                                    cy="50"
+                                    r="40"
+                                    fill="transparent"
+                                    [attr.stroke]="seg.color"
+                                    stroke-width="8"
+                                    stroke-linecap="round"
+                                    [attr.stroke-dasharray]="seg.strokeDashArray"
+                                    [style.--seg-rotation]="seg.rotation"
+                                    [style.--circumference]="circumference"
+                                    class="db-donut-segment"
+                                    role="img"
+                                    [attr.aria-label]="seg.tableName + ': ' + seg.percent + '%'"
+                                    [class.is-dimmed]="activeSegment() !== null && activeSegment() !== seg.index"
+                                    [class.is-active]="activeSegment() === seg.index"
+                                ></circle>
+                            }
+                        </svg>
+
+                        <!-- חור ה-Donut המרכזי עם טקסט דינמי -->
+                        <div class="db-donut-hole">
+                            <span class="metric-value db-center-value">{{ centerValue() }}</span>
+                            <span class="metric-label db-center-label">{{ centerLabel() }}</span>
                         </div>
                     </div>
+
                     <div class="db-legend">
-                        @for (table of getTopTables(); track table.tableName; let i = $index) {
-                            <div class="db-legend-row">
+                        @for (seg of chartSegments(); track seg.tableName; let i = $index) {
+                            <div
+                                class="db-legend-row"
+                                [class.is-active]="activeSegment() === i"
+                                [class.is-dimmed]="activeSegment() !== null && activeSegment() !== i"
+                                (mouseenter)="setActiveSegment(i)"
+                                (mouseleave)="clearActiveSegment()"
+                            >
                                 <span class="db-legend-dot" [style.background]="getChartColor(i)"></span>
-                                <span class="db-legend-name">{{ table.tableName }}</span>
-                                <span class="db-legend-pct">{{ table.percentOfDatabase }}%</span>
+                                <span class="db-legend-name">{{ seg.tableName }}</span>
+                                <span class="db-legend-pct">{{ seg.percent }}%</span>
                             </div>
                         }
                     </div>
@@ -69,20 +129,27 @@
                     <span class="ph ph-list"></span>
                     <h3>טבלאות ({{ d.tableCount }})</h3>
                 </div>
-                @for (table of getAllTables(); track table.tableName) {
+                @for (table of allTables(); track table.tableName) {
                     <div class="db-table-row">
                         <div class="db-table-top">
                             <span class="row-label row-label--bold">{{ table.tableName }}</span>
                             <span class="row-meta row-meta--xs">{{ table.totalSizeFormatted }}</span>
                         </div>
-                        <div class="db-bar-track">
+                        <div
+                            class="db-bar-track"
+                            role="progressbar"
+                            [attr.aria-valuenow]="table.percentOfDatabase"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            [attr.aria-label]="table.tableName + ' תופס ' + table.percentOfDatabase + '% ממסד הנתונים'"
+                        >
                             <div class="db-bar-fill" [style.--bar-width]="getBarWidth(table.percentOfDatabase)"></div>
                         </div>
                         <div class="db-table-chips">
-                            <span class="db-stat-pill tag-muted"><i class="ph ph-rows"></i> {{ table.rowCount | number }} שורות</span>
-                            <span class="db-stat-pill tag-muted"><i class="ph ph-hard-drives"></i> {{ table.dataSizeFormatted }}</span>
-                            <span class="db-stat-pill tag-muted"><i class="ph ph-sort-ascending"></i> {{ table.indexSizeFormatted }}</span>
-                            <span class="db-stat-pill db-pct">{{ table.percentOfDatabase }}%</span>
+                            <span class="tag tag-muted"><i class="ph ph-rows"></i> {{ table.rowCount | number }} שורות</span>
+                            <span class="tag tag-muted"><i class="ph ph-hard-drives"></i> {{ table.dataSizeFormatted }}</span>
+                            <span class="tag tag-muted"><i class="ph ph-sort-ascending"></i> {{ table.indexSizeFormatted }}</span>
+                            <span class="badge badge-admin">{{ table.percentOfDatabase }}%</span>
                         </div>
                     </div>
                 }

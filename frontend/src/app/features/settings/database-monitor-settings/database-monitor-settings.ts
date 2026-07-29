@@ -1,7 +1,17 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { DatabaseMonitorService, DatabaseStorageSummary, DatabaseTableStorage } from '../../../core/services/database-monitor.service';
+
+interface SvgSegment {
+    tableName: string;
+    percent: number;
+    strokeDashArray: string;
+    rotation: string;
+    color: string;
+    index: number;
+    formattedSize: string;
+}
 
 @Component({
     selector: 'app-database-monitor-settings',
@@ -17,9 +27,62 @@ export class DatabaseMonitorSettings implements OnInit {
     loading = signal(false);
     error = signal<string | null>(null);
     data = signal<DatabaseStorageSummary | null>(null);
+    activeSegment = signal<number | null>(null);
 
-    async ngOnInit(): Promise<void> {
-        await this.loadStorage();
+    readonly radius = 40;
+    readonly circumference = 2 * Math.PI * this.radius; // 251.327
+
+    readonly topTables = computed<DatabaseTableStorage[]>(() => this.data()?.tables.slice(0, 6) ?? []);
+    readonly allTables = computed<DatabaseTableStorage[]>(() => this.data()?.tables ?? []);
+    readonly totalRowsFormatted = computed<string | null>(() => {
+        const rows = this.data()?.totalRows;
+        return rows != null ? rows.toLocaleString('he-IL') : null;
+    });
+
+    readonly chartSegments = computed<SvgSegment[]>(() => {
+        const tables = this.topTables();
+        if (!tables.length) return [];
+
+        const total = tables.reduce((sum, t) => sum + t.percentOfDatabase, 0);
+        if (total === 0) return [];
+
+        let accumulatedPercent = 0;
+
+        return tables.map((t, i) => {
+            const percent = t.percentOfDatabase;
+            const gap = tables.length > 1 ? 1.5 : 0;
+            const strokeLength = Math.max(0, (percent / 100) * this.circumference - gap);
+            const rotation = (accumulatedPercent / 100) * 360 - 90;
+            accumulatedPercent += percent;
+
+            return {
+                tableName: t.tableName,
+                percent,
+                strokeDashArray: `${strokeLength} ${this.circumference}`,
+                rotation: `${rotation}deg`,
+                color: `var(--color-chart-${i + 1})`,
+                index: i,
+                formattedSize: t.totalSizeFormatted
+            };
+        });
+    });
+
+    readonly centerLabel = computed(() => {
+        const activeIdx = this.activeSegment();
+        if (activeIdx === null) return 'סך הכל';
+        const segments = this.chartSegments();
+        return segments[activeIdx]?.tableName ?? 'סך הכל';
+    });
+
+    readonly centerValue = computed(() => {
+        const activeIdx = this.activeSegment();
+        if (activeIdx === null) return this.data()?.totalSizeFormatted ?? '0B';
+        const segments = this.chartSegments();
+        return segments[activeIdx]?.formattedSize ?? '0B';
+    });
+
+    ngOnInit(): void {
+        this.loadStorage();
     }
 
     async loadStorage(): Promise<void> {
@@ -33,37 +96,12 @@ export class DatabaseMonitorSettings implements OnInit {
             } else {
                 this.error.set(res.message);
             }
-        } catch (err: any) {
-            this.error.set(err?.error?.message ?? 'Failed to load database storage');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to load database storage';
+            this.error.set(message);
         } finally {
             this.loading.set(false);
         }
-    }
-
-    getTopTables(): DatabaseTableStorage[] {
-        const d = this.data();
-        return d ? d.tables.slice(0, 6) : [];
-    }
-
-    getAllTables(): DatabaseTableStorage[] {
-        return this.data()?.tables ?? [];
-    }
-
-    getDonutGradient(): string {
-        const tables = this.getTopTables();
-        if (!tables.length) return '';
-        const total = tables.reduce((sum, t) => sum + t.percentOfDatabase, 0);
-        if (total === 0) return '';
-        const segments: string[] = [];
-        let accumulated = 0;
-        for (const t of tables) {
-            const start = (accumulated / total) * 100;
-            accumulated += t.percentOfDatabase;
-            const end = (accumulated / total) * 100;
-            const colorIdx = tables.indexOf(t) + 1;
-            segments.push(`var(--color-chart-${colorIdx}) ${start.toFixed(2)}% ${end.toFixed(2)}%`);
-        }
-        return `conic-gradient(${segments.join(', ')})`;
     }
 
     getBarWidth(percent: number): string {
@@ -72,5 +110,13 @@ export class DatabaseMonitorSettings implements OnInit {
 
     getChartColor(index: number): string {
         return `var(--color-chart-${index + 1})`;
+    }
+
+    setActiveSegment(index: number): void {
+        this.activeSegment.set(index);
+    }
+
+    clearActiveSegment(): void {
+        this.activeSegment.set(null);
     }
 }
