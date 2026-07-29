@@ -20,17 +20,7 @@
     }
   }
 
-  /* ── Dialog entry animation ── */
-  ::ng-deep .image-dialog .p-dialog {
-    transform: scale(0.96);
-    opacity: 0;
-    transition: transform var(--transition-normal), opacity var(--transition-normal) !important;
-  }
 
-  ::ng-deep .image-dialog .p-dialog-mask-active .p-dialog {
-    transform: scale(1);
-    opacity: 1;
-  }
 
   .strain-main-details {
     display: flex;
@@ -247,6 +237,10 @@
     cursor: pointer;
     font: inherit;
     transition: var(--transition-fast), transform 160ms ease-out;
+
+    .ph {
+      font-size: var(--font-size-xs);
+    }
 
     &:active {
       transform: scale(0.97);
