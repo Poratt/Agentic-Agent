@@ -72,7 +72,7 @@
                 <div class="sessions-list stagger stagger-up">
                     @for (session of filteredSessions(); track session.id) {
                         <div
-                            class="session-row"
+                            class="session-row hover-parent"
                             [class.active]="currentSessionId() === session.id"
                             [class.danger]="pendingDeleteSessionId() === session.id"
                         >
@@ -103,7 +103,7 @@
 
                                     <button
                                         type="button"
-                                        class="icon-only transparent-btn delete-btn"
+                                        class="icon-only transparent-btn hover-reveal-btn"
                                         (click)="setPendingDelete($event, session.id)"
                                         aria-label="מחק שיחה"
                                     >

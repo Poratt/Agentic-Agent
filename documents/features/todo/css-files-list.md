@@ -1,59 +1,90 @@
 # CSS Files List
 
-| #   |          | Name                                                                                                    | find-animation-opportunities | emil-design-eng | button overrides |
-| --- | -------- | ------------------------------------------------------------------------------------------------------- | ---------------------------- | --------------- | ---------------- |
-| 1   |          | `frontend/src/styles.css`                                                                               |
-| 2   | assets   | `frontend/src/app/assets/styles/_variables.css`                                                         |
-| 3   | assets   | `frontend/src/app/assets/styles/_utilities.css`                                                         |
-| 4   | assets   | `frontend/src/app/assets/styles/_typography.css`                                                        |
-| 5   | assets   | `frontend/src/app/assets/styles/_reset.css`                                                             |
-| 6   | assets   | `frontend/src/app/assets/styles/_primeng-overrides.css`                                                 |
-| 7   | assets   | `frontend/src/app/assets/styles/_layout.css`                                                            |
-| 8   | assets   | `frontend/src/app/assets/styles/_forms.css`                                                             |
-| 9   | assets   | `frontend/src/app/assets/styles/_filters.css`                                                           |
-| 10  | assets   | `frontend/src/app/assets/styles/_composer.css`                                                          |
-| 11  | assets   | `frontend/src/app/assets/styles/_buttons.css`                                                           |
-| 12  | assets   | `frontend/src/app/assets/styles/_animations.css`                                                        |
-| 13  | shared   | `frontend/src/app/components/shared/tooltip/tooltip.css`                                                |
-| 14  | shared   | `frontend/src/app/components/shared/score-tooltip/score-tooltip.css`                                    |
-| 15  | shared   | `frontend/src/app/components/shared/dropdown/dropdown.css`                                              |
-| 16  | features | `frontend/src/app/features/strain-hunter/strain-hunter.css`                                             | ✅                           | ✅              |
-| 17  | features | `frontend/src/app/features/strain-hunter/matching-preferences-drawer/matching-preferences-drawer.css`   | ✅                           | ✅              |
-| 18  | features | `frontend/src/app/features/ideas/idea-card/idea-card.css`                                               | ✅                           | ✅              |
-| 19  | features | `frontend/src/app/features/design-system/_design-system-tokens.css`                                     | ✅                           | ✅              |
-| 20  | features | `frontend/src/app/features/design-system/_design-system-swatches.css`                                   | ✅                           | ✅              |
-| 21  | features | `frontend/src/app/features/design-system/_design-system-showcase.css`                                   | ✅                           | ✅              |
-| 22  | features | `frontend/src/app/features/design-system/_design-system-buttons.css`                                    | ✅                           | ✅              |
-| 23  | features | `frontend/src/app/features/design-system/design-system.css`                                             | ✅                           | ✅              |
-| 24  | features | `frontend/src/app/features/settings/strain-hunter-settings/strain-hunter-settings.css`                  | ✅                           | ✅              |
-| 25  | features | `frontend/src/app/features/chat/render-host/render-host.component.css`                                  | ✅                           | ✅              |
-| 26  | features | `frontend/src/app/features/chat/chat/chat.css`                                                          | ✅                           | ✅              |
-| 27  | features | `frontend/src/app/features/llm-providers-management/llm-providers-management.css`                       | ✅                           | ✅              |
-| 28  | features | `frontend/src/app/features/settings/database-monitor-settings/database-monitor-settings.css`            | ✅                           | ✅              |
-| 29  | features | `frontend/src/app/features/chat/chat-message/chat-message.css`                                          | ✅                           | ✅              |
-| 30  | features | `frontend/src/app/features/media-studio/media-studio.css`                                               | ✅                           | ✅              |
-| 31  | features | `frontend/src/app/features/chat/chat-history/chat-history.css`                                          | ✅                           | ✅              |
-| 32  | features | `frontend/src/app/features/chat/blocks/weather-summary-card/weather-summary-card.component.css`         | ✅                           | ✅              |
-| 33  | features | `frontend/src/app/features/ideas/ideas-progress/ideas-progress.css`                                     | ✅                           | ✅              |
-| 34  | features | `frontend/src/app/features/chat/blocks/weather-forecast/weather-forecast.component.css`                 | ✅                           | ✅              |
-| 35  | features | `frontend/src/app/features/chat/blocks/weather-current-card/weather-current-card.component.css`         | ✅                           | ✅              |
-| 36  | features | `frontend/src/app/features/chat/blocks/users-table/users-table.component.css`                           | ✅                           | ✅              |
-| 37  | features | `frontend/src/app/features/chat/blocks/user-profile-card/user-profile-card.component.css`               | ✅                           | ✅              |
-| 38  | features | `frontend/src/app/features/layout/main-sidebar/main-sidebar.css`                                        | ✅                           | ✅              |
-| 39  | features | `frontend/src/app/features/chat/blocks/transcript-timeline/transcript-timeline.component.css`           | ✅                           | ✅              |
-| 40  | features | `frontend/src/app/features/chat/blocks/role-change-card/role-change-card.component.css`                 | ✅                           | ✅              |
-| 41  | features | `frontend/src/app/features/chat/blocks/register-form/register-form.component.css`                       | ✅                           | ✅              |
-| 42  | features | `frontend/src/app/features/chat/blocks/system-status-dashboard/system-status-dashboard.component.css`   | ✅                           | ✅              |
-| 43  | features | `frontend/src/app/features/layout/header/header.css`                                                    | ✅                           | ✅              |
-| 44  | features | `frontend/src/app/features/chat/blocks/session-created-card/session-created-card.component.css`         | ✅                           | ✅              |
-| 45  | features | `frontend/src/app/features/chat/blocks/llm-test-results/llm-test-results.component.css`                 | ✅                           | ✅              |
-| 46  | features | `frontend/src/app/features/chat/blocks/analytics-chart/analytics-chart.component.css`                   | ✅                           | ✅              |
-| 47  | features | `frontend/src/app/features/chat/blocks/agnes-image-card/agnes-image-card.component.css`                 | ✅                           | ✅              |
-| 48  | features | `frontend/src/app/features/chat/blocks/delete-confirm-card/delete-confirm-card.component.css`           | ✅                           | ✅              |
-| 49  | features | `frontend/src/app/features/chat/blocks/chat-sessions-list/chat-sessions-list.component.css`             | ✅                           | ✅              |
-| 50  | features | `frontend/src/app/features/chat/blocks/currency-card/currency-card.component.css`                       | ✅                           | ✅              |
-| 51  | features | `frontend/src/app/features/chat/blocks/agnes-video-card/agnes-video-card.component.css`                 | ✅                           | ✅              |
-| 52  | features | `frontend/src/app/features/chat/blocks/database-storage-monitor/database-storage-monitor.component.css` | ✅                           | ✅              |
+## Main Table
+
+| #   | Type     | File                                     | Anim | Emil | Buttons                            | Variants                                            |
+| --- | -------- | ---------------------------------------- | ---- | ---- | ---------------------------------- | --------------------------------------------------- |
+| 1   |          | `styles.css`                             |      |      |                                    |                                                     |
+| 2   | assets   | `_variables.css`                         |      |      |                                    |                                                     |
+| 3   | assets   | `_utilities.css`                         |      |      |                                    |                                                     |
+| 4   | assets   | `_typography.css`                        |      |      |                                    |                                                     |
+| 5   | assets   | `_reset.css`                             |      |      |                                    |                                                     |
+| 6   | assets   | `_primeng-overrides.css`                 |      |      |                                    |                                                     |
+| 7   | assets   | `_layout.css`                            |      |      |                                    |                                                     |
+| 8   | assets   | `_forms.css`                             |      |      |                                    |                                                     |
+| 9   | assets   | `_filters.css`                           |      |      |                                    |                                                     |
+| 10  | assets   | `_composer.css`                          |      |      |                                    |                                                     |
+| 11  | assets   | `_buttons.css`                           |      |      |                                    |                                                     |
+| 12  | assets   | `_animations.css`                        |      |      |                                    |                                                     |
+| 13  | shared   | `tooltip.css`                            |      |      |                                    | tooltip-card ≈ score-card                           |
+| 14  | shared   | `score-tooltip.css`                      |      |      |                                    | score-card ≈ tooltip-card                           |
+| 15  | shared   | `dropdown.css`                           |      |      |                                    |                                                     |
+| 16  | features | `strain-hunter.css`                      | ✅   | ✅   | primary-btn responsive ✅ OK      |                                                     |
+| 17  | features | `matching-preferences-drawer.css`        | ✅   | ✅   | reset-btn transition ✅ OK        |                                                     |
+| 18  | features | `idea-card.css`                          | ✅   | ✅   |                                    |                                                     |
+| 19  | features | `_design-system-tokens.css`              | ✅   | ✅   |                                    |                                                     |
+| 20  | features | `_design-system-swatches.css`            | ✅   | ✅   |                                    |                                                     |
+| 21  | features | `_design-system-showcase.css`            | ✅   | ✅   | primary-btn demo ✅ OK            |                                                     |
+| 22  | features | `_design-system-buttons.css`             | ✅   | ✅   |                                    |                                                     |
+| 23  | features | `design-system.css`                      | ✅   | ✅   |                                    |                                                     |
+| 24  | features | `strain-hunter-settings.css`             | ✅   | ✅   |                                    | badge scoped                                        |
+| 25  | features | `render-host.component.css`              | ✅   | ✅   |                                    |                                                     |
+| 26  | features | `chat.css`                               | ✅   | ✅   |                                    |                                                     |
+| 27  | features | `llm-providers-management.css`           | ✅   | ✅   |                                    | col-expand shadow                                   |
+| 28  | features | `database-monitor-settings.css`          | ✅   | ✅   |                                    | db-metrics → metric-card.sm ✅                      |
+| 29  | features | `chat-message.css`                       | ✅   | ✅   |                                    |                                                     |
+| 30  | features | `media-studio.css`                       | ✅   | ✅   |                                    | page-content wrapper                                |
+| 31  | features | `chat-history.css`                       | ✅   | ✅   | ✅ delete-btn → hover-reveal-btn   | ≈ hidden-btn #38 ✅ Done                            |
+| 32  | features | `weather-summary-card.component.css`     | ✅   | ✅   |                                    |                                                     |
+| 33  | features | `ideas-progress.css`                     | ✅   | ✅   |                                    |                                                     |
+| 34  | features | `weather-forecast.component.css`         | ✅   | ✅   |                                    |                                                     |
+| 35  | features | `weather-current-card.component.css`     | ✅   | ✅   |                                    |                                                     |
+| 36  | features | `users-table.component.css`              | ✅   | ✅   |                                    | role-badge dup · card-header dup                    |
+| 37  | features | `user-profile-card.component.css`        | ✅   | ✅   |                                    | role-badge dup · field-row dup                      |
+| 38  | features | `main-sidebar.css`                       | ✅   | ✅   | ✅ hidden-btn → hover-reveal-btn   | action-btns ✅ Done                                 |
+| 39  | features | `transcript-timeline.component.css`      | ✅   | ✅   |                                    |                                                     |
+| 40  | features | `role-change-card.component.css`         | ✅   | ✅   |                                    | role-badge source · field-row source · status-badge |
+| 41  | features | `register-form.component.css`            | ✅   | ✅   | ✅ submit-btn → primary-btn.filled | form-fields ≈ .form ✅ Done                         |
+| 42  | features | `system-status-dashboard.component.css`  | ✅   | ✅   |                                    | info-chip → badge/tag                               |
+| 43  | features | `header.css`                             | ✅   | ✅   |                                    |                                                     |
+| 44  | features | `session-created-card.component.css`     | ✅   | ✅   |                                    | status-badge · field-row dup                        |
+| 45  | features | `llm-test-results.component.css`         | ✅   | ✅   |                                    | provider-badge → badge                              |
+| 46  | features | `analytics-chart.component.css`          | ✅   | ✅   |                                    | card-header dup                                     |
+| 47  | features | `agnes-image-card.component.css`         | ✅   | ✅   |                                    |                                                     |
+| 48  | features | `delete-confirm-card.component.css`      | ✅   | ✅   |                                    | status-badge · field-row dup                        |
+| 49  | features | `chat-sessions-list.component.css`       | ✅   | ✅   |                                    | card-header dup                                     |
+| 50  | features | `currency-card.component.css`            | ✅   | ✅   |                                    |                                                     |
+| 51  | features | `agnes-video-card.component.css`         | ✅   | ✅   |                                    |                                                     |
+| 52  | features | `database-storage-monitor.component.css` | ✅   | ✅   |                                    | card-header dup                                     |
+
+---
+
+## Button Overrides
+
+| Priority   | #   | Class          | Issue                                                      | Status     |
+| ---------- | --- | -------------- | ---------------------------------------------------------- | ---------- |
+| ~~High~~   | 41  | `.submit-btn`  | Redefines button basics — should use `.primary-btn.filled` | ✅ Done    |
+| ~~High~~   | 38  | `.hidden-btn`  | Hover-reveal icon button — duplicates `.delete-btn` #31    | ✅ Done    |
+| ~~Medium~~ | 31  | `.delete-btn`  | Custom hover-reveal icon button                            | ✅ Done    |
+| Low        | 16  | `.primary-btn` | Responsive width:100% override (scoped to @media)          | ✅ OK      |
+| Low        | 17  | `.reset-btn`   | Transition-only override                                   | ✅ OK      |
+| Low        | 21  | `.primary-btn` | Demo width:auto override (sandbox-only)                    | ✅ OK      |
+
+---
+
+## Inner Class → Global Variant Opportunities
+
+| Priority | #             | Class             | Opportunity                                                       |
+| -------- | ------------- | ----------------- | ----------------------------------------------------------------- |
+| High     | 36,37,40      | `.role-badge`     | Identical across 3 files → global `.badge.role-admin/.role-user`  |
+| High     | 37,40,44,48   | `.field-row`      | Identical across 4 files → global `.field-row` utility            |
+| High     | 36,46,48,52+4 | `.card-header`    | Identical across 8 chat blocks → global `.card-header` pattern    |
+| Medium   | 40,44,48      | `.status-badge`   | Similar to global `.badge` → `.badge.badge-danger/.badge-success` |
+| Medium   | 45            | `.provider-badge` | Similar to global `.badge` → `.badge.badge-admin`                 |
+| Medium   | 42            | `.info-chip`      | Could use global `.badge` or `.tag`                               |
+| Medium   | 27            | `.col-expand`     | Shadows global `.col-expand` from `_utilities.css`                |
+| Low      | 13,14         | `.tooltip-card`   | Similar fixed-position tooltip containers                         |
+| Low      | 30            | `.page-content`   | Angular encapsulation safe but confusing                          |
 
 ---
 

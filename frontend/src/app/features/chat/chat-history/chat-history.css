@@ -90,33 +90,8 @@
             }
 
             .delete-btn {
-                flex: 0 0 auto;
-                color: var(--color-text-muted);
                 margin-inline-end: var(--space-4);
-                opacity: 0;
-                scale: 0;
-                transition:
-                    opacity var(--transition-fast),
-                    scale var(--transition-fast),
-                    color var(--transition-fast),
-                    background var(--transition-fast);
-
-                &:hover,
-                &:focus-visible {
-                    color: var(--color-danger);
-                    background: var(--color-danger-bg);
-                    opacity: 1;
-                    scale: 1;
-                }
             }
-
-            &:hover .delete-btn,
-            &:focus-within .delete-btn {
-                opacity: 1;
-                scale: 1;
-            }
-
-
         }
     }
 }

@@ -192,6 +192,11 @@ button {
     background-color: var(--color-danger-bg);
   }
 
+  &:focus-visible {
+    outline: 2px solid var(--color-danger-border);
+    outline-offset: 2px;
+  }
+
   &.outlined {
     background-color: transparent;
     color: var(--color-danger);
@@ -327,9 +332,35 @@ a,
   }
 }
 
-.danger-btn {
+/* 7. Hover Reveal Button — hidden by default, revealed on parent hover */
+.hover-reveal-btn {
+  flex: 0 0 auto;
+  opacity: 0;
+  scale: 0;
+  transition:
+    opacity var(--transition-fast),
+    scale var(--transition-fast),
+    color var(--transition-fast),
+    background var(--transition-fast);
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &:hover,
   &:focus-visible {
-    outline: 2px solid var(--color-danger-border);
-    outline-offset: 2px;
+    color: var(--color-danger);
+    background: var(--color-danger-bg);
+  }
+}
+
+/* Reveal on parent hover/focus-within */
+.hover-parent {
+  &:hover,
+  &:focus-within {
+    > .hover-reveal-btn {
+      opacity: 1;
+      scale: 1;
+    }
   }
 }

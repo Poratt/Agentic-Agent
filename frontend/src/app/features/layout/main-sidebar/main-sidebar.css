@@ -50,24 +50,6 @@
 				}
 			}
 
-		.hidden-btn {
-			flex: 0 0 auto;
-			opacity: 0;
-			scale: 0;
-			transition:
-				opacity var(--transition-fast),
-				transform var(--transition-fast),
-				scale var(--transition-fast);
-
-			&:active {
-				transform: scale(0.97);
-			}
-
-			&.color-danger:hover {
-				color: var(--color-danger)
-			}
-		}
-
 			&:is(:hover) {
 				background: var(--color-surface-hover);
 
@@ -75,7 +57,7 @@
 					color: var(--color-primary);
 				}
 
-				.hidden-btn {
+				.hover-reveal-btn {
 					opacity: 1;
 					scale: 1;
 				}
