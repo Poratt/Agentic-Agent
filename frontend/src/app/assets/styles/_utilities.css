@@ -89,6 +89,7 @@
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
+  will-change: transform;
 
   &::before {
     content: '';

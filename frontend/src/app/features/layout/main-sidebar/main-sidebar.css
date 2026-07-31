@@ -208,8 +208,8 @@
 			text-align: right;
 
 			.user-avatar {
-				width: var(--space-20);
-				height: var(--space-20);
+				width: var(--space-14);
+				height: var(--space-14);
 				background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
 				color: var(--color-white);
 				border-radius: 50%;
@@ -217,6 +217,7 @@
 				align-items: center;
 				justify-content: center;
 				font-weight: var(--font-weight-bold);
+				flex-shrink: 0;
 			}
 
 			.user-info {
