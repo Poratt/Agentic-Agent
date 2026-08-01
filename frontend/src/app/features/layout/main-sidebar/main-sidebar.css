@@ -13,10 +13,6 @@
 		width: var(--sidebar-width-collapsed);
 
 		.nav-label {
-			max-width: 0;
-		}
-
-		.nav-label {
 			opacity: 0;
 			max-width: 0;
 			overflow: hidden;
