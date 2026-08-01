@@ -1,40 +1,47 @@
-<aside class="sidebar glass-effect">
+<aside class="sidebar glass-effect" [class.collapsed]="collapsed()">
     <div class="sidebar-header">
         <img src="logo/agentic-admin-logo.png" alt="Agentic Admin" class="logo" />
     </div>
 
     <nav class="nav-list">
-        <button routerLink="/dashboard" routerLinkActive="active" class="nav-item">
+        <button routerLink="/dashboard" routerLinkActive="active" class="nav-item"
+            appTooltip [text]="collapsed() ? 'לוח בקרה' : ''">
             <span class="ph ph-squares-four nav-icon"></span>
             <span class="nav-label">לוח בקרה</span>
         </button>
-        <button routerLink="/users" routerLinkActive="active" class="nav-item">
+        <button routerLink="/users" routerLinkActive="active" class="nav-item"
+            appTooltip [text]="collapsed() ? 'ניהול משתמשים' : ''">
             <span class="ph ph-users nav-icon"></span>
             <span class="nav-label">ניהול משתמשים</span>
         </button>
 
-        <button routerLink="/strain-hunter" routerLinkActive="active" class="nav-item">
+        <button routerLink="/strain-hunter" routerLinkActive="active" class="nav-item"
+            appTooltip [text]="collapsed() ? 'Strain Hunter' : ''">
             <span class="ph ph-compass nav-icon"></span>
             <span class="nav-label">Strain Hunter</span>
         </button>
 
-        <button routerLink="/settings" routerLinkActive="active" class="nav-item">
+        <button routerLink="/settings" routerLinkActive="active" class="nav-item"
+            appTooltip [text]="collapsed() ? 'הגדרות' : ''">
             <span class="ph ph-gear nav-icon"></span>
             <span class="nav-label">הגדרות</span>
         </button>
 
-        <button routerLink="/media" routerLinkActive="active" class="nav-item">
+        <button routerLink="/media" routerLinkActive="active" class="nav-item"
+            appTooltip [text]="collapsed() ? 'סטודיו מדיה' : ''">
             <span class="ph ph-images nav-icon"></span>
             <span class="nav-label">סטודיו מדיה</span>
         </button>
 
-        <button routerLink="/ideas" routerLinkActive="active" class="nav-item">
+        <button routerLink="/ideas" routerLinkActive="active" class="nav-item"
+            appTooltip [text]="collapsed() ? 'מחולל רעיונות' : ''">
             <span class="ph ph-lightbulb nav-icon"></span>
             <span class="nav-label">מחולל רעיונות</span>
         </button>
 
         <div class="nav-item-chat">
-            <button routerLink="/chat" routerLinkActive="active" class="nav-item">
+            <button routerLink="/chat" routerLinkActive="active" class="nav-item"
+                appTooltip [text]="collapsed() ? 'צʼאט' : ''">
                 <span class="ph ph-chat-circle-text nav-icon"></span>
                 <span class="nav-label">צ'אט</span>
             </button>
@@ -96,7 +103,13 @@
     </nav>
 
     <div class="sidebar-footer">
-        <button (click)="authStore.logout()" class="nav-item">
+        <button (click)="toggleSidebar()" class="nav-item toggle-btn"
+            appTooltip [text]="collapsed() ? 'הרחב תפריט' : 'כווץ תפריט'">
+            <span class="ph ph-caret-left toggle-icon nav-icon"></span>
+            <span class="nav-label">{{ collapsed() ? 'הרחב' : 'כווץ' }}</span>
+        </button>
+        <button (click)="authStore.logout()" class="nav-item"
+            appTooltip [text]="collapsed() ? 'יציאה' : ''">
             <span class="ph ph-sign-out nav-icon"></span>
             <span class="nav-label">יציאה</span>
         </button>

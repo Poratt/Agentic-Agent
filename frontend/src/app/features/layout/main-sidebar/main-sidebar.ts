@@ -6,6 +6,8 @@ import { ChatStore } from '../../../core/store/chat.store';
 import { TooltipDirective } from '../../../core/directives/tooltip.directive';
 import { Dropdown } from '../../../components/shared/dropdown/dropdown';
 
+const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed';
+
 @Component({
     selector: 'app-main-sidebar',
     standalone: true,
@@ -21,6 +23,7 @@ export class MainSidebar implements OnInit {
 
     @ViewChild('chatDropdown') chatDropdown?: Dropdown;
 
+    public collapsed = signal(this.loadCollapsed());
     public pendingDeleteSessionId = signal<number | null>(null);
 
     ngOnInit() {
@@ -34,6 +37,19 @@ export class MainSidebar implements OnInit {
                 session.title === 'New chat...' || session.title === 'New chat' ? 'שיחה חדשה...' : session.title,
         }));
     });
+
+    toggleSidebar() {
+        this.collapsed.update(v => !v);
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, JSON.stringify(this.collapsed()));
+    }
+
+    private loadCollapsed(): boolean {
+        try {
+            return JSON.parse(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) ?? 'false');
+        } catch {
+            return false;
+        }
+    }
 
     setPendingDelete(event: MouseEvent, sessionId: number) {
         event.preventDefault();
