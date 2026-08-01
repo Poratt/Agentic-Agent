@@ -5,23 +5,8 @@
     </div>
 
     <div class="header-actions">
-        <div class="user-profile">
-            <div class="user-avatar">
-                {{ avatarLetter() }}
-            </div>
-            <div class="user-info">
-                <span class="user-name">{{ currentUserProfile()?.fullName || authStore.user()?.email }}</span>
-                <span class="subtitle">{{ currentUserProfile()?.email }}</span>
-            </div>
+        <div class="user-avatar">
+            <span>{{ avatarLetter() }}</span>
         </div>
-
-        <button
-            class="transparent-btn icon-only"
-            type="button"
-            (click)="themeService.toggle()"
-            [attr.aria-label]="themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
-        >
-            <span class="ph" [class.ph-moon]="themeService.isDark()" [class.ph-sun]="!themeService.isDark()"></span>
-        </button>
     </div>
 </header>

@@ -9,7 +9,15 @@
 
 
 	.sidebar-header {
-		margin-bottom: var(--space-24);
+		margin-bottom: var(--space-4);
+
+		img.logo {
+			width: 48px;
+			height: 48px;
+			object-fit: contain;
+			background: none;
+			box-shadow: none;
+		}
 	}
 
 

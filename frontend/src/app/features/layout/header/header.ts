@@ -1,8 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { AuthStore } from '../../../core/store/auth.store';
-import { ThemeService } from '../../../core/services/theme.service';
-import { UsersStore } from '../../../core/store/users.store';
 
 @Component({
     selector: 'app-header',
@@ -14,10 +12,6 @@ import { UsersStore } from '../../../core/store/users.store';
 })
 export class Header {
     protected authStore = inject(AuthStore);
-    protected userStore = inject(UsersStore);
-    protected themeService = inject(ThemeService);
-
-    currentUserProfile = this.userStore.currentUserProfile;
 
     protected userEmail = computed(() => this.authStore.user()?.email || '');
 
