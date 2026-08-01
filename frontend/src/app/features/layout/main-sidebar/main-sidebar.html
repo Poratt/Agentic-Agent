@@ -1,14 +1,6 @@
 <aside class="sidebar glass-effect">
     <div class="sidebar-header">
         <div class="logo">LG</div>
-        <button
-            class="transparent-btn theme-toggle icon-only"
-            type="button"
-            (click)="themeService.toggle()"
-            [attr.aria-label]="themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
-        >
-            <span class="ph nav-icon" [class.ph-moon]="themeService.isDark()" [class.ph-sun]="!themeService.isDark()"></span>
-        </button>
     </div>
 
     <nav class="nav-list">
@@ -103,24 +95,10 @@
         </div>
     </nav>
 
-    <div class="sidebar-footer glass-effect">
-        <div class="user-profile">
-            <div class="user-avatar">
-                {{ authStore.user()?.email ? authStore.user()?.email![0].toUpperCase() : '?' }}
-            </div>
-            <div class="user-info">
-                <span class="user-name">{{ authStore.user()?.email }}</span>
-                @if (authStore.user()?.role) {
-                    <span class="badge" [badgeColor]="getUserRoleData(authStore.user()!.role)">
-                        <span class="ph sm" [ngClass]="getUserRoleData(authStore.user()!.role)?.icon"></span>
-                        {{ getUserRoleData(authStore.user()!.role)?.heLabel }}
-                    </span>
-                }
-            </div>
-        </div>
-        <button (click)="authStore.logout()" class="transparent-btn warning-btn sm">
-            <span class="ph ph-sign-out ph-fill nav-icon"></span>
-            <span>יציאה</span>
+    <div class="sidebar-footer">
+        <button (click)="authStore.logout()" class="nav-item">
+            <span class="ph ph-sign-out nav-icon"></span>
+            <span class="nav-label">יציאה</span>
         </button>
     </div>
 </aside>

@@ -3,16 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthStore } from '../../../core/store/auth.store';
 import { ChatStore } from '../../../core/store/chat.store';
-import { getUserRoleData } from '../../../core/enums/user-role.enum';
-import { BadgeColor } from '../../../core/directives/badge-color.directive';
 import { TooltipDirective } from '../../../core/directives/tooltip.directive';
-import { ThemeService } from '../../../core/services/theme.service';
 import { Dropdown } from '../../../components/shared/dropdown/dropdown';
 
 @Component({
     selector: 'app-main-sidebar',
     standalone: true,
-    imports: [CommonModule, RouterLink, RouterLinkActive, BadgeColor, TooltipDirective, Dropdown],
+    imports: [CommonModule, RouterLink, RouterLinkActive, TooltipDirective, Dropdown],
     templateUrl: './main-sidebar.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './main-sidebar.css',
@@ -21,11 +18,9 @@ export class MainSidebar implements OnInit {
     protected authStore = inject(AuthStore);
     protected chatStore = inject(ChatStore);
     protected router = inject(Router);
-    protected themeService = inject(ThemeService);
 
     @ViewChild('chatDropdown') chatDropdown?: Dropdown;
 
-    protected readonly getUserRoleData = getUserRoleData;
     public pendingDeleteSessionId = signal<number | null>(null);
 
     ngOnInit() {
