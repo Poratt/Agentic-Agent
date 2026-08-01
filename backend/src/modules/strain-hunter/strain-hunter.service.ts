@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as puppeteer from 'puppeteer';
 import { Strain } from './entities/strain';
+import { UserMatchingPreferences } from './entities/user-matching-preferences.entity';
+import { UpdateMatchingPreferencesDto } from './dto/matching-preferences.dto';
 import { GeneticsService } from '../genetics/genetics.service';
 import { TerpeneService } from '../terpene/terpene.service';
 
@@ -75,9 +77,13 @@ const SOURCE_URL_2 =
 
 @Injectable()
 export class StrainHunterService {
+    private readonly DEFAULT_WEIGHTS = { terpene: 60, genetics: 40 };
+
     constructor(
         @InjectRepository(Strain)
         private readonly strainRepository: Repository<Strain>,
+        @InjectRepository(UserMatchingPreferences)
+        private readonly prefsRepository: Repository<UserMatchingPreferences>,
         private readonly geneticsService: GeneticsService,
         private readonly terpeneService: TerpeneService,
     ) { }
@@ -181,6 +187,39 @@ export class StrainHunterService {
         ]);
 
         return { items: entities, lastScrapedAt: scrapedAt };
+    }
+
+    async getPreferences(userId: number): Promise<{ prefs: Record<string, string>; weights: { terpene: number; genetics: number } }> {
+        const record = await this.prefsRepository.findOne({ where: { userId } });
+
+        if (!record) {
+            return { prefs: {}, weights: { ...this.DEFAULT_WEIGHTS } };
+        }
+
+        return {
+            prefs: (record.prefs as Record<string, string>) ?? {},
+            weights: (record.weights as { terpene: number; genetics: number }) ?? { ...this.DEFAULT_WEIGHTS },
+        };
+    }
+
+    async upsertPreferences(userId: number, dto: UpdateMatchingPreferencesDto): Promise<{ prefs: Record<string, string>; weights: { terpene: number; genetics: number } }> {
+        const existing = await this.prefsRepository.findOne({ where: { userId } });
+
+        const prefs = dto.prefs ?? existing?.prefs ?? {};
+        const weights = dto.weights
+            ? { terpene: dto.weights.terpene, genetics: dto.weights.genetics }
+            : (existing?.weights as { terpene: number; genetics: number }) ?? { ...this.DEFAULT_WEIGHTS };
+
+        if (existing) {
+            existing.prefs = prefs;
+            existing.weights = weights;
+            await this.prefsRepository.save(existing);
+        } else {
+            const record = this.prefsRepository.create({ userId, prefs, weights });
+            await this.prefsRepository.save(record);
+        }
+
+        return { prefs, weights };
     }
 
     private async fetchDataFromUrl(url: string): Promise<{ items: StrainItem[] }> {

@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Query, Sse, ServiceUnavailableException, UseGuards, Req } from '@nestjs/common';
+﻿import { Controller, Post, Get, Body, Query, Sse, ServiceUnavailableException, UseGuards, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Observable, Subscriber } from 'rxjs';
 import { MessageEvent } from '@nestjs/common';
@@ -17,6 +17,11 @@ export class IdeasController {
 
   @UseGuards(JwtAuthGuard)
   @Post('generate')
+  @ApiOperation({
+    summary: 'Generate startup ideas',
+    summaryHe: 'מגבשים ומחוללים רעיונות סטארטאפ חדשניים ופורצי דרך',
+    toolIcon: 'ph-lightbulb',
+  } as CustomApiOperationOptions)
   async generate(@Req() req: RequestWithUser, @Body() dto: GenerateIdeasDto): Promise<GenerateIdeasResponse> {
     try {
       const userId = req.user?.sub;
@@ -34,7 +39,7 @@ export class IdeasController {
   @Sse()
   @ApiOperation({
     summary: 'Generate business ideas with real-time progress (SSE)',
-    summaryHe: 'מייצר רעיונות עסקיים עם פרוגרס בזמן אמת (SSE)',
+    summaryHe: 'מחוללים רעיונות עסקיים מעולים עם חיווי התקדמות חי בסטרמינג',
     toolIcon: 'ph-lightbulb',
     description:
       'Same flow as POST /ideas/generate but streams progress events (phase 0 → 1 → 2) over Server-Sent Events. Final event carries the full GenerateIdeasResponse. Use this when the UI needs a real progress bar.',

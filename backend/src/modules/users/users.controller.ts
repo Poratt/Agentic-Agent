@@ -47,7 +47,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'List all users',
-    summaryHe: 'שולף את רשימת כל המשתמשים במערכת',
+    summaryHe: 'מציגים את רשימת המשתמשים הפעילים במערכת',
     toolIcon: 'ph-users',
     description:
       'Returns every user in the system with public fields only: id, email, fullName, numeric role, createdAt, updatedAt, lastLoginAt. ' +
@@ -67,7 +67,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Get current authenticated user payload',
-    summaryHe: 'שולף את פרטי המשתמש המחובר מתוך הטוקן',
+    summaryHe: 'מציגים את פרטי הפרופיל המהירים של המשתמש הנוכחי',
     toolIcon: 'ph-user-circle',
     description:
       'Returns the JWT payload decoded by JwtAuthGuard. No database query is made. Role is numeric: 1 = Admin, 2 = User.',
@@ -91,7 +91,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Get user by id',
-    summaryHe: 'שולף משתמש לפי מזהה (מזהה: ${id})',
+    summaryHe: 'מציגים פרטים מלאים על משתמש לפי מזהה ייחודי',
     toolIcon: 'ph-user',
     description:
       'Fetches one user by numeric id with public fields only. Use GET /users first to discover valid IDs.',
@@ -116,7 +116,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiOperation({
     summary: 'Update user profile fields',
-    summaryHe: 'מעדכן את שדות הפרופיל של המשתמש (מזהה: ${id})',
+    summaryHe: 'מעדכנים את פרטי הפרופיל האישיים של המשתמש',
     toolIcon: 'ph-pencil-simple',
     description:
       'Updates fullName and/or email for the user identified by :id. ' +
@@ -144,7 +144,7 @@ export class UsersController {
   @RequiresConfirmation()
   @ApiOperation({
     summary: 'Delete user permanently',
-    summaryHe: 'מוחק לצמיתות את המשתמש (מזהה: ${id})',
+    summaryHe: 'מוחקים משתמש לצמיתות מהמערכת',
     toolIcon: 'ph-trash',
     description: 'Hard-deletes the user record. This is irreversible and requires admin privileges.',
   } as CustomApiOperationOptions)
@@ -167,7 +167,7 @@ export class UsersController {
   @RequiresConfirmation()
   @ApiOperation({
     summary: 'Change user role',
-    summaryHe: 'משנה את תפקיד המשתמש (מזהה: ${id})',
+    summaryHe: 'מעדכנים את תפקיד והרשאות המשתמש במערכת',
     toolIcon: 'ph-shield',
     description:
       'Sets only the role field of the user identified by :id. IMPORTANT: role must be a NUMBER: 1 = Admin, 2 = User. Never send a string. Accepted numeric values : 1 = Admin, 2 = User. ' +

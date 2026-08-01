@@ -1,4 +1,4 @@
-import { Controller, Get, Delete, Param, Post, Patch, Body, UseGuards } from '@nestjs/common';
+﻿import { Controller, Get, Delete, Param, Post, Patch, Body, UseGuards } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -72,7 +72,7 @@ export class TerpeneController {
     @Get()
     @ApiOperation({
         summary: 'List all terpenes',
-        summaryHe: 'שליפת כל הטרפנים בקטלוג',
+        summaryHe: 'מציגים את קטלוג הטרפנים המלא המוגדר במערכת',
         toolIcon: 'ph-flower-lotus',
         description:
             'Returns the full terpene reference catalog ordered alphabetically by Hebrew name. The list is small (~17 rows) and intended to be cached client-side.',
@@ -107,7 +107,7 @@ export class TerpeneController {
     @Get(':name')
     @ApiOperation({
         summary: 'Get a terpene by name',
-        summaryHe: 'שליפת טרפן בודד לפי שם',
+        summaryHe: 'מציגים פרטים מלאים על טרפן ספציפי לפי שמו',
         toolIcon: 'ph-flower-lotus',
         description:
             'Returns the terpene whose `name` column exactly matches the supplied `:name` path parameter. Result is `null` when no record matches — this is not treated as a 404 so the frontend can render a graceful empty state.',
@@ -157,7 +157,7 @@ export class TerpeneController {
     @Post()
     @ApiOperation({
         summary: 'Create a new terpene',
-        summaryHe: 'יצירת טרפן חדש',
+        summaryHe: 'יוצרים טרפן חדש בקטלוג המערכת',
         toolIcon: 'ph-flower-lotus',
         description:
             'Creates a new terpene entry in the catalog. The `name` field must be unique — attempting to create a duplicate will return a 409 Conflict. The `color` field must be a valid hex color (e.g., #66BB6A).',
@@ -205,7 +205,7 @@ export class TerpeneController {
     @Patch(':name')
     @ApiOperation({
         summary: 'Update a terpene by name',
-        summaryHe: 'עדכון טרפן לפי שם',
+        summaryHe: 'מעדכנים את המאפיינים, הריח וההשפעות של טרפן קיים',
         toolIcon: 'ph-flower-lotus',
         description:
             'Updates an existing terpene. Only the provided fields are modified — omitted fields retain their current values. The `name` cannot be changed via this endpoint; use POST /terpenes to create a new record with a different name.',
@@ -252,7 +252,7 @@ export class TerpeneController {
     @Post(':name/enrich')
     @ApiOperation({
         summary: 'Enrich a single terpene',
-        summaryHe: 'העשרת טרפן בודד באמצעות LLM',
+        summaryHe: 'מעשירים טרפן בודד בפרטי ארומה והשפעות מבוססי AI',
         toolIcon: 'ph-flower-lotus',
         description:
             'Searches the web for the given terpene name, sends context to LLM, and returns enriched description with web results. Does not persist — caller decides whether to save.',
@@ -281,7 +281,11 @@ export class TerpeneController {
     }
 
     @Post('enrich-missing')
-    @ApiOperation({ summary: 'Enrich all terpenes with missing properties (description, scent, effects).' })
+    @ApiOperation({
+        summary: 'Enrich all terpenes with missing properties (description, scent, effects).',
+        summaryHe: 'מפעילים סריקה והעשרה אוטומטית לכל הטרפנים שחסר להם מידע מבוסס AI',
+        toolIcon: 'ph-magic-wand',
+    } as CustomApiOperationOptions)
     @ApiOkResponse({ description: 'Bulk enrichment completed.' })
     @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
     @ApiInternalServerErrorResponse({ description: 'LLM or web search failure.' })
@@ -296,7 +300,11 @@ export class TerpeneController {
 
     @Delete(':name')
     @UseGuards(JwtAuthGuard)
-    @ApiOperation({ summary: 'Delete a terpene by name.' })
+    @ApiOperation({
+        summary: 'Delete a terpene by name.',
+        summaryHe: 'מחוקים טרפן לצמיות מקטלוג המערכת',
+        toolIcon: 'ph-trash',
+    } as CustomApiOperationOptions)
     @ApiParam({
         name: 'name',
         type: String,

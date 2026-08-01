@@ -1,0 +1,145 @@
+/* ------------------------------ */
+/* AI Format — Chat Rendered Content */
+/* ------------------------------ */
+
+.ai-table-wrap {
+  overflow-x: auto;
+  margin: var(--space-4) 0;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+
+  .ai-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    color: var(--color-text-primary);
+
+    thead {
+      th {
+        padding: var(--space-3) var(--space-4);
+        text-align: right;
+        font-weight: var(--font-weight-semibold);
+        font-size: var(--font-size-xs);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--color-text-secondary);
+        background: var(--color-surface-elevated);
+        border-bottom: 1px solid var(--color-border-strong);
+        white-space: nowrap;
+
+        &:first-child {
+          border-radius: 0 var(--radius-md) 0 0;
+        }
+
+        &:last-child {
+          border-radius: var(--radius-md) 0 0 0;
+        }
+      }
+    }
+
+    tbody {
+      tr {
+        transition: background-color var(--transition-fast);
+
+        &:hover {
+          background: var(--color-surface-hover);
+        }
+
+        &:not(:last-child) td {
+          border-bottom: 1px solid var(--color-border);
+        }
+      }
+
+      td {
+        padding: var(--space-3) var(--space-4);
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
+.ai-bold {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.ai-table-header {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+/* Inline code inside AI responses */
+.ai-table-wrap code,
+.ai-table code {
+  font-family: var(--font-code);
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-xs);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+}
+
+/* Legacy component block */
+.legacy-component-block {
+  display: block;
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-warning-border);
+  background: var(--color-warning-bg);
+
+  .legacy-component-label {
+    display: inline-block;
+    font-size: var(--font-size-xxs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-warning);
+    margin-bottom: var(--space-2);
+  }
+}
+
+/* Badge styles for roles in AI responses */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+
+  &.badge-admin {
+    color: var(--color-primary);
+    background: var(--color-primary-glow-bg);
+    border: 1px solid var(--color-primary-glow);
+  }
+
+  &.badge-info {
+    color: var(--color-secondary);
+    background: var(--color-secondary-glow-bg);
+    border: 1px solid var(--color-secondary-glow);
+  }
+}
+
+/* Fade-in animation for AI nodes */
+.ai-node-fade-in {
+  animation: aiFadeIn 0.25s ease-out both;
+}
+
+@keyframes aiFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

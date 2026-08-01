@@ -1,6 +1,13 @@
 # Project Documentation Status
 
-Last updated: 2026-07-28
+Last updated: 2026-08-01
+
+## 2026-08-01 Session — Tooltip Effect Tag Font Size
+
+- Completed: reduced `.tooltip-card-effect-tag` font size from `var(--font-size-xs)` (12px) to `9px` in `tooltip.css`
+- Files: `frontend/src/app/components/shared/tooltip/tooltip.css`
+- Current state: CSS-only change, no verification performed
+- Next: visually confirm tooltip effect tags in strain-hunter
 
 ## 2026-07-28 Session — CSS Animation Audit, Page Layout Unification, Drag-and-Drop Fix
 

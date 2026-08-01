@@ -1,4 +1,8 @@
-import { Injectable, computed, effect, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { catchError, debounceTime, of, Subject, switchMap, tap } from 'rxjs';
+import { AuthStore } from './auth.store';
+import { environment } from '../../environments/environment';
 
 export type PrefState = 'neutral' | 'like' | 'love' | 'avoid';
 
@@ -19,11 +23,8 @@ export type ScoreBreakdown = {
   };
   genetics: {
     weight: number;
-    /** For genetics (OR logic): true if at least one preferred genetics was found */
     hasMatch: boolean;
-    /** All preferred genetics (for display) */
     preferred: string[];
-    /** Genetics found in the strain */
     hits: string[];
   };
   penalty: boolean;
@@ -37,7 +38,9 @@ export type ScoredStrain<T = Record<string, unknown>> = T & {
   breakdown: ScoreBreakdown;
 };
 
-const STORAGE_KEY = 'matching-engine:v1';
+const STORAGE_PREFIX = 'matching-engine:v1';
+
+const VALID_PREF_STATES = new Set<string>(['neutral', 'like', 'love', 'avoid']);
 
 const PREF_STATES: PrefState[] = ['neutral', 'like', 'love', 'avoid'];
 
@@ -53,8 +56,14 @@ type PersistedShape = {
 
 @Injectable({ providedIn: 'root' })
 export class MatchingEngineStore {
+  private readonly http = inject(HttpClient);
+  private readonly authStore = inject(AuthStore);
+
   private readonly prefsState = signal<PrefMap>({});
   private readonly weightsState = signal<Weights>({ ...DEFAULT_WEIGHTS });
+
+  private readonly sync$ = new Subject<PersistedShape>();
+  private isHydrating = false;
 
   public readonly prefs = this.prefsState.asReadonly();
   public readonly weights = this.weightsState.asReadonly();
@@ -65,7 +74,18 @@ export class MatchingEngineStore {
   });
 
   constructor() {
-    this.hydrate();
+    this.setupSyncPipeline();
+
+    effect(() => {
+      const user = this.authStore.user();
+      const userId = this.getActiveUserId();
+
+      if (user && userId !== null) {
+        this.handleLogin(userId);
+      } else {
+        this.handleLogout();
+      }
+    });
 
     effect(() => {
       const snapshot: PersistedShape = {
@@ -73,11 +93,21 @@ export class MatchingEngineStore {
         weights: this.weightsState(),
       };
 
+      const userId = this.getActiveUserId();
+
+      if (this.isHydrating || userId === null) {
+        return;
+      }
+
+      const storageKey = this.buildStorageKey(userId);
+
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+        localStorage.setItem(storageKey, JSON.stringify(snapshot));
       } catch {
         // Storage unavailable
       }
+
+      this.sync$.next(snapshot);
     });
   }
 
@@ -140,9 +170,7 @@ export class MatchingEngineStore {
     const prefs = this.prefsState();
     const weights = this.weightsState();
 
-    // Terpenes: proportional scoring (more terpenes = better match)
     const terpeneData = this.scoreCategory(item, 'terpene', prefs, 'proportional');
-    // Genetics: OR logic (at least one preferred genetics = full score)
     const geneticsData = this.scoreCategory(item, 'genetics', prefs, 'any');
 
     const activeTerpWeight = terpeneData.hasPositivePrefs ? weights.terpene : 0;
@@ -152,9 +180,7 @@ export class MatchingEngineStore {
     let weightedBaseScore = 100;
 
     if (totalActiveWeight > 0) {
-      // Terpenes: proportional (0-100% based on how many matched)
       const terpScore = terpeneData.maxPoints > 0 ? terpeneData.earnedPoints / terpeneData.maxPoints : 0;
-      // Genetics: binary (0% or 100% based on whether any matched)
       const genScore = geneticsData.hasMatch ? 1 : 0;
 
       weightedBaseScore = (((terpScore * activeTerpWeight) + (genScore * activeGenWeight)) / totalActiveWeight) * 100;
@@ -203,6 +229,140 @@ export class MatchingEngineStore {
       .slice(0, limit);
   }
 
+  private handleLogin(userId: number): void {
+    this.isHydrating = true;
+
+    const storageKey = this.buildStorageKey(userId);
+    const shape = this.loadFromStorage(storageKey);
+
+    if (shape) {
+      this.prefsState.set(shape.prefs);
+      this.weightsState.set({ ...DEFAULT_WEIGHTS, ...shape.weights });
+    }
+
+    this.isHydrating = false;
+
+    this.fetchRemotePreferences(userId, shape);
+  }
+
+  private handleLogout(): void {
+    this.prefsState.set({});
+    this.weightsState.set({ ...DEFAULT_WEIGHTS });
+    this.cleanAllMatchingKeys();
+  }
+
+  private fetchRemotePreferences(userId: number, localShape: PersistedShape | null): void {
+    this.http.get<{ prefs: PrefMap; weights: Weights }>(`${environment.apiUrl}/strain-hunter/preferences`).pipe(
+      tap((remote) => {
+        const hasRemotePrefs = Object.keys(remote.prefs ?? {}).length > 0;
+        const hasLocalPrefs = localShape !== null && Object.keys(localShape.prefs).length > 0;
+
+        if (hasRemotePrefs) {
+          this.isHydrating = true;
+          this.prefsState.set(remote.prefs ?? {});
+          this.weightsState.set({ ...DEFAULT_WEIGHTS, ...remote.weights });
+          this.isHydrating = false;
+          return;
+        }
+
+        if (hasLocalPrefs && localShape) {
+          this.sync$.next(localShape);
+        }
+      }),
+      catchError(() => of(null)),
+    ).subscribe();
+  }
+
+  private setupSyncPipeline(): void {
+    this.sync$
+      .pipe(
+        debounceTime(500),
+        switchMap((snapshot) => {
+          return this.http.put(`${environment.apiUrl}/strain-hunter/preferences`, snapshot).pipe(
+            catchError(() => of(null)),
+          );
+        }),
+      )
+      .subscribe();
+  }
+
+  private buildStorageKey(userId: number): string {
+    return `${STORAGE_PREFIX}:user_${userId}`;
+  }
+
+  private getActiveUserId(): number | null {
+    const user = this.authStore.user();
+    if (!user) {
+      return null;
+    }
+    const id = user.id ?? (user as unknown as { sub?: number }).sub;
+    return typeof id === 'number' ? id : null;
+  }
+
+  private loadFromStorage(key: string): PersistedShape | null {
+    try {
+      const raw = localStorage.getItem(key);
+
+      if (!raw) {
+        return null;
+      }
+
+      const parsed = JSON.parse(raw) as Partial<PersistedShape>;
+
+      return this.validatePersistedShape(parsed) ? parsed as PersistedShape : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private validatePersistedShape(shape: Partial<PersistedShape>): shape is PersistedShape {
+    if (!shape || typeof shape !== 'object') {
+      return false;
+    }
+
+    if (!shape.prefs || typeof shape.prefs !== 'object' || Array.isArray(shape.prefs)) {
+      return false;
+    }
+
+    for (const [key, value] of Object.entries(shape.prefs)) {
+      if (typeof key !== 'string' || !VALID_PREF_STATES.has(value as string)) {
+        return false;
+      }
+    }
+
+    if (!shape.weights || typeof shape.weights !== 'object' || Array.isArray(shape.weights)) {
+      return false;
+    }
+
+    const { terpene, genetics } = shape.weights as Record<string, unknown>;
+
+    if (typeof terpene !== 'number' || typeof genetics !== 'number') {
+      return false;
+    }
+
+    if (terpene < 0 || terpene > 100 || genetics < 0 || genetics > 100) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private cleanAllMatchingKeys(): void {
+    const keysToRemove: string[] = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+
+      if (key && key.startsWith(STORAGE_PREFIX)) {
+        keysToRemove.push(key);
+      }
+    }
+
+    for (const key of keysToRemove) {
+      localStorage.removeItem(key);
+    }
+  }
+
   private scoreCategory(
     item: Record<string, unknown>,
     category: keyof Weights,
@@ -212,7 +372,7 @@ export class MatchingEngineStore {
     earnedPoints: number;
     maxPoints: number;
     hasPositivePrefs: boolean;
-    hasMatch: boolean; // true if at least one preferred item was found
+    hasMatch: boolean;
     penaltyIngredient: string | null;
     hits: string[];
     misses: string[];
@@ -262,7 +422,6 @@ export class MatchingEngineStore {
       return !hits.includes(d);
     });
 
-    // hasMatch: for 'any' mode, true if at least one hit; for 'proportional', also true if at least one hit
     const hasMatch = hits.length > 0;
 
     return { earnedPoints, maxPoints, hasPositivePrefs, hasMatch, penaltyIngredient, hits, misses };
@@ -303,27 +462,5 @@ export class MatchingEngineStore {
 
   private stripTerpeneParens(value: string): string {
     return value.replace(/\s*\(?\d+(?:[.,]\d+)?\s*%\)?\s*$/u, '').replace(/\s*\(?%\s*\d+(?:[.,]\d+)?\)?\s*$/u, '').trim();
-  }
-
-  private hydrate(): void {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-
-      if (!raw) {
-        return;
-      }
-
-      const parsed = JSON.parse(raw) as Partial<PersistedShape>;
-
-      if (parsed.prefs && typeof parsed.prefs === 'object') {
-        this.prefsState.set(parsed.prefs as PrefMap);
-      }
-
-      if (parsed.weights && typeof parsed.weights === 'object') {
-        this.weightsState.set({ ...DEFAULT_WEIGHTS, ...parsed.weights });
-      }
-    } catch {
-      // Storage unavailable
-    }
   }
 }

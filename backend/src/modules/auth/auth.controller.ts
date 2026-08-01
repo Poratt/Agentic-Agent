@@ -45,7 +45,7 @@ export class AuthController {
   @HttpCode(201)
   @ApiOperation({
     summary: 'Register a new user account',
-    summaryHe: 'רושם חשבון משתמש חדש במערכת',
+    summaryHe: 'יוצרים חשבון חדש ומצטרפים למשפחת המערכת',
     toolIcon: 'ph-user-plus',
     description:
       'Creates a new user account. Required RegisterDto fields: fullName, email, password. ' +
@@ -73,7 +73,7 @@ export class AuthController {
   @HttpCode(200)
   @ApiOperation({
     summary: 'Login with email and password',
-    summaryHe: 'מבצע התחברות באמצעות אימייל וסיסמה',
+    summaryHe: 'נכנסים לחשבון האישי בבטחה',
     toolIcon: 'ph-sign-in',
     description:
       'Validates user credentials. On success, the service writes access and refresh tokens to HTTP-only cookies ' +
@@ -101,7 +101,7 @@ export class AuthController {
   @UseGuards(JwtRefreshGuard)
   @ApiOperation({
     summary: 'Refresh access token using refresh token',
-    summaryHe: 'מרענן את טוקן הגישה באמצעות טוקן רענון',
+    summaryHe: 'מחדשים את טוקן הגישה ברקע כדי להישאר מחוברים',
     toolIcon: 'ph-arrows-clockwise',
     description:
       'JwtRefreshGuard reads the refresh token from the cookie or Authorization header. ' +
@@ -129,7 +129,7 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Logout and invalidate session',
-    summaryHe: 'מבצע התנתקות ומבטל את סשן המשתמש',
+    summaryHe: 'מתנתקים מהמ系統 ומסיימים את סשן העבודה בבטחה',
     toolIcon: 'ph-sign-out',
     description:
       'Requires a valid access token. Clears the stored refresh token hash and removes auth cookies from the response.',
@@ -155,7 +155,7 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get current authenticated user payload',
-    summaryHe: 'שולף את פרטי המשתמש המחובר מתוך הטוקן',
+    summaryHe: 'מציגים את פרטי הפרופיל המהירים של המשתמש הנוכחי',
     toolIcon: 'ph-user-circle',
     description:
       'Reads req.user as populated by JwtAuthGuard. No database query is made. ' +

@@ -1,5 +1,17 @@
 # Documentation Handoff
 
+## 2026-08-01 Session — Tooltip Effect Tag Font Size
+
+**Tooltip terpene effect tag size reduction**
+
+- Reduced `.tooltip-card-effect-tag` font size from `var(--font-size-xs)` (12px) to `9px` in the shared tooltip component.
+- Files touched: `frontend/src/app/components/shared/tooltip/tooltip.css` (modified)
+- Verification: CSS-only change, no build/lint/test verification performed.
+- Decisions made: reduced only the effect tag, not the tooltip name, description, or icon — per user's explicit instruction.
+- Open questions for the user: none
+- Next exact step: visually confirm the tooltip in the strain-hunter page shows smaller effect tags
+- No architecture diagram update needed (CSS-only, no new components or endpoints)
+
 ## 2026-07-28 Session — CSS Animation Audit, Page Layout Unification, Drag-and-Drop Fix
 
 **CSS Animation Audit (files #16-52):** All feature CSS files audited with `find-animation-opportunities` and `emil-design-eng` skills. Key fixes: `:active scale(0.97)` on buttons/interactive elements; GPU-accelerated `scaleX()` replacing `width` transitions on progress bars (chat system-status, database-monitor-settings, database-storage-monitor, media-studio); grid-rows expand/collapse animation on idea-card; `.preview-bar-fill` transform-origin fixed to `right center` for RTL; removed dead `.match-btn` rule; theme toggle transition added; `prefers-reduced-motion` verified in multiple files; removed `scale(0.97)` from `.session-row` (looked bad on list items); added `slide-up` class to ideas-form and media-studio composer areas.

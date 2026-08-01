@@ -62,7 +62,7 @@ export class AdminAgentController {
   @Get('sessions')
   @ApiOperation({
     summary: 'Get chat sessions for the authenticated user',
-    summaryHe: 'שולף את סשני הצ\'אט של המשתמש המחובר',
+    summaryHe: 'מציגים את כל שיחות הצ\'אט השמורות שלך עם ה-AI',
     toolIcon: 'ph-chat-centered-text',
     description:
       'Returns recent chat sessions owned by the authenticated user. Sessions from other users are never returned.',
@@ -88,7 +88,7 @@ export class AdminAgentController {
   @Get('sessions/:id/messages')
   @ApiOperation({
     summary: 'Get session message history',
-    summaryHe: 'שולף את היסטוריית ההודעות של סשן הצ\'אט (מזהה: ${id})',
+    summaryHe: 'מציגים את היסטוריית ההודעות המלאה של שיחת הצ\'אט',
     toolIcon: 'ph-chats',
     description:
       'Returns user and assistant messages for a session owned by the authenticated user. ' +
@@ -114,7 +114,7 @@ export class AdminAgentController {
   @Post('messages/images')
   @ApiOperation({
     summary: 'Batch fetch image data for messages',
-    summaryHe: 'שולף תמונות עבור הודעות בפאנץ\'',
+    summaryHe: 'שולפים ומציגים את קבצי המדיה והתמונות של ההודעה',
     toolIcon: 'ph-image',
     description:
       'Returns the imageUrl (Base64 data URL) for each requested message ID. ' +
@@ -153,7 +153,7 @@ export class AdminAgentController {
   @Post('sessions')
   @ApiOperation({
     summary: 'Create a new chat session',
-    summaryHe: 'מייצר סשן שיחת צ\'אט חדש',
+    summaryHe: 'פותחים שיחת צ\'אט חדשה ורעננה עם סוכן ה-AI',
     toolIcon: 'ph-plus-circle',
     description: 'Creates a new empty chat session owned by the authenticated user.',
   } as CustomApiOperationOptions)
@@ -170,7 +170,7 @@ export class AdminAgentController {
   @HttpCode(204)
   @ApiOperation({
     summary: 'Delete chat session',
-    summaryHe: 'מוחק לצמיתות את סשן הצ\'אט (מזהה: ${id})',
+    summaryHe: 'מוחקים לצמיתות שיחת צ\'אט מההיסטוריה השמורה',
     toolIcon: 'ph-trash',
     description:
       'Permanently deletes a session owned by the authenticated user. ' +
@@ -193,7 +193,7 @@ export class AdminAgentController {
   @HttpCode(204)
   @ApiOperation({
     summary: 'Delete a chat message and later history',
-    summaryHe: 'מוחק הודעת צאט ואת כל ההודעות שאחריה',
+    summaryHe: 'מוחקים הודעת צאט ואת כל היסטוריית השיחה שנכתבה אחריה',
     toolIcon: 'ph-trash',
     description:
       'Permanently deletes one message owned by the authenticated user and every later message in the same session. ' +
@@ -220,7 +220,7 @@ export class AdminAgentController {
   @ApiConsumes('application/json', 'multipart/form-data')
   @ApiOperation({
     summary: 'Query Admin Agent as a streamed response',
-    summaryHe: 'שולח שאילתה לסוכן הניהול ומחזיר תגובת סטרים',
+    summaryHe: 'מתכתבים עם סוכן הניהול ומקבלים תגובות חיות בסטרמינג',
     toolIcon: 'ph-robot',
     description:
       'Streams newline-delimited JSON objects over a text/event-stream response. ' +
@@ -289,7 +289,7 @@ export class AdminAgentController {
   @HttpCode(200)
   @ApiOperation({
     summary: 'Confirm or cancel a pending dangerous action',
-    summaryHe: 'מאשר או מבטל פעולה מסוכנת שממתינה',
+    summaryHe: 'מאשרים או מבטלים פעולה רגישה הממתינה לאישור הניהול שלך',
     toolIcon: 'ph-shield-check',
     description: 'Confirms or cancels a pending dangerous action. When confirmed, the action is executed immediately.',
   } as CustomApiOperationOptions)

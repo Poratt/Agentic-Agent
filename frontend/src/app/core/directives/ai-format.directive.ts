@@ -64,7 +64,7 @@ export class AiFormat implements OnChanges {
       .replace(/\n/g, '<br>');
 
     processed = processed
-      .replace(/(<br>\s*){2,}/gi, '<br>')
+      .replace(/(<br>\s*){2,}/gi, '<br><br>')
       .replace(/<br>\s*<(h1|h2|h3|hr|ul|li|table|thead|tbody|tr|div|pre)/gi, '<$1')
       .replace(/<\/(h1|h2|h3|hr|ul|li|table|thead|tbody|tr|div|pre)>\s*<br>/gi, '</$1>');
 

@@ -154,7 +154,8 @@
   border-radius: var(--radius-xs);
   background: var(--color-primary-glow-bg);
   color: var(--color-primary);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-weight-normal);
   line-height: 1.4;
   max-width: 100%;
   animation: chipIn var(--transition-slow) cubic-bezier(0.34, 1.56, 0.64, 1) both;

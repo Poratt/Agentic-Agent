@@ -45,7 +45,7 @@
           }
         },
         "summary": "Register a new user account",
-        "summaryHe": "רושם חשבון משתמש חדש במערכת",
+        "summaryHe": "יוצרים חשבון חדש ומצטרפים למשפחת המערכת",
         "tags": [
           "auth"
         ],
@@ -96,7 +96,7 @@
           }
         },
         "summary": "Login with email and password",
-        "summaryHe": "מבצע התחברות באמצעות אימייל וסיסמה",
+        "summaryHe": "נכנסים לחשבון האישי בבטחה",
         "tags": [
           "auth"
         ],
@@ -136,7 +136,7 @@
           }
         },
         "summary": "Refresh access token using refresh token",
-        "summaryHe": "מרענן את טוקן הגישה באמצעות טוקן רענון",
+        "summaryHe": "מחדשים את טוקן הגישה ברקע כדי להישאר מחוברים",
         "tags": [
           "auth"
         ],
@@ -181,7 +181,7 @@
           }
         ],
         "summary": "Logout and invalidate session",
-        "summaryHe": "מבצע התנתקות ומבטל את סשן המשתמש",
+        "summaryHe": "מתנתקים מהמ系統 ומסיימים את סשן העבודה בבטחה",
         "tags": [
           "auth"
         ],
@@ -226,7 +226,7 @@
           }
         ],
         "summary": "Get current authenticated user payload",
-        "summaryHe": "שולף את פרטי המשתמש המחובר מתוך הטוקן",
+        "summaryHe": "מציגים את פרטי הפרופיל המהירים של המשתמש הנוכחי",
         "tags": [
           "auth"
         ],
@@ -262,7 +262,7 @@
           }
         ],
         "summary": "List all users",
-        "summaryHe": "שולף את רשימת כל המשתמשים במערכת",
+        "summaryHe": "מציגים את רשימת המשתמשים הפעילים במערכת",
         "tags": [
           "users"
         ],
@@ -298,7 +298,7 @@
           }
         ],
         "summary": "Get current authenticated user payload",
-        "summaryHe": "שולף את פרטי המשתמש המחובר מתוך הטוקן",
+        "summaryHe": "מציגים את פרטי הפרופיל המהירים של המשתמש הנוכחי",
         "tags": [
           "users"
         ],
@@ -347,7 +347,7 @@
           }
         ],
         "summary": "Get user by id",
-        "summaryHe": "שולף משתמש לפי מזהה (מזהה: ${id})",
+        "summaryHe": "מציגים פרטים מלאים על משתמש לפי מזהה ייחודי",
         "tags": [
           "users"
         ],
@@ -408,7 +408,7 @@
           }
         ],
         "summary": "Update user profile fields",
-        "summaryHe": "מעדכן את שדות הפרופיל של המשתמש (מזהה: ${id})",
+        "summaryHe": "מעדכנים את פרטי הפרופיל האישיים של המשתמש",
         "tags": [
           "users"
         ],
@@ -458,7 +458,7 @@
           }
         ],
         "summary": "Delete user permanently",
-        "summaryHe": "מוחק לצמיתות את המשתמש (מזהה: ${id})",
+        "summaryHe": "מוחקים משתמש לצמיתות מהמערכת",
         "tags": [
           "users"
         ],
@@ -521,7 +521,7 @@
           }
         ],
         "summary": "Change user role",
-        "summaryHe": "משנה את תפקיד המשתמש (מזהה: ${id})",
+        "summaryHe": "מעדכנים את תפקיד והרשאות המשתמש במערכת",
         "tags": [
           "users"
         ],
@@ -566,7 +566,7 @@
           }
         ],
         "summary": "Get chat sessions for the authenticated user",
-        "summaryHe": "שולף את סשני הצ'אט של המשתמש המחובר",
+        "summaryHe": "מציגים את כל שיחות הצ'אט השמורות שלך עם ה-AI",
         "tags": [
           "Admin Agent"
         ],
@@ -594,7 +594,7 @@
           }
         ],
         "summary": "Create a new chat session",
-        "summaryHe": "מייצר סשן שיחת צ'אט חדש",
+        "summaryHe": "פותחים שיחת צ'אט חדשה ורעננה עם סוכן ה-AI",
         "tags": [
           "Admin Agent"
         ],
@@ -637,7 +637,7 @@
           }
         ],
         "summary": "Get session message history",
-        "summaryHe": "שולף את היסטוריית ההודעות של סשן הצ'אט (מזהה: ${id})",
+        "summaryHe": "מציגים את היסטוריית ההודעות המלאה של שיחת הצ'אט",
         "tags": [
           "Admin Agent"
         ],
@@ -688,7 +688,7 @@
           }
         ],
         "summary": "Batch fetch image data for messages",
-        "summaryHe": "שולף תמונות עבור הודעות בפאנץ'",
+        "summaryHe": "שולפים ומציגים את קבצי המדיה והתמונות של ההודעה",
         "tags": [
           "Admin Agent"
         ],
@@ -721,7 +721,7 @@
           }
         ],
         "summary": "Delete chat session",
-        "summaryHe": "מוחק לצמיתות את סשן הצ'אט (מזהה: ${id})",
+        "summaryHe": "מוחקים לצמיתות שיחת צ'אט מההיסטוריה השמורה",
         "tags": [
           "Admin Agent"
         ],
@@ -769,7 +769,7 @@
           }
         ],
         "summary": "Delete a chat message and later history",
-        "summaryHe": "מוחק הודעת צאט ואת כל ההודעות שאחריה",
+        "summaryHe": "מוחקים הודעת צאט ואת כל היסטוריית השיחה שנכתבה אחריה",
         "tags": [
           "Admin Agent"
         ],
@@ -818,7 +818,7 @@
           }
         ],
         "summary": "Query Admin Agent as a streamed response",
-        "summaryHe": "שולח שאילתה לסוכן הניהול ומחזיר תגובת סטרים",
+        "summaryHe": "מתכתבים עם סוכן הניהול ומקבלים תגובות חיות בסטרמינג",
         "tags": [
           "Admin Agent"
         ],
@@ -871,7 +871,7 @@
           }
         ],
         "summary": "Confirm or cancel a pending dangerous action",
-        "summaryHe": "מאשר או מבטל פעולה מסוכנת שממתינה",
+        "summaryHe": "מאשרים או מבטלים פעולה רגישה הממתינה לאישור הניהול שלך",
         "tags": [
           "Admin Agent"
         ],
@@ -902,9 +902,11 @@
           }
         ],
         "summary": "Test a single model connectivity and save the result",
+        "summaryHe": "בודקים ומאמתים את מהירות התגובה והחיבור של מודל ה-AI",
         "tags": [
           "llm"
-        ]
+        ],
+        "toolIcon": "ph-lightning"
       }
     },
     "/llm/test-results/{id}": {
@@ -931,9 +933,11 @@
           }
         ],
         "summary": "Delete a test result",
+        "summaryHe": "מוחקים היסטוריית בדיקת חיבור בודדת של מודל מהארכיון",
         "tags": [
           "llm"
-        ]
+        ],
+        "toolIcon": "ph-trash"
       }
     },
     "/llm/set-default-model": {
@@ -951,9 +955,11 @@
           }
         ],
         "summary": "Set the authenticated user's default LLM model",
+        "summaryHe": "קובעים את מודל ה-AI המועדף עליך כברירת המחדל של המערכת",
         "tags": [
           "llm"
-        ]
+        ],
+        "toolIcon": "ph-star"
       }
     },
     "/llm/default-model": {
@@ -971,9 +977,11 @@
           }
         ],
         "summary": "Get the authenticated user's default LLM model",
+        "summaryHe": "מציגים את מודל ה-AI המוגדר כברירת המחדל שלך",
         "tags": [
           "llm"
-        ]
+        ],
+        "toolIcon": "ph-star"
       }
     },
     "/llm/image/generate": {
@@ -1028,9 +1036,11 @@
           }
         ],
         "summary": "Generate an image with an Agnes image model",
+        "summaryHe": "יוצרים תמונות מרהיבות על בסיס טקסט עם Agnes Image",
         "tags": [
           "llm"
-        ]
+        ],
+        "toolIcon": "ph-palette"
       }
     },
     "/llm/video/generate": {
@@ -1087,9 +1097,11 @@
           }
         ],
         "summary": "Create an asynchronous Agnes video generation task",
+        "summaryHe": "מפיקים סרטונים מרהיבים מבוססי טקסט או תמונה עם Agnes Video",
         "tags": [
           "llm"
-        ]
+        ],
+        "toolIcon": "ph-video-camera"
       }
     },
     "/llm/video/{videoId}": {
@@ -1148,9 +1160,11 @@
           }
         ],
         "summary": "Poll an Agnes video generation task",
+        "summaryHe": "בודקים את סטטוס הפקת הסרטון ומורידים אותו כשהוא מוכן",
         "tags": [
           "llm"
-        ]
+        ],
+        "toolIcon": "ph-hourglass-high"
       }
     },
     "/llm/video/extend": {
@@ -1203,9 +1217,11 @@
           }
         ],
         "summary": "Continue a generated video from its last frame",
+        "summaryHe": "מאריכים וממשיכים סרטון קיים מפריים המפתח האחרון שלו",
         "tags": [
           "llm"
-        ]
+        ],
+        "toolIcon": "ph-fast-forward"
       }
     },
     "/llm-provider": {
@@ -1237,9 +1253,11 @@
           }
         ],
         "summary": "Create new provider",
+        "summaryHe": "רושמים ספק מודלים (Provider) חדש במערכת",
         "tags": [
           "LLM Provider"
-        ]
+        ],
+        "toolIcon": "ph-database"
       },
       "get": {
         "description": "Retrieves a list of all configured LLM providers.",
@@ -1259,9 +1277,11 @@
           }
         ],
         "summary": "Get all providers",
+        "summaryHe": "מציגים את כל ספקי ה-AI והמודלים המוגדרים במערכת",
         "tags": [
           "LLM Provider"
-        ]
+        ],
+        "toolIcon": "ph-list-bullets"
       }
     },
     "/llm-provider/{id}": {
@@ -1305,9 +1325,11 @@
           }
         ],
         "summary": "Update provider",
+        "summaryHe": "מעדכנים את הגדרות החיבור, הכתובת והמפתח של הספק",
         "tags": [
           "LLM Provider"
-        ]
+        ],
+        "toolIcon": "ph-pencil-simple"
       }
     },
     "/llm-provider/{id}/models": {
@@ -1348,9 +1370,11 @@
           }
         ],
         "summary": "Add model to provider",
+        "summaryHe": "מוסיפים מודל חדש תחת ספק ה-LLM שנבחר",
         "tags": [
           "LLM Provider"
-        ]
+        ],
+        "toolIcon": "ph-plus-circle"
       },
       "get": {
         "description": "Retrieves all models associated with the given provider.",
@@ -1379,9 +1403,11 @@
           }
         ],
         "summary": "Get models for provider",
+        "summaryHe": "מציגים את כל המודלים המשויכים לספק שנבחר",
         "tags": [
           "LLM Provider"
-        ]
+        ],
+        "toolIcon": "ph-cube"
       }
     },
     "/llm-provider/models/{id}": {
@@ -1422,9 +1448,11 @@
           }
         ],
         "summary": "Update model",
+        "summaryHe": "מעדכנים את ההגדרות, התפקיד והסטטוס הפעיל של מודל קיים",
         "tags": [
           "LLM Provider"
-        ]
+        ],
+        "toolIcon": "ph-sliders"
       },
       "delete": {
         "description": "Deletes an LLM model by ID.",
@@ -1453,9 +1481,11 @@
           }
         ],
         "summary": "Delete model",
+        "summaryHe": "מכבים או מוחקים מודל לצמיתות מהספק שלו",
         "tags": [
           "LLM Provider"
-        ]
+        ],
+        "toolIcon": "ph-trash"
       }
     },
     "/llm-provider/models/{modelId}/test-results": {
@@ -1486,9 +1516,11 @@
           }
         ],
         "summary": "Delete all test results for model",
+        "summaryHe": "מנקים את כל היסטוריית בדיקות החיבור של המודל",
         "tags": [
           "LLM Provider"
-        ]
+        ],
+        "toolIcon": "ph-eraser"
       }
     },
     "/llm-provider/cleanup-test-results": {
@@ -1520,9 +1552,11 @@
           }
         ],
         "summary": "Delete old test results",
+        "summaryHe": "מנקים בדיקות חיבור ישנות מהארכיון על בסיס תקופת שימור",
         "tags": [
           "LLM Provider"
-        ]
+        ],
+        "toolIcon": "ph-broom"
       }
     },
     "/llm-provider/test-results": {
@@ -1563,9 +1597,11 @@
           }
         ],
         "summary": "Get test results",
+        "summaryHe": "מציגים את ההיסטוריה המלאה של בדיקות החיבור במערכת",
         "tags": [
           "LLM Provider"
-        ]
+        ],
+        "toolIcon": "ph-activity"
       }
     },
     "/analytics/query": {
@@ -1611,7 +1647,7 @@
           }
         ],
         "summary": "Run a safe analytics query",
-        "summaryHe": "מריץ שאילתת אנליטיקה בטוחה ומחזיר נתונים לגרף",
+        "summaryHe": "מריצים שאילתת אנליטיקה ומקבלים נתוני גרף מעובדים",
         "tags": [
           "analytics"
         ],
@@ -1662,7 +1698,7 @@
           }
         ],
         "summary": "Get exchange rates for a base currency",
-        "summaryHe": "בודק שערי מטבע עדכניים לפי מטבע בסיס",
+        "summaryHe": "מציגים שערי חליפין מעודכנים על בסיס מטבע נבחר",
         "tags": [
           "currency"
         ],
@@ -1732,7 +1768,7 @@
           }
         ],
         "summary": "Convert currency amount",
-        "summaryHe": "ממיר סכום בין שני מטבעות לפי שער עדכני",
+        "summaryHe": "ממירים סכומי כסף בין שני מטבעות לפי השער היציג העדכני",
         "tags": [
           "currency"
         ],
@@ -1761,7 +1797,7 @@
           }
         ],
         "summary": "Get system status and metrics",
-        "summaryHe": "שולף את מצב המערכת הכללי ומדדי הפעילות",
+        "summaryHe": "מציגים את מצב המערכת הכללי, העומסים ומדדי הפעילות",
         "tags": [
           "system"
         ],
@@ -1810,11 +1846,132 @@
           }
         ],
         "summary": "Fetch configured strain hunter strain data",
-        "summaryHe": "בודק זנים..",
+        "summaryHe": "סורקים, מעדכנים ומציגים את מלאי הזנים הנוכחי",
         "tags": [
           "strain-hunter"
         ],
         "toolIcon": "ph-compass"
+      }
+    },
+    "/strain-hunter/preferences": {
+      "get": {
+        "description": "Returns the saved matching preferences (prefs map and weights) for the authenticated user. Returns defaults if no record exists.",
+        "operationId": "StrainHunterController_getPreferences",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "User matching preferences retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "prefs": {
+                      "type": "object",
+                      "description": "Map of preference keys to states."
+                    },
+                    "weights": {
+                      "type": "object",
+                      "properties": {
+                        "terpene": {
+                          "type": "number",
+                          "example": 60
+                        },
+                        "genetics": {
+                          "type": "number",
+                          "example": 40
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get authenticated user matching preferences",
+        "summaryHe": "שולפים את הגדרות ההתאמה האישית השמורות שלך",
+        "tags": [
+          "strain-hunter"
+        ],
+        "toolIcon": "ph-sliders"
+      },
+      "put": {
+        "description": "Creates or updates the matching preferences for the authenticated user. Only the fields included in the request body will be updated.",
+        "operationId": "StrainHunterController_upsertPreferences",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMatchingPreferencesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User matching preferences saved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "prefs": {
+                      "type": "object",
+                      "description": "Map of preference keys to states."
+                    },
+                    "weights": {
+                      "type": "object",
+                      "properties": {
+                        "terpene": {
+                          "type": "number",
+                          "example": 60
+                        },
+                        "genetics": {
+                          "type": "number",
+                          "example": 40
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid preferences data."
+          },
+          "401": {
+            "description": "Missing or expired JWT token."
+          },
+          "500": {
+            "description": "Unexpected server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upsert authenticated user matching preferences",
+        "summaryHe": "שומרים או מעדכנים את הגדרות ההתאמה האישית שלך",
+        "tags": [
+          "strain-hunter"
+        ],
+        "toolIcon": "ph-floppy-disk"
       }
     },
     "/genetics": {
@@ -1855,7 +2012,7 @@
           }
         ],
         "summary": "List all genetics rows",
-        "summaryHe": "שליפת כל הזנים בקטלוג",
+        "summaryHe": "מציגים את קטלוג הגנטיקה והזנים המלא במערכת",
         "tags": [
           "genetics"
         ],
@@ -1923,7 +2080,7 @@
           }
         ],
         "summary": "Create a new genetics record",
-        "summaryHe": "יצירת זן חדש בקטלוג",
+        "summaryHe": "יוצרים גנטיקה חדשה בקטלוג המערכת",
         "tags": [
           "genetics"
         ],
@@ -1979,7 +2136,7 @@
           }
         ],
         "summary": "Get a strain by name",
-        "summaryHe": "שליפת זן בודד לפי שם",
+        "summaryHe": "מציגים פרטים מלאים על זן גנטיקה ספציפי לפי שמו",
         "tags": [
           "genetics"
         ],
@@ -2053,7 +2210,7 @@
           }
         ],
         "summary": "Update a genetics record by name",
-        "summaryHe": "עדכון זן קיים לפי שם",
+        "summaryHe": "מעדכנים את מאפייני הגנטיקה של זן קיים לפי שמו",
         "tags": [
           "genetics"
         ],
@@ -2090,9 +2247,11 @@
           }
         ],
         "summary": "Delete a genetics strain by name.",
+        "summaryHe": "מחוקים זן גנטיקה לצמיות מקטלוג",
         "tags": [
           "genetics"
-        ]
+        ],
+        "toolIcon": "ph-trash"
       }
     },
     "/genetics/{name}/enrich": {
@@ -2137,7 +2296,7 @@
           }
         ],
         "summary": "Enrich a single genetics record",
-        "summaryHe": "העשרת זן בודד באמצעות LLM",
+        "summaryHe": "מעשירים זן גנטיקה בודד בפרטים ונתוני מעבדה מבוססי AI",
         "tags": [
           "genetics"
         ],
@@ -2165,9 +2324,11 @@
           }
         ],
         "summary": "Enrich all genetics with missing properties (thcRange, terpenes, effects).",
+        "summaryHe": "מפעילים סריקה והעשרה אוטומטית לכל הזנים שחסר להם מידע מבוסס AI",
         "tags": [
           "genetics"
-        ]
+        ],
+        "toolIcon": "ph-magic-wand"
       }
     },
     "/web-search/search": {
@@ -2205,7 +2366,7 @@
           }
         ],
         "summary": "Search the web for current information",
-        "summaryHe": "מחפש מידע עדכני באינטרנט — שימושי לאימות עובדות, מציאת מקורות, או בדיקת מידע שלא נמצא במאגר המקומי",
+        "summaryHe": "מחפשים מידע עדכני באינטרנט לאימות עובדות ומחקר מהיר",
         "tags": [
           "web-search"
         ],
@@ -2250,7 +2411,7 @@
           }
         ],
         "summary": "List all terpenes",
-        "summaryHe": "שליפת כל הטרפנים בקטלוג",
+        "summaryHe": "מציגים את קטלוג הטרפנים המלא המוגדר במערכת",
         "tags": [
           "terpenes"
         ],
@@ -2319,7 +2480,7 @@
           }
         ],
         "summary": "Create a new terpene",
-        "summaryHe": "יצירת טרפן חדש",
+        "summaryHe": "יוצרים טרפן חדש בקטלוג המערכת",
         "tags": [
           "terpenes"
         ],
@@ -2375,7 +2536,7 @@
           }
         ],
         "summary": "Get a terpene by name",
-        "summaryHe": "שליפת טרפן בודד לפי שם",
+        "summaryHe": "מציגים פרטים מלאים על טרפן ספציפי לפי שמו",
         "tags": [
           "terpenes"
         ],
@@ -2457,7 +2618,7 @@
           }
         ],
         "summary": "Update a terpene by name",
-        "summaryHe": "עדכון טרפן לפי שם",
+        "summaryHe": "מעדכנים את המאפיינים, הריח וההשפעות של טרפן קיים",
         "tags": [
           "terpenes"
         ],
@@ -2494,9 +2655,11 @@
           }
         ],
         "summary": "Delete a terpene by name.",
+        "summaryHe": "מחוקים טרפן לצמיות מקטלוג המערכת",
         "tags": [
           "terpenes"
-        ]
+        ],
+        "toolIcon": "ph-trash"
       }
     },
     "/terpenes/{name}/enrich": {
@@ -2541,7 +2704,7 @@
           }
         ],
         "summary": "Enrich a single terpene",
-        "summaryHe": "העשרת טרפן בודד באמצעות LLM",
+        "summaryHe": "מעשירים טרפן בודד בפרטי ארומה והשפעות מבוססי AI",
         "tags": [
           "terpenes"
         ],
@@ -2569,9 +2732,11 @@
           }
         ],
         "summary": "Enrich all terpenes with missing properties (description, scent, effects).",
+        "summaryHe": "מפעילים סריקה והעשרה אוטומטית לכל הטרפנים שחסר להם מידע מבוסס AI",
         "tags": [
           "terpenes"
-        ]
+        ],
+        "toolIcon": "ph-magic-wand"
       }
     },
     "/ideas/generate": {
@@ -2593,9 +2758,12 @@
             "description": ""
           }
         },
+        "summary": "Generate startup ideas",
+        "summaryHe": "מגבשים ומחוללים רעיונות סטארטאפ חדשניים ופורצי דרך",
         "tags": [
           "ideas"
-        ]
+        ],
+        "toolIcon": "ph-lightbulb"
       }
     },
     "/ideas/generate/stream": {
@@ -2651,7 +2819,7 @@
           }
         },
         "summary": "Generate business ideas with real-time progress (SSE)",
-        "summaryHe": "מייצר רעיונות עסקיים עם פרוגרס בזמן אמת (SSE)",
+        "summaryHe": "מחוללים רעיונות עסקיים מעולים עם חיווי התקדמות חי בסטרמינג",
         "tags": [
           "ideas"
         ],
@@ -2680,7 +2848,7 @@
           }
         ],
         "summary": "Get database storage usage by table",
-        "summaryHe": "שולף נתוני שימוש בזיכרון במסד הנתונים לפי טבלה",
+        "summaryHe": "מציגים את השימוש באחסון ומספר השורות של כל טבלה ב-DB",
         "tags": [
           "database-monitor"
         ],
@@ -4047,6 +4215,42 @@
         "required": [
           "items"
         ]
+      },
+      "WeightsDto": {
+        "type": "object",
+        "properties": {
+          "terpene": {
+            "type": "number",
+            "description": "Terpene weight (0-100).",
+            "example": 60
+          },
+          "genetics": {
+            "type": "number",
+            "description": "Genetics weight (0-100). Must sum to 100 with terpene.",
+            "example": 40
+          }
+        }
+      },
+      "UpdateMatchingPreferencesDto": {
+        "type": "object",
+        "properties": {
+          "prefs": {
+            "type": "object",
+            "description": "Dynamic map of preference keys to states. Keys follow the pattern \"category:name\" (e.g. \"terpene:Myrcene\"). Values must be one of: neutral, like, love, avoid.",
+            "example": {
+              "terpene:Myrcene": "like",
+              "genetics:GG4": "love"
+            }
+          },
+          "weights": {
+            "description": "Weight configuration for scoring. terpene and genetics must be numbers between 0 and 100 that sum to 100.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WeightsDto"
+              }
+            ]
+          }
+        }
       },
       "GeneticsDto": {
         "type": "object",

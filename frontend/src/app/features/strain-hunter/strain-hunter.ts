@@ -686,7 +686,6 @@ export class StrainHunter implements OnInit {
     }
 
     getSymbols(symbols: unknown): { url: string; alt: string }[] {
-        console.log('getSymbols received:', symbols);
         let parsedSymbols = symbols;
 
         if (typeof symbols === 'string') {

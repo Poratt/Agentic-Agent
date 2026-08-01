@@ -38,6 +38,7 @@ import { CreateVideoTaskDto } from './dto/create-video-task.dto';
 import { ExtendVideoDto } from './dto/extend-video.dto';
 import { LlmModelEntity } from '../llm-provider/entities/llm-model.entity';
 import { LlmModelCapability } from './types/llm.types';
+import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 
 @ApiTags('llm')
 @ApiBearerAuth()
@@ -53,7 +54,7 @@ export class LlmController {
 
   @Post('models/:id/test')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Test a single model connectivity and save the result' })
+  @ApiOperation({ summary: 'Test a single model connectivity and save the result', summaryHe: 'בודקים ומאמתים את מהירות התגובה והחיבור של מודל ה-AI', toolIcon: 'ph-lightning' } as CustomApiOperationOptions)
   async testModel(@Param('id') id: string) {
     const dbModel = await this.dbProviderService.findModelById(+id);
     if (!dbModel) {
@@ -70,14 +71,14 @@ export class LlmController {
 
   @Delete('test-results/:id')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Delete a test result' })
+  @ApiOperation({ summary: 'Delete a test result', summaryHe: 'מוחקים היסטוריית בדיקת חיבור בודדת של מודל מהארכיון', toolIcon: 'ph-trash' } as CustomApiOperationOptions)
   async deleteTestResult(@Param('id') id: string) {
     return this.dbProviderService.deleteTestResult(+id);
   }
 
   @Post('set-default-model')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Set the authenticated user\'s default LLM model' })
+  @ApiOperation({ summary: 'Set the authenticated user\'s default LLM model', summaryHe: 'קובעים את מודל ה-AI המועדף עליך כברירת המחדל של המערכת', toolIcon: 'ph-star' } as CustomApiOperationOptions)
   async setDefaultModel(@Body('modelId') modelId: number, @Req() req: RequestWithUser) {
     if (!req.user) {
       throw new UnauthorizedException();
@@ -91,7 +92,7 @@ export class LlmController {
 
   @Get('default-model')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Get the authenticated user\'s default LLM model' })
+  @ApiOperation({ summary: 'Get the authenticated user\'s default LLM model', summaryHe: 'מציגים את מודל ה-AI המוגדר כברירת המחדל שלך', toolIcon: 'ph-star' } as CustomApiOperationOptions)
   async getDefaultModel(@Req() req: RequestWithUser) {
     if (!req.user) {
       throw new UnauthorizedException();
@@ -104,9 +105,11 @@ export class LlmController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Generate an image with an Agnes image model',
+    summaryHe: 'יוצרים תמונות מרהיבות על בסיס טקסט עם Agnes Image',
+    toolIcon: 'ph-palette',
     description:
       'Sends a text prompt (optionally with input images) to an Agnes image-generation model and returns a hosted URL or Base64 JSON. Resolves the provider/model from modelId when provided, otherwise falls back to the first active image-capability model.',
-  })
+  } as CustomApiOperationOptions)
   @ApiBody({ type: GenerateImageDto })
   @ApiOkResponse({
     description: 'The generated image.',
@@ -146,9 +149,11 @@ export class LlmController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Create an asynchronous Agnes video generation task',
+    summaryHe: 'מפיקים סרטונים מרהיבים מבוססי טקסט או תמונה עם Agnes Video',
+    toolIcon: 'ph-video-camera',
     description:
       'Submits a text (or image) prompt to an Agnes video model and returns a video id immediately. Poll the status with GET /llm/video/:videoId. The HTTP create response is not blocked on generation.',
-  })
+  } as CustomApiOperationOptions)
   @ApiBody({ type: CreateVideoTaskDto })
   @ApiCreatedResponse({
     description: 'Video task created.',
@@ -184,8 +189,10 @@ export class LlmController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Poll an Agnes video generation task',
+    summaryHe: 'בודקים את סטטוס הפקת הסרטון ומורידים אותו כשהוא מוכן',
+    toolIcon: 'ph-hourglass-high',
     description: 'Returns the current status of a video task. Poll until status is "completed" (returns a .mp4 URL) or "failed".',
-  })
+  } as CustomApiOperationOptions)
   @ApiParam({ name: 'videoId', description: 'Agnes video id returned by the create endpoint.', example: 'vid_1' })
   @ApiQuery({ name: 'modelId', required: false, description: 'DB model id used to resolve the provider key.', type: Number })
   @ApiOkResponse({
@@ -212,9 +219,11 @@ export class LlmController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Continue a generated video from its last frame',
+    summaryHe: 'מאריכים וממשיכים סרטון קיים מפריים המפתח האחרון שלו',
+    toolIcon: 'ph-fast-forward',
     description:
       'Downloads a source video (by videoId or videoUrl), extracts its final frame, and submits a new image-to-video task using that frame. Returns the completed continuation video.',
-  })
+  } as CustomApiOperationOptions)
   @ApiBody({ type: ExtendVideoDto })
   @ApiCreatedResponse({
     description: 'Continuation video task completed.',

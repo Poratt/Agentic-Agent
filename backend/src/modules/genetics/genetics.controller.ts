@@ -1,4 +1,4 @@
-import { Controller, Get, Delete, Param, Post, Patch, Body, UseGuards } from '@nestjs/common';
+﻿import { Controller, Get, Delete, Param, Post, Patch, Body, UseGuards } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -42,7 +42,7 @@ import { GeneticsUpdateDto } from './dto/genetics-update.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('genetics')
 export class GeneticsController {
-    constructor(private readonly geneticsService: GeneticsService) {}
+    constructor(private readonly geneticsService: GeneticsService) { }
 
     /**
      * Return every genetics row in the catalog.
@@ -57,7 +57,7 @@ export class GeneticsController {
     @Get()
     @ApiOperation({
         summary: 'List all genetics rows',
-        summaryHe: 'שליפת כל הזנים בקטלוג',
+        summaryHe: 'מציגים את קטלוג הגנטיקה והזנים המלא במערכת',
         toolIcon: 'ph-tree-evergreen',
         description:
             'Returns the full genetics reference catalog ordered alphabetically by Hebrew name. The list is intended to be cached client-side.',
@@ -92,7 +92,7 @@ export class GeneticsController {
     @Get(':name')
     @ApiOperation({
         summary: 'Get a strain by name',
-        summaryHe: 'שליפת זן בודד לפי שם',
+        summaryHe: 'מציגים פרטים מלאים על זן גנטיקה ספציפי לפי שמו',
         toolIcon: 'ph-tree-evergreen',
         description:
             'Returns the genetics row whose `name` column exactly matches the supplied `:name` path parameter. Result is `null` when no record matches — this is not treated as a 404 so the frontend can render a graceful empty state.',
@@ -136,7 +136,7 @@ export class GeneticsController {
     @Post()
     @ApiOperation({
         summary: 'Create a new genetics record',
-        summaryHe: 'יצירת זן חדש בקטלוג',
+        summaryHe: 'יוצרים גנטיקה חדשה בקטלוג המערכת',
         toolIcon: 'ph-tree-evergreen',
         description:
             'Creates a new genetics entry in the reference catalog. The `name` field must be unique. Returns the created record wrapped in ServiceResultContainer.',
@@ -192,7 +192,7 @@ export class GeneticsController {
     @Patch(':name')
     @ApiOperation({
         summary: 'Update a genetics record by name',
-        summaryHe: 'עדכון זן קיים לפי שם',
+        summaryHe: 'מעדכנים את מאפייני הגנטיקה של זן קיים לפי שמו',
         toolIcon: 'ph-tree-evergreen',
         description:
             'Updates an existing genetics entry in the reference catalog. All fields are optional — only provided fields are modified. The `name` path parameter identifies the record to update and cannot be changed.',
@@ -238,7 +238,7 @@ export class GeneticsController {
     @Post(':name/enrich')
     @ApiOperation({
         summary: 'Enrich a single genetics record',
-        summaryHe: 'העשרת זן בודד באמצעות LLM',
+        summaryHe: 'מעשירים זן גנטיקה בודד בפרטים ונתוני מעבדה מבוססי AI',
         toolIcon: 'ph-tree-evergreen',
         description:
             'Searches the web for the given strain name, sends context to LLM, and returns enriched description with web results. Does not persist — caller decides whether to save.',
@@ -267,7 +267,11 @@ export class GeneticsController {
     }
 
     @Post('enrich-missing')
-    @ApiOperation({ summary: 'Enrich all genetics with missing properties (thcRange, terpenes, effects).' })
+    @ApiOperation({
+        summary: 'Enrich all genetics with missing properties (thcRange, terpenes, effects).',
+        summaryHe: 'מפעילים סריקה והעשרה אוטומטית לכל הזנים שחסר להם מידע מבוסס AI',
+        toolIcon: 'ph-magic-wand',
+    } as CustomApiOperationOptions)
     @ApiOkResponse({ description: 'Bulk enrichment completed.' })
     @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
     @ApiInternalServerErrorResponse({ description: 'LLM or web search failure.' })
@@ -282,7 +286,11 @@ export class GeneticsController {
 
     @Delete(':name')
     @UseGuards(JwtAuthGuard)
-    @ApiOperation({ summary: 'Delete a genetics strain by name.' })
+    @ApiOperation({
+        summary: 'Delete a genetics strain by name.',
+        summaryHe: 'מחוקים זן גנטיקה לצמיות מקטלוג',
+        toolIcon: 'ph-trash',
+    } as CustomApiOperationOptions)
     @ApiParam({
         name: 'name',
         type: String,
