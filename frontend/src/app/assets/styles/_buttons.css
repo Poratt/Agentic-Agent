@@ -356,9 +356,10 @@ a,
 
 /* Reveal on parent hover/focus-within */
 .hover-parent {
+
   &:hover,
   &:focus-within {
-    > .hover-reveal-btn {
+    >.hover-reveal-btn {
       opacity: 1;
       scale: 1;
     }
