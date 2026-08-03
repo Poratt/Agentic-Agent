@@ -1,23 +1,23 @@
 <div class="users-table-card">
     <div class="card-header">
         <span class="ph ph-users card-icon"></span>
-        <span class="card-title">Users</span>
+        <span class="card-title">משתמשים</span>
     </div>
 
     @if (sortedUsers().length === 0) {
         <div class="empty-state">
             <span class="ph ph-user"></span>
-            <span>No users found.</span>
+            <span>לא נמצאו משתמשים.</span>
         </div>
     } @else {
         <p-table [value]="sortedUsers()" [tableStyle]="{ width: '100%' }" styleClass="users-prime-table">
             <ng-template pTemplate="header">
                 <tr>
-                    <th>ID</th>
-                    <th>Full Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Created At</th>
+                    <th><span class="ph ph-hash"></span></th>
+                    <th>שם מלא</th>
+                    <th>אימייל</th>
+                    <th>תפקיד</th>
+                    <th>נוצר בתאריך</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-user>

@@ -1,4 +1,9 @@
-<div class="page-content flush chat-root-container" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+<div
+    class="page-content flush chat-root-container"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+>
     @if (historyLoading()) {
         <div class="chat-history-loader">
             <span class="custom-loader"></span>
@@ -173,7 +178,7 @@
                             (click)="loading() ? stopStreaming() : null"
                         >
                             @if (loading()) {
-                                <span class="ph ph-stop sm"></span>
+                                <span class="ph ph-fill ph-stop xs"></span>
                             } @else {
                                 <span class="ph ph-arrow-up sm"></span>
                             }

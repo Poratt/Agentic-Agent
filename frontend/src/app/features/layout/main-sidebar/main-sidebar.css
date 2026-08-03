@@ -20,6 +20,10 @@
 				max-width 200ms ease;
 		}
 
+		.nav-item-chat > app-dropdown {
+			display: none;
+		}
+
 	}
 
 	.sidebar-header {
@@ -229,7 +233,7 @@
 
 .custom-icon {
 	width: 15px;
-	height: 11px;
+	height: 12px;
 	border-radius: 1px;
 	border: 2px solid currentColor;
 	opacity: 0.8;
@@ -242,16 +246,34 @@
 		position: absolute;
 		top: 0;
 		left: 0;
-		transform: translateX(4px);
+		transform: translateX(5px);
 		width: 2px;
 		height: 100%;
 		background-color: currentColor;
 		transition: transform var(--transition-fast), background-color var(--transition-fast);
 	}
+
+	&::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		right: 0;
+		width: 6px;
+		height: 100%;
+		background-color: currentColor;
+		border-radius: 1px;
+		opacity: 0.3;
+		transition: width var(--transition-fast);
+	}
+
 }
 
 .collapsed .custom-icon {
 	&::after {
 		transform: translateX(8px);
+	}
+
+	&::before {
+		width: 4px;
 	}
 }

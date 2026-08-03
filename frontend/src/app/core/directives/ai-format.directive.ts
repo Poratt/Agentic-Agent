@@ -68,6 +68,16 @@ export class AiFormat implements OnChanges {
       .replace(/<br>\s*<(h1|h2|h3|hr|ul|li|table|thead|tbody|tr|div|pre)/gi, '<$1')
       .replace(/<\/(h1|h2|h3|hr|ul|li|table|thead|tbody|tr|div|pre)>\s*<br>/gi, '</$1>');
 
+    processed = processed.replace(
+      /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
+      '<a href="$2" target="_blank" rel="noopener noreferrer" class="ai-link">$1</a>',
+    );
+
+    processed = processed.replace(
+      /(?<!["'=a])(https?:\/\/[^\s<>"')\]]+)/gi,
+      '<a href="$1" target="_blank" rel="noopener noreferrer" class="ai-link">$1</a>',
+    );
+
     processed = processed
       .replace(
         new RegExp(`(${HEBREW_ROLE_LABEL}|Role):\\s*(${HEBREW_ADMIN_LABEL}|Admin)`, 'g'),

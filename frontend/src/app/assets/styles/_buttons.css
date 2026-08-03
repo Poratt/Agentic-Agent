@@ -308,7 +308,7 @@ a {
   text-decoration: none;
   color: var(--color-primary-text);
   transition: color var(--transition-fast), outline-offset var(--transition-fast);
-  border-radius: var(--radius-sm);
+  /* border-radius: var(--radius-sm); */
   line-height: 1;
   width: fit-content;
 

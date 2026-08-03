@@ -21,6 +21,7 @@ import { IdeasThrottlerGuard } from './modules/ideas/guards/ideas-throttler.guar
 import { CannlyticsModule } from './modules/cannlytics/cannlytics.module';
 import { DatabaseMonitorModule } from './modules/database-monitor/database-monitor.module';
 import { McpBridgeModule } from './modules/mcp-bridge/mcp-bridge.module';
+import { GoogleCalendarModule } from './modules/google-calendar/google-calendar.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { McpBridgeModule } from './modules/mcp-bridge/mcp-bridge.module';
     IdeasModule,
     CannlyticsModule,
     DatabaseMonitorModule,
+    GoogleCalendarModule,
   ],
   providers: [
     {
