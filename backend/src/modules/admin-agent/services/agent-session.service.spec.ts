@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AgentSessionService } from './agent-session.service';
 import { ChatSession } from '../entities/chat-session.entity';
@@ -31,6 +31,7 @@ describe('AgentSessionService', () => {
         AgentSessionService,
         { provide: getRepositoryToken(ChatSession), useValue: sessionRepo },
         { provide: getRepositoryToken(ChatMessage), useValue: messageRepo },
+        { provide: getDataSourceToken(), useValue: { transaction: jest.fn((cb) => cb({ delete: jest.fn().mockResolvedValue(undefined) })) } },
       ],
     }).compile();
 
