@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 
@@ -55,7 +55,7 @@ export class LlmProviderService {
     // 2. User-level default model
     if (userId) {
       const userDefault = await this.getUserDefaultModel(userId);
-      if (userDefault) {
+      if (userDefault && userDefault.active !== false) {
         return {
           provider: userDefault.provider.key,
           model: userDefault.key,
@@ -82,6 +82,9 @@ export class LlmProviderService {
     const model = await this.modelRepo.findOne({ where: { id: modelId }, relations: ['provider'] });
     if (!model || !model.active) {
       throw new NotFoundException('Model not found or inactive');
+    }
+    if (model.capability !== 'text') {
+      throw new BadRequestException('מודל זה אינו תומך שיחה (טקסט)');
     }
 
     const existing = await this.userDefaultRepo.findOne({ where: { userId } });

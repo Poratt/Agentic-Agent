@@ -31,6 +31,8 @@ const PENDING_ACTION_TTL_MS = 5 * 60 * 1000;
 export class AgentToolExecutorService {
   private readonly logger = new Logger(AgentToolExecutorService.name);
   private readonly pendingActions = new Map<string, PendingAction>();
+  private readonly internalTokenCache = new Map<number, { token: string; expiresAt: number }>();
+  private readonly INTERNAL_TOKEN_TTL_MS = 10 * 60 * 1000;
 
   constructor(
     @InjectRepository(User)
@@ -202,17 +204,29 @@ export class AgentToolExecutorService {
     return { allowed: true };
   }
 
-  private async getSystemHeadersForUser(userId: number): Promise<Record<string, string>> {
+  private async getInternalToken(userId: number): Promise<string> {
+    const cached = this.internalTokenCache.get(userId);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.token;
+    }
+
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new Error(`User ${userId} not found for system authentication`);
     }
 
     const payload = { sub: user.id, email: user.email, role: user.role };
-    const accessToken = this.jwtService.sign(payload, {
+    const token = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_SECRET'),
       expiresIn: '5m',
     });
+
+    this.internalTokenCache.set(userId, { token, expiresAt: Date.now() + this.INTERNAL_TOKEN_TTL_MS });
+    return token;
+  }
+
+  private async getSystemHeadersForUser(userId: number): Promise<Record<string, string>> {
+    const accessToken = await this.getInternalToken(userId);
 
     return {
       'Cookie': `access_token=${accessToken}`,

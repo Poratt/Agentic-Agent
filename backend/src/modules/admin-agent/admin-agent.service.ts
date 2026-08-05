@@ -127,10 +127,9 @@ export class AdminAgentService implements OnModuleInit {
     const tools = this.getTools();
     const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model);
     const collectedRenderBlocks: Array<{ component: string; data: Record<string, unknown> }> = [];
+    let history = await this.agentSessionService.loadHistory(session.id, userId);
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration = iteration + 1) {
-      const history = await this.agentSessionService.loadHistory(session.id, userId);
-
       const llmResponse = await this.llmService.generateResponse({
         prompt: iteration === 0 ? prompt : '',
         systemContext: dynamicSystemContext,
@@ -155,13 +154,11 @@ export class AdminAgentService implements OnModuleInit {
           return breakerMessage;
         }
 
-        await this.agentSessionService.saveMessage(
-          userId,
-          session.id,
-          'assistant',
-          this.truncateForStorage(JSON.stringify(llmResponse.toolCalls)),
-          { toolCallId: 'YES_TOOL_CALLS' },
-        );
+        const toolCallsContent = this.truncateForStorage(JSON.stringify(llmResponse.toolCalls));
+        await this.agentSessionService.saveMessage(userId, session.id, 'assistant', toolCallsContent, {
+          toolCallId: 'YES_TOOL_CALLS',
+        });
+        history.push({ role: 'assistant', content: null, tool_calls: JSON.parse(toolCallsContent) });
 
         const groups = this.groupToolCallsForExecution(llmResponse.toolCalls);
 
@@ -173,14 +170,27 @@ export class AdminAgentService implements OnModuleInit {
           const results = await this.executeToolCallGroup(group, userId, session.id);
 
           for (const { call, resultData } of results) {
+            let parsedResult: any;
+            try {
+              parsedResult = JSON.parse(resultData);
+            } catch {
+              parsedResult = null;
+            }
+
+            if (parsedResult?.error === 'CONFIRMATION_REQUIRED') {
+              throw new Error('הפעולה דורשת אישור משתמש — יש להשתמש בשיחה הסטרימינגית לאישור פעולות רגישות.');
+            }
+
             const renderSpec = this.renderSpecService.buildRenderSpec(call.function.name, resultData);
             if (renderSpec) {
               collectedRenderBlocks.push({ component: renderSpec.type, data: renderSpec.data });
             }
-            await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), {
+            const toolResultContent = this.truncateForStorage(resultData);
+            await this.agentSessionService.saveMessage(userId, session.id, 'tool', toolResultContent, {
               toolCallId: call.id,
               renderSpec: renderSpec ? JSON.stringify(renderSpec) : null,
             });
+            history.push({ role: 'tool', tool_call_id: call.id, content: toolResultContent });
           }
         }
       } else {
@@ -188,6 +198,7 @@ export class AdminAgentService implements OnModuleInit {
         await this.agentSessionService.saveMessage(userId, session.id, 'assistant', assistantContent, {
           renderSpec: collectedRenderBlocks.length > 0 ? JSON.stringify(collectedRenderBlocks) : null,
         });
+        history.push({ role: 'assistant', content: assistantContent });
         return assistantContent;
       }
     }
@@ -219,10 +230,9 @@ export class AdminAgentService implements OnModuleInit {
     const tools = this.getTools();
     const dynamicSystemContext = this.getDynamicSystemContext(userId, provider, model);
     const collectedRenderBlocks: Array<{ component: string; data: Record<string, unknown> }> = [];
+    let history = await this.agentSessionService.loadHistory(session.id, userId);
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration = iteration + 1) {
-      const history = await this.agentSessionService.loadHistory(session.id, userId);
-
       const llmResponse = await this.llmService.generateResponse({
         prompt: iteration === 0 ? prompt : '',
         systemContext: dynamicSystemContext,

@@ -16,23 +16,35 @@ export class AiFormat implements OnChanges {
   private renderer = inject(Renderer2);
   private sanitizer = inject(DomSanitizer);
 
+  private legacyBlocks: string[] = [];
+
   ngOnChanges() {
     const raw = this.aiFormat() ?? '';
-    const sanitized = this.sanitizeLegacyComponentBlocks(raw);
-    const parsedHtml = this.parse(sanitized);
-    const safeHtml = this.sanitizer.sanitize(SecurityContext.HTML, parsedHtml) || '';
+    const prepped = this.sanitizeLegacyComponentBlocks(raw);
+    const parsedHtml = this.parse(prepped);
+    const restored = this.restoreLegacyComponentBlocks(parsedHtml);
+    const safeHtml = this.sanitizer.sanitize(SecurityContext.HTML, restored) || '';
     this.updateDomEfficiently(safeHtml);
     this.markNewCompletedBlocks(raw);
   }
 
   private sanitizeLegacyComponentBlocks(text: string): string {
     const regex = /```component\s*([\s\S]*?)```/gi;
+    this.legacyBlocks = [];
     if (!regex.test(text)) return text;
 
     return text.replace(regex, (_match, inner: string) => {
       const stripped = inner.replace(/<script[\s\S]*?<\/script>/gi, '');
-      const trimmed = stripped.trim();
-      return `<blockquote class="legacy-component-block"><span class="legacy-component-label">Legacy Component</span>${trimmed}</blockquote>`;
+      this.legacyBlocks.push(stripped.trim());
+      return `LEGACY_BLOCK_${this.legacyBlocks.length - 1}_`;
+    });
+  }
+
+  private restoreLegacyComponentBlocks(text: string): string {
+    return text.replace(/LEGACY_BLOCK_(\d+)_/g, (_match, index: string) => {
+      const content = this.legacyBlocks[Number(index)] ?? '';
+      const escaped = content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return `<blockquote class="legacy-component-block"><span class="legacy-component-label">Legacy Component</span>${escaped}</blockquote>`;
     });
   }
 

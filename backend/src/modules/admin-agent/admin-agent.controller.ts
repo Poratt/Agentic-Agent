@@ -39,6 +39,7 @@ import { SessionResponseDto } from './dto/session-response.dto';
 import { ChatMessageResponseDto } from './dto/chat-message-response.dto';
 import { AgentStreamEventDto } from './dto/agent-stream-event.dto';
 import { GetSessionsQueryDto } from './dto/get-sessions-query.dto';
+import { ConfirmActionDto } from './dto/confirm-action.dto';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { AgentToolExecutorService } from './services/agent-tool-executor.service';
 import { AgentAuditService } from './services/agent-audit.service';
@@ -307,15 +308,14 @@ export class AdminAgentController {
   @ApiForbiddenResponse({ description: 'Action belongs to another user.' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
   async confirmAction(
-    @Body('actionId') actionId: string,
-    @Body('confirmed') confirmed: boolean,
+    @Body() dto: ConfirmActionDto,
     @Req() req: RequestWithUser,
   ) {
     if (!req.user) {
       throw new UnauthorizedException();
     }
 
-    const ownership = this.agentToolExecutorService.getPendingActionOwner(actionId);
+    const ownership = this.agentToolExecutorService.getPendingActionOwner(dto.actionId);
     if (!ownership) {
       throw new NotFoundException('Pending action not found or already processed');
     }
@@ -326,7 +326,7 @@ export class AdminAgentController {
         actionType: AuditAction.ACTION_UNAUTHORIZED_ACCESS_ATTEMPT,
         functionName: 'unknown',
         sessionId: ownership.sessionId,
-        actionId,
+        actionId: dto.actionId,
         metadata: {
           targetUserId: ownership.userId,
           requestedBy: req.user.sub,
@@ -335,25 +335,25 @@ export class AdminAgentController {
       });
 
       this.logger.warn(
-        `SECURITY: User ${req.user.sub} attempted to confirm action ${actionId} owned by user ${ownership.userId}`,
+        `SECURITY: User ${req.user.sub} attempted to confirm action ${dto.actionId} owned by user ${ownership.userId}`,
       );
       throw new ForbiddenException('This action belongs to another user');
     }
 
-    if (confirmed) {
-      const inspection = this.agentToolExecutorService.inspectPendingAction(actionId);
+    if (dto.confirmed) {
+      const inspection = this.agentToolExecutorService.inspectPendingAction(dto.actionId);
       if (inspection.status === 'expired') {
         await this.agentAuditService.log({
           userId: req.user.sub,
           actionType: AuditAction.ACTION_EXPIRED,
           functionName: inspection.action?.functionName ?? 'unknown',
           sessionId: ownership.sessionId,
-          actionId,
+          actionId: dto.actionId,
         });
         throw new BadRequestException('Pending action expired or already processed');
       }
 
-      const pendingAction = this.agentToolExecutorService.confirmPendingActionById(actionId);
+      const pendingAction = this.agentToolExecutorService.confirmPendingActionById(dto.actionId);
       if (!pendingAction) {
         throw new BadRequestException('Pending action expired or already processed');
       }
@@ -363,7 +363,7 @@ export class AdminAgentController {
         actionType: AuditAction.ACTION_CONFIRMED,
         functionName: pendingAction.functionName,
         sessionId: pendingAction.sessionId,
-        actionId,
+        actionId: dto.actionId,
         metadata: pendingAction.args,
       });
 
@@ -379,14 +379,14 @@ export class AdminAgentController {
       const result = await this.agentToolExecutorService.executeToolCall(call, req.user.sub);
       return { success: true, result };
     } else {
-      const cancelledAction = this.agentToolExecutorService.cancelPendingActionById(actionId);
+      const cancelledAction = this.agentToolExecutorService.cancelPendingActionById(dto.actionId);
 
       await this.agentAuditService.log({
         userId: req.user.sub,
         actionType: AuditAction.ACTION_CANCELLED,
         functionName: cancelledAction?.functionName ?? 'unknown',
         sessionId: ownership.sessionId,
-        actionId,
+        actionId: dto.actionId,
       });
 
       return { success: true, cancelled: !!cancelledAction };

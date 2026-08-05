@@ -8,8 +8,9 @@ import {
   Get,
   HttpCode,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -65,7 +66,8 @@ export class AuthController {
   @ApiForbiddenResponse({ description: 'Not applicable for this public endpoint.' })
   @ApiNotFoundResponse({ description: 'Not applicable for this endpoint.' })
   @ApiInternalServerErrorResponse({ description: 'Unexpected server error.' })
-  register(@Body() dto: RegisterDto) {
+  register(@Req() req: Request, @Body() dto: RegisterDto) {
+    this.assertAllowedOrigin(req);
     return this.authService.register(dto);
   }
 
@@ -92,7 +94,8 @@ export class AuthController {
   @ApiForbiddenResponse({ description: 'Not applicable for this public endpoint.' })
   @ApiNotFoundResponse({ description: 'Not applicable for this endpoint.' })
   @ApiInternalServerErrorResponse({ description: 'Unexpected server error.' })
-  login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
+  login(@Req() req: Request, @Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
+    this.assertAllowedOrigin(req);
     return this.authService.login(dto, res);
   }
 
@@ -179,5 +182,17 @@ export class AuthController {
       result: user,
     };
     return result;
+  }
+
+  private assertAllowedOrigin(req: Request): void {
+    const origin = req.headers.origin;
+    if (!origin) return; // non-browser clients (curl, server-to-server) carry no Origin
+    const allowed = [
+      process.env.CORS_ORIGIN ?? 'http://localhost:4200',
+      'http://localhost:3000',
+    ];
+    if (!allowed.includes(origin)) {
+      throw new ForbiddenException('Cross-site request origin blocked');
+    }
   }
 }

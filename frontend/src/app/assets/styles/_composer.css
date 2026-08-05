@@ -113,7 +113,7 @@
     &.stop {
         color: var(--color-text-primary);
         background: var(--color-border);
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+        text-shadow: var(--shadow-text);
 
         &:hover {
             background: var(--color-text-primary);

@@ -10,20 +10,25 @@ import { UserForLogin } from '../models/user-for-login.interface';
 export class AuthService {
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/auth`;
+  private sessionCheckPromise: Promise<User | null> | null = null;
 
   login(payload: UserForLogin) {
+    this.sessionCheckPromise = null;
     return this.http.post<ServiceResultContainer<User>>(`${this.base}/login`, payload);
   }
 
   register(payload: UserForLogin) {
+    this.sessionCheckPromise = null;
     return this.http.post<ServiceResultContainer<User>>(`${this.base}/register`, payload);
   }
 
   refresh() {
+    this.sessionCheckPromise = null;
     return this.http.post<ServiceResultContainer<User>>(`${this.base}/refresh`, {});
   }
 
   logout() {
+    this.sessionCheckPromise = null;
     return this.http.post<ServiceResultContainer<{ ok: true }>>(`${this.base}/logout`, {});
   }
 
@@ -31,7 +36,14 @@ export class AuthService {
     return this.http.get<ServiceResultContainer<User>>(`${this.base}/me`);
   }
 
-  async checkSession(): Promise<User | null> {
+  checkSession(): Promise<User | null> {
+    if (!this.sessionCheckPromise) {
+      this.sessionCheckPromise = this.performSessionCheck();
+    }
+    return this.sessionCheckPromise;
+  }
+
+  private async performSessionCheck(): Promise<User | null> {
     try {
       const me = await firstValueFrom(this.me());
       return me.result ?? null;

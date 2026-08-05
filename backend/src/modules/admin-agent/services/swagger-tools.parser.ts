@@ -35,6 +35,8 @@ export class SwaggerToolsParser {
   >();
 
   private swaggerSpecMtimeMs = 0;
+  private cleanedToolsCache: LlmToolSchema[] | null = null;
+  private cleanedToolsSourceMtime = 0;
 
   constructor(private readonly reflector: Reflector) {
     this.loadSwaggerAsTools();
@@ -43,7 +45,12 @@ export class SwaggerToolsParser {
   getTools(): LlmToolSchema[] {
     this.refreshSwaggerToolsIfChanged();
 
-    return this.swaggerTools.map((t) => {
+    if (this.cleanedToolsCache && this.cleanedToolsSourceMtime === this.swaggerSpecMtimeMs) {
+      return this.cleanedToolsCache;
+    }
+
+    this.cleanedToolsSourceMtime = this.swaggerSpecMtimeMs;
+    this.cleanedToolsCache = this.swaggerTools.map((t) => {
       const params = t.function?.parameters;
 
       const cleaned = this.cleanSchema(params);
@@ -62,6 +69,8 @@ export class SwaggerToolsParser {
         },
       } as LlmToolSchema;
     });
+
+    return this.cleanedToolsCache;
   }
 
   getEndpoint(operationId: string) {

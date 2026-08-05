@@ -322,6 +322,7 @@ export class LlmController {
   private extractVersion(key: string): number {
     const matches = key.match(/(\d+(?:\.\d+)?)/g);
     if (!matches || matches.length === 0) return 0;
-    return Number(matches[matches.length - 1]);
+    const first = matches.find((m) => !/^\d{4}$/.test(m)) ?? matches[0];
+    return Number(first);
   }
 }

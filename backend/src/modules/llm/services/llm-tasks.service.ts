@@ -6,7 +6,7 @@ import { LlmProviderService } from '../../llm-provider/llm-provider.service';
 @Injectable()
 export class LlmTasksService {
     private readonly logger = new Logger(LlmTasksService.name);
-    private readonly LLM_HEALTH_CHECK_ENABLED = false;
+    private readonly LLM_HEALTH_CHECK_ENABLED = process.env.LLM_HEALTH_CHECK_ENABLED === 'true';
 
     constructor(
         private readonly healthService: LlmHealthService,
@@ -29,12 +29,6 @@ export class LlmTasksService {
         } catch (error) {
             this.logger.error('Error occurred during Nightly LLM Health Check Cron Job', error);
         }
-    }
-
-    // 💡 בונוס לפיתוח: בדיקה קטנה שרצה כל שעה בדקה 30 (לא בדקה 0 כדי לא להתנגש עם nightly check בשעות 0, 3, 6, 9) 💡
-    @Cron('0 30 * * * *') // runs every hour at minute 30
-    async runIntermittentCheck() {
-        this.logger.log('Intermittent LLM health validation is active.');
     }
 
     // 🚀 ניקוי יומי של תוצאות בדיקות מודלים ישנות מ-30 יום — רץ כל יום ב-03:00 🚀

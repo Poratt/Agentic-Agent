@@ -240,11 +240,11 @@ button {
 
   &.filled {
     background-color: var(--color-warning);
-    color: #1a1a1a;
+    color: var(--color-on-warning);
     border-color: transparent;
 
     &:hover:not(:disabled) {
-      background-color: color-mix(in srgb, var(--color-warning) 80%, #000);
+      background-color: color-mix(in srgb, var(--color-warning) 80%, var(--color-black));
     }
   }
 }

@@ -176,10 +176,16 @@ export class LlmClientService {
 
     this.logger.log(`Initializing OpenAI client for ${dbProvider.label} (${dbProvider.key}) using DB credentials.`);
 
+    const apiKey = dbProvider.apiKey?.trim();
+    const isLocalBaseUrl = /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:|$)/i.test(dbProvider.baseUrl);
+    if (!apiKey && !isLocalBaseUrl) {
+      throw new Error(`LLM Provider '${dbProvider.key}' has no API key configured and is not a local provider.`);
+    }
+
     return {
       client: new OpenAI({
         baseURL: dbProvider.baseUrl,
-        apiKey: dbProvider.apiKey ? dbProvider.apiKey.trim() : undefined,
+        apiKey: apiKey || 'local-no-key',
         timeout: 60_000,
         defaultHeaders: this.providerConfig.getDefaultHeaders(dbProvider.key as any),
       }),
@@ -199,6 +205,8 @@ export class LlmClientService {
         const isRetryable =
           errorLike.status === 503 ||
           errorLike.status === 502 ||
+          errorLike.status === 500 ||
+          errorLike.status === 429 ||
           errorLike.message?.includes('no choices') ||
           errorLike.message?.includes('overloaded');
 
@@ -549,37 +557,41 @@ export class LlmClientService {
   ): Promise<{ status: 'queued' | 'in_progress' | 'completed' | 'failed'; url?: string; error?: string | Record<string, unknown> | null; seconds?: number | string }> {
     const { baseUrl, apiKey } = await this.getProviderConnection(provider);
 
-    const res = await fetch(`${baseUrl}/agnesapi?video_id=${encodeURIComponent(videoId)}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-      signal: AbortSignal.timeout(60_000),
-    });
+    const result = await this.withRetry(async () => {
+      const res = await fetch(`${baseUrl}/agnesapi?video_id=${encodeURIComponent(videoId)}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+        signal: AbortSignal.timeout(60_000),
+      });
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Agnes video poll failed (${res.status}): ${text.slice(0, 500)}`);
-    }
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Agnes video poll failed (${res.status}): ${text.slice(0, 500)}`);
+      }
 
-    const json = (await res.json()) as {
-      status?: string;
-      video_url?: string;
-      url?: string;
-      error?: string;
-      seconds?: number;
-    };
+      const json = (await res.json()) as {
+        status?: string;
+        video_url?: string;
+        url?: string;
+        error?: string;
+        seconds?: number;
+      };
 
-    const status = (json.status ?? 'in_progress') as 'queued' | 'in_progress' | 'completed' | 'failed';
+      const status = (json.status ?? 'in_progress') as 'queued' | 'in_progress' | 'completed' | 'failed';
 
-    if (status === 'failed') {
-      throw new Error(json.error ?? 'Agnes video generation failed');
-    }
+      if (status === 'failed') {
+        throw new Error(json.error ?? 'Agnes video generation failed');
+      }
 
-    return {
-      status,
-      url: json.video_url ?? json.url,
-      seconds: json.seconds,
-    };
+      return {
+        status,
+        url: json.video_url ?? json.url,
+        seconds: json.seconds,
+      };
+    }, 'getVideoResult');
+
+    return result;
   }
 }
