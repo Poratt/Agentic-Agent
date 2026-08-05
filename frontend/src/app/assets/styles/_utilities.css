@@ -126,13 +126,15 @@
   padding: 2px var(--space-4);
   border-radius: var(--radius-pill);
   font-size: var(--font-size-xxs);
-  font-weight: var(--font-weight-semibold);
+  font-weight: 400;
   border: 1px solid transparent;
   letter-spacing: 0.01em;
 
-  .ph,
-  .material-symbols-rounded {
+  .ph {
     color: inherit;
+    font-size: 0.9em;
+    align-items: center;
+    display: flex;
   }
 
   &.badge-danger {
@@ -367,7 +369,7 @@
     .summary-value {
       /* font-family: var(--font-code); */
       font-variant-numeric: tabular-nums;
-      font-weight: var(--font-weight-semibold);
+  font-weight: 400;
       color: var(--color-text-primary);
       font-size: var(--font-size-xxs);
 

@@ -1,5 +1,17 @@
 # Documentation Handoff
 
+## 2026-08-05 Session - Media Studio LLM Provider Payload Check
+
+- Completed: attempted Browser/DevTools inspection for `/llm-provider`; no browser targets were available in this Codex session (`agent.browsers.list()` returned empty), so verified the same live API payload directly against `http://localhost:3000/llm-provider`.
+- Finding: unauthenticated `/llm-provider` returns `401 AUTH_MISSING_TOKEN`; authenticated with the local admin seed and inspected the payload.
+- Result: every returned model object includes a `capability` field (`modelsMissingCapability = 0`), but all 45 returned models have `capability: "text"`.
+- Critical detail: provider `agnes-ai` is active and includes `agnes-image-2.0-flash`, `agnes-image-2.1-flash`, and `agnes-video-v2.0`, but all three are returned as `capability: "text"`. Media Studio correctly filters by `image`/`video`, so the select is empty.
+- Source check: `LlmModelEntity` has the `capability` enum and `LlmProviderService.findProviders()` returns entities directly; no backend DTO mapping is stripping the field. `seedLlmProviders(dataSource)` contains the correct Agnes image/video capabilities but is currently commented out in `backend/src/main.ts`, so startup reconciliation does not fix old rows.
+- Files touched this session: `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md`.
+- Decisions made: no code changes; this was a runtime payload investigation only. No architecture diagram update needed.
+- Open questions for the user: whether to update the DB rows directly, re-enable/run the seed reconciliation, or add a one-off repair migration/script.
+- Next exact step: update the existing `llm_models` rows for `agnes-image-2.0-flash` and `agnes-image-2.1-flash` to `capability = 'image'`, and `agnes-video-v2.0` to `capability = 'video'`; then reload Media Studio and confirm both selects populate.
+
 ## 2026-08-05 Session — Full Code Review (read-only audit)
 
 - Completed: comprehensive code review of backend + frontend (security, bugs, performance, maintainability) — no code changes.

@@ -1,5 +1,11 @@
 # Documentation Change Log
 
+## 2026-08-05 Media Studio LLM Provider Payload Check
+
+- Runtime finding: `/llm-provider` returns the `capability` field on every model object, but the live payload currently reports every model as `text`.
+- Operational cause to verify/fix: `agnes-ai` media model rows are present but have stale capabilities (`agnes-image-2.0-flash`, `agnes-image-2.1-flash`, and `agnes-video-v2.0` all returned as `text`).
+- No architecture decision changed. No architecture diagram update needed.
+
 ## 2026-07-25 CSS Cleanup — Labels, Compact Inputs, Number Steppers
 
 - **Architectural decision:** consolidated bare `label` styles into one global rule in `_typography.css` (font-size sm, font-weight medium, color text-primary). Component-scoped label overrides (like `.composer-count label { white-space: nowrap }`) stay local for context-specific needs.

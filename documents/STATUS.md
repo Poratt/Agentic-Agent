@@ -2,6 +2,14 @@
 
 Last updated: 2026-08-05
 
+## 2026-08-05 Session - Media Studio LLM Provider Payload Check
+
+- Completed: checked the live `/llm-provider` payload directly after Browser/DevTools access was unavailable in this Codex session.
+- Result: `capability` is present on every returned model object, but all 45 returned models have `capability: "text"`.
+- Current state: Media Studio select is empty because the API returns zero active models with `capability: "image"` and zero active models with `capability: "video"`.
+- Root finding: active `agnes-ai` media model rows are returned as text: `agnes-image-2.0-flash`, `agnes-image-2.1-flash`, and `agnes-video-v2.0`.
+- Next: repair those DB rows or run/re-enable the existing seed reconciliation that sets Agnes model capabilities correctly.
+
 ## 2026-08-05 Session — Full Code Review (read-only audit)
 
 - Completed: full code review → `documents/audit/code-review-2026-08-05.md` (6 Critical / 8 High / 22 Medium / ~36 Low-Info)

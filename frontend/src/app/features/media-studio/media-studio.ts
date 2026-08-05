@@ -1,11 +1,16 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, signal, computed, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, signal, computed, ChangeDetectionStrategy, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Select } from 'primeng/select';
 import { TooltipDirective } from '../../core/directives/tooltip.directive';
 import { LlmProviderStore } from '../../core/store/llm-provider.store';
+import { LlmProvider, LlmModel } from '../../core/services/llm-provider.service';
 import { MediaService, MediaImageResult, MediaVideoTask, MediaVideoResult } from '../../core/services/media.service';
 import { FloatLabelModule } from 'primeng/floatlabel';
+import { environment } from '../../environments/environment';
+import { ServiceResultContainer } from '../../core/models/service-result-container.model';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 
 
@@ -25,15 +30,15 @@ export class MediaStudio implements OnInit, OnDestroy {
 
     protected llmProviderStore = inject(LlmProviderStore);
     private mediaService = inject(MediaService);
+    private http = inject(HttpClient);
 
     activeTab = signal<'image' | 'video'>('image');
-
     isDragging = signal(false);
     private dragCounter = 0;
     selectedImagePreview = signal<string | null>(null);
 
-    imageModels = this.llmProviderStore.imageModels;
-    videoModels = this.llmProviderStore.videoModels;
+    imageModels = signal<LlmModel[]>([]);
+    videoModels = signal<LlmModel[]>([]);
 
     // Image form
     imageModelId = signal<number | null>(null);
@@ -173,16 +178,34 @@ export class MediaStudio implements OnInit, OnDestroy {
 
     imageTier = computed(() => ['1K', '2K', '3K', '4K'].includes(this.imageSize()));
 
-    ngOnInit(): void {
+    async ngOnInit(): Promise<void> {
         this.promptTextarea?.nativeElement.focus();
-        this.llmProviderStore.reload();
-        const imgs = this.imageModels();
-        if (imgs.length > 0 && this.imageModelId() == null) {
-            this.imageModelId.set(imgs[0].id);
-        }
-        const vids = this.videoModels();
-        if (vids.length > 0 && this.videoModelId() == null) {
-            this.videoModelId.set(vids[0].id);
+        try {
+            const res = await firstValueFrom(
+                this.http.get<ServiceResultContainer<LlmProvider[]>>(`${environment.apiUrl}/llm-provider`),
+            );
+            const providers = res?.result ?? [];
+            const imgs = providers
+                .filter(p => p.active)
+                .flatMap(p => p.models ?? [])
+                .filter(m => m.active && m.capability === 'image');
+            this.imageModels.set(imgs);
+            if (imgs.length > 0 && this.imageModelId() == null) {
+                this.imageModelId.set(imgs[0].id);
+            }
+            const vids = providers
+                .filter(p => p.active)
+                .flatMap(p => p.models ?? [])
+                .filter(m => m.active && m.capability === 'video');
+            this.videoModels.set(vids);
+            if (vids.length > 0 && this.videoModelId() == null) {
+                this.videoModelId.set(vids[0].id);
+            }
+        } catch {
+            // fallback: store may have cached data
+            const store = this.llmProviderStore;
+            this.imageModels.set(store.imageModels());
+            this.videoModels.set(store.videoModels());
         }
     }
 

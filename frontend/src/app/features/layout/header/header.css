@@ -41,13 +41,21 @@
 		isolation: isolate;
 		width: var(--space-14);
 		height: var(--space-14);
-		border-radius: 50%;
+		border-radius: var(--radius-pill);
 		display: grid;
 		place-items: center;
 		background: var(--glass-bg);
 		border: 1px solid var(--glass-border);
 		box-shadow: var(--shadow-glow-primary-soft);
 		flex-shrink: 0;
+		appearance: none;
+		padding: 0;
+		cursor: pointer;
+		transition: transform 200ms ease;
+
+		&:hover {
+			transform: scale(1.08);
+		}
 
 		&::before {
 			content: '';

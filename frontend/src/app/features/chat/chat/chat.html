@@ -33,7 +33,7 @@
                 }
 
                 @if (messages().length === 0) {
-                    <div class="page-empty-state">
+                    <div class="page-empty-state stagger stagger-up">
                         <span class="ph ph-chat-circle-text xl"></span>
                         <h3 class="">שלום {{ currentUserProfile()?.fullName || authStore.user()?.email }}!</h3>
                         <p>כתוב הודעה למטה כדי להתחיל להתייעץ עם סוכן ה-AI שלך.</p>

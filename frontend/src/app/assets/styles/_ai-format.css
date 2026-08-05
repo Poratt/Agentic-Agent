@@ -103,28 +103,17 @@
   }
 }
 
-/* Badge styles for roles in AI responses */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-pill);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  line-height: 1;
+/* Badge overrides for AI responses */
+.badge-admin {
+  color: var(--color-primary);
+  background: var(--color-primary-glow-bg);
+  border: 1px solid var(--color-primary-glow);
+}
 
-  &.badge-admin {
-    color: var(--color-primary);
-    background: var(--color-primary-glow-bg);
-    border: 1px solid var(--color-primary-glow);
-  }
-
-  &.badge-info {
-    color: var(--color-secondary);
-    background: var(--color-secondary-glow-bg);
-    border: 1px solid var(--color-secondary-glow);
-  }
+.badge-info {
+  color: var(--color-secondary);
+  background: var(--color-secondary-glow-bg);
+  border: 1px solid var(--color-secondary-glow);
 }
 
 /* Fade-in animation for AI nodes */

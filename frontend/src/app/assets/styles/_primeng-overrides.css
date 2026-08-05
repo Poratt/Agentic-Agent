@@ -365,7 +365,66 @@ li.p-select-option {
   }
 }
 
-/* ── Confirm Dialog ───────────────────────────────────────────────────────── */
+/* ── TieredMenu ──────────────────────────────────────────────────────────── */
+
+.p-tieredmenu {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+  border-radius: var(--radius-md) !important;
+  padding: var(--space-2) !important;
+  backdrop-filter: blur(var(--glass-blur)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
+
+  .p-tieredmenu-root-list {
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  .p-tieredmenu-item {
+    margin: 0 !important;
+  }
+
+  .p-tieredmenu-item-content {
+    padding: 0 !important;
+    border-radius: var(--radius-sm) !important;
+    transition: background var(--transition-fast) !important;
+    cursor: pointer !important;
+  }
+
+  .p-tieredmenu-item-content:hover {
+    background: var(--color-surface-hover) !important;
+  }
+
+  .p-tieredmenu-item-link {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: var(--space-3) !important;
+    padding: var(--space-4) var(--space-3) !important;
+    border-radius: var(--radius-sm) !important;
+    overflow: hidden !important;
+    color: var(--color-text-secondary) !important;
+
+    &:hover {
+      color: var(--color-text-primary) !important;
+    }
+  }
+
+  .p-tieredmenu-item-icon {
+    color: var(--color-primary) !important;
+    font-size: var(--font-size-sm) !important;
+  }
+
+  .p-tieredmenu-item-label {
+    font-size: var(--font-size-xxs) !important;
+  }
+
+  .p-tieredmenu-separator {
+    border-color: var(--color-border) !important;
+    margin: var(--space-1) 0 !important;
+  }
+}
 
 .p-confirmdialog {
   direction: ltr;
