@@ -23,6 +23,7 @@ export class UsersStore {
   users = computed(() => this.usersResource.value()?.result ?? []);
   loading = computed(() => this.usersResource.isLoading());
   error = signal<string | null>(null);
+  selectedUser = signal<User | null>(null);
 
   currentUserProfile = computed(() => {
     const userId = this.currentUserId();
@@ -67,8 +68,7 @@ export class UsersStore {
   getUserById(userId: number) {
     this.userService.getById(userId).subscribe({
       next: (res) => {
-        if (!res.result) return;
-        this.usersResource.reload();
+        this.selectedUser.set(res.result ?? null);
       },
       error: (err) => {
         this.error.set(err?.error?.message ?? 'Failed to get user');

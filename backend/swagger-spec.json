@@ -3535,10 +3535,12 @@
         "properties": {
           "type": {
             "type": "string",
-            "description": "Stream event kind. \"token\" carries model text; \"step\" carries tool progress metadata.",
+            "description": "Stream event kind. \"token\" carries model text; \"step\" carries tool progress; \"confirmation\" carries a pending destructive action awaiting user approval; \"render\" carries a rich component payload.",
             "enum": [
               "token",
-              "step"
+              "step",
+              "confirmation",
+              "render"
             ],
             "example": "token"
           },
@@ -3556,6 +3558,26 @@
             "type": "string",
             "description": "UI icon key for a step event. Present on step events.",
             "example": "ph-check-circle"
+          },
+          "actionId": {
+            "type": "string",
+            "description": "Pending destructive action id. Present on confirmation events."
+          },
+          "action": {
+            "type": "string",
+            "description": "Destructive action name. Present on confirmation events."
+          },
+          "target": {
+            "type": "string",
+            "description": "Destructive action target. Present on confirmation events."
+          },
+          "component": {
+            "type": "string",
+            "description": "Component key for a rich render block. Present on render events."
+          },
+          "data": {
+            "type": "object",
+            "description": "Payload data for a rich render block. Present on render events."
           }
         },
         "required": [

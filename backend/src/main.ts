@@ -23,7 +23,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   app.enableCors({
-    origin: 'http://localhost:4200',
+    origin: process.env.CORS_ORIGIN ?? 'http://localhost:4200',
     credentials: true,
   });
 
@@ -32,7 +32,11 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  fs.writeFileSync('./swagger-spec.json', JSON.stringify(document, null, 2));
+  try {
+    fs.writeFileSync('./swagger-spec.json', JSON.stringify(document, null, 2));
+  } catch (error) {
+    console.warn('Failed to write swagger-spec.json:', error);
+  }
 
   const dataSource = app.get(DataSource);
   await seedAdmin(dataSource);

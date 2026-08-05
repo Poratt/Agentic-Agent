@@ -204,7 +204,7 @@ export class AdminAgentService implements OnModuleInit {
     image?: string,
   ): AsyncIterable<string> {
     if (image && image.length > 15 * 1024 * 1024) {
-      yield JSON.stringify({ type: 'token', content: 'התמונה גדולה מדי. מקסימום 10MB.' }) + '\n';
+      yield JSON.stringify({ type: 'token', content: 'התמונה גדולה מדי. מקסימום 15MB.' }) + '\n';
       return;
     }
 

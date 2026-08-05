@@ -362,7 +362,7 @@ export class LlmProvidersManagement implements OnInit {
             rejectLabel: 'Cancel',
             acceptButtonStyleClass: 'p-button-danger',
             accept: () => {
-                this.llmProviderStore.deleteModel(providerId, modelId);
+                this.llmProviderStore.softDeleteModel(providerId, modelId);
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Deactivated',

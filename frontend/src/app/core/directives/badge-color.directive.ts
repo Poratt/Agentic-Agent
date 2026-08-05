@@ -1,5 +1,6 @@
 import { Directive, ElementRef, Renderer2, inject, input, effect } from '@angular/core';
 import { EnumData } from '../models/enum-data.model';
+import { ThemeService } from '../services/theme.service';
 
 @Directive({
 	selector: '[badgeColor]',
@@ -10,11 +11,12 @@ export class BadgeColor {
 
 	private el = inject(ElementRef);
 	private renderer = inject(Renderer2);
+	private themeService = inject(ThemeService);
 
 	constructor() {
 		effect(() => {
 			const value = this.badgeColor();
-			const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+			const isDark = this.themeService.isDark();
 
 			let color: string;
 			if (typeof value === 'string') {

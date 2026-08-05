@@ -35,6 +35,18 @@ export class IdeasForm implements OnInit {
   }
 
   constructor() {
+    // Disable the domain control through the FormControl API instead of the [disabled] template
+    // binding (Angular ignores template [disabled] on reactive controls and logs a dev warning).
+    effect(() => {
+      const loading = this.store.loading();
+      const domainControl = this.ideasForm.get('domain');
+      if (loading) {
+        domainControl?.disable();
+      } else {
+        domainControl?.enable();
+      }
+    });
+
     effect(() => {
       const groups = this.models();
       const currentSelection = this.ideasForm.get('model')?.value;

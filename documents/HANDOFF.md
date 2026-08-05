@@ -1,5 +1,15 @@
 # Documentation Handoff
 
+## 2026-08-05 Session — Full Code Review (read-only audit)
+
+- Completed: comprehensive code review of backend + frontend (security, bugs, performance, maintainability) — no code changes.
+- Output: `documents/audit/code-review-2026-08-05.md` — 6 Critical / 8 High / 22 Medium / ~36 Low-Info findings, with file:line, fix suggestions, and quick-wins ordered list.
+- Top findings: (1) `/llm-provider` lacks AdminGuard + `apiKey` returned plaintext to any user; (2) SSRF via DB-backed `baseUrl` + `extendVideo` `sourceVideoUrl`; (3) `@RequiresConfirmation()` never reaches swagger spec → confirmation flow dead; (4) Google Calendar controller has zero guards; (5) frontend refresh-on-401 race causes random logouts; (6) hardcoded admin seed `admin@admin.com`/`admin`.
+- Files touched this session: `documents/audit/code-review-2026-08-05.md` (created), `documents/HANDOFF.md`, `documents/STATUS.md`.
+- Decisions made: none (read-only audit). No architecture changes — architecture diagram needs no update.
+- Open questions for the user: which findings to fix first (recommended quick-win order is in the audit file §Quick Wins); whether to open a dedicated fix branch per area.
+- Next exact step: pick the first quick win (add `AdminGuard` to `llm-provider.controller.ts` + hide `apiKey`) and implement on a new branch.
+
 ## 2026-08-01 Session — Tooltip Effect Tag Font Size
 
 **Tooltip terpene effect tag size reduction**

@@ -160,6 +160,7 @@
 
   /* Primary */
   --color-primary: #22D3EE;
+  --color-primary-hover: #67E8F9;
   --color-primary-glow: rgba(34, 211, 238, 0.20);
   --primary-30: var(--color-primary-glow-bg); /* deprecated alias — use --color-primary-glow-bg */
   --primary-300: var(--color-primary-glow); /* deprecated alias — use --color-primary-glow */
@@ -232,6 +233,7 @@
 
   /* Primary — deeper sky for contrast on white */
   --color-primary: #0369A1;
+  --color-primary-hover: #075985;
   --color-primary-glow: rgba(3, 105, 161, 0.14);
   --primary-30: var(--color-primary-glow-bg); /* deprecated alias — use --color-primary-glow-bg */
   --primary-300: var(--color-primary-glow); /* deprecated alias — use --color-primary-glow */

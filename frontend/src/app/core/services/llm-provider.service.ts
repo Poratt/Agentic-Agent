@@ -56,7 +56,8 @@ export class LlmProviderService {
         return this.http.patch<ServiceResultContainer<LlmModel>>(`${this.base}/models/${modelId}`, model);
     }
 
-    deleteModel(modelId: number): Observable<ServiceResultContainer<void>> {
+    // Soft-disable via PATCH {active:false}. The hard DELETE route exists but the UI intentionally never calls it.
+    softDeleteModel(modelId: number): Observable<ServiceResultContainer<void>> {
         return this.http.patch<ServiceResultContainer<void>>(`${this.base}/models/${modelId}`, { active: false } as Partial<LlmModel>);
     }
 

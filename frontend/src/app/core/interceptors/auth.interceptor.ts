@@ -24,7 +24,10 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
       }
 
       return authService.refresh().pipe(
-        switchMap(() => {
+        switchMap((res) => {
+          if (res?.result) {
+            authStore.user.set(res.result);
+          }
           return next(req);
         }),
         catchError((refreshErr) => {

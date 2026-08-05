@@ -1,6 +1,12 @@
 # Project Documentation Status
 
-Last updated: 2026-08-01
+Last updated: 2026-08-05
+
+## 2026-08-05 Session — Full Code Review (read-only audit)
+
+- Completed: full code review → `documents/audit/code-review-2026-08-05.md` (6 Critical / 8 High / 22 Medium / ~36 Low-Info)
+- Current state: audit file is the reference for upcoming fixes; no code changed
+- Next: implement quick wins in order (start: AdminGuard on `/llm-provider` + mask `apiKey`)
 
 ## 2026-08-01 Session — Tooltip Effect Tag Font Size
 

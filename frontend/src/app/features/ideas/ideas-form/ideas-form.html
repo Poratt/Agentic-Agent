@@ -9,7 +9,6 @@
                 [value]="store.domain()"
                 (input)="onDomainInput($event)"
                 placeholder="תחום עסקי (למשל: כלי AI לפרילנסרים)"
-                [disabled]="store.loading()"
                 autocomplete="off"
                 (keydown.enter)="$event.preventDefault(); onGenerate()"
             />

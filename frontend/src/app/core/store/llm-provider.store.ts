@@ -184,8 +184,8 @@ export class LlmProviderStore {
         });
     }
 
-    deleteModel(providerId: number, modelId: number) {
-        this.llmProviderService.deleteModel(modelId).subscribe({
+    softDeleteModel(providerId: number, modelId: number) {
+        this.llmProviderService.softDeleteModel(modelId).subscribe({
             next: () => {
                 this.providersResource.reload();
             },

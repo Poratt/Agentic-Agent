@@ -154,6 +154,8 @@ export class Chat implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        delete (window as any).agentPrompt;
+
         this.cancelActiveStream();
 
         if (this.routeSub) {

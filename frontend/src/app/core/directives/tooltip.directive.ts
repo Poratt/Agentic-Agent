@@ -53,6 +53,7 @@ export class TooltipDirective implements OnDestroy {
 
         if (imgEl) {
             imgEl.addEventListener('load', () => this.positionTooltip(), { once: true });
+            imgEl.addEventListener('error', () => this.positionTooltip(), { once: true });
         }
     }
 
@@ -102,7 +103,9 @@ export class TooltipDirective implements OnDestroy {
 
     private removeTooltip() {
         if (this.tooltipEl) {
-            this.renderer.removeChild(document.body, this.tooltipEl);
+            if (this.tooltipEl.isConnected) {
+                this.renderer.removeChild(document.body, this.tooltipEl);
+            }
             if (TooltipDirective.activeTooltipEl === this.tooltipEl) {
                 TooltipDirective.activeTooltipEl = null;
             }
