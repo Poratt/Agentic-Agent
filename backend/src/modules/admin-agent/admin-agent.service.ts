@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { LlmService } from '../llm/llm.service';
-import { AgentSessionService } from './services/agent-session.service';
+import { AgentSessionService, trimHistoryForLlm } from './services/agent-session.service';
 import { AgentToolExecutorService } from './services/agent-tool-executor.service';
 import { ChatSession } from './entities/chat-session.entity';
 import { ChatMessage } from './entities/chat-message.entity';
@@ -133,7 +133,7 @@ export class AdminAgentService implements OnModuleInit {
       const llmResponse = await this.llmService.generateResponse({
         prompt: iteration === 0 ? prompt : '',
         systemContext: dynamicSystemContext,
-        messageHistory: history,
+        messageHistory: trimHistoryForLlm(history),
         tools,
         providerOverride: provider,
         modelOverride: model,
@@ -236,7 +236,7 @@ export class AdminAgentService implements OnModuleInit {
       const llmResponse = await this.llmService.generateResponse({
         prompt: iteration === 0 ? prompt : '',
         systemContext: dynamicSystemContext,
-        messageHistory: history,
+        messageHistory: trimHistoryForLlm(history),
         tools,
         providerOverride: provider,
         modelOverride: model,
@@ -348,7 +348,7 @@ export class AdminAgentService implements OnModuleInit {
           const stream = this.llmService.generateStream({
             prompt,
             systemContext: dynamicSystemContext,
-            messageHistory: history,
+            messageHistory: trimHistoryForLlm(history),
             tools,
             providerOverride: provider,
             modelOverride: model,

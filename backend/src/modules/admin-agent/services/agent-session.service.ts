@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, In, MoreThanOrEqual } from 'typeorm';
+import { Repository, IsNull, In, MoreThanOrEqual, Not, DataSource } from 'typeorm';
 import { ChatSession } from '../entities/chat-session.entity';
 import { ChatMessage } from '../entities/chat-message.entity';
 import { LlmMessage } from '../../llm/types/llm.types';
@@ -14,6 +14,19 @@ export interface SaveMessageOptions {
 const DEFAULT_SESSION_TITLE = 'שיחה חדשה...';
 const LEGACY_DEFAULT_SESSION_TITLES = ['New chat...', 'New chat'];
 
+/**
+ * Bounds the message history sent to the LLM provider: keeps only the most
+ * recent MAX_LLM_HISTORY_MESSAGES messages to cap per-iteration token cost on
+ * long conversations. The DB keeps the full history; only the LLM context is
+ * windowed.
+ */
+export const MAX_LLM_HISTORY_MESSAGES = 50;
+
+export function trimHistoryForLlm(history: LlmMessage[]): LlmMessage[] {
+  if (history.length <= MAX_LLM_HISTORY_MESSAGES) return history;
+  return history.slice(-MAX_LLM_HISTORY_MESSAGES);
+}
+
 @Injectable()
 export class AgentSessionService {
   constructor(
@@ -21,6 +34,7 @@ export class AgentSessionService {
     private readonly chatSessionRepository: Repository<ChatSession>,
     @InjectRepository(ChatMessage)
     private readonly chatMessageRepository: Repository<ChatMessage>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async getSessions(userId: number, limit?: number): Promise<ChatSession[]> {
@@ -54,11 +68,10 @@ export class AgentSessionService {
     }
 
     const messages = await this.chatMessageRepository.find({
-      where: {
-        sessionId,
-        role: In(['user', 'assistant']),
-        toolCallId: IsNull(),
-      },
+      where: [
+        { sessionId, userId, role: In(['user', 'assistant']), toolCallId: IsNull() },
+        { sessionId, userId, role: 'tool', renderSpec: Not(IsNull()) },
+      ],
       order: { createdAt: 'ASC', id: 'ASC' },
     });
 
@@ -106,7 +119,9 @@ export class AgentSessionService {
       throw new ForbiddenException('אינך מורשה למחוק שיחה זו או שהיא אינה קיימת.');
     }
 
-    await this.chatSessionRepository.delete(sessionId);
+    await this.dataSource.transaction(async (manager) => {
+      await manager.delete(ChatSession, sessionId);
+    });
   }
 
   async deleteSessionMessage(sessionId: number, messageId: number, userId: number): Promise<void> {
@@ -126,10 +141,8 @@ export class AgentSessionService {
       throw new ForbiddenException('You are not allowed to delete this message or it does not exist.');
     }
 
-    await this.chatMessageRepository.delete({
-      sessionId,
-      userId,
-      id: MoreThanOrEqual(message.id),
+    await this.dataSource.transaction(async (manager) => {
+      await manager.delete(ChatMessage, { sessionId, userId, id: MoreThanOrEqual(message.id) });
     });
   }
 
@@ -165,8 +178,9 @@ export class AgentSessionService {
     const isGreeting = genericGreetings.includes(normalizedPrompt) || normalizedPrompt.length <= 3;
 
     if (this.isDefaultSessionTitle(session.title) && prompt && !isGreeting) {
-      const cleanTitle = prompt.trim().substring(0, 30);
-      session.title = cleanTitle.length > 28 ? `${cleanTitle}...` : cleanTitle;
+      const words = prompt.trim().split(/\s+/).slice(0, 6).join(' ');
+      const truncated = words.length > 28 ? `${words.slice(0, 28)}...` : words;
+      session.title = truncated;
       await this.chatSessionRepository.save(session);
     }
   }
@@ -200,7 +214,7 @@ export class AgentSessionService {
     }
 
     const rawHistory = await this.chatMessageRepository.find({
-      where: { sessionId },
+      where: { sessionId, userId },
       order: { createdAt: 'ASC' },
     });
 
