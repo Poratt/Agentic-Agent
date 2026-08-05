@@ -35,19 +35,22 @@
     background: var(--color-input-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
+    box-sizing: border-box;
+    isolation: isolate;
     transition:
         border-color var(--transition-fast),
-        box-shadow var(--transition-fast),
+        outline-color var(--transition-fast),
         opacity var(--transition-fast);
 
     &:focus-within {
         background: var(--color-input-bg);
         border-color: var(--color-primary-glow);
-        box-shadow: 0 0 0 2px var(--color-primary-glow);
+        outline: 2px solid var(--color-primary-glow);
+        outline-offset: -2px;
+        box-shadow: none;
     }
 
-    &:hover:not(:focus-within),
-    &:hover:not(:disabled) {
+    &:hover:not(:focus-within) {
         background: var(--color-input-bg);
         border-color: var(--color-primary-glow);
     }
