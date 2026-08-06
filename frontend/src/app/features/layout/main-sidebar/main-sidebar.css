@@ -20,7 +20,7 @@
 				max-width 200ms ease;
 		}
 
-		.nav-item-chat > app-dropdown {
+		.nav-item-chat>app-dropdown {
 			display: none;
 		}
 
@@ -215,6 +215,7 @@
 			background: var(--color-surface-hover);
 			color: var(--color-primary);
 		}
+
 	}
 
 	.sidebar-footer {
@@ -228,6 +229,18 @@
 	&.collapsed .toggle-icon {
 		transform: scaleX(-1);
 	}
+}
+
+
+::ng-deep .nav-item-chat:has(.dropdown-container:hover)>.nav-item,
+.nav-item-chat:has(.dropdown-trigger-btn:hover)>.nav-item {
+	background: var(--color-surface-hover);
+	color: var(--color-primary);
+}
+
+::ng-deep .nav-item-chat:has(.dropdown-container:hover) .dropdown-trigger-btn,
+.dropdown-trigger-btn:hover {
+	color: var(--color-primary);
 }
 
 
