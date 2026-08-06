@@ -201,7 +201,19 @@ export class AgentSessionService {
       imageUrl: options.imageUrl ?? null,
       renderSpec: options.renderSpec ?? null,
     });
-    return this.chatMessageRepository.save(message);
+    const saved = await this.chatMessageRepository.save(message);
+
+    // Touch session updatedAt so recent-activity sorting stays accurate
+    if (sessionId) {
+      await this.chatSessionRepository
+        .createQueryBuilder()
+        .update(ChatSession)
+        .set({ updatedAt: () => 'NOW()' })
+        .where('id = :sessionId', { sessionId })
+        .execute();
+    }
+
+    return saved;
   }
 
   async loadHistory(sessionId: number, userId: number): Promise<LlmMessage[]> {
