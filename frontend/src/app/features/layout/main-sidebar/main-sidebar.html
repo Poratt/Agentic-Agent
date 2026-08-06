@@ -45,7 +45,7 @@
                 <span class="nav-label">צ'אט</span>
             </button>
             @if (chatStore.recentSessions().length > 0) {
-                <app-dropdown #chatDropdown [position]="'bottom-right'">
+                <app-dropdown #chatDropdown [position]="'bottom-right'" (closed)="pendingDeleteSessionId.set(null)">
                     <button
                         button
                         class="transparent-btn icon-only sm dropdown-trigger-btn"
