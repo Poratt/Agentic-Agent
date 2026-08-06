@@ -9,6 +9,7 @@ import OpenAI from 'openai';
 import { LlmRequest, LlmResponse, LlmToolCall } from '../types/llm.types';
 import { LlmProviderConfigService } from './llm-provider-config.service';
 import { LlmProviderService } from '../../llm-provider/llm-provider.service';
+import { assertSafeUrl, SsrfError } from '../../../core/utils/ssrf-guard.util';
 
 const execFileAsync = promisify(execFile);
 
@@ -174,6 +175,17 @@ export class LlmClientService {
       throw new Error(`LLM Provider with key '${providerKey}' was not found in the database.`);
     }
 
+    // TOCTOU defense: validate baseUrl at call time (DNS may have changed since record creation)
+    try {
+      await assertSafeUrl(dbProvider.baseUrl);
+    } catch (e) {
+      if (e instanceof SsrfError) {
+        this.logger.warn(`SSRF blocked for provider ${dbProvider.key}: ${e.message}`);
+        throw new BadRequestException(`Provider URL blocked: ${e.message}`);
+      }
+      throw e;
+    }
+
     this.logger.log(`Initializing OpenAI client for ${dbProvider.label} (${dbProvider.key}) using DB credentials.`);
 
     const apiKey = dbProvider.apiKey?.trim();
@@ -245,6 +257,17 @@ export class LlmClientService {
 
     if (!dbProvider) {
       throw new Error(`LLM Provider with key '${providerKey}' was not found in the database.`);
+    }
+
+    // TOCTOU defense: validate baseUrl at call time
+    try {
+      await assertSafeUrl(dbProvider.baseUrl);
+    } catch (e) {
+      if (e instanceof SsrfError) {
+        this.logger.warn(`SSRF blocked for provider ${dbProvider.key}: ${e.message}`);
+        throw new BadRequestException(`Provider URL blocked: ${e.message}`);
+      }
+      throw e;
     }
 
     return {
