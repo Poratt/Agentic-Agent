@@ -447,8 +447,14 @@
     </form>
 
     <ng-template pTemplate="footer">
-        <button type="button" class="secondary-btn" (click)="closeProviderDialog()">Cancel</button>
-        <button type="button" class="primary-btn filled" [disabled]="providerForm.invalid" (click)="saveProvider()">Save</button>
+        <button type="button" class="primary-btn sm" (click)="closeProviderDialog()">
+            <i class="ph ph-x"></i>
+            <span>Cancel</span>
+        </button>
+        <button type="button" class="primary-btn filled sm" [disabled]="providerForm.invalid" (click)="saveProvider()">
+            <i class="ph ph-check"></i>
+            <span>Save</span>
+        </button>
     </ng-template>
 </p-dialog>
 
@@ -495,7 +501,13 @@
     </form>
 
     <ng-template pTemplate="footer">
-        <button type="button" class="secondary-btn" (click)="closeModelDialog()">Cancel</button>
-        <button type="button" class="primary-btn filled" [disabled]="modelForm.invalid" (click)="saveModel()">Save</button>
+        <button type="button" class="primary-btn sm" (click)="closeModelDialog()">
+            <i class="ph ph-x"></i>
+            <span>Cancel</span>
+        </button>
+        <button type="button" class="primary-btn filled sm" [disabled]="modelForm.invalid" (click)="saveModel()">
+            <i class="ph ph-check"></i>
+            <span>Save</span>
+        </button>
     </ng-template>
 </p-dialog>

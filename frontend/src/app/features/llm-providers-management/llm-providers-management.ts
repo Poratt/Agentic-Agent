@@ -8,7 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { DialogModule } from 'primeng/dialog';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { Confirmation, ConfirmationService, MessageService } from 'primeng/api';
 import { AuthStore } from '../../core/store/auth.store';
 import { LlmProviderStore } from '../../core/store/llm-provider.store';
 import { PageStates } from '../../core/enums/page-states.enum';
@@ -98,7 +98,7 @@ export class LlmProvidersManagement implements OnInit {
     pageState = computed(() => this.llmProviderStore.pageState());
 
     llmProviders = computed<LlmProviderView[]>(() => {
-        const providers = this.llmProviderStore.providers();
+        const providers = this.llmProviderStore.providers().filter(p => p.active);
 
         return providers.map(provider => ({
             ...provider,
@@ -166,13 +166,27 @@ export class LlmProvidersManagement implements OnInit {
     }
 
     deleteProvider(providerId: number) {
-        this.confirmService.confirm({
+        let confirm: Confirmation = {
+            closeOnEscape: true,
+            dismissableMask: true,
             message: 'Are you sure you want to delete this provider?',
             header: 'Delete Provider',
-            icon: 'pi pi-exclamation-triangle',
-            acceptLabel: 'Delete',
-            rejectLabel: 'Cancel',
-            acceptButtonStyleClass: 'p-button-danger',
+            icon: 'ph ph-warning',
+            acceptIcon: 'ph ph-trash',
+            rejectIcon: 'ph ph-x',
+            rejectButtonProps: {
+                label: 'Cancel',
+                text: true,
+                severity: 'primary',
+                size: 'small'
+            },
+            acceptButtonProps: {
+                label: 'Delete',
+                text: true,
+                variant: 'danger',
+                severity: 'danger',
+                size: 'small',
+            },
             accept: () => {
                 this.llmProviderStore.deleteProvider(providerId);
                 this.messageService.add({
@@ -181,7 +195,9 @@ export class LlmProvidersManagement implements OnInit {
                     detail: 'Provider has been deleted successfully.'
                 });
             }
-        });
+        }
+
+        this.confirmService.confirm(confirm);
     }
 
     testModel(modelId: number) {
@@ -354,13 +370,27 @@ export class LlmProvidersManagement implements OnInit {
     }
 
     deleteModel(providerId: number, modelId: number) {
-        this.confirmService.confirm({
+        let confirm: Confirmation = {
+            closeOnEscape: true,
+            dismissableMask: true,
             message: 'Are you sure you want to deactivate this model?',
             header: 'Deactivate Model',
-            icon: 'pi pi-exclamation-triangle',
-            acceptLabel: 'Deactivate',
-            rejectLabel: 'Cancel',
-            acceptButtonStyleClass: 'p-button-danger',
+            icon: 'ph ph-warning',
+            acceptIcon: 'ph ph-trash',
+            rejectIcon: 'ph ph-x',
+            rejectButtonProps: {
+                label: 'Cancel',
+                text: true,
+                severity: 'primary',
+                size: 'small'
+            },
+            acceptButtonProps: {
+                label: 'Deactivate',
+                text: true,
+                variant: 'danger',
+                severity: 'danger',
+                size: 'small',
+            },
             accept: () => {
                 this.llmProviderStore.softDeleteModel(providerId, modelId);
                 this.messageService.add({
@@ -369,17 +399,32 @@ export class LlmProvidersManagement implements OnInit {
                     detail: 'Model has been deactivated successfully.'
                 });
             }
-        });
+        };
+        this.confirmService.confirm(confirm);
     }
 
     deleteTestResult(providerId: number, modelId: number, testResultId: number) {
-        this.confirmService.confirm({
+        let confirm: Confirmation = {
+            closeOnEscape: true,
+            dismissableMask: true,
             message: 'Are you sure you want to delete this test result?',
             header: 'Delete Test Result',
-            icon: 'pi pi-exclamation-triangle',
-            acceptLabel: 'Delete',
-            rejectLabel: 'Cancel',
-            acceptButtonStyleClass: 'p-button-danger',
+            icon: 'ph ph-warning',
+            acceptIcon: 'ph ph-trash',
+            rejectIcon: 'ph ph-x',
+            rejectButtonProps: {
+                label: 'Cancel',
+                text: true,
+                severity: 'primary',
+                size: 'small'
+            },
+            acceptButtonProps: {
+                label: 'Delete',
+                text: true,
+                variant: 'danger',
+                severity: 'danger',
+                size: 'small',
+            },
             accept: () => {
                 this.llmProviderStore.deleteTestResult(providerId, modelId, testResultId);
                 this.messageService.add({
@@ -388,17 +433,32 @@ export class LlmProvidersManagement implements OnInit {
                     detail: 'Test result has been deleted successfully.'
                 });
             }
-        });
+        };
+        this.confirmService.confirm(confirm);
     }
 
     deleteAllTestResults(providerId: number, modelId: number, count: number) {
-        this.confirmService.confirm({
+        let confirm: Confirmation = {
+            closeOnEscape: true,
+            dismissableMask: true,
             message: `Are you sure you want to delete all ${count} test results for this model?`,
             header: 'Delete All Test Results',
-            icon: 'pi pi-exclamation-triangle',
-            acceptLabel: 'Delete All',
-            rejectLabel: 'Cancel',
-            acceptButtonStyleClass: 'p-button-danger',
+            icon: 'ph ph-warning',
+            acceptIcon: 'ph ph-trash',
+            rejectIcon: 'ph ph-x',
+            rejectButtonProps: {
+                label: 'Cancel',
+                text: true,
+                severity: 'primary',
+                size: 'small'
+            },
+            acceptButtonProps: {
+                label: 'Delete All',
+                text: true,
+                variant: 'danger',
+                severity: 'danger',
+                size: 'small',
+            },
             accept: () => {
                 this.llmProviderStore.deleteAllTestResults(providerId, modelId);
                 this.messageService.add({
@@ -407,7 +467,8 @@ export class LlmProvidersManagement implements OnInit {
                     detail: 'All test results have been deleted successfully.'
                 });
             }
-        });
+        };
+        this.confirmService.confirm(confirm);
     }
 
     setDefaultModel(model: LlmModel) {

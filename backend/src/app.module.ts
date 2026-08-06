@@ -22,6 +22,7 @@ import { CannlyticsModule } from './modules/cannlytics/cannlytics.module';
 import { DatabaseMonitorModule } from './modules/database-monitor/database-monitor.module';
 import { McpBridgeModule } from './modules/mcp-bridge/mcp-bridge.module';
 import { GoogleCalendarModule } from './modules/google-calendar/google-calendar.module';
+import { EncryptionModule } from './core/encryption.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { GoogleCalendarModule } from './modules/google-calendar/google-calendar.
     CannlyticsModule,
     DatabaseMonitorModule,
     GoogleCalendarModule,
+    EncryptionModule,
   ],
   providers: [
     {

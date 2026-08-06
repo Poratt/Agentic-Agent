@@ -113,12 +113,14 @@ export class LlmProviderService {
   }
 
   async updateProvider(id: number, dto: UpdateLlmProviderDto): Promise<ServiceResultContainer<LlmProviderEntity>> {
-    const provider = await this.providerRepo.findOneBy({ id });
-    if (!provider) throw new NotFoundException('Provider not found');
+    // Use repository.update() — only the fields present in dto are written.
+    // This avoids the select:false trap: findOneBy won't load apiKey, and
+    // a subsequent save() could accidentally NULL it out.
+    await this.providerRepo.update({ id }, dto);
 
-    Object.assign(provider, dto);
-    const saved = await this.providerRepo.save(provider);
-    return { success: true, message: 'Provider updated', result: saved };
+    const updated = await this.providerRepo.findOneBy({ id });
+    if (!updated) throw new NotFoundException('Provider not found');
+    return { success: true, message: 'Provider updated', result: updated };
   }
 
   async findProviders(): Promise<ServiceResultContainer<LlmProviderEntity[]>> {
@@ -139,7 +141,12 @@ export class LlmProviderService {
   }
 
   async findProviderByKey(key: string): Promise<LlmProviderEntity | null> {
-    return this.providerRepo.findOne({ where: { key }, relations: ['models'] });
+    return this.providerRepo
+      .createQueryBuilder('provider')
+      .addSelect('provider.apiKey')
+      .leftJoinAndSelect('provider.models', 'models')
+      .where('provider.key = :key', { key })
+      .getOne();
   }
 
   async createModel(providerId: number, dto: CreateLlmModelDto): Promise<ServiceResultContainer<LlmModelEntity>> {

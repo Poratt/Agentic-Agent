@@ -423,9 +423,8 @@ export class Chat implements OnInit, OnDestroy {
                     return s.id === sessionId;
                 });
 
-                if (isFirstMessage || currentSession?.title === 'שיחה חדשה...') {
-                    this.chatStore.reload();
-                }
+                // Always reload session list so recent-activity sorting updates
+                this.chatStore.reload();
 
                 this.router.navigate(['/chat'], { queryParams: { sessionId }, replaceUrl: true });
             },
