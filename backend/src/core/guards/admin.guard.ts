@@ -1,4 +1,4 @@
-import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { AppErrorCode } from '../errors/app-error-code';
 import { UserRole } from '../enums/user-role.enum';
@@ -18,7 +18,7 @@ export class AdminGuard extends JwtAuthGuard {
 
     // 2. בדיקת רול (עכשיו כשה-user בטוח נמצא ב-request)
     if (user?.role !== UserRole.Admin) {
-      throw new UnauthorizedException({ 
+      throw new ForbiddenException({ 
         code: AppErrorCode.ACCESS_DENIED,
         message: 'אין לך הרשאת מנהל לביצוע פעולה זו' 
       });
