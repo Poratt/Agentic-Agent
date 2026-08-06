@@ -2,6 +2,19 @@
 
 Last updated: 2026-08-05
 
+## 2026-08-05 Session — C4: Google Calendar authz/credentials fixed (closed)
+
+- Completed: C4 (Critical #4) — Google Calendar was fully unauthenticated and returned `refresh_token` to the client. Now:
+  - `@UseGuards(JwtAuthGuard)` on all `/calendar` routes except `callback` (browser redirect from Google — protected by OAuth `state` CSRF instead: httpOnly `gcal_state` cookie + non-expired DB row bound to the user).
+  - `refresh_token` stored server-side, encrypted (AES-256-GCM via EncryptionService) in new `google_calendar_tokens` table; never accepted from client input and never returned in any response.
+  - Ownership is structural: tokens resolved by `req.user.sub` only — no way to target another user's calendar.
+  - Fixed cross-user token leak: shared singleton OAuth2 client replaced with per-call client.
+  - Removed `refreshToken` from all event DTOs (client-supplied credential vector removed).
+- Files: `backend/src/modules/google-calendar/*` (controller, service, module, new entity, 3 DTOs, 2 new spec files), `backend/src/migrations/AddGoogleCalendarTokens1765000000000.ts` + runner script, `documents/audit/code-review-2026-08-05.md` (C4 marked fixed)
+- Verification: migration ran against live DB ✅, full app boot OK ✅, live HTTP checks (events/auth no-JWT → 401, callback missing code → 400, callback state mismatch → 400) ✅, 18 new unit tests pass ✅, `npm run build` clean ✅
+- Known pre-existing failures (NOT from this change): `app.controller.spec.ts` + `llm-provider.service.spec.ts` fail to compile (TS2339/TS2554), `agent-session.service.spec.ts` 3 `imageUrl` tests fail, e2e suite can't run (puppeteer ESM in jest-e2e config)
+- Next: C3 (SSRF in `extendVideo` sourceVideoUrl — `assertSafeUrl()` exists, cheap reuse) or C5 (confirmation dead code, architectural) or stop
+
 ## 2026-08-05 Session - Media Studio LLM Provider Payload Check
 
 - Completed: checked the live `/llm-provider` payload directly after Browser/DevTools access was unavailable in this Codex session.

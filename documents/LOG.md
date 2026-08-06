@@ -1,5 +1,13 @@
 # Documentation Change Log
 
+## 2026-08-05 C4 — Google Calendar: server-side OAuth token storage + per-route authz
+
+- **Architectural decision:** Google Calendar OAuth refresh tokens are now stored server-side, encrypted at rest (AES-256-GCM via the existing `EncryptionService`), in a new `google_calendar_tokens` table keyed by `userId`. They are never accepted from client input and never returned in responses.
+- **Architectural decision:** the OAuth `callback` route is the only `/calendar` route without `JwtAuthGuard` (it is a browser redirect from Google, so no Authorization header can be sent). It is authenticated by the OAuth `state` parameter: a random 32-byte value persisted as an httpOnly `gcal_state` cookie plus a non-expired DB row bound to the user who started the flow. This closes the OAuth CSRF / account-binding vector without requiring a session middleware.
+- **Architectural decision:** the shared singleton `google.auth.OAuth2` client was removed — `setCredentials()` on a shared client leaks tokens between concurrent users. Each call now constructs its own client.
+- **Architectural decision:** a dedicated table (not `users` columns) holds the transient OAuth state so it doesn't pollute the `User` entity; migration `AddGoogleCalendarTokens1765000000000` declares the FK/`ON DELETE CASCADE` explicitly. Note: `app.module.ts` still runs `synchronize: true`, so the table would be auto-created on boot anyway — the migration is the documented DDL path and stays consistent with the encryption-migration precedent.
+- **No architecture diagram update needed** — no new module boundary or external provider; the change stays inside the existing `GoogleCalendarModule`.
+
 ## 2026-08-05 Media Studio LLM Provider Payload Check
 
 - Runtime finding: `/llm-provider` returns the `capability` field on every model object, but the live payload currently reports every model as `text`.

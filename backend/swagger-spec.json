@@ -2857,19 +2857,24 @@
     },
     "/calendar/auth": {
       "get": {
-        "description": "Returns a URL that the user must visit to grant the application access to their Google Calendar. After granting consent, Google redirects to /calendar/callback with an authorization code.",
+        "description": "Returns a URL that the authenticated user must visit to grant the application access to their Google Calendar. After granting consent, Google redirects to /calendar/callback with an authorization code and state.",
         "operationId": "GoogleCalendarController_auth",
         "parameters": [],
         "responses": {
           "200": {
             "description": "OAuth consent URL returned successfully."
           },
-          "400": {
-            "description": "Not applicable for this endpoint."
+          "401": {
+            "description": "JWT token missing or invalid."
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Get Google OAuth URL",
-        "summaryHe": "מקבלים את קישור האישור של Google untuk גישה ליומן",
+        "summaryHe": "מקבלים את קישור האישור של Google כדי לחבר את היומן",
         "tags": [
           "calendar"
         ]
@@ -2877,7 +2882,7 @@
     },
     "/calendar/callback": {
       "get": {
-        "description": "Handles the OAuth callback from Google. Exchanges the authorization code for access and refresh tokens. Typically called automatically by Google after user consent.",
+        "description": "Handles the OAuth callback from Google. Validates the CSRF state, exchanges the authorization code for tokens, and stores the refresh token server-side, encrypted. Typically called automatically by Google after user consent.",
         "operationId": "GoogleCalendarController_callback",
         "parameters": [
           {
@@ -2889,16 +2894,31 @@
               "example": "4/0Aae7Xt8...",
               "type": "string"
             }
+          },
+          {
+            "name": "state",
+            "required": true,
+            "in": "query",
+            "description": "CSRF state value issued by /calendar/auth (also sent as the gcal_state cookie).",
+            "schema": {
+              "example": "a1b2c3...",
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Tokens returned successfully. Contains access_token, refresh_token, etc."
+            "description": "Calendar connected. Tokens are stored server-side and never returned."
           },
           "400": {
-            "description": "Invalid or expired authorization code."
+            "description": "Missing code, invalid/expired state, or Google rejected the code."
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Handle Google OAuth callback",
         "summaryHe": "מטפלים בהפנייה חזרה מ-Google אחרי אישור הגישה",
         "tags": [
@@ -2908,28 +2928,25 @@
     },
     "/calendar/events": {
       "get": {
-        "description": "Returns upcoming events from the primary Google Calendar. Events are fetched from the start of today up to 7 days ahead, ordered by start time. Maximum 20 events returned.",
+        "description": "Returns upcoming events from the authenticated user's primary Google Calendar. Events are fetched from the start of today up to 7 days ahead, ordered by start time. Maximum 20 events returned.",
         "operationId": "GoogleCalendarController_events",
-        "parameters": [
-          {
-            "name": "refreshToken",
-            "required": true,
-            "in": "query",
-            "description": "Google OAuth refresh token obtained from the OAuth flow.",
-            "schema": {
-              "example": "1//03k_esvioMjAPCgYIARAAGAMSNwF...",
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Events fetched successfully. Returns an array of calendar events (may be empty)."
           },
           "400": {
-            "description": "Missing or invalid refreshToken. Complete OAuth flow first via /calendar/auth."
+            "description": "Calendar not connected. Complete the OAuth flow first via /calendar/auth."
+          },
+          "401": {
+            "description": "JWT token missing or invalid."
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "List upcoming calendar events",
         "summaryHe": "מציגים את האירועים העתידיים ביומן Google",
         "tags": [
@@ -2937,7 +2954,7 @@
         ]
       },
       "post": {
-        "description": "Creates a new event in the primary Google Calendar. Requires summary, start time, and end time. Optional fields: description, location. Times should be in ISO 8601 format.",
+        "description": "Creates a new event in the authenticated user's primary Google Calendar. Requires summary, start time, and end time. Optional fields: description, location. Times should be in ISO 8601 format.",
         "operationId": "GoogleCalendarController_createEvent",
         "parameters": [],
         "requestBody": {
@@ -2952,7 +2969,6 @@
                 "basic": {
                   "summary": "Basic meeting",
                   "value": {
-                    "refreshToken": "1//03k_esvioMjAPCgYIARAAGAMSNwF...",
                     "summary": "פגישת עבודה",
                     "startTime": "2026-08-03T20:00:00+03:00",
                     "endTime": "2026-08-03T21:00:00+03:00",
@@ -2969,9 +2985,17 @@
             "description": "Event created successfully. Returns the created event details."
           },
           "400": {
-            "description": "Missing required fields or invalid refreshToken."
+            "description": "Missing required fields or calendar not connected."
+          },
+          "401": {
+            "description": "JWT token missing or invalid."
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Create a new calendar event",
         "summaryHe": "יוצרים אירוע חדש ביומן Google",
         "tags": [
@@ -2979,12 +3003,12 @@
         ]
       },
       "delete": {
-        "description": "Deletes an event from the primary Google Calendar by its event ID. Use GET /calendar/events first to retrieve the eventId of the event to delete.",
+        "description": "Deletes an event from the authenticated user's primary Google Calendar by its event ID. Use GET /calendar/events first to retrieve the eventId of the event to delete.",
         "operationId": "GoogleCalendarController_deleteEvent",
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "Event deletion payload. Requires refreshToken and eventId.",
+          "description": "Event deletion payload. Requires eventId.",
           "content": {
             "application/json": {
               "schema": {
@@ -2994,7 +3018,6 @@
                 "basic": {
                   "summary": "Delete an event",
                   "value": {
-                    "refreshToken": "1//03k_esvioMjAPCgYIARAAGAMSNwF...",
                     "eventId": "abc123def456..."
                   }
                 }
@@ -3007,9 +3030,17 @@
             "description": "Event deleted successfully."
           },
           "400": {
-            "description": "Missing refreshToken or eventId."
+            "description": "Missing eventId or calendar not connected."
+          },
+          "401": {
+            "description": "JWT token missing or invalid."
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Delete a calendar event",
         "summaryHe": "מוחקים אירוע מהיומן Google",
         "tags": [
@@ -3017,7 +3048,7 @@
         ]
       },
       "patch": {
-        "description": "Updates an existing event in the primary Google Calendar. All fields except refreshToken and eventId are optional — only provided fields are modified. Use GET /calendar/events first to retrieve the eventId.",
+        "description": "Updates an existing event in the authenticated user's primary Google Calendar. All fields except eventId are optional — only provided fields are modified. Use GET /calendar/events first to retrieve the eventId.",
         "operationId": "GoogleCalendarController_updateEvent",
         "parameters": [],
         "requestBody": {
@@ -3032,7 +3063,6 @@
                 "reschedule": {
                   "summary": "Reschedule event",
                   "value": {
-                    "refreshToken": "1//03k_esvioMjAPCgYIARAAGAMSNwF...",
                     "eventId": "abc123def456...",
                     "startTime": "2026-08-04T15:00:00+03:00",
                     "endTime": "2026-08-04T16:00:00+03:00"
@@ -3041,7 +3071,6 @@
                 "rename": {
                   "summary": "Rename event",
                   "value": {
-                    "refreshToken": "1//03k_esvioMjAPCgYIARAAGAMSNwF...",
                     "eventId": "abc123def456...",
                     "summary": "פגישת עבודה - שם חדש"
                   }
@@ -3055,9 +3084,17 @@
             "description": "Event updated successfully. Returns the updated event details."
           },
           "400": {
-            "description": "Missing refreshToken or eventId."
+            "description": "Missing eventId or calendar not connected."
+          },
+          "401": {
+            "description": "JWT token missing or invalid."
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Update/reschedule a calendar event",
         "summaryHe": "מעדכנים או מזיזים אירוע ביומן Google",
         "tags": [
@@ -3809,7 +3846,7 @@
           },
           "baseUrl": {
             "type": "string",
-            "description": "API base URL for LLM requests",
+            "description": "API base URL for LLM requests. Must be https. Private/internal addresses (127.x, 10.x, 172.16-31.x, 192.168.x, 169.254.x, localhost) are not allowed.",
             "example": "https://api.openai.com/v1"
           },
           "apiKey": {
@@ -3844,7 +3881,7 @@
           },
           "baseUrl": {
             "type": "string",
-            "description": "API base URL for LLM requests",
+            "description": "API base URL for LLM requests. Must be https. Private/internal addresses (127.x, 10.x, 172.16-31.x, 192.168.x, 169.254.x, localhost) are not allowed.",
             "example": "https://api.openai.com/v1"
           },
           "apiKey": {
@@ -5024,10 +5061,6 @@
       "CreateEventDto": {
         "type": "object",
         "properties": {
-          "refreshToken": {
-            "type": "string",
-            "description": "Google OAuth refresh token"
-          },
           "summary": {
             "type": "string",
             "description": "Event summary/title"
@@ -5050,7 +5083,6 @@
           }
         },
         "required": [
-          "refreshToken",
           "summary",
           "startTime",
           "endTime"
@@ -5059,27 +5091,18 @@
       "DeleteEventDto": {
         "type": "object",
         "properties": {
-          "refreshToken": {
-            "type": "string",
-            "description": "Google OAuth refresh token"
-          },
           "eventId": {
             "type": "string",
             "description": "Google Calendar event ID to delete"
           }
         },
         "required": [
-          "refreshToken",
           "eventId"
         ]
       },
       "UpdateEventDto": {
         "type": "object",
         "properties": {
-          "refreshToken": {
-            "type": "string",
-            "description": "Google OAuth refresh token"
-          },
           "eventId": {
             "type": "string",
             "description": "Google Calendar event ID to update"
@@ -5106,7 +5129,6 @@
           }
         },
         "required": [
-          "refreshToken",
           "eventId"
         ]
       }

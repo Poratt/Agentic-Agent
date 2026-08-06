@@ -2,11 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class UpdateEventDto {
-    @ApiProperty({ description: 'Google OAuth refresh token' })
-    @IsString()
-    @IsNotEmpty()
-    refreshToken: string;
-
     @ApiProperty({ description: 'Google Calendar event ID to update' })
     @IsString()
     @IsNotEmpty()

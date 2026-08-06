@@ -1,5 +1,19 @@
 # Documentation Handoff
 
+## 2026-08-05 Session — C4: Google Calendar authz/credentials fixed (CLOSED)
+
+- Completed: C4 (Critical #4) — the entire Google Calendar module was unauthenticated and returned `refresh_token` to the client. Now fully closed:
+  - All `/calendar` routes require `@UseGuards(JwtAuthGuard)` except `callback` (browser redirect from Google — no Authorization header can be sent; it is protected by OAuth `state` CSRF instead: random 32-byte state in an httpOnly `gcal_state` cookie + non-expired DB row bound to the initiating user).
+  - Google refresh token is stored server-side, encrypted at rest (AES-256-GCM via the existing `EncryptionService`), in a new `google_calendar_tokens` table. It is never accepted from client input (removed `refreshToken` from all 3 event DTOs) and never returned in any response (callback returns `{ success: true }`).
+  - Ownership is structural: tokens resolved by `req.user.sub` only, so there is no way to address another user's calendar.
+  - Fixed a cross-user token leak: the shared singleton `oauth2Client` (whose `setCredentials()` would clobber between concurrent users) replaced with a per-call client.
+- Files: `backend/src/modules/google-calendar/google-calendar.controller.ts`, `google-calendar.service.ts`, `google-calendar.module.ts`, `dto/create-event.dto.ts`, `dto/update-event.dto.ts`, `dto/delete-event.dto.ts`, new `entities/google-calendar-token.entity.ts`, new `google-calendar.controller.spec.ts` + `google-calendar.service.spec.ts`; new migration `backend/src/migrations/AddGoogleCalendarTokens1765000000000.ts` + runner `run-google-calendar-tokens-migration.ts`.
+- Decisions made: (1) `callback` stays JWT-free by design — CSRF state + cookie + expiry is the authentication for the OAuth redirect; (2) per-call OAuth2 client instead of singleton; (3) dedicated table (not users columns) so the transient OAuth state doesn't pollute the User entity; (4) raw SQL migration follows the encryption-migration precedent; note `app.module.ts` still has `synchronize: true` which would auto-create the table anyway — the migration adds the explicit FK/`ON DELETE CASCADE` and is the documented DDL path.
+- Verification: migration ran against the live DB (table shape matches entity) ✅; full backend boot OK ✅; live HTTP: `GET /calendar/events` no-JWT → 401, `GET /calendar/auth` no-JWT → 401, callback missing code → 400, callback state≠cookie → 400 ✅; 18 new unit tests pass ✅; `npm run build` clean ✅.
+- Pre-existing failures confirmed NOT caused by this change: `app.controller.spec.ts` + `llm-provider.service.spec.ts` fail to compile (TS2339 `getHello`, TS2554 constructor arity); `agent-session.service.spec.ts` 3 `imageUrl` tests fail; jest-e2e can't run (puppeteer ESM import untransformable). All 3 unit suites + e2e were already broken in committed code.
+- Next exact step: C3 — SSRF in `extendVideo` (`sourceVideoUrl`) — cheap because `assertSafeUrl()` exists in `backend/src/core/utils/ssrf-guard.util.ts` (reuse in `llm-client.service.ts` `extendVideo`/`downloadBuffer`). Then C5 (confirmation dead code — architectural, needs DiscoveryService/Reflector). Remaining after that: migration-dependent L11/L34/L36 and deferred L1/L28/L35.
+- No architecture diagram update needed — no new module boundary or external provider; a table was added inside the existing `GoogleCalendarModule` (mention in LOG.md instead).
+
 ## 2026-08-05 Session - Media Studio LLM Provider Payload Check
 
 - Completed: attempted Browser/DevTools inspection for `/llm-provider`; no browser targets were available in this Codex session (`agent.browsers.list()` returned empty), so verified the same live API payload directly against `http://localhost:3000/llm-provider`.

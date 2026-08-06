@@ -16,7 +16,7 @@
 
 1. **כל משתמש מחובר יכול לקרוא את מפתחות ה-API של ספקי ה-LLM ולשנות את הגדרות הספקים** (כולל `baseUrl` ו-`apiKey`) — זה מאפשר גניבת מפתחות מלאה + SSRF פנימי. ← **הכי דחוף**.
 2. **מנגנון אישור הפעולות המסוכנות (Confirmation Flow) של הסוכן לא פעיל בפועל** — ה-decorator `@RequiresConfirmation()` לא מגיע ל-swagger spec, ולכן כל פעולה הרסנית שהמודל מבקש לבצע מתבצעת ללא אישור אנושי.
-3. **Google Calendar: כל הנתיבים ללא אימות כלל** (ללא guards), כולל חשיפת `refresh_token` בתשובה.
+3. **Google Calendar: כל הנתיבים ללא אימות כלל** (ללא guards), כולל חשיפת `refresh_token` בתשובה. ← ✅ **טופל** (C4).
 4. **SSRF בכמה מוקדים**: `extendVideo` (sourceVideoUrl), `baseUrl` של ספקים, והזרקת ערכים גולמיים לנתיבי URL פנימיים בסוכן.
 5. **פרונטאנד**: race condition ב-refresh שגורם להתנתקויות אקראיות, אין route guard לפי רול, ופרופיל המשתמש (`/auth/me`) מחזיר `JwtPayload` בעוד הסטור מצפה ל-`User` (מקור לבאגים שקטים).
 
@@ -68,6 +68,7 @@
 - **תיאור**: כל אחד יכול: ליזום OAuth, לקרוא/ליצור/לשנות/למחוק אירועים, ולקבל את ה-`refresh_token` של המשתמש המחובר. גם פרמטרים רגישים (`access_token`/`refresh_token`) מתקבלים מה-query/body מהלקוח. בנוסף `auth` URL ללא פרמטר `state` (CSRF ב-OAuth callback).
 - **תיקון מוצע**: `@UseGuards(JwtAuthGuard)` + בעלות על ה-calendar לפי `userId`; להחזיר רק metadata, לא `refresh_token`; `state` אקראי ב-OAuth; אימות בעלות לפני כל פעולה.
 - **השפעה**: חשיפה מלאה של יומן המשתמש + גניבת token, כולל דרך הסוכן (הכלים נבנים מ-Swagger spec).
+- **סטטוס**: ✅ **טופל** (2026-08-05) — כל הנתיבים תחת `@UseGuards(JwtAuthGuard)` למעט `callback` (redirect דפדפן מ-Google) שמוגן ע"י `state` CSRF (cookie httpOnly + שורת DB לא-פגה); `refresh_token` נשמר בשרת (מוצפן AES-256-GCM ב-`google_calendar_tokens`), אף פעם לא מתקבל/מוחזר ללקוח; בעלות לפי `req.user.sub` בלבד; singleton OAuth2 client הוחלף ב-client-לפי-קריאה (מנע דליפת token בין משתמשים). קובץ: `backend/src/modules/google-calendar/`. אומת: migration רץ מול DB חי + boot מוצלח + 401/400 live + 18 unit tests.
 
 ### C5 — מנגנון אישור פעולות מסוכנות (Confirmation) — מת ולא פעיל
 
