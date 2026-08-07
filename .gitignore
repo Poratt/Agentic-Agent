@@ -67,3 +67,6 @@ temp/.codex/
 
 # Graphify cache
 graphify-out/
+# DB dumps and backups (may contain plaintext secrets)
+backup_*.sql
+*.sql.bak
