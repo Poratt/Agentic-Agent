@@ -128,28 +128,24 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(200)
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Logout and invalidate session',
     summaryHe: 'מתנתקים מהמ系統 ומסיימים את סשן העבודה בבטחה',
     toolIcon: 'ph-sign-out',
     description:
-      'Requires a valid access token. Clears the stored refresh token hash and removes auth cookies from the response.',
+      'Always succeeds, even when the access token is already expired: revokes the stored refresh token (best-effort, from the refresh cookie) and removes auth cookies from the response.',
   } as CustomApiOperationOptions)
   @ApiOkResponse({
     description: 'Logout successful.',
     type: LogoutResultResponseDto,
   })
   @ApiBadRequestResponse({ description: 'Malformed request.' })
-  @ApiUnauthorizedResponse({ description: 'Access token is missing, expired, or invalid.' })
+  @ApiUnauthorizedResponse({ description: 'Not applicable — logout never rejects.' })
   @ApiForbiddenResponse({ description: 'Not applicable for this endpoint.' })
   @ApiNotFoundResponse({ description: 'Not applicable for this endpoint.' })
   @ApiInternalServerErrorResponse({ description: 'Unexpected server error.' })
-  logout(@Req() req: RequestWithUser, @Res({ passthrough: true }) res: Response) {
-    const user = req.user;
-    if (!user) throw new UnauthorizedException();
-    return this.authService.logout(user.sub, res);
+  logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    return this.authService.logout(req, res);
   }
 
   @Get('me')

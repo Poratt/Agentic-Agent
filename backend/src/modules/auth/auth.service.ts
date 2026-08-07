@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ServiceResultContainer } from '../../core/models/service-result-container.model';
@@ -70,8 +70,22 @@ export class AuthService {
     };
   }
 
-  async logout(userId: number, res: Response): Promise<ServiceResultContainer<{ ok: true }>> {
-    await this.usersRepo.update(userId, { refreshToken: null });
+  async logout(req: Request, res: Response): Promise<ServiceResultContainer<{ ok: true }>> {
+    // Best-effort token cleanup: only the refresh token is revoked (the access
+    // token may already be expired, which is why logout must not depend on it).
+    // The refresh guard decodes the refresh cookie without re-validating the
+    // access token, so we can still clear the stored hash and cookies.
+    const refreshToken = req.cookies?.['refresh_token'];
+    if (refreshToken) {
+      try {
+        const payload = this.jwtService.verify(refreshToken, {
+          secret: this.config.get('JWT_REFRESH_SECRET'),
+        });
+        await this.usersRepo.update(payload.sub, { refreshToken: null });
+      } catch {
+        // Refresh token expired/invalid — nothing to revoke; clear cookies below anyway.
+      }
+    }
     res.clearCookie('access_token');
     res.clearCookie('refresh_token');
 
