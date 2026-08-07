@@ -9,6 +9,7 @@ import {
   Req,
   UseGuards,
   Delete,
+  ForbiddenException,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import {
@@ -44,7 +45,7 @@ export class UsersController {
   constructor(private usersService: UsersService) { }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiOperation({
     summary: 'List all users',
     summaryHe: 'מציגים את רשימת המשתמשים הפעילים במערכת',
@@ -94,7 +95,7 @@ export class UsersController {
     summaryHe: 'מציגים פרטים מלאים על משתמש לפי מזהה ייחודי',
     toolIcon: 'ph-user',
     description:
-      'Fetches one user by numeric id with public fields only. Use GET /users first to discover valid IDs.',
+      'Fetches one user by numeric id with public fields only. Admin can view any user. Regular users can only view their own profile (self-access).',
   } as CustomApiOperationOptions)
   @ApiParam({
     name: 'id',
@@ -105,10 +106,19 @@ export class UsersController {
     description: 'ServiceResultContainer<UserResponseDto>.',
     type: UserResultResponseDto,
   })
+  @ApiForbiddenResponse({ description: 'Regular user trying to view another user\'s profile.' })
   @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
   @ApiNotFoundResponse({ description: 'No user found with the given id.' })
   @ApiInternalServerErrorResponse({ description: 'Unexpected server error.' })
-  getById(@Param('id', ParseIntPipe) id: number) {
+  async getById(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
+    const payload = req.user as JwtPayload;
+    const isAdmin = payload.role === 1;
+    const isSelf = payload.sub === id;
+
+    if (!isAdmin && !isSelf) {
+      throw new ForbiddenException('אין הרשאה להציג פרופיל של משתמש אחר');
+    }
+
     return this.usersService.findOneSafe(id);
   }
 
