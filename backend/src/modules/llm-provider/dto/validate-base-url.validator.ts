@@ -13,7 +13,12 @@ export class IsSafeBaseUrlConstraint implements ValidatorConstraintInterface {
     try {
       const parsed = new URL(value);
 
-      // https only
+      // In non-production (local dev), allow http:// and private/local hosts so
+      // the admin can point a provider at http://localhost:<port>/v1.
+      const isDev = process.env.NODE_ENV !== 'production';
+      if (isDev) return true;
+
+      // Production: https only
       if (parsed.protocol.replace(':', '') !== 'https') return false;
 
       const hostname = parsed.hostname.toLowerCase();
