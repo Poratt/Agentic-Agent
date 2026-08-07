@@ -1,5 +1,12 @@
 # Documentation Change Log
 
+## 2026-08-05 C5 — Confirmation flow activated + H3 self-confirmation closed
+
+- **Architectural decision:** the `@RequiresConfirmation` decorator now writes two things via `applyDecorators`: NestJS metadata (`SetMetadata`) for runtime Reflector checks, and an OpenAPI extension (`ApiExtension('x-requires-confirmation', true)`) so the swagger-spec.json reflects the dangerous operations. This was the minimal fix — a full `DiscoveryService` registry was considered unnecessary.
+- **Architectural decision:** a boot assertion in `main.ts` verifies the exact set of operationIds with `x-requires-confirmation: true` in the spec against a hardcoded expected list. This prevents the exact regression that caused C5 (decorator writes metadata but spec never receives it). Fails loud — the app will not start if the list drifts.
+- **Architectural decision:** `AdminAgentController_confirmAction` is excluded from `getTools()` via a static denylist (`SwaggerToolsParser.HIDDEN_FROM_LLM`). The endpoint still exists for the UI (humans confirm via the frontend `pendingConfirmation` signal), but the LLM can never see it as a callable tool. This closes H3 (self-confirmation) in the same pass as C5.
+- **No architecture diagram update needed** — decorator rewrite + assertion + filter inside existing modules.
+
 ## 2026-08-05 C3 — `extendVideo` source video download: SSRF + size guard
 
 - **Architectural decision:** user-controlled download URLs (`sourceVideoUrl`) are validated twice: fast sync DTO validation (`@IsSafeUrl()` — https-only, blocklist, private-range match) and authoritative runtime validation (`assertSafeUrl()` — DNS + ipaddr) inside `downloadBuffer()`, which is the single download funnel for both user URLs and provider-resolved videoId URLs.

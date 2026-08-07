@@ -78,6 +78,7 @@
 - **תיאור**: ה-decorator כותב metadata תחת `'requires_confirmation'`, אבל ה-parser קורא את extension `x-requires-confirmation` מה-swagger-spec.json — ו-SwaggerModule רגיל לא מייצא metadata מותאם אישית ל-`x-` extensions. לפיכך `requiresConfirmationOps` ריק תמיד, `isDangerousOperation()` מחזיר `false` תמיד, והמנגנון כולו (pending actions, confirm/cancel ב-UI) הוא dead code. `UsersController_delete`, `UsersController_updateRole` ו-`LlmProviderController_cleanupTestResults` מתבצעים מיד כשהמודל קורא להם.
 - **תיקון מוצע**: לקרוא את דגלי האישור מ-Reflector metadata ישירות (למשל רישום operationId→requiresConfirmation ב-bootstrap דרך `DiscoveryService`), או `@ApiExtension('x-requires-confirmation', true)`; להוסיף assertion ב-boot שכל op מסומן מופיע ב-`requiresConfirmationOps`.
 - **השפעה**: משתמש/LLM (או session שנפרץ ב-prompt injection) יכול למחוק משתמשים, לשנות רולים ולמחוק היסטוריות בדיקות ללא שום אישור אנושי.
+- **סטטוס**: ✅ **טופל** (2026-08-05) — decorator rewritten עם `applyDecorators(SetMetadata + ApiExtension('x-requires-confirmation', true))`, boot assertion ב-main.ts בודק שלושת ה-operationIds מופיעים ב-spec (fail loud אם אחד חסר), ו-`AdminAgentController_confirmAction` הוסר מ-`getTools()` (denylist — סוגר את H3 במקביל). אומת: 6 unit tests pass ✅, `npm run build` ✅, boot live עם assertion ✅, swagger-spec מכיל 3 `x-requires-confirmation` entries ✅.
 
 ### C6 — אין הרשאת Admin על ניהול ספקי/מודלי LLM
 
@@ -114,6 +115,7 @@
 - **תיאור**: `POST /admin-agent/confirm-action` הוא בעצמו כלי של המודל. בדיקת הבעלות (controller.ts:323) משווה ל-`req.user.sub` — וזה אותו משתמש, כי ה-token שייך לו. אז גם אם C5 יתוקן, המודל יוכל לאשר את הפעולה ההרסנית שלו עצמו בלי משתמש אנושי.
 - **תיקון**: להחריג את `confirm-action` (ו-`query-stream`) מכלי המודל (denylist); אישור דרך token חד-פעמי שמוצג רק למשתמש, לעולם לא בהקשר ה-LLM.
 - **השפעה**: עקיפת כל מנגנון אישור עתידי.
+- **סטטוס**: ✅ **טופל** (2026-08-05) — `AdminAgentController_confirmAction` הוסר מ-`getTools()` ב-`swagger-tools.parser.ts` (denylist סטטי); ה-endpoint עדיין קיים וזמין ל-UI ( calling `confirm-action` ישירות). אומת: parser spec test מאשרת שהכלי לא מופיע ברשימת הכלים ל-LLM.
 
 ### H4 — הזרקת ערכים גולמיים ל-URL פנימי בסוכן (SSRF מקומי)
 

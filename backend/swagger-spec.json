@@ -462,7 +462,8 @@
         "tags": [
           "users"
         ],
-        "toolIcon": "ph-trash"
+        "toolIcon": "ph-trash",
+        "x-requires-confirmation": true
       }
     },
     "/users/{id}/role": {
@@ -525,7 +526,8 @@
         "tags": [
           "users"
         ],
-        "toolIcon": "ph-shield"
+        "toolIcon": "ph-shield",
+        "x-requires-confirmation": true
       }
     },
     "/admin-agent/sessions": {
@@ -1556,7 +1558,8 @@
         "tags": [
           "LLM Provider"
         ],
-        "toolIcon": "ph-broom"
+        "toolIcon": "ph-broom",
+        "x-requires-confirmation": true
       }
     },
     "/llm-provider/test-results": {

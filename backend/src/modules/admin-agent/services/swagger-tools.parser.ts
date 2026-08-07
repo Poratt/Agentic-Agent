@@ -42,6 +42,16 @@ export class SwaggerToolsParser {
     this.loadSwaggerAsTools();
   }
 
+  /**
+   * Operations that must never be exposed as LLM tools, even though they
+   * appear in swagger-spec.json. The confirm-action endpoint is called
+   * directly by the human via the UI — if the LLM can call it, it could
+   * confirm its own dangerous actions (H3 self-confirmation bug).
+   */
+  private static readonly HIDDEN_FROM_LLM = new Set([
+    'AdminAgentController_confirmAction',
+  ]);
+
   getTools(): LlmToolSchema[] {
     this.refreshSwaggerToolsIfChanged();
 
@@ -50,7 +60,9 @@ export class SwaggerToolsParser {
     }
 
     this.cleanedToolsSourceMtime = this.swaggerSpecMtimeMs;
-    this.cleanedToolsCache = this.swaggerTools.map((t) => {
+    this.cleanedToolsCache = this.swaggerTools
+      .filter((t) => !SwaggerToolsParser.HIDDEN_FROM_LLM.has(t.function?.name ?? ''))
+      .map((t) => {
       const params = t.function?.parameters;
 
       const cleaned = this.cleanSchema(params);

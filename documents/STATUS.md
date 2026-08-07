@@ -4,16 +4,26 @@ Last updated: 2026-08-05
 
 ## Audit Fix Status — `documents/audit/code-review-2026-08-05.md`
 
-**Overall: 5 / 6 Critical closed. C5 remains.**
+**Overall: 6 / 6 Critical closed. 🎉**
 
 | Severity | Total | Closed | Open |
 | -------- | ----- | ------ | ---- |
-| 🔴 Critical | 6 | **5** (C1, C2, C3, C4, C6) | C5 — confirmation flow dead (architectural: Reflector/DiscoveryService; also gates H3) |
-| 🟠 High | 8 | 1 (H6 refresh race) | H1 users enumeration, H2 genetics/terpene AdminGuard, H3 LLM self-confirm (gated by C5), H4 raw URL injection in agent, H5 recursion depth, H7 frontend role guard, H8 hardcoded admin seed |
+| 🔴 Critical | 6 | **6** (C1, C2, C3, C4, C5, C6) | — |
+| 🟠 High | 8 | 2 (H3 self-confirm ✅, H6 refresh race) | H1 users enumeration, H2 genetics/terpene AdminGuard, H4 raw URL injection in agent, H5 recursion depth, H7 frontend role guard, H8 hardcoded admin seed |
 | 🟡 Medium | 22 | most via quick-wins (L2-L6, L8, L10, L12-L13, L20, L23-L25, L27, L29-L31) | L11 images→external storage, L34 sequence column, L36 status column (all need migration) |
 | 🟢 Low / Info | ~36 | most | L1 seeds (non-relevant), L28/L35 soft-delete sessions (deferred by user) |
 
-Critical commit trail: C6 `8f4022c` context → C1 encryption+admin commits → C4 `376369d` (Google Calendar) → C3 `dc1d909` (extendVideo SSRF).
+Critical commit trail: C6 `8f4022c` context → C1 encryption+admin commits → C4 `376369d` (Google Calendar) → C3 `dc1d909` (extendVideo SSRF) → C5 + H3 (confirmation flow + self-confirmation).
+
+## 2026-08-05 Session — C5: Confirmation flow activated + H3 self-confirmation closed
+
+- Completed: C5 (Critical #5) — the `@RequiresConfirmation` decorator wrote metadata to NestJS Reflector but the swagger-spec never received `x-requires-confirmation`, so `isDangerousOperation()` always returned false and dangerous ops (delete user, change role, cleanup) executed without confirmation. Now:
+  - Decorator rewritten: `applyDecorators(SetMetadata('requires_confirmation', true), ApiExtension('x-requires-confirmation', true))` — writes both NestJS metadata and OpenAPI extension.
+  - Boot assertion in `main.ts`: counts `x-requires-confirmation: true` entries in the swagger-spec and compares against a hardcoded expected list (`UsersController_delete`, `UsersController_updateRole`, `LlmProviderController_cleanupTestResults`). Fails loud if mismatch — prevents the exact regression that caused C5.
+  - H3 closed: `AdminAgentController_confirmAction` excluded from `getTools()` via denylist in `swagger-tools.parser.ts` — the LLM cannot call the confirm-action endpoint. The endpoint still exists for the UI (human-only confirmation path).
+- Files: `decorators/requires-confirmation.decorator.ts` (rewritten), `main.ts` (boot assertion), `swagger-tools.parser.ts` (H3 denylist), new `requires-confirmation.decorator.spec.ts` + `swagger-tools.parser.spec.ts`
+- Verification: 6 unit tests pass ✅, `npm run build` clean ✅, boot live: C5 assertion passes (3 ops in spec) ✅, confirmAction excluded from getTools ✅, confirm-action endpoint still exists in spec for UI ✅
+- **All 6 Critical findings now closed.**
 
 ## 2026-08-05 Session — C3: SSRF + unbounded download in extendVideo fixed (closed)
 

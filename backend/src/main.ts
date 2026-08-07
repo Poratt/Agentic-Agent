@@ -38,6 +38,48 @@ async function bootstrap() {
     console.warn('Failed to write swagger-spec.json:', error);
   }
 
+  // ─── C5 boot assertion ──────────────────────────────────────────────────
+  // Prevents the exact regression that caused C5: @RequiresConfirmation
+  // decorator writes metadata, but the swagger-spec never receives the
+  // x-requires-confirmation extension — causing dangerous operations to
+  // execute without human confirmation. This assertion verifies the
+  // decorator-to-spec pipeline is intact at startup.
+  {
+    const EXPECTED_CONFIRMATION_OPS = [
+      'UsersController_delete',
+      'UsersController_updateRole',
+      'LlmProviderController_cleanupTestResults',
+    ];
+
+    const actualConfirmationOps: string[] = [];
+    for (const pathObj of Object.values(document.paths ?? {})) {
+      for (const op of Object.values(pathObj as Record<string, any>)) {
+        if (op?.['x-requires-confirmation'] === true && op.operationId) {
+          actualConfirmationOps.push(op.operationId);
+        }
+      }
+    }
+
+    const actualSet = new Set(actualConfirmationOps);
+    const missingFromSpec = EXPECTED_CONFIRMATION_OPS.filter((id) => !actualSet.has(id));
+    const unexpectedInSpec = actualConfirmationOps.filter((id) => !EXPECTED_CONFIRMATION_OPS.includes(id));
+
+    if (missingFromSpec.length > 0 || unexpectedInSpec.length > 0) {
+      const lines: string[] = ['C5 boot assertion failed:'];
+      if (missingFromSpec.length) {
+        lines.push(`  Missing from spec (decorated but absent): ${missingFromSpec.join(', ')}`);
+      }
+      if (unexpectedInSpec.length) {
+        lines.push(`  Unexpected in spec (not in expected list): ${unexpectedInSpec.join(', ')}`);
+      }
+      lines.push(`  Expected: ${EXPECTED_CONFIRMATION_OPS.join(', ')}`);
+      lines.push(`  Actual:   ${actualConfirmationOps.join(', ')}`);
+      throw new Error(lines.join('\n'));
+    }
+
+    console.log(`✅ C5 assertion passed: ${actualConfirmationOps.length} confirmation-required operations in swagger spec`);
+  }
+
   const dataSource = app.get(DataSource);
   await seedAdmin(dataSource);
   // await seedLlmProviders(dataSource);

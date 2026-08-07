@@ -1,5 +1,18 @@
 # Documentation Handoff
 
+## 2026-08-05 Session — C5: Confirmation flow activated + H3 self-confirmation closed (CLOSED)
+
+- Completed: C5 — the `@RequiresConfirmation` decorator wrote metadata to NestJS Reflector but the swagger-spec never received `x-requires-confirmation`, so `isDangerousOperation()` always returned false and dangerous ops executed without confirmation. H3 (LLM self-confirmation) also closed in the same pass.
+- Now:
+  - Decorator rewritten: `applyDecorators(SetMetadata('requires_confirmation', true), ApiExtension('x-requires-confirmation', true))` — writes both NestJS metadata and OpenAPI extension.
+  - Boot assertion in `main.ts`: counts `x-requires-confirmation: true` entries in swagger-spec and compares against a hardcoded expected list. Fails loud on mismatch — prevents the exact regression that caused C5.
+  - H3 closed: `AdminAgentController_confirmAction` excluded from `getTools()` via denylist in `swagger-tools.parser.ts`. The endpoint still exists for the UI (human-only confirmation path).
+- Files: `decorators/requires-confirmation.decorator.ts` (rewritten), `main.ts` (boot assertion), `swagger-tools.parser.ts` (H3 denylist), new `requires-confirmation.decorator.spec.ts` + `swagger-tools.parser.spec.ts`
+- Decisions made: (1) Hybrid approach — `ApiExtension` (minimal, writes to spec) + boot assertion (regression guard), not a full DiscoveryService registry; (2) H3 denylist lives in `SwaggerToolsParser.HIDDEN_FROM_LLM` static set — easy to extend if more tools need hiding; (3) did not remove the unused `Reflector` from the parser constructor — it's harmless and might be useful for future runtime checks.
+- Verification: 6 unit tests pass ✅, `npm run build` clean ✅, boot live: C5 assertion passes (3 ops in spec) ✅, confirmAction excluded from getTools ✅, confirm-action endpoint still exists in spec ✅.
+- Next exact step: all 6 Critical findings closed. Remaining work is High-severity items (H1, H2, H4, H5, H7, H8) and migration-dependent Low items (L11, L34, L36).
+- No architecture diagram update needed — no new module boundary or external provider; a decorator rewrite + assertion inside existing modules.
+
 ## 2026-08-05 Session — C3: SSRF + unbounded download in `extendVideo` fixed (CLOSED)
 
 - Completed: C3 — `extendVideo` accepted an attacker-controlled `sourceVideoUrl` and fetched it blindly (no URL/IP validation, no size cap, silent redirects). Now:
