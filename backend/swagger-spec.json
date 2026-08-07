@@ -307,7 +307,7 @@
     },
     "/users/{id}": {
       "get": {
-        "description": "Fetches one user by numeric id with public fields only. Use GET /users first to discover valid IDs.",
+        "description": "Fetches one user by numeric id with public fields only. Admin can view any user. Regular users can only view their own profile (self-access).",
         "operationId": "UsersController_getById",
         "parameters": [
           {
@@ -333,6 +333,9 @@
           },
           "401": {
             "description": "Missing or expired JWT token."
+          },
+          "403": {
+            "description": "Regular user trying to view another user's profile."
           },
           "404": {
             "description": "No user found with the given id."
