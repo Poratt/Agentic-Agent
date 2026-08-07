@@ -22,6 +22,17 @@ const STEP_ICONS = {
   success: 'ph-check-circle',
 } as const;
 
+/**
+ * Maps tool names to human-readable setup instructions shown to the user
+ * when the tool fails because the underlying service isn't connected.
+ */
+const SETUP_INSTRUCTIONS: Record<string, { he: string; authTool?: string }> = {
+  GoogleCalendarController_events: {
+    he: 'היומן שלך עדיין לא מחובר. לחץ על הקישור הבא כדי להתחבר:',
+    authTool: 'GoogleCalendarController_auth',
+  },
+};
+
 type ToolCallResult = {
   call: LlmToolCall;
   resultData: string;
@@ -149,6 +160,37 @@ export class AdminAgentService implements OnModuleInit {
           this.logger.warn(
             `[AgentLoopBreaker] userId=${userId} sessionId=${session.id} toolName=${duplicateCall.function.name} args=${JSON.stringify(args)} — model called the same tool+args ${MAX_DUPLICATE_TOOL_CALLS + 1}+ times in one turn, breaking the loop.`,
           );
+
+          // Check if there's an auth URL from a previous tool call that can help
+          const setupInstruction = SETUP_INSTRUCTIONS[duplicateCall.function.name];
+          if (setupInstruction?.authTool) {
+            const authUrl = this.findAuthUrlInHistory(history, setupInstruction.authTool);
+            if (authUrl) {
+              // Inject context and give one more turn
+              const contextMsg = `${setupInstruction.he}\n${authUrl}\n\nאל ת尝试 שוב את הכלי שנכשל. הצג את הקישור למשתמש בלבד.`;
+              await this.agentSessionService.saveMessage(userId, session.id, 'tool', contextMsg);
+
+              const finalResponse = await this.llmService.generateResponse({
+                prompt: '',
+                systemContext: dynamicSystemContext,
+                messageHistory: trimHistoryForLlm([
+                  ...history,
+                  { role: 'user', content: contextMsg },
+                ]),
+                tools: [],
+                providerOverride: provider,
+                modelOverride: model,
+                maxTokens: 1024,
+              });
+
+              if (finalResponse.content) {
+                await this.agentSessionService.saveMessage(userId, session.id, 'assistant', finalResponse.content);
+                return finalResponse.content;
+              }
+            }
+          }
+
+          // Fallback: generic breaker message
           const breakerMessage = this.breakerErrorMessage(duplicateCall.function.name, args);
           await this.agentSessionService.saveMessage(userId, session.id, 'assistant', breakerMessage);
           return breakerMessage;
@@ -253,6 +295,38 @@ export class AdminAgentService implements OnModuleInit {
           this.logger.warn(
             `[AgentLoopBreaker] userId=${userId} sessionId=${session.id} toolName=${duplicateCall.function.name} args=${JSON.stringify(args)} — model called the same tool+args ${MAX_DUPLICATE_TOOL_CALLS + 1}+ times in one turn, breaking the loop.`,
           );
+
+          // Check if there's an auth URL from a previous tool call that can help
+          const setupInstruction = SETUP_INSTRUCTIONS[duplicateCall.function.name];
+          if (setupInstruction?.authTool) {
+            const authUrl = this.findAuthUrlInHistory(history, setupInstruction.authTool);
+            if (authUrl) {
+              // Inject context and give one more turn
+              const contextMsg = `${setupInstruction.he}\n${authUrl}\n\nאל ת尝试 שוב את הכלי שנכשל. הצג את הקישור למשתמש בלבד.`;
+              await this.agentSessionService.saveMessage(userId, session.id, 'tool', contextMsg);
+
+              const finalResponse = await this.llmService.generateResponse({
+                prompt: '',
+                systemContext: dynamicSystemContext,
+                messageHistory: trimHistoryForLlm([
+                  ...history,
+                  { role: 'user', content: contextMsg },
+                ]),
+                tools: [],
+                providerOverride: provider,
+                modelOverride: model,
+                maxTokens: 1024,
+              });
+
+              if (finalResponse.content) {
+                await this.agentSessionService.saveMessage(userId, session.id, 'assistant', finalResponse.content);
+                yield JSON.stringify({ type: 'token', content: finalResponse.content }) + '\n';
+                return;
+              }
+            }
+          }
+
+          // Fallback: generic breaker message
           const breakerMessage = this.breakerErrorMessage(duplicateCall.function.name, args);
           yield JSON.stringify({ type: 'step', icon: STEP_ICONS.error, message: breakerMessage }) + '\n';
           yield JSON.stringify({ type: 'token', content: breakerMessage }) + '\n';
@@ -522,6 +596,26 @@ export class AdminAgentService implements OnModuleInit {
   private breakerErrorMessage(toolName: string, args: Record<string, unknown>): string {
     const argsJson = Object.keys(args).length > 0 ? JSON.stringify(args) : '{}';
     return `הסוכן ניסה לקרוא שוב ושוב לכלי "${toolName}" עם אותם ארגומנטים (${argsJson}) ונעצר. כנראה שהמודל לא הצליח להפיק תשובה סופית. אפשר לנסות שוב עם מודל אחר או לנסח את הבקשה מחדש.`;
+  }
+
+  /**
+   * Scans conversation history for a successful auth URL from a previous tool call.
+   * Used by the loop breaker to inject context before giving up.
+   */
+  private findAuthUrlInHistory(history: any[], authToolName: string): string | null {
+    for (const msg of history) {
+      if (msg.role === 'tool' && msg.content) {
+        try {
+          const parsed = JSON.parse(msg.content);
+          if (parsed.url && typeof parsed.url === 'string' && parsed.url.startsWith('http')) {
+            return parsed.url;
+          }
+        } catch {
+          // not JSON, skip
+        }
+      }
+    }
+    return null;
   }
 
   private parseToolArguments(call: LlmToolCall): Record<string, unknown> {
