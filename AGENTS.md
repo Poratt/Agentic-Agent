@@ -1,5 +1,11 @@
 # Claude Code Project Guide — Porat Monorepo
 
+## שפת תגובה
+תגובות בשיחה יהיו בעברית או באנגלית — לפי השפה שבה המשתמש כתב את
+ההודעה האחרונה, או השפה שהייתה בשימוש בהקשר הקרוב. אסור בהחלט
+לענות בשפה שלישית כלשהי (כגון סינית) — אם קורה דבר כזה בטעות,
+יש לעצור מיד ולהתחיל מחדש בשפה הנכונה (עברית/אנגלית).
+
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
 ## 1. Think Before Coding
