@@ -1,5 +1,11 @@
 # Documentation Change Log
 
+## 2026-08-05 C3 — `extendVideo` source video download: SSRF + size guard
+
+- **Architectural decision:** user-controlled download URLs (`sourceVideoUrl`) are validated twice: fast sync DTO validation (`@IsSafeUrl()` — https-only, blocklist, private-range match) and authoritative runtime validation (`assertSafeUrl()` — DNS + ipaddr) inside `downloadBuffer()`, which is the single download funnel for both user URLs and provider-resolved videoId URLs.
+- **Architectural decision:** `downloadBuffer()` uses `redirect: 'manual'` with per-hop re-validation (max 5 hops, relative locations resolved against the current URL) instead of letting fetch follow redirects silently to internal hosts. Body is streamed with a 100MB cap (plus a `content-length` pre-check) to prevent OOM.
+- **No architecture diagram update needed** — a validator + hardened fetch inside the existing `LlmModule`.
+
 ## 2026-08-05 C4 — Google Calendar: server-side OAuth token storage + per-route authz
 
 - **Architectural decision:** Google Calendar OAuth refresh tokens are now stored server-side, encrypted at rest (AES-256-GCM via the existing `EncryptionService`), in a new `google_calendar_tokens` table keyed by `userId`. They are never accepted from client input and never returned in responses.

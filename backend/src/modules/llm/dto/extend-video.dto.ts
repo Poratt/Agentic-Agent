@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional, IsNumber, IsIn } from 'class-validator';
+import { IsSafeUrl } from './validate-safe-url.validator';
 
 export class ExtendVideoDto {
   @ApiPropertyOptional({ description: 'DB model id of an Agnes video model. Resolved automatically when omitted.', example: 14 })
@@ -12,9 +13,10 @@ export class ExtendVideoDto {
   @IsOptional()
   sourceVideoId?: string;
 
-  @ApiPropertyOptional({ description: 'Direct downloadable URL of a source video (.mp4) to extract the last frame from.' })
+  @ApiPropertyOptional({ description: 'Direct downloadable URL of a source video (.mp4) to extract the last frame from. Must be a public https URL.' })
   @IsString()
   @IsOptional()
+  @IsSafeUrl()
   sourceVideoUrl?: string;
 
   @ApiProperty({ description: 'Continuation prompt describing how the video should proceed from the last frame.', example: 'the camera slowly zooms in and the waves keep rolling' })

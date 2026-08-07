@@ -2,6 +2,16 @@
 
 Last updated: 2026-08-05
 
+## 2026-08-05 Session — C3: SSRF + unbounded download in extendVideo fixed (closed)
+
+- Completed: C3 — `extendVideo` (`sourceVideoUrl`) fetched attacker-controlled URLs with no validation, no size cap, silent redirects. Now:
+  - DTO `@IsSafeUrl()` on `sourceVideoUrl` (https-only + blocklist + private-range)
+  - Runtime `assertSafeUrl()` (DNS + ipaddr) in `downloadBuffer()` before every hop, `redirect: 'manual'` (max 5 hops, per-hop re-validation), 100MB streaming cap + content-length check, 120s timeout
+  - Single download funnel covers both user-supplied URLs and provider-resolved videoId URLs
+- Files: `backend/src/modules/llm/dto/validate-safe-url.validator.ts` (new), `extend-video.dto.ts`, `llm-client.service.ts`, `llm-client.service.spec.ts` (new, 12 tests)
+- Verification: 12 unit tests pass ✅, `npm run build` clean ✅, live HTTP with real JWT: 127.0.0.1 / localhost / 192.168.1.5 → 400 ✅, public https URL passes validation and reaches the real download ✅
+- Next: C5 (confirmation dead code — architectural, also gates H3). Remaining High: H1, H2, H4, H5, H7, H8. Then migration-dependent L11/L34/L36 and deferred L1/L28/L35.
+
 ## 2026-08-05 Session — C4: Google Calendar authz/credentials fixed (closed)
 
 - Completed: C4 (Critical #4) — Google Calendar was fully unauthenticated and returned `refresh_token` to the client. Now:

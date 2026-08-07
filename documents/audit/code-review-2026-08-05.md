@@ -17,7 +17,7 @@
 1. **כל משתמש מחובר יכול לקרוא את מפתחות ה-API של ספקי ה-LLM ולשנות את הגדרות הספקים** (כולל `baseUrl` ו-`apiKey`) — זה מאפשר גניבת מפתחות מלאה + SSRF פנימי. ← **הכי דחוף**.
 2. **מנגנון אישור הפעולות המסוכנות (Confirmation Flow) של הסוכן לא פעיל בפועל** — ה-decorator `@RequiresConfirmation()` לא מגיע ל-swagger spec, ולכן כל פעולה הרסנית שהמודל מבקש לבצע מתבצעת ללא אישור אנושי.
 3. **Google Calendar: כל הנתיבים ללא אימות כלל** (ללא guards), כולל חשיפת `refresh_token` בתשובה. ← ✅ **טופל** (C4).
-4. **SSRF בכמה מוקדים**: `extendVideo` (sourceVideoUrl), `baseUrl` של ספקים, והזרקת ערכים גולמיים לנתיבי URL פנימיים בסוכן.
+4. **SSRF בכמה מוקדים**: `extendVideo` (sourceVideoUrl) ✅ טופל (C3), `baseUrl` של ספקים ✅ טופל (C2), והזרקת ערכים גולמיים לנתיבי URL פנימיים בסוכן (H4) — עדיין פתוח.
 5. **פרונטאנד**: race condition ב-refresh שגורם להתנתקויות אקראיות, אין route guard לפי רול, ופרופיל המשתמש (`/auth/me`) מחזיר `JwtPayload` בעוד הסטור מצפה ל-`User` (מקור לבאגים שקטים).
 
 **סה"כ: 6 Critical, 8 High, 22 Medium, ~36 Low/Info.**
@@ -60,6 +60,7 @@
 - **תיאור**: `extendVideo` מקבל `sourceVideoUrl` בשליטת המשתמש/LLM, ו-`fetch` אותו ישירות ללא ולידציית URL/IP, ללא מגבלת גודל (`res.arrayBuffer()` טוען הכל לזכרון), עם redirects. הפריים האחרון מוחזר ללקוח כ-`sourceFrame: frameDataUri` (שורה 527). תוקף יכול: (א) לקרוא נקודות קצה פנימיות אם התוכן מפוענח כווידאו; (ב) לגרום ל-OOM עם URL של קובץ ענק. אין command injection (args מערך + `execFile` ללא shell).
 - **תיקון מוצע**: דחיית hosts פרטיים/link-local ו-schemes שאינם http(s); מגבלת גודל (streaming עם cap, למשל 100MB); `redirect: 'manual'` עם ולידציה לכל hop; AbortController עם timeout כולל.
 - **השפעה**: קריאת רשת פנימית (מוחזרת ויזואלית כ-frame), DoS בזכרון, ניצול endpoints פנימיים.
+- **סטטוס**: ✅ **טופל** (2026-08-05) — DTO-level `@IsSafeUrl()` (https-only + blocklist + private-range) על `sourceVideoUrl`; runtime `assertSafeUrl()` (DNS + ipaddr) ב-`downloadBuffer` לפני כל hop כולל redirects (`redirect: 'manual'`, מקסימום 5 hops); מגבלת גודל 100MB (streaming עם cap, כולל בדיקת `content-length`); timeout 120s. אומת: 12 unit tests + build ✅ + live (400 על 127.0.0.1/localhost/192.168.1.5, וקובץ public עובר ולידציה ומגיע להורדה בפועל).
 
 ### C4 — Google Calendar — אפס אימות על כל הנתיבים
 

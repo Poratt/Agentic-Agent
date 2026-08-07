@@ -1,5 +1,17 @@
 # Documentation Handoff
 
+## 2026-08-05 Session — C3: SSRF + unbounded download in `extendVideo` fixed (CLOSED)
+
+- Completed: C3 — `extendVideo` accepted an attacker-controlled `sourceVideoUrl` and fetched it blindly (no URL/IP validation, no size cap, silent redirects). Now:
+  - DTO level: `@IsSafeUrl()` on `sourceVideoUrl` in `extend-video.dto.ts` (new `validate-safe-url.validator.ts` — https-only + hostname blocklist + private-range fast match, same pattern as the C2 baseUrl validator).
+  - Runtime level: `downloadBuffer()` now runs `assertSafeUrl()` (DNS + ipaddr) before every hop — including each redirect (`redirect: 'manual'`, max 5 hops, relative locations resolved against the current URL), streams with a 100MB cap (also checks `content-length`), and keeps the 120s timeout. `SsrfError` → `BadRequestException` via `assertSafeDownloadUrl()`.
+  - The guard lives in `downloadBuffer`, which is the single funnel for both user-supplied `sourceVideoUrl` and provider-resolved videoId URLs.
+- Files: `backend/src/modules/llm/dto/validate-safe-url.validator.ts` (new), `backend/src/modules/llm/dto/extend-video.dto.ts` (added `@IsSafeUrl()`), `backend/src/modules/llm/services/llm-client.service.ts` (`downloadBuffer` + `assertSafeDownloadUrl`), `backend/src/modules/llm/services/llm-client.service.spec.ts` (new, 12 tests).
+- Verification: 12 unit tests pass (blocked protocols/hosts/private DNS ranges, content-length cap, streaming cap, safe download, redirect re-validation incl. private redirect targets and multi-hop chains); `npm run build` clean; live HTTP with real JWT: `http://127.0.0.1`, `https://localhost`, `https://192.168.1.5` → 400 with the validator message; `https://example.com/v.mp4` passes validation and reaches the real download (fails only on the target's 404).
+- Decisions made: reuse `assertSafeUrl()` from C2 (no new SSRF logic); cap at 100MB per the audit suggestion; keep the download single-funnel so no future caller can bypass validation.
+- Next exact step: C5 — confirmation dead code (architectural, needs DiscoveryService/Reflector; also gates H3). Remaining High: H1 (users enumeration), H2 (genetics/terpene AdminGuard), H4 (raw URL injection in agent), H5 (recursion depth), H7 (frontend role guard), H8 (hardcoded admin seed). Then migration-dependent L11/L34/L36 and deferred L1/L28/L35.
+- No architecture diagram update needed — no new module boundary or external provider; a validator + hardened fetch inside the existing `LlmModule`.
+
 ## 2026-08-05 Session — C4: Google Calendar authz/credentials fixed (CLOSED)
 
 - Completed: C4 (Critical #4) — the entire Google Calendar module was unauthenticated and returned `refresh_token` to the client. Now fully closed:

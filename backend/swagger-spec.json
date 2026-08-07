@@ -3779,7 +3779,7 @@
           },
           "sourceVideoUrl": {
             "type": "string",
-            "description": "Direct downloadable URL of a source video (.mp4) to extract the last frame from."
+            "description": "Direct downloadable URL of a source video (.mp4) to extract the last frame from. Must be a public https URL."
           },
           "prompt": {
             "type": "string",

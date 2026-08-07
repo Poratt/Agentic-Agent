@@ -562,13 +562,81 @@ export class LlmClientService {
     }
   }
 
+  /**
+   * Downloads a source video into memory with SSRF + size protection:
+   * - `assertSafeUrl` before every hop (covers the initial URL and each redirect)
+   * - `redirect: 'manual'` — no silent follow to a blocked internal host
+   * - hard cap on total bytes (streamed, not buffered blindly) to prevent OOM
+   */
   private async downloadBuffer(url: string): Promise<Buffer> {
-    const res = await fetch(url, { signal: AbortSignal.timeout(120_000) });
-    if (!res.ok) {
-      throw new BadRequestException(`Failed to download source video (${res.status})`);
+    const MAX_DOWNLOAD_BYTES = 100 * 1024 * 1024; // 100MB
+    const MAX_REDIRECTS = 5;
+    const timeoutMs = 120_000;
+
+    let currentUrl = url;
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      await this.assertSafeDownloadUrl(currentUrl);
+
+      const res = await fetch(currentUrl, {
+        redirect: 'manual',
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+
+      // Redirect — re-validate the next hop before following
+      if (res.status >= 300 && res.status < 400) {
+        const location = res.headers.get('location');
+        res.body?.cancel().catch(() => undefined);
+        if (!location) {
+          throw new BadRequestException(`Redirect without Location header (${res.status})`);
+        }
+        currentUrl = new URL(location, currentUrl).toString();
+        continue;
+      }
+
+      if (!res.ok) {
+        throw new BadRequestException(`Failed to download source video (${res.status})`);
+      }
+
+      const contentLength = Number(res.headers.get('content-length') || 0);
+      if (contentLength > MAX_DOWNLOAD_BYTES) {
+        throw new BadRequestException(`Source video exceeds the ${MAX_DOWNLOAD_BYTES / (1024 * 1024)}MB limit`);
+      }
+      if (!res.body) {
+        throw new BadRequestException('Failed to download source video: empty response body');
+      }
+
+      const reader = res.body.getReader();
+      const chunks: Buffer[] = [];
+      let total = 0;
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          total += value.length;
+          if (total > MAX_DOWNLOAD_BYTES) {
+            await reader.cancel().catch(() => undefined);
+            throw new BadRequestException(`Source video exceeds the ${MAX_DOWNLOAD_BYTES / (1024 * 1024)}MB limit`);
+          }
+          chunks.push(Buffer.from(value));
+        }
+      } finally {
+        reader.releaseLock();
+      }
+      return Buffer.concat(chunks);
     }
-    const arrayBuffer = await res.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+
+    throw new BadRequestException('Too many redirects while downloading source video');
+  }
+
+  private async assertSafeDownloadUrl(url: string): Promise<void> {
+    try {
+      await assertSafeUrl(url);
+    } catch (e) {
+      if (e instanceof SsrfError) {
+        throw new BadRequestException(e.message);
+      }
+      throw e;
+    }
   }
 
   /**
