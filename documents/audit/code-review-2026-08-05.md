@@ -107,6 +107,7 @@
 - **תיאור**: קטלוג מעוצב ביד — כל משתמש יכול ליצור/לעדכן/למחוק ערכים, ולהריץ enrich (קריאות LLM בתשלום). מחיקה של זן/טרפן מקטלוג משותף על ידי כל משתמש.
 - **תיקון**: `AdminGuard` על פעולות הכתיבה וה-enrich.
 - **השפעה**: השחתת נתונים, ניצול עלויות LLM.
+- **סטטוס**: ✅ **טופל** (2026-08-08) — `@UseGuards(AdminGuard)` הוחל על 10 endpoints: `POST /genetics`, `PATCH /genetics/:name`, `POST /genetics/:name/enrich`, `POST /genetics/enrich-missing`, `DELETE /genetics/:name` + 5 מקבילים ב-terpenes. `AdminGuard` מרחיב `JwtAuthGuard` אז JWT + רול מכוסים בבת אחת.
 
 ### H3 — ה-LLM יכול לאשר לעצמו פעולות (self-confirmation)
 
@@ -124,6 +125,7 @@
 - **תיאור**: ערכי args שמספק ה-LLM מוזרקים לנתיב ה-URL ללא encoding וללא נורמליזציה, ואז נשלח ל-`http://localhost:PORT` עם ה-JWT של המשתמש. ערכים כמו `1/../../sessions/5` או הזרקת `?`/`#` יכולים להגיע לנקודות קצה פנימיות שלא הוכרזו ככלים.
 - **תיקון**: בניית URL רק מ-path template; ולידציית ערכי פרמטרים לפי ה-schema; דחיית `../`, `?`, `#` ותווים מיוחדים; בדיקה שה-URL הסופי נשאר ב-localhost ומייצג נתיב ידוע אחד.
 - **השפעה**: גישה לנקודות קצה פנימיות בלתי-מוצהרות עם JWT מוגבה.
+- **סטטוס**: ✅ **טופל** (2026-08-08) — שני שכבות: (1) `resolveArguments` עכשיו מבצע `encodeURIComponent` על ערכי path params (לא יכול להוסיף `/`, `..`, `?`, `#` או מבנה URL אחר; מטפל נכון בעברית עם רווחים); (2) guard הגנתי `assertSafeTargetUrl` ב-`AgentToolExecutorService` לפני שליחת ה-HTTP — דוחה URL שלא מתחיל ב-`baseUrl`, escape של host-suffix, או נתיב המכיל `..`/`?`/`#` (מחזיר 403 envelope). אומת: 11/11 parser tests + 9/9 h4 executor tests עוברים; 3 כשלונות קיימים ב-agent-session הם pre-existing (imageUrl).
 
 ### H5 — רקורסיה עצמית של הסוכן — `query-stream` ככלי, ללא מגבלת עומק
 
@@ -132,6 +134,7 @@
 - **תיאור**: `POST /admin-agent/query-stream` הוא כלי. המודל יכול לקרוא לו עם `prompt` שרירותי וליצור ריצת סוכן מקוננת מלאה (קריאות LLM, כלים, כתיבת DB) — ללא מגבלת עומק. הודעת prompt-injection אחת ("קרא ל-query-stream עם...") הופכת ל-cascade.
 - **תיקון**: denylist ל-`streamChat`/`query-stream`; אם רוצים רקורסיה — budget מוגדר.
 - **השפעה**: ניצול עלויות, גידול DB, amplifier ל-prompt injection.
+- **סטטוס**: ✅ **טופל** (2026-08-08) — `AdminAgentController_streamChat` הוסר מ-`getTools()` ב-`swagger-tools.parser.ts` (denylist סטטי, אותו מנגנון כמו H3). ה-endpoint עדיין זמין ל-UI (הצ'אט קורא ל-query-stream ישירות). אומת: 6/6 parser spec tests עוברים, כולל בדיקת ה-exclusion וה-getEndpoint.
 
 ### H6 — Race condition ב-refresh — התנתקויות אקראיות
 

@@ -1,20 +1,26 @@
 # Project Documentation Status
 
-Last updated: 2026-08-05
+Last updated: 2026-08-07
+
+## ⚠️ Lesson: Every commit must be reviewed individually
+
+`82d9baa` added a total SSRF bypass (`NODE_ENV !== 'production'` → skip all validation) during a batch commit. It was caught and reverted (`021224b`) only because each commit was reviewed separately before closing. **Rule:** never approve a batch commit without reviewing every file diff, especially security-critical code.
 
 ## Audit Fix Status — `documents/audit/code-review-2026-08-05.md`
 
-**Overall: 6 / 6 Critical closed. 🎉**
+**Overall: 6 / 6 Critical closed + H1 + H2 + H3 + H4 + H5 closed. 🎉**
 
 | Severity | Total | Closed | Open |
 | -------- | ----- | ------ | ---- |
 | 🔴 Critical | 6 | **6** (C1, C2, C3, C4, C5, C6) | — |
-| 🟠 High | 8 | 2 (H3 self-confirm ✅, H6 refresh race, H1 user enumeration ✅) | H2 genetics/terpene AdminGuard, H4 raw URL injection in agent, H5 recursion depth, H7 frontend role guard, H8 hardcoded admin seed |
+| 🟠 High | 8 | 6 (H1 ✅, H2 ✅, H3 ✅, H4 ✅, H5 ✅, H6 ✅) | H7 frontend role guard, H8 hardcoded admin seed |
 | 🟡 Medium | 22 | most via quick-wins (L2-L6, L8, L10, L12-L13, L20, L23-L25, L27, L29-L31) | L11 images→external storage, L34 sequence column, L36 status column (all need migration) |
 | 🟢 Low / Info | ~36 | most | L1 seeds (non-relevant), L28/L35 soft-delete sessions (deferred by user) |
-| 🔧 Backlog | 1 | — | UX: calendar not-connected flow — agent should surface auth link instead of generic error when user hasn't connected Google Calendar |
+| 🔧 UX | 3 | 3 (calendar loop-breaker ✅, auth-url card ✅, q parameter ✅) | — |
 
-Critical commit trail: C6 `8f4022c` context → C1 encryption+admin commits → C4 `376369d` (Google Calendar) → C3 `dc1d909` (extendVideo SSRF) → C5 + H3 (confirmation flow + self-confirmation).
+**SSRF regression caught:** `82d9baa` bypassed all SSRF checks in dev mode → reverted `021224b` → 12/12 C3 tests pass ✅.
+
+Critical commit trail: C6 `8f4022c` → C1 encryption → C4 `376369d` (Google Calendar) → C3 `dc1d909` (extendVideo SSRF) → C5+H3 `56b6ac0` → H1 `6d45a7c` → SSRF revert `021224b`.
 
 ## 2026-08-05 Session — C5: Confirmation flow activated + H3 self-confirmation closed
 

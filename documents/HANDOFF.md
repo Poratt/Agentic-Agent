@@ -1,5 +1,51 @@
 # Documentation Handoff
 
+## ⚠️ Lesson: Every non-trivial commit must be reviewed individually
+
+`82d9baa` ("skip SSRF validation in dev mode") was committed as part of a batch without individual review. It added a **total SSRF bypass** when `NODE_ENV !== 'production'` — not just localhost. Worse: if `NODE_ENV` is unset, the bypass activates silently. Caught and reverted (`021224b`) only because each commit was examined separately before closing the session.
+
+## 2026-08-08 Session — H2: Genetics/Terpene AdminGuard + frontend hide admin buttons
+
+- **Completed:** H2 (High #2) — genetics/terpene write+enrich endpoints were only protected with `JwtAuthGuard` (any logged-in user could modify the shared catalog and run paid LLM enrich calls). Now:
+  - **Backend:** `@UseGuards(AdminGuard)` applied on 10 endpoints: genetics POST/PATCH/enrich/enrich-missing/DELETE + same 5 on terpenes. `AdminGuard` extends `JwtAuthGuard` so JWT + role check covered in one decorator. `ApiForbiddenResponse` descriptions updated where relevant.
+  - **Frontend:** `isAdmin` computed signal added to `StrainHunterSettings` and `LlmProvidersManagement` (`authStore.userRole() === UserRole.Admin`). All admin-only buttons wrapped in `@if (isAdmin())`: genetics/terpene Regenerate+Delete per row, bulk enrich buttons, Add Provider, provider Edit/Delete, Add Model, model Edit/Delete, default-star toggle, test-result Delete buttons, Delete-all-test-results.
+  - The existing `accessTo` directive exists but reads the role at input-set time (not reactive to signal changes); using `@if (isAdmin())` is more idiomatic here since user is already loaded via `loadMe()` on app init.
+- **Files touched backend:** `genetics.controller.ts`, `terpene.controller.ts`
+- **Files touched frontend:** `strain-hunter-settings.ts`, `strain-hunter-settings.html`, `llm-providers-management.ts`, `llm-providers-management.html`
+- **Verification:** `npm run build` backend ✅, `npx ng build` frontend ✅ (only pre-existing budget warnings).
+- **Decisions made:** 
+  - Method-level `@UseGuards(AdminGuard)` over class-level `@UseGuards(JwtAuthGuard)` — GET endpoints remain accessible to all authenticated users (catalog is public read), only write/enrich gated.
+  - `@if (isAdmin())` over `[accessTo]` directive — directive is not reactive (evaluated once at @Input set), while `@if` with computed signal reacts to auth state changes.
+  - `setDefaultModel` also hidden for non-admin (it calls PATCH on the model).
+- **Next exact step:** remaining High items: H4 (URL injection in agent), H5 (query-stream recursion), H7 (frontend route guard per role), H8 (hardcoded admin seed).
+- **Open questions for the user:** לבדוק אם יש עוד מקומות בפרונטאנד שצריך להסתיר (users management מוגן? dashboard?).
+- **No architecture diagram update needed** — RBAC on existing controllers, no new module boundary.
+
+## 2026-08-08 Session — H4 + H5 closed (agent security)
+
+- **H5 (recursion):** `AdminAgentController_streamChat` (operationId של `POST /admin-agent/query-stream`) נוסף ל-`HIDDEN_FROM_LLM` denylist ב-`swagger-tools.parser.ts` — המודל לא יכול לקרוא לריצת סוכן מקוננת. ה-endpoint נשאר זמין ל-UI (הצ'אט קורא לו ישירות). Parser spec הורחב ל-6 טסטים.
+- **H4 (URL injection):** שתי שכבות:
+  1. **Encoding** (ב-`resolveArguments`): `encodeURIComponent(String(value))` על ערכי path params — `1/../../sessions/5` הופך ל-`1%2F..%2F..%2Fsessions%2F5` (segment אחד מקודד, לא יכול לברוח מהנתיב). גם מתקן שמות עברית עם רווחים (`גורילה גלו` → UTF-8 + `%20`). 5 טסטים חדשים.
+  2. **Defense-in-depth guard** (ב-`AgentToolExecutorService.assertSafeTargetUrl`): לפני שליחת ה-HTTP דוחה URL שלא מתחיל ב-`baseUrl`, escape של host-suffix, או נתיב המכיל `..`/`?`/`#` — מחזיר `{error, status: 403}` envelope. 9 טסטים חדשים ב-`agent-tool-executor.service.h4.spec.ts`.
+- **Sub-agent split:** H4 חולק לשני תת-סוכנים במקביל (אחד על parser+spec, אחד על executor+spec) — בלי התנגשות קבצים; H5 בוצע על ידי הראשי לפני השחרור כי הוא נוגע באותו קובץ parser.
+- **Files touched:** `swagger-tools.parser.ts`, `swagger-tools.parser.spec.ts`, `agent-tool-executor.service.ts`, `agent-tool-executor.service.h4.spec.ts` (חדש)
+- **Verification:** parser spec 11/11 ✅ (כולל H3/H5), h4 executor spec 9/9 ✅, c5 spec ✅, `npm run build` backend נקי ✅. 3 כשלונות ב-`agent-session.service.spec.ts` הם pre-existing (imageUrl, מתועד מ-C4) ולא קשורים.
+- **Risk note:** ה-guard דוחה `?`/`#` בכל remainder — מקרים לגיטימיים עתידיים עם `?` בנתיב המוצהר יהיו false positive (מקובל). URL-encoding traversal (`%2e%2e`) מטופל על ידי שכבת ה-encoding.
+- **Remaining High:** H7 (frontend role guard) + H8 (hardcoded admin seed).
+
+`82d9baa` ("skip SSRF validation in dev mode") was committed as part of a batch without individual review. It added a **total SSRF bypass** when `NODE_ENV !== 'production'` — not just localhost. Worse: if `NODE_ENV` is unset, the bypass activates silently. Caught and reverted (`021224b`) only because each commit was examined separately before closing the session.
+
+**Rule going forward:** Never merge a batch commit without reviewing every file diff individually, even if "everything works." This applies especially to security-sensitive code (guards, validators, encryption).
+
+## 2026-08-07 Session — Calendar UX fixes + SSRF regression fix
+
+- **Calendar UX loop-breaker fix** (`a2b6853`): When the agent's `loop-breaker` fires (same tool+args 3+ times), it now checks if an auth URL from a previous successful `GoogleCalendarController_auth` call exists in conversation history. If found, injects a system message with the auth link and gives the LLM one more turn to produce a helpful response (e.g., "click here to connect your calendar") instead of a generic error.
+- **Calendar q parameter** (`840bfbf` + `534841f`): Added `date` (YYYY-MM-DD) and `q` (text search) query parameters to `GET /calendar/events`. Taught the LLM via system context to use these for specific date queries and keyword searches.
+- **Auth-url render card** (`6b6c60f`): New `auth-url-card` frontend component that renders the OAuth consent URL as a clickable card in chat. Registered in `RenderSpecService` so the agent can surface it when calendar isn't connected.
+- **Cookie-state fallback** (`6b6c60f`): `handleCallback` now allows `state` without `cookieState` when the flow is initiated by the agent (internal HTTP call sets the cookie on the agent's response, not the user's browser). Security verified: state is still bound to userId in DB, still single-use (nulled after callback), still time-limited.
+- **Auth cascade fix** (`589a7f9`): Removed `JwtAuthGuard` from `POST /auth/logout` (logout should succeed even with expired token). Added single-flight refresh deduplication in the frontend interceptor to prevent burst401s from triggering spurious logouts.
+- **SSRF regression caught and reverted** (`021224b`): `82d9baa` added a `NODE_ENV !== 'production'` bypass to both `assertSafeUrl` and `IsSafeBaseUrl` validator — a total bypass, not localhost-only. Reverted after individual commit review revealed the risk.
+
 ## 2026-08-05 Session — C5: Confirmation flow activated + H3 self-confirmation closed (CLOSED)
 
 - Completed: C5 — the `@RequiresConfirmation` decorator wrote metadata to NestJS Reflector but the swagger-spec never received `x-requires-confirmation`, so `isDangerousOperation()` always returned false and dangerous ops executed without confirmation. H3 (LLM self-confirmation) also closed in the same pass.
