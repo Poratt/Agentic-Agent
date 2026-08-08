@@ -27,6 +27,7 @@ import {
   DeleteConfirmRenderSpecSchema,
   RegisterFormRenderSpecSchema,
 } from './common.render-spec';
+import { AuthUrlRenderSpecSchema } from './auth-url.render-spec';
 
 type ToolRenderMapping = {
   toolName: string;
@@ -272,6 +273,15 @@ const TOOL_RENDER_MAPPINGS: ToolRenderMapping[] = [
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
       };
+    },
+  },
+  {
+    toolName: 'GoogleCalendarController_auth',
+    renderType: RenderSpecType.AuthUrl,
+    schema: AuthUrlRenderSpecSchema,
+    transform: (data) => {
+      const r = data.result ?? data;
+      return { url: r.url, title: 'חיבור Google Calendar' };
     },
   },
   {

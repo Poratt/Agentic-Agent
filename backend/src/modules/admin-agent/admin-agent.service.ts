@@ -8,6 +8,7 @@ import { SYSTEM_CONTEXT, buildSystemContext } from './constants/system-context.c
 import { SwaggerToolsParser, type LlmToolSchema } from './services/swagger-tools.parser';
 import { RenderSpecService } from './render-spec/render-spec.service';
 import { McpBridgeService } from '../mcp-bridge/mcp-bridge.service';
+import { GoogleCalendarService } from '../google-calendar/google-calendar.service';
 import type { LlmProvider, LlmToolCall } from '../llm/types/llm.types';
 
 const MAX_ITERATIONS = 10;
@@ -28,7 +29,19 @@ const STEP_ICONS = {
  */
 const SETUP_INSTRUCTIONS: Record<string, { he: string; authTool?: string }> = {
   GoogleCalendarController_events: {
-    he: 'היומן שלך עדיין לא מחובר. לחץ על הקישור הבא כדי להתחבר:',
+    he: 'היומן שלך עדיין לא מחובר.',
+    authTool: 'GoogleCalendarController_auth',
+  },
+  GoogleCalendarController_createEvent: {
+    he: 'היומן שלך עדיין לא מחובר.',
+    authTool: 'GoogleCalendarController_auth',
+  },
+  GoogleCalendarController_updateEvent: {
+    he: 'היומן שלך עדיין לא מחובר.',
+    authTool: 'GoogleCalendarController_auth',
+  },
+  GoogleCalendarController_deleteEvent: {
+    he: 'היומן שלך עדיין לא מחובר.',
     authTool: 'GoogleCalendarController_auth',
   },
 };
@@ -50,6 +63,7 @@ export class AdminAgentService implements OnModuleInit {
     private readonly agentToolExecutorService: AgentToolExecutorService,
     private readonly renderSpecService: RenderSpecService,
     private readonly mcpBridgeService: McpBridgeService,
+    private readonly googleCalendarService: GoogleCalendarService,
   ) { }
 
   private getTools(): LlmToolSchema[] {
@@ -394,10 +408,42 @@ export class AdminAgentService implements OnModuleInit {
               collectedRenderBlocks.push({ component: renderSpec.type, data: renderSpec.data });
             }
 
-            await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(resultData), {
+            // When a tool fails because the underlying service isn't connected,
+            // auto-call the auth tool and return the URL directly. This bypasses
+            // the model entirely — no need for it to "understand" the instruction.
+            let storedResult = resultData;
+            const setup = SETUP_INSTRUCTIONS[call.function.name];
+            if (setup?.authTool && parsedResult?.error) {
+              try {
+                const authResult = await this.googleCalendarService.getAuthUrl(userId);
+                storedResult = JSON.stringify({
+                  success: false,
+                  setup_required: true,
+                  message: setup.he,
+                  auth_url: authResult.url,
+                });
+                // Build render spec for the auth URL so it shows as a clickable link
+                const authRenderSpec = this.renderSpecService.buildRenderSpec(setup.authTool, JSON.stringify(authResult));
+                if (authRenderSpec) {
+                  yield JSON.stringify({ type: 'render', component: authRenderSpec.type, data: authRenderSpec.data }) + '\n';
+                  collectedRenderBlocks.push({ component: authRenderSpec.type, data: authRenderSpec.data });
+                }
+                this.logger.warn(`[SetupAutoAuth] tool=${call.function.name} → auto-called ${setup.authTool}, url=${authResult.url.substring(0, 80)}...`);
+              } catch (authErr: any) {
+                this.logger.error(`[SetupAutoAuth] Failed to call auth tool: ${authErr.message}`);
+                storedResult = JSON.stringify({
+                  ...parsedResult,
+                  error: `${setup.he} כדי לחבר, הפעל את הכלי: ${setup.authTool}`,
+                  instruction: `${setup.he} כדי לחבר, הפעל את הכלי: ${setup.authTool}`,
+                });
+              }
+            }
+
+            await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(storedResult), {
               toolCallId: call.id,
               renderSpec: renderSpec ? JSON.stringify(renderSpec) : null,
             });
+            history.push({ role: 'tool', tool_call_id: call.id, content: this.truncateForStorage(storedResult) });
           }
         }
       } else {

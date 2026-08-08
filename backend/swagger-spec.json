@@ -1605,6 +1605,274 @@
         "toolIcon": "ph-activity"
       }
     },
+    "/calendar/auth": {
+      "get": {
+        "description": "Returns a URL that the authenticated user must visit to grant the application access to their Google Calendar. After granting consent, Google redirects to /calendar/callback with an authorization code and state.",
+        "operationId": "GoogleCalendarController_auth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OAuth consent URL returned successfully."
+          },
+          "401": {
+            "description": "JWT token missing or invalid."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get Google OAuth URL",
+        "summaryHe": "מקבלים את קישור האישור של Google כדי לחבר את היומן",
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
+    "/calendar/callback": {
+      "get": {
+        "description": "Handles the OAuth callback from Google. Validates the CSRF state, exchanges the authorization code for tokens, and stores the refresh token server-side, encrypted. Typically called automatically by Google after user consent.",
+        "operationId": "GoogleCalendarController_callback",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "query",
+            "description": "Authorization code received from Google after user consent.",
+            "schema": {
+              "example": "4/0Aae7Xt8...",
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "required": true,
+            "in": "query",
+            "description": "CSRF state value issued by /calendar/auth (also sent as the gcal_state cookie).",
+            "schema": {
+              "example": "a1b2c3...",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar connected. Tokens are stored server-side and never returned."
+          },
+          "400": {
+            "description": "Missing code, invalid/expired state, or Google rejected the code."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Handle Google OAuth callback",
+        "summaryHe": "מטפלים בהפנייה חזרה מ-Google אחרי אישור הגישה",
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
+    "/calendar/events": {
+      "get": {
+        "description": "Returns upcoming events from the authenticated user's primary Google Calendar. If a date is provided (YYYY-MM-DD), returns events for that specific day. If a search query (q) is provided, searches event titles, descriptions, and locations. Otherwise returns events from today up to 7 days ahead. Maximum 20 events returned.",
+        "operationId": "GoogleCalendarController_events",
+        "parameters": [
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Optional date in YYYY-MM-DD format. When provided, returns events for that specific day.",
+            "schema": {
+              "example": "2026-08-31",
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Optional text search query. Searches event title, description, and location. Example: \"תג נכה\", \"רופא\", \"meeting\".",
+            "schema": {
+              "example": "תג נכה",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Events fetched successfully. Returns an array of calendar events (may be empty)."
+          },
+          "400": {
+            "description": "Calendar not connected. Complete the OAuth flow first via /calendar/auth."
+          },
+          "401": {
+            "description": "JWT token missing or invalid."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List upcoming calendar events",
+        "summaryHe": "מציגים את האירועים העתידיים ביומן Google",
+        "tags": [
+          "calendar"
+        ]
+      },
+      "post": {
+        "description": "Creates a new event in the authenticated user's primary Google Calendar. Requires summary, start time, and end time. Optional fields: description, location. Times should be in ISO 8601 format.",
+        "operationId": "GoogleCalendarController_createEvent",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Event creation payload. summary, startTime, and endTime are required.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventDto"
+              },
+              "examples": {
+                "basic": {
+                  "summary": "Basic meeting",
+                  "value": {
+                    "summary": "פגישת עבודה",
+                    "startTime": "2026-08-03T20:00:00+03:00",
+                    "endTime": "2026-08-03T21:00:00+03:00",
+                    "description": "פגישת סיכום חודשית",
+                    "location": "משרד ראשי"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Event created successfully. Returns the created event details."
+          },
+          "400": {
+            "description": "Missing required fields or calendar not connected."
+          },
+          "401": {
+            "description": "JWT token missing or invalid."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new calendar event",
+        "summaryHe": "יוצרים אירוע חדש ביומן Google",
+        "tags": [
+          "calendar"
+        ]
+      },
+      "delete": {
+        "description": "Deletes an event from the authenticated user's primary Google Calendar by its event ID. Use GET /calendar/events first to retrieve the eventId of the event to delete.",
+        "operationId": "GoogleCalendarController_deleteEvent",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Event deletion payload. Requires eventId.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteEventDto"
+              },
+              "examples": {
+                "basic": {
+                  "summary": "Delete an event",
+                  "value": {
+                    "eventId": "abc123def456..."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event deleted successfully."
+          },
+          "400": {
+            "description": "Missing eventId or calendar not connected."
+          },
+          "401": {
+            "description": "JWT token missing or invalid."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a calendar event",
+        "summaryHe": "מוחקים אירוע מהיומן Google",
+        "tags": [
+          "calendar"
+        ]
+      },
+      "patch": {
+        "description": "Updates an existing event in the authenticated user's primary Google Calendar. All fields except eventId are optional — only provided fields are modified. Use GET /calendar/events first to retrieve the eventId.",
+        "operationId": "GoogleCalendarController_updateEvent",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Event update payload. Only provided fields will be updated.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEventDto"
+              },
+              "examples": {
+                "reschedule": {
+                  "summary": "Reschedule event",
+                  "value": {
+                    "eventId": "abc123def456...",
+                    "startTime": "2026-08-04T15:00:00+03:00",
+                    "endTime": "2026-08-04T16:00:00+03:00"
+                  }
+                },
+                "rename": {
+                  "summary": "Rename event",
+                  "value": {
+                    "eventId": "abc123def456...",
+                    "summary": "פגישת עבודה - שם חדש"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event updated successfully. Returns the updated event details."
+          },
+          "400": {
+            "description": "Missing eventId or calendar not connected."
+          },
+          "401": {
+            "description": "JWT token missing or invalid."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update/reschedule a calendar event",
+        "summaryHe": "מעדכנים או מזיזים אירוע ביומן Google",
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
     "/analytics/query": {
       "post": {
         "description": "Runs a supported analytics metric from the server-side catalog and returns chart-ready data.",
@@ -2855,253 +3123,6 @@
         ],
         "toolIcon": "ph-database"
       }
-    },
-    "/calendar/auth": {
-      "get": {
-        "description": "Returns a URL that the authenticated user must visit to grant the application access to their Google Calendar. After granting consent, Google redirects to /calendar/callback with an authorization code and state.",
-        "operationId": "GoogleCalendarController_auth",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OAuth consent URL returned successfully."
-          },
-          "401": {
-            "description": "JWT token missing or invalid."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get Google OAuth URL",
-        "summaryHe": "מקבלים את קישור האישור של Google כדי לחבר את היומן",
-        "tags": [
-          "calendar"
-        ]
-      }
-    },
-    "/calendar/callback": {
-      "get": {
-        "description": "Handles the OAuth callback from Google. Validates the CSRF state, exchanges the authorization code for tokens, and stores the refresh token server-side, encrypted. Typically called automatically by Google after user consent.",
-        "operationId": "GoogleCalendarController_callback",
-        "parameters": [
-          {
-            "name": "code",
-            "required": true,
-            "in": "query",
-            "description": "Authorization code received from Google after user consent.",
-            "schema": {
-              "example": "4/0Aae7Xt8...",
-              "type": "string"
-            }
-          },
-          {
-            "name": "state",
-            "required": true,
-            "in": "query",
-            "description": "CSRF state value issued by /calendar/auth (also sent as the gcal_state cookie).",
-            "schema": {
-              "example": "a1b2c3...",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Calendar connected. Tokens are stored server-side and never returned."
-          },
-          "400": {
-            "description": "Missing code, invalid/expired state, or Google rejected the code."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Handle Google OAuth callback",
-        "summaryHe": "מטפלים בהפנייה חזרה מ-Google אחרי אישור הגישה",
-        "tags": [
-          "calendar"
-        ]
-      }
-    },
-    "/calendar/events": {
-      "get": {
-        "description": "Returns upcoming events from the authenticated user's primary Google Calendar. Events are fetched from the start of today up to 7 days ahead, ordered by start time. Maximum 20 events returned.",
-        "operationId": "GoogleCalendarController_events",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Events fetched successfully. Returns an array of calendar events (may be empty)."
-          },
-          "400": {
-            "description": "Calendar not connected. Complete the OAuth flow first via /calendar/auth."
-          },
-          "401": {
-            "description": "JWT token missing or invalid."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "List upcoming calendar events",
-        "summaryHe": "מציגים את האירועים העתידיים ביומן Google",
-        "tags": [
-          "calendar"
-        ]
-      },
-      "post": {
-        "description": "Creates a new event in the authenticated user's primary Google Calendar. Requires summary, start time, and end time. Optional fields: description, location. Times should be in ISO 8601 format.",
-        "operationId": "GoogleCalendarController_createEvent",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "description": "Event creation payload. summary, startTime, and endTime are required.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateEventDto"
-              },
-              "examples": {
-                "basic": {
-                  "summary": "Basic meeting",
-                  "value": {
-                    "summary": "פגישת עבודה",
-                    "startTime": "2026-08-03T20:00:00+03:00",
-                    "endTime": "2026-08-03T21:00:00+03:00",
-                    "description": "פגישת סיכום חודשית",
-                    "location": "משרד ראשי"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Event created successfully. Returns the created event details."
-          },
-          "400": {
-            "description": "Missing required fields or calendar not connected."
-          },
-          "401": {
-            "description": "JWT token missing or invalid."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create a new calendar event",
-        "summaryHe": "יוצרים אירוע חדש ביומן Google",
-        "tags": [
-          "calendar"
-        ]
-      },
-      "delete": {
-        "description": "Deletes an event from the authenticated user's primary Google Calendar by its event ID. Use GET /calendar/events first to retrieve the eventId of the event to delete.",
-        "operationId": "GoogleCalendarController_deleteEvent",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "description": "Event deletion payload. Requires eventId.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeleteEventDto"
-              },
-              "examples": {
-                "basic": {
-                  "summary": "Delete an event",
-                  "value": {
-                    "eventId": "abc123def456..."
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Event deleted successfully."
-          },
-          "400": {
-            "description": "Missing eventId or calendar not connected."
-          },
-          "401": {
-            "description": "JWT token missing or invalid."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Delete a calendar event",
-        "summaryHe": "מוחקים אירוע מהיומן Google",
-        "tags": [
-          "calendar"
-        ]
-      },
-      "patch": {
-        "description": "Updates an existing event in the authenticated user's primary Google Calendar. All fields except eventId are optional — only provided fields are modified. Use GET /calendar/events first to retrieve the eventId.",
-        "operationId": "GoogleCalendarController_updateEvent",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "description": "Event update payload. Only provided fields will be updated.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateEventDto"
-              },
-              "examples": {
-                "reschedule": {
-                  "summary": "Reschedule event",
-                  "value": {
-                    "eventId": "abc123def456...",
-                    "startTime": "2026-08-04T15:00:00+03:00",
-                    "endTime": "2026-08-04T16:00:00+03:00"
-                  }
-                },
-                "rename": {
-                  "summary": "Rename event",
-                  "value": {
-                    "eventId": "abc123def456...",
-                    "summary": "פגישת עבודה - שם חדש"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Event updated successfully. Returns the updated event details."
-          },
-          "400": {
-            "description": "Missing eventId or calendar not connected."
-          },
-          "401": {
-            "description": "JWT token missing or invalid."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update/reschedule a calendar event",
-        "summaryHe": "מעדכנים או מזיזים אירוע ביומן Google",
-        "tags": [
-          "calendar"
-        ]
-      }
     }
   },
   "info": {
@@ -3970,6 +3991,80 @@
             ]
           }
         }
+      },
+      "CreateEventDto": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string",
+            "description": "Event summary/title"
+          },
+          "startTime": {
+            "type": "string",
+            "description": "Event start time (ISO 8601)"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "Event end time (ISO 8601)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Event description"
+          },
+          "location": {
+            "type": "string",
+            "description": "Event location"
+          }
+        },
+        "required": [
+          "summary",
+          "startTime",
+          "endTime"
+        ]
+      },
+      "DeleteEventDto": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "description": "Google Calendar event ID to delete"
+          }
+        },
+        "required": [
+          "eventId"
+        ]
+      },
+      "UpdateEventDto": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "description": "Google Calendar event ID to update"
+          },
+          "summary": {
+            "type": "string",
+            "description": "New event summary/title"
+          },
+          "startTime": {
+            "type": "string",
+            "description": "New start time (ISO 8601)"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "New end time (ISO 8601)"
+          },
+          "description": {
+            "type": "string",
+            "description": "New event description"
+          },
+          "location": {
+            "type": "string",
+            "description": "New event location"
+          }
+        },
+        "required": [
+          "eventId"
+        ]
       },
       "AnalyticsMetric": {
         "type": "number",
@@ -5057,80 +5152,6 @@
         },
         "required": [
           "domain"
-        ]
-      },
-      "CreateEventDto": {
-        "type": "object",
-        "properties": {
-          "summary": {
-            "type": "string",
-            "description": "Event summary/title"
-          },
-          "startTime": {
-            "type": "string",
-            "description": "Event start time (ISO 8601)"
-          },
-          "endTime": {
-            "type": "string",
-            "description": "Event end time (ISO 8601)"
-          },
-          "description": {
-            "type": "string",
-            "description": "Event description"
-          },
-          "location": {
-            "type": "string",
-            "description": "Event location"
-          }
-        },
-        "required": [
-          "summary",
-          "startTime",
-          "endTime"
-        ]
-      },
-      "DeleteEventDto": {
-        "type": "object",
-        "properties": {
-          "eventId": {
-            "type": "string",
-            "description": "Google Calendar event ID to delete"
-          }
-        },
-        "required": [
-          "eventId"
-        ]
-      },
-      "UpdateEventDto": {
-        "type": "object",
-        "properties": {
-          "eventId": {
-            "type": "string",
-            "description": "Google Calendar event ID to update"
-          },
-          "summary": {
-            "type": "string",
-            "description": "New event summary/title"
-          },
-          "startTime": {
-            "type": "string",
-            "description": "New start time (ISO 8601)"
-          },
-          "endTime": {
-            "type": "string",
-            "description": "New end time (ISO 8601)"
-          },
-          "description": {
-            "type": "string",
-            "description": "New event description"
-          },
-          "location": {
-            "type": "string",
-            "description": "New event location"
-          }
-        },
-        "required": [
-          "eventId"
         ]
       }
     }

@@ -74,7 +74,14 @@ export class GoogleCalendarService {
       throw new BadRequestException('Missing authorization code');
     }
 
-    if (!state || !cookieState || state !== cookieState) {
+    // When the OAuth flow is initiated by the agent (internal HTTP call), the
+    // gcal_state cookie is set on the agent's response and never reaches the
+    // user's browser. Fall back to DB-only validation: the state is already
+    // bound to a specific user in the DB, which is sufficient.
+    if (!state) {
+      throw new BadRequestException('Missing OAuth state parameter');
+    }
+    if (cookieState && state !== cookieState) {
       throw new BadRequestException('OAuth state mismatch. The flow was not started from this browser.');
     }
 

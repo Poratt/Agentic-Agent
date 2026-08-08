@@ -19,6 +19,7 @@ export enum RenderSpecType {
   AgnesImage = 'agnes-image',
   AgnesVideo = 'agnes-video',
   WeatherSummary = 'weather-summary',
+  AuthUrl = 'auth-url',
 }
 
 const renderSpecDiscriminatedSchema = z.discriminatedUnion('type', [
@@ -40,6 +41,7 @@ const renderSpecDiscriminatedSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal(RenderSpecType.AgnesImage), data: z.record(z.string(), z.unknown()) }),
   z.object({ type: z.literal(RenderSpecType.AgnesVideo), data: z.record(z.string(), z.unknown()) }),
   z.object({ type: z.literal(RenderSpecType.WeatherSummary), data: z.record(z.string(), z.unknown()) }),
+  z.object({ type: z.literal(RenderSpecType.AuthUrl), data: z.record(z.string(), z.unknown()) }),
 ]);
 
 export type RenderSpec = z.infer<typeof renderSpecDiscriminatedSchema>;

@@ -1,0 +1,11 @@
+<div class="auth-url-card">
+    <div class="card-header">
+        <span class="ph ph-link card-icon"></span>
+        <span class="card-title">{{ data().title || 'חיבור חשבון' }}</span>
+    </div>
+    <p class="card-desc">לחיצה על הקישור תפתח את מסך ההתחברות:</p>
+    <a class="auth-link" [href]="data().url" target="_blank" rel="noopener">
+        <span class="ph ph-arrow-square-out"></span>
+        <span>פתח את הקישור</span>
+    </a>
+</div>
