@@ -122,21 +122,33 @@ export class GoogleCalendarService {
     return google.calendar({ version: 'v3', auth: oauth2Client });
   }
 
-  async listEvents(userId: number) {
+  async listEvents(userId: number, date?: string, q?: string) {
     const refreshToken = await this.getRefreshToken(userId);
     const calendar = this.getCalendar(refreshToken);
 
     const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const endOfWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    let timeMin: Date;
+    let timeMax: Date;
+
+    if (date) {
+      // Specific date requested: fetch the full day
+      const target = new Date(date);
+      timeMin = new Date(target.getFullYear(), target.getMonth(), target.getDate());
+      timeMax = new Date(timeMin.getTime() + 24 * 60 * 60 * 1000);
+    } else {
+      // No date specified: today → +7 days
+      timeMin = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      timeMax = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    }
 
     const res = await calendar.events.list({
       calendarId: 'primary',
-      timeMin: startOfDay.toISOString(),
-      timeMax: endOfWeek.toISOString(),
+      timeMin: timeMin.toISOString(),
+      timeMax: timeMax.toISOString(),
       maxResults: 20,
       singleEvents: true,
       orderBy: 'startTime',
+      q: q || undefined, // Add text search query if provided
     });
     return res.data.items;
   }

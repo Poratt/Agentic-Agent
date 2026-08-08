@@ -159,18 +159,35 @@ export class GoogleCalendarController {
         summary: 'List upcoming calendar events',
         summaryHe: 'מציגים את האירועים העתידיים ביומן Google',
         description:
-            'Returns upcoming events from the authenticated user\'s primary Google Calendar. Events are fetched from the start of today up to 7 days ahead, ordered by start time. Maximum 20 events returned.',
+            'Returns upcoming events from the authenticated user\'s primary Google Calendar. ' +
+            'If a date is provided (YYYY-MM-DD), returns events for that specific day. ' +
+            'If a search query (q) is provided, searches event titles, descriptions, and locations. ' +
+            'Otherwise returns events from today up to 7 days ahead. Maximum 20 events returned.',
     } as CustomApiOperationOptions)
+    @ApiQuery({
+        name: 'date',
+        type: String,
+        required: false,
+        description: 'Optional date in YYYY-MM-DD format. When provided, returns events for that specific day.',
+        example: '2026-08-31',
+    })
+    @ApiQuery({
+        name: 'q',
+        type: String,
+        required: false,
+        description: 'Optional text search query. Searches event title, description, and location. Example: "תג נכה", "רופא", "meeting".',
+        example: 'תג נכה',
+    })
     @ApiOkResponse({
         description: 'Events fetched successfully. Returns an array of calendar events (may be empty).',
     })
     @ApiUnauthorizedResponse({ description: 'JWT token missing or invalid.' })
     @ApiBadRequestResponse({ description: 'Calendar not connected. Complete the OAuth flow first via /calendar/auth.' })
-    async events(@Req() req: RequestWithUser) {
+    async events(@Req() req: RequestWithUser, @Query('date') date?: string, @Query('q') q?: string) {
         if (!req.user) {
             throw new UnauthorizedException();
         }
-        return this.calendarService.listEvents(req.user.sub);
+        return this.calendarService.listEvents(req.user.sub, date, q);
     }
 
     /**
