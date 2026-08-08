@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Put, Query, Req, UseGuards, ForbiddenException } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiOperation,
@@ -16,6 +17,7 @@ import { CustomApiOperationOptions } from '../../core/types/custom-api-operation
 import { UpdateMatchingPreferencesDto } from './dto/matching-preferences.dto';
 import { StrainHunterFetchResponseDto } from './dto/strain-hunter-fetch-response.dto';
 import { StrainHunterService } from './strain-hunter.service';
+import { UserRole } from '../../core/enums/user-role.enum';
 
 @ApiTags('strain-hunter')
 @ApiBearerAuth()
@@ -44,9 +46,13 @@ export class StrainHunterController {
   })
   @ApiBadRequestResponse({ description: 'The configured Jane source could not be fetched.' })
   @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
+  @ApiForbiddenResponse({ description: 'forceRefresh requires Admin role.' })
   @ApiInternalServerErrorResponse({ description: 'Unexpected server error.' })
-  fetchData(@Query('forceRefresh') forceRefresh?: string) {
+  fetchData(@Query('forceRefresh') forceRefresh: string | undefined, @Req() req: RequestWithUser) {
     const isForce = forceRefresh === 'true';
+    if (isForce && req.user?.role !== UserRole.Admin) {
+      throw new ForbiddenException('רענון נתונים כפוי מוגבל למנהלי מערכת');
+    }
     return this.strainHunterService.fetchData(isForce);
   }
 
