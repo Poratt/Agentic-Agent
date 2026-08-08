@@ -229,18 +229,20 @@
                                                         }
                                                     </td>
                                                     <td class="col-test">
-                                                        <button
-                                                            type="button"
-                                                            class="icon-only transparent-btn sm"
-                                                            [class.testing]="testingModelId() === model.id"
-                                                            [disabled]="testingModelId() === model.id"
-                                                            aria-label="Run test"
-                                                            appTooltip
-                                                            [text]="testingModelId() === model.id ? 'Testing...' : 'Test model'"
-                                                            (click)="testModel(model.id)"
-                                                        >
-                                                            <i class="ph ph-lightning"></i>
-                                                        </button>
+                                                        @if (isAdmin()) {
+                                                            <button
+                                                                type="button"
+                                                                class="icon-only transparent-btn sm"
+                                                                [class.testing]="testingModelId() === model.id"
+                                                                [disabled]="testingModelId() === model.id"
+                                                                aria-label="Run test"
+                                                                appTooltip
+                                                                [text]="testingModelId() === model.id ? 'Testing...' : 'Test model'"
+                                                                (click)="testModel(model.id)"
+                                                            >
+                                                                <i class="ph ph-lightning"></i>
+                                                            </button>
+                                                        }
                                                     </td>
                                                     <td class="col-actions-xs">
                                                         @if (isAdmin()) {
