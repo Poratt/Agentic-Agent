@@ -18,6 +18,8 @@ import { Tooltip, TooltipCategory } from '../../components/shared/tooltip/toolti
 import { ScoreTooltip } from '../../components/shared/score-tooltip/score-tooltip';
 import { MatchingPreferencesDrawer } from './matching-preferences-drawer/matching-preferences-drawer';
 import { TooltipDirective } from '../../core/directives/tooltip.directive';
+import { AuthStore } from '../../core/store/auth.store';
+import { UserRole } from '../../core/enums/user-role.enum';
 
 type ScoreTooltipPos = {
     breakdown: ScoreBreakdown;
@@ -122,6 +124,8 @@ export class StrainHunter implements OnInit {
     private matchingEngine = inject(MatchingEngineStore);
     private readonly terpeneStore = inject(TerpeneStore);
     private readonly geneticsStore = inject(GeneticsStore);
+    private readonly authStore = inject(AuthStore);
+    protected isAdmin = computed(() => this.authStore.userRole() === UserRole.Admin);
     private base = `${environment.apiUrl}/strain-hunter`;
     private table = viewChild<Table>('table');
     private requestSubscription: Subscription | null = null;

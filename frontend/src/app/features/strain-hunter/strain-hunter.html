@@ -69,17 +69,19 @@
                             (input)="applyGlobalFilter($event)"
                         />
                     </div>
-                    <button
-                        class="primary-btn icon-only"
-                        type="button"
-                        [disabled]="loading() || refreshing()"
-                        (click)="refresh()"
-                        aria-label="רענן נתונים"
-                        appTooltip
-                        text="רענן נתונים"
-                    >
-                        <span class="ph ph-arrows-clockwise" [class.spin-animation]="refreshing()"></span>
-                    </button>
+                    @if (isAdmin()) {
+                        <button
+                            class="primary-btn icon-only"
+                            type="button"
+                            [disabled]="loading() || refreshing()"
+                            (click)="refresh()"
+                            aria-label="רענן נתונים"
+                            appTooltip
+                            text="רענן נתונים"
+                        >
+                            <span class="ph ph-arrows-clockwise" [class.spin-animation]="refreshing()"></span>
+                        </button>
+                    }
                     <button
                         class="primary-btn icon-only"
                         type="button"
