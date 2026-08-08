@@ -45,6 +45,16 @@
 - **Verification:** `npm run build` backend ✅.
 - **Remaining High:** H7 (frontend role guard) is the only High item left.
 
+## 2026-08-08 Session — H7 closed (frontend role guard)
+
+- **H7 (frontend role guard):**Two-layer defense:
+  1. **Sidebar hiding** (`main-sidebar.ts`/`.html`): `isAdmin` computed from `authStore.userRole()`. "לוח בקרה" and "ניהול משתמשים" buttons wrapped in `@if (isAdmin())` — non-admin users don't see them at all.
+  2. **Route guard** (`role.guard.ts`): `CanActivateFn` that checks `route.data.roles` against `AuthStore.userRole()`. Applied to `/dashboard` and `/users` with `data: { roles: [UserRole.Admin] }`. Non-admin users navigating directly to these URLs are redirected to `/chat`.
+  - Redirect target `/chat` chosen over `/` to avoid infinite loop (`/` → `/dashboard` → roleGuard → `/` → ...).
+- **Files touched:** `main-sidebar.ts`, `main-sidebar.html`, `role.guard.ts` (new), `app.routes.ts`
+- **Verification:** `npx ng build` frontend ✅ (only pre-existing budget warnings).
+- **All 8 High findings are now closed.** Remaining work is Medium items (L11/L34/L36 — need migration) and deferred Low items.
+
 `82d9baa` ("skip SSRF validation in dev mode") was committed as part of a batch without individual review. It added a **total SSRF bypass** when `NODE_ENV !== 'production'` — not just localhost. Worse: if `NODE_ENV` is unset, the bypass activates silently. Caught and reverted (`021224b`) only because each commit was examined separately before closing the session.
 
 **Rule going forward:** Never merge a batch commit without reviewing every file diff individually, even if "everything works." This applies especially to security-sensitive code (guards, validators, encryption).
