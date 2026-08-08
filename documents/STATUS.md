@@ -13,7 +13,7 @@ Last updated: 2026-08-07
 | Severity | Total | Closed | Open |
 | -------- | ----- | ------ | ---- |
 | 🔴 Critical | 6 | **6** (C1, C2, C3, C4, C5, C6) | — |
-| 🟠 High | 8 | 6 (H1 ✅, H2 ✅, H3 ✅, H4 ✅, H5 ✅, H6 ✅) | H7 frontend role guard, H8 hardcoded admin seed |
+| 🟠 High | 8 | 7 (H1 ✅, H2 ✅, H3 ✅, H4 ✅, H5 ✅, H6 ✅, H8 ✅) | H7 frontend role guard |
 | 🟡 Medium | 22 | most via quick-wins (L2-L6, L8, L10, L12-L13, L20, L23-L25, L27, L29-L31) | L11 images→external storage, L34 sequence column, L36 status column (all need migration) |
 | 🟢 Low / Info | ~36 | most | L1 seeds (non-relevant), L28/L35 soft-delete sessions (deferred by user) |
 | 🔧 UX | 3 | 3 (calendar loop-breaker ✅, auth-url card ✅, q parameter ✅) | — |

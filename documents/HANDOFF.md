@@ -33,6 +33,18 @@
 - **Risk note:** ה-guard דוחה `?`/`#` בכל remainder — מקרים לגיטימיים עתידיים עם `?` בנתיב המוצהר יהיו false positive (מקובל). URL-encoding traversal (`%2e%2e`) מטופל על ידי שכבת ה-encoding.
 - **Remaining High:** H7 (frontend role guard) + H8 (hardcoded admin seed).
 
+## 2026-08-08 Session — H8 closed (hardcoded admin seed)
+
+- **H8 (hardcoded admin seed):** `user.seed.ts` now reads password from `ADMIN_PASSWORD` env. Behavior:
+  - **Env set:** uses the env value, logs only `Admin user created: admin@admin.com` (never prints the password).
+  - **Env not set + production:** generates a random 16-byte hex password, logs it ONCE with a warning to change it immediately.
+  - **Env not set + dev:** falls back to `changeme` (safe enough for localhost, preserves dev workflow).
+- Email stays `admin@admin.com` (it's an identifier, not a secret — visible in login UI anyway).
+- **Decision:** "require password change on first login" is deferred — it needs a DB flag + middleware + frontend prompt and is a separate feature. The env-var approach removes the hardcoded secret, which was the critical risk.
+- **Files touched:** `backend/src/core/seeds/user.seed.ts`
+- **Verification:** `npm run build` backend ✅.
+- **Remaining High:** H7 (frontend role guard) is the only High item left.
+
 `82d9baa` ("skip SSRF validation in dev mode") was committed as part of a batch without individual review. It added a **total SSRF bypass** when `NODE_ENV !== 'production'` — not just localhost. Worse: if `NODE_ENV` is unset, the bypass activates silently. Caught and reverted (`021224b`) only because each commit was examined separately before closing the session.
 
 **Rule going forward:** Never merge a batch commit without reviewing every file diff individually, even if "everything works." This applies especially to security-sensitive code (guards, validators, encryption).
