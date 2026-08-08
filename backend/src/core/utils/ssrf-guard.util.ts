@@ -29,13 +29,6 @@ export async function assertSafeUrl(url: string): Promise<void> {
     throw new SsrfError(`Invalid URL: ${url}`);
   }
 
-  // Non-production (local dev) allows http:// and private/local hosts so
-  // providers can point at http://localhost:<port>/v1. The full guard applies
-  // in production.
-  if (process.env.NODE_ENV !== 'production') {
-    return;
-  }
-
   const scheme = parsed.protocol.replace(':', '');
   if (scheme !== 'https') {
     throw new SsrfError(`Blocked: protocol '${scheme}' is not allowed (https only)`);
