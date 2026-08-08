@@ -47,9 +47,12 @@ export class SwaggerToolsParser {
    * appear in swagger-spec.json. The confirm-action endpoint is called
    * directly by the human via the UI — if the LLM can call it, it could
    * confirm its own dangerous actions (H3 self-confirmation bug).
+   * The query-stream endpoint is excluded too — the LLM calling it would
+   * spawn a nested full agent run with no depth limit (H5 recursion bug).
    */
   private static readonly HIDDEN_FROM_LLM = new Set([
     'AdminAgentController_confirmAction',
+    'AdminAgentController_streamChat',
   ]);
 
   getTools(): LlmToolSchema[] {
@@ -107,7 +110,10 @@ export class SwaggerToolsParser {
 
     for (const [key, value] of Object.entries(args || {})) {
       if (path.includes(`{${key}}`)) {
-        targetUrl = targetUrl.replace(`{${key}}`, String(value));
+        // H4 SSRF fix: percent-encode path-param values so LLM-supplied input
+        // can never add URL structure (/, ?, #, ...). Also encodes Hebrew
+        // names with spaces (e.g. 'גורילה גלו') correctly as UTF-8.
+        targetUrl = targetUrl.replace(`{${key}}`, encodeURIComponent(String(value)));
       } else if (method.toLowerCase() === 'get') {
         queryParams[key] = value;
       } else {

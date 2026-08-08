@@ -2,14 +2,14 @@ import { SwaggerToolsParser } from './swagger-tools.parser';
 import { Reflector } from '@nestjs/core';
 
 /**
- * C5 H3 — verify that getTools() excludes AdminAgentController_confirmAction
- * so the LLM cannot confirm its own dangerous actions.
+ * C5 H3 + H5 — verify that getTools() excludes AdminAgentController_confirmAction
+ * (LLM self-confirmation) and AdminAgentController_streamChat (agent recursion).
  *
  * The parser reads the real swagger-spec.json in its constructor, so tests
  * work against the actual spec rather than mocks. The denylist filter runs
- * after spec loading — if it works, tool count drops by exactly 1.
+ * after spec loading — if it works, tool count drops by exactly 2.
  */
-describe('SwaggerToolsParser — C5 H3: confirmAction hidden from LLM', () => {
+describe('SwaggerToolsParser — C5 H3 + H5: confirmAction + streamChat hidden from LLM', () => {
   let parser: SwaggerToolsParser;
   let toolNames: string[];
 
@@ -20,6 +20,10 @@ describe('SwaggerToolsParser — C5 H3: confirmAction hidden from LLM', () => {
 
   it('confirmAction is excluded from the LLM tool list', () => {
     expect(toolNames).not.toContain('AdminAgentController_confirmAction');
+  });
+
+  it('streamChat (query-stream) is excluded from the LLM tool list', () => {
+    expect(toolNames).not.toContain('AdminAgentController_streamChat');
   });
 
   it('dangerous operations are still exposed (no over-filtering)', () => {
@@ -35,10 +39,104 @@ describe('SwaggerToolsParser — C5 H3: confirmAction hidden from LLM', () => {
     expect(endpoint?.path).toContain('confirm-action');
   });
 
-  it('confirmAction is the only tool filtered (total = spec tools minus 1)', () => {
-    // The real spec loads 68 tools; with the denylist it should be 67
+  it('getEndpoint still returns streamChat metadata (UI calls it directly)', () => {
+    // The chat page calls query-stream directly — only the tool exposure is blocked
+    const endpoint = parser.getEndpoint('AdminAgentController_streamChat');
+    expect(endpoint).toBeDefined();
+    expect(endpoint?.path).toContain('query-stream');
+  });
+
+  it('confirmAction + streamChat are the only tools filtered (total = spec tools minus 2)', () => {
+    // The real spec loads 68 tools; with the denylist it should be 66
     // If someone adds more tools to the denylist, this test will need updating
-    expect(toolNames.length).toBeGreaterThanOrEqual(67);
-    expect(toolNames.length).toBeLessThanOrEqual(69); // tolerance for spec changes
+    expect(toolNames.length).toBeGreaterThanOrEqual(66);
+    expect(toolNames.length).toBeLessThanOrEqual(68); // tolerance for spec changes
+  });
+});
+
+/**
+ * H4 — SSRF/URL injection: resolveArguments must percent-encode path-param
+ * values (encodeURIComponent) so LLM-supplied input can never introduce URL
+ * structure characters (/, ?, #, ...) and escape the declared endpoint.
+ * Note: encodeURIComponent intentionally preserves '.' (RFC 3986 unreserved),
+ * so a value like '1/../../sessions/5' still contains literal '..' — but the
+ * slashes are %2F, so the whole value stays one encoded path segment and can
+ * never be parsed as path traversal or a different route.
+ */
+describe('SwaggerToolsParser — H4 SSRF/URL injection: path params are encoded', () => {
+  let parser: SwaggerToolsParser;
+
+  beforeAll(() => {
+    parser = new SwaggerToolsParser(new Reflector() as any);
+  });
+
+  it('encodes traversal input (1/../../sessions/5) — cannot escape the declared path', () => {
+    const { targetUrl } = parser.resolveArguments(
+      '/genetics/{name}',
+      'get',
+      { name: '1/../../sessions/5' },
+      'http://localhost:3000',
+    );
+
+    // No raw '/' can be forged, so no /sessions segment can ever be reached
+    expect(targetUrl).not.toContain('/sessions');
+    expect(targetUrl).toContain('%2F');
+    // The value stays a single encoded path segment
+    expect(targetUrl).toBe('http://localhost:3000/genetics/1%2F..%2F..%2Fsessions%2F5');
+  });
+
+  it('encodes query-injection characters (? and =)', () => {
+    const { targetUrl } = parser.resolveArguments(
+      '/genetics/{name}',
+      'get',
+      { name: 'x?admin=true' },
+      'http://localhost:3000',
+    );
+
+    // No raw '?' can start a query string beyond the declared path
+    expect(targetUrl).not.toContain('?admin=true');
+    expect(targetUrl).toContain('%3F');
+    expect(targetUrl).toBe('http://localhost:3000/genetics/x%3Fadmin%3Dtrue');
+  });
+
+  it('encodes Hebrew strain names with spaces (UTF-8 + %20)', () => {
+    const { targetUrl } = parser.resolveArguments(
+      '/genetics/{name}',
+      'get',
+      { name: 'גורילה גלו' },
+      'http://localhost:3000',
+    );
+
+    expect(targetUrl).toContain('%20');
+    expect(targetUrl).toContain('%D7%92'); // 'ג' as UTF-8
+    expect(targetUrl).toBe(
+      'http://localhost:3000/genetics/%D7%92%D7%95%D7%A8%D7%99%D7%9C%D7%94%20%D7%92%D7%9C%D7%95',
+    );
+  });
+
+  it('non-path args with GET still land in queryParams (unchanged behavior)', () => {
+    const { targetUrl, body, queryParams } = parser.resolveArguments(
+      '/genetics/{name}',
+      'get',
+      { name: 'strain1', limit: '10' },
+      'http://localhost:3000',
+    );
+
+    expect(targetUrl).toBe('http://localhost:3000/genetics/strain1');
+    expect(queryParams).toEqual({ limit: '10' });
+    expect(body).toEqual({});
+  });
+
+  it('non-path args with POST still land in body (unchanged behavior)', () => {
+    const { targetUrl, body, queryParams } = parser.resolveArguments(
+      '/users/{id}',
+      'post',
+      { id: '42', role: 'admin' },
+      'http://localhost:3000',
+    );
+
+    expect(targetUrl).toBe('http://localhost:3000/users/42');
+    expect(body).toEqual({ role: 'admin' });
+    expect(queryParams).toEqual({});
   });
 });

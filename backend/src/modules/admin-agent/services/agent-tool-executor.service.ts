@@ -235,6 +235,39 @@ export class AgentToolExecutorService {
     };
   }
 
+  /**
+   * H4 SSRF defense-in-depth: verifies the final resolved URL is still safe
+   * before the HTTP request is dispatched.
+   *
+   * Rejects:
+   * 1. Any URL that does not start with the base URL (scheme/host escape).
+   * 2. Any remainder after the base URL that contains `..` (path traversal)
+   *    or raw `?`/`#` (parameter injection).
+   *
+   * @param targetUrl - the fully resolved URL produced by SwaggerToolsParser.resolveArguments
+   * @param baseUrl - the trusted base URL the target must be anchored to
+   * @throws Error with a Hebrew security message when the URL is unsafe
+   */
+  private assertSafeTargetUrl(targetUrl: string, baseUrl: string): void {
+    if (!targetUrl.startsWith(baseUrl)) {
+      throw new Error(
+        `חסימת אבטחה (SSRF): כתובת היעד "${targetUrl}" חייבת להתחיל בכתובת הבסיס "${baseUrl}".`,
+      );
+    }
+
+    const remainder = targetUrl.slice(baseUrl.length);
+    if (
+      (remainder !== '' && !remainder.startsWith('/')) || // host-suffix escape, e.g. http://localhost:3000evil.com
+      remainder.includes('..') ||
+      remainder.includes('?') ||
+      remainder.includes('#')
+    ) {
+      throw new Error(
+        `חסימת אבטחה (SSRF): כתובת היעד "${targetUrl}" מכילה תווים או מבנה אסורים (.., ?, #) בנתיב שנפתר.`,
+      );
+    }
+  }
+
   async executeToolCall(call: LlmToolCall, userId: number, sessionId?: number): Promise<string> {
     if (this.mcpBridgeService.hasTool(call.function.name)) {
       let args: Record<string, any> = {};
@@ -305,6 +338,16 @@ export class AgentToolExecutorService {
       args,
       baseUrl,
     );
+
+    try {
+      this.assertSafeTargetUrl(resolved.targetUrl, baseUrl);
+    } catch (err: any) {
+      this.logger.error(`Security blocked unsafe target URL for "${call.function.name}": ${err.message}`);
+      return JSON.stringify({
+        error: err.message,
+        status: 403,
+      });
+    }
 
     this.logger.log(`Executing tool "${call.function.name}" -> [${endpointMeta.method.toUpperCase()}] ${resolved.targetUrl}`);
     const systemHeaders = await this.getSystemHeadersForUser(userId);
