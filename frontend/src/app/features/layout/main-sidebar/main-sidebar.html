@@ -4,14 +4,16 @@
     </div>
 
     <nav class="nav-list">
-        <button routerLink="/dashboard" routerLinkActive="active" class="nav-item" appTooltip [text]="collapsed() ? 'לוח בקרה' : ''">
-            <span class="ph ph-squares-four nav-icon"></span>
-            <span class="nav-label">לוח בקרה</span>
-        </button>
-        <button routerLink="/users" routerLinkActive="active" class="nav-item" appTooltip [text]="collapsed() ? 'ניהול משתמשים' : ''">
-            <span class="ph ph-users nav-icon"></span>
-            <span class="nav-label">ניהול משתמשים</span>
-        </button>
+        @if (isAdmin()) {
+            <button routerLink="/dashboard" routerLinkActive="active" class="nav-item" appTooltip [text]="collapsed() ? 'לוח בקרה' : ''">
+                <span class="ph ph-squares-four nav-icon"></span>
+                <span class="nav-label">לוח בקרה</span>
+            </button>
+            <button routerLink="/users" routerLinkActive="active" class="nav-item" appTooltip [text]="collapsed() ? 'ניהול משתמשים' : ''">
+                <span class="ph ph-users nav-icon"></span>
+                <span class="nav-label">ניהול משתמשים</span>
+            </button>
+        }
 
         <button
             routerLink="/strain-hunter"

@@ -3,6 +3,8 @@ import { Login } from './features/auth/login/login';
 import { Register } from './features/auth/register/register';
 import { MainLayout } from './features/layout/main-layout/main-layout';
 import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
+import { UserRole } from './core/enums/user-role.enum';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -12,8 +14,8 @@ export const routes: Routes = [
     canActivate: [authGuard],
     component: MainLayout,
     children: [
-      { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard').then(m => m.Dashboard) },
-      { path: 'users', loadComponent: () => import('./features/users/users-management').then(m => m.UsersManagement) },
+      { path: 'dashboard', canActivate: [roleGuard], data: { roles: [UserRole.Admin] }, loadComponent: () => import('./features/dashboard/dashboard').then(m => m.Dashboard) },
+      { path: 'users', canActivate: [roleGuard], data: { roles: [UserRole.Admin] }, loadComponent: () => import('./features/users/users-management').then(m => m.UsersManagement) },
       { path: 'strain-hunter', loadComponent: () => import('./features/strain-hunter/strain-hunter').then(m => m.StrainHunter) },
       { path: 'chat', loadComponent: () => import('./features/chat/chat/chat').then(m => m.Chat) },
       { path: 'chat/history', loadComponent: () => import('./features/chat/chat-history/chat-history').then(m => m.ChatHistory) },

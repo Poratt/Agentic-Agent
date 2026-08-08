@@ -4,6 +4,7 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthStore } from '../../../core/store/auth.store';
 import { ChatStore } from '../../../core/store/chat.store';
 import { TooltipDirective } from '../../../core/directives/tooltip.directive';
+import { UserRole } from '../../../core/enums/user-role.enum';
 import { Dropdown } from '../../../components/shared/dropdown/dropdown';
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed';
@@ -20,6 +21,7 @@ export class MainSidebar implements OnInit {
     protected authStore = inject(AuthStore);
     protected chatStore = inject(ChatStore);
     protected router = inject(Router);
+    protected isAdmin = computed(() => this.authStore.userRole() === UserRole.Admin);
 
     @ViewChild('chatDropdown') chatDropdown?: Dropdown;
 
