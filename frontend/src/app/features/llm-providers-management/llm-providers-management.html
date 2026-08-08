@@ -44,10 +44,12 @@
                             </span>
                         </div>
                     </div>
-                    <button type="button" class="primary-btn filled sm" (click)="openAddProviderDialog()">
-                        <i class="ph ph-plus"></i>
-                        Add Provider
-                    </button>
+                    @if (isAdmin()) {
+                        <button type="button" class="primary-btn filled sm" (click)="openAddProviderDialog()">
+                            <i class="ph ph-plus"></i>
+                            Add Provider
+                        </button>
+                    }
                 </div>
             </div>
 
@@ -82,28 +84,30 @@
                             <td class="row-meta row-meta--mono">{{ provider.baseUrl }}</td>
                             <td class="col-count count-value">{{ provider.modelsCount }}</td>
                             <td class="col-actions">
-                                <div class="row-actions">
-                                    <button
-                                        type="button"
-                                        class="icon-only transparent-btn"
-                                        aria-label="Edit"
-                                        appTooltip
-                                        [text]="'Edit provider'"
-                                        (click)="openEditProviderDialog(provider)"
-                                    >
-                                        <i class="ph ph-pencil-simple"></i>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="icon-only danger-btn"
-                                        aria-label="Delete"
-                                        appTooltip
-                                        [text]="'Delete provider'"
-                                        (click)="deleteProvider(provider.id)"
-                                    >
-                                        <i class="ph ph-trash"></i>
-                                    </button>
-                                </div>
+                                @if (isAdmin()) {
+                                    <div class="row-actions">
+                                        <button
+                                            type="button"
+                                            class="icon-only transparent-btn"
+                                            aria-label="Edit"
+                                            appTooltip
+                                            [text]="'Edit provider'"
+                                            (click)="openEditProviderDialog(provider)"
+                                        >
+                                            <i class="ph ph-pencil-simple"></i>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="icon-only danger-btn"
+                                            aria-label="Delete"
+                                            appTooltip
+                                            [text]="'Delete provider'"
+                                            (click)="deleteProvider(provider.id)"
+                                        >
+                                            <i class="ph ph-trash"></i>
+                                        </button>
+                                    </div>
+                                }
                             </td>
                         </tr>
 
@@ -114,25 +118,29 @@
                                         <div class="empty-state">
                                             <span class="ph ph-cube-simple"></span>
                                             <p>No models configured for this provider.</p>
-                                            <button type="button" class="primary-btn filled sm" (click)="openAddModelDialog(provider.id)">
-                                                <i class="ph ph-plus"></i>
-                                                Add Model
-                                            </button>
+                                            @if (isAdmin()) {
+                                                <button type="button" class="primary-btn filled sm" (click)="openAddModelDialog(provider.id)">
+                                                    <i class="ph ph-plus"></i>
+                                                    Add Model
+                                                </button>
+                                            }
                                         </div>
                                     } @else {
                                         <div class="panel-header compact">
                                             <span class="panel-title muted">Models</span>
-                                            <button
-                                                type="button"
-                                                class="primary-btn filled sm"
-                                                (click)="openAddModelDialog(provider.id)"
-                                                aria-label="Add model"
-                                                appTooltip
-                                                [text]="'Add model'"
-                                            >
-                                                <i class="ph ph-plus"></i>
-                                                Add Model
-                                            </button>
+                                            @if (isAdmin()) {
+                                                <button
+                                                    type="button"
+                                                    class="primary-btn filled sm"
+                                                    (click)="openAddModelDialog(provider.id)"
+                                                    aria-label="Add model"
+                                                    appTooltip
+                                                    [text]="'Add model'"
+                                                >
+                                                    <i class="ph ph-plus"></i>
+                                                    Add Model
+                                                </button>
+                                            }
                                         </div>
 
                                         <p-table
@@ -235,7 +243,8 @@
                                                         </button>
                                                     </td>
                                                     <td class="col-actions-xs">
-                                                        <div class="row-actions">
+                                                        @if (isAdmin()) {
+                                                            <div class="row-actions">
                                                             <button
                                                                 type="button"
                                                                 class="icon-only accent-btn sm"
@@ -275,7 +284,8 @@
                                                             >
                                                                 <i class="ph ph-trash"></i>
                                                             </button>
-                                                        </div>
+                                                            </div>
+                                                        }
                                                     </td>
                                                 </tr>
 
@@ -290,22 +300,24 @@
                                                                         <th>Status</th>
                                                                         <th>Log output</th>
                                                                         <th class="col-actions-xs">
-                                                                            <button
-                                                                                type="button"
-                                                                                class="icon-only danger-btn sm"
-                                                                                aria-label="Delete all test results"
-                                                                                appTooltip
-                                                                                [text]="'Delete all test results'"
-                                                                                (click)="
-                                                                                    deleteAllTestResults(
-                                                                                        provider.id,
-                                                                                        model.id,
-                                                                                        model.testResults.length
-                                                                                    )
-                                                                                "
-                                                                            >
-                                                                                <i class="ph ph-trash"></i>
-                                                                            </button>
+                                                                            @if (isAdmin()) {
+                                                                                <button
+                                                                                    type="button"
+                                                                                    class="icon-only danger-btn sm"
+                                                                                    aria-label="Delete all test results"
+                                                                                    appTooltip
+                                                                                    [text]="'Delete all test results'"
+                                                                                    (click)="
+                                                                                        deleteAllTestResults(
+                                                                                            provider.id,
+                                                                                            model.id,
+                                                                                            model.testResults.length
+                                                                                        )
+                                                                                    "
+                                                                                >
+                                                                                    <i class="ph ph-trash"></i>
+                                                                                </button>
+                                                                            }
                                                                         </th>
                                                                     </tr>
                                                                 </thead>
@@ -334,18 +346,20 @@
                                                                                 {{ result.errorMessage || 'OK' }}
                                                                             </td>
                                                                             <td class="col-actions-xs">
-                                                                                <button
-                                                                                    type="button"
-                                                                                    class="icon-only danger-btn sm"
-                                                                                    aria-label="Delete test result"
-                                                                                    appTooltip
-                                                                                    [text]="'Delete test result'"
-                                                                                    (click)="
-                                                                                        deleteTestResult(provider.id, model.id, result.id)
-                                                                                    "
-                                                                                >
-                                                                                    <i class="ph ph-trash"></i>
-                                                                                </button>
+                                                                                @if (isAdmin()) {
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        class="icon-only danger-btn sm"
+                                                                                        aria-label="Delete test result"
+                                                                                        appTooltip
+                                                                                        [text]="'Delete test result'"
+                                                                                        (click)="
+                                                                                            deleteTestResult(provider.id, model.id, result.id)
+                                                                                        "
+                                                                                    >
+                                                                                        <i class="ph ph-trash"></i>
+                                                                                    </button>
+                                                                                }
                                                                             </td>
                                                                         </tr>
                                                                     }
@@ -362,14 +376,16 @@
                                                         <div class="empty-state">
                                                             <span class="ph ph-cube-simple"></span>
                                                             <p>No models yet.</p>
-                                                            <button
-                                                                type="button"
-                                                                class="primary-btn filled sm"
-                                                                (click)="openAddModelDialog(provider.id)"
-                                                            >
-                                                                <i class="ph ph-plus"></i>
-                                                                Add Model
-                                                            </button>
+                                                            @if (isAdmin()) {
+                                                                <button
+                                                                    type="button"
+                                                                    class="primary-btn filled sm"
+                                                                    (click)="openAddModelDialog(provider.id)"
+                                                                >
+                                                                    <i class="ph ph-plus"></i>
+                                                                    Add Model
+                                                                </button>
+                                                            }
                                                         </div>
                                                     </td>
                                                 </tr>

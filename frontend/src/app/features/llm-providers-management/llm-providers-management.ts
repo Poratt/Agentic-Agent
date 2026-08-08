@@ -10,6 +10,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { Confirmation, ConfirmationService, MessageService } from 'primeng/api';
 import { AuthStore } from '../../core/store/auth.store';
+import { UserRole } from '../../core/enums/user-role.enum';
 import { LlmProviderStore } from '../../core/store/llm-provider.store';
 import { PageStates } from '../../core/enums/page-states.enum';
 import { BadgeColor } from '../../core/directives/badge-color.directive';
@@ -96,6 +97,7 @@ export class LlmProvidersManagement implements OnInit {
     expandedModels = signal<Record<number, boolean>>({});
 
     pageState = computed(() => this.llmProviderStore.pageState());
+    isAdmin = computed(() => this.authStore.userRole() === UserRole.Admin);
 
     llmProviders = computed<LlmProviderView[]>(() => {
         const providers = this.llmProviderStore.providers().filter(p => p.active);

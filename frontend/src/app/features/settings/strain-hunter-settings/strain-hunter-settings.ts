@@ -16,6 +16,8 @@ import { IGenetics } from '../../../core/models/genetics.interface';
 import { ITerpene } from '../../../core/models/terpene.interface';
 import { confirmationDialogSettings } from '../../../core/config/confirmation-dialog-settings';
 import { TooltipDirective } from '../../../core/directives/tooltip.directive';
+import { AuthStore } from '../../../core/store/auth.store';
+import { UserRole } from '../../../core/enums/user-role.enum';
 
 @Component({
     selector: 'app-strain-hunter-settings',
@@ -32,6 +34,8 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
     private readonly terpeneService = inject(TerpeneService);
     private readonly confirmService = inject(ConfirmationService);
     private readonly messageService = inject(MessageService);
+    private readonly authStore = inject(AuthStore);
+    protected isAdmin = computed(() => this.authStore.userRole() === UserRole.Admin);
     private readonly mql = window.matchMedia('(max-width: 1599px)');
     private readonly mqlHandler = () => this.isCompact.set(this.mql.matches);
 

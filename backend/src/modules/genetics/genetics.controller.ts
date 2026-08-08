@@ -15,6 +15,7 @@ import {
     ApiBody,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
+import { AdminGuard } from '../../core/guards/admin.guard';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { GeneticsService } from './genetics.service';
 import { GeneticsListResultResponseDto } from './dto/genetics-list-result-response.dto';
@@ -134,6 +135,7 @@ export class GeneticsController {
      * @throws 500 on unexpected database or server failure.
      */
     @Post()
+    @UseGuards(AdminGuard)
     @ApiOperation({
         summary: 'Create a new genetics record',
         summaryHe: 'יוצרים גנטיקה חדשה בקטלוג המערכת',
@@ -190,6 +192,7 @@ export class GeneticsController {
      * @throws 500 on unexpected database or server failure.
      */
     @Patch(':name')
+    @UseGuards(AdminGuard)
     @ApiOperation({
         summary: 'Update a genetics record by name',
         summaryHe: 'מעדכנים את מאפייני הגנטיקה של זן קיים לפי שמו',
@@ -236,6 +239,7 @@ export class GeneticsController {
     }
 
     @Post(':name/enrich')
+    @UseGuards(AdminGuard)
     @ApiOperation({
         summary: 'Enrich a single genetics record',
         summaryHe: 'מעשירים זן גנטיקה בודד בפרטים ונתוני מעבדה מבוססי AI',
@@ -267,6 +271,7 @@ export class GeneticsController {
     }
 
     @Post('enrich-missing')
+    @UseGuards(AdminGuard)
     @ApiOperation({
         summary: 'Enrich all genetics with missing properties (thcRange, terpenes, effects).',
         summaryHe: 'מפעילים סריקה והעשרה אוטומטית לכל הזנים שחסר להם מידע מבוסס AI',
@@ -285,7 +290,7 @@ export class GeneticsController {
     }
 
     @Delete(':name')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(AdminGuard)
     @ApiOperation({
         summary: 'Delete a genetics strain by name.',
         summaryHe: 'מחוקים זן גנטיקה לצמיות מקטלוג',

@@ -15,6 +15,7 @@ import {
     ApiBody,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
+import { AdminGuard } from '../../core/guards/admin.guard';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { TerpeneService } from './terpene.service';
 import { TerpeneListResultResponseDto } from './dto/terpene-list-result-response.dto';
@@ -155,6 +156,7 @@ export class TerpeneController {
      * @throws 500 on unexpected database or server failure.
      */
     @Post()
+    @UseGuards(AdminGuard)
     @ApiOperation({
         summary: 'Create a new terpene',
         summaryHe: 'יוצרים טרפן חדש בקטלוג המערכת',
@@ -203,6 +205,7 @@ export class TerpeneController {
      * @throws 500 on unexpected database or server failure.
      */
     @Patch(':name')
+    @UseGuards(AdminGuard)
     @ApiOperation({
         summary: 'Update a terpene by name',
         summaryHe: 'מעדכנים את המאפיינים, הריח וההשפעות של טרפן קיים',
@@ -250,6 +253,7 @@ export class TerpeneController {
     }
 
     @Post(':name/enrich')
+    @UseGuards(AdminGuard)
     @ApiOperation({
         summary: 'Enrich a single terpene',
         summaryHe: 'מעשירים טרפן בודד בפרטי ארומה והשפעות מבוססי AI',
@@ -281,6 +285,7 @@ export class TerpeneController {
     }
 
     @Post('enrich-missing')
+    @UseGuards(AdminGuard)
     @ApiOperation({
         summary: 'Enrich all terpenes with missing properties (description, scent, effects).',
         summaryHe: 'מפעילים סריקה והעשרה אוטומטית לכל הטרפנים שחסר להם מידע מבוסס AI',
@@ -299,7 +304,7 @@ export class TerpeneController {
     }
 
     @Delete(':name')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(AdminGuard)
     @ApiOperation({
         summary: 'Delete a terpene by name.',
         summaryHe: 'מחוקים טרפן לצמיות מקטלוג המערכת',
