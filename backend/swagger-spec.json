@@ -2105,6 +2105,9 @@
           "401": {
             "description": "Missing or expired JWT token."
           },
+          "403": {
+            "description": "forceRefresh requires Admin role."
+          },
           "500": {
             "description": "Unexpected server error."
           }

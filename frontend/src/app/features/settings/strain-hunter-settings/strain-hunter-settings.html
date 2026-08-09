@@ -128,12 +128,12 @@
                             </td>
                         </tr>
                         @if (isGeneticsExpanded(g.id)) {
-                            <tr class="expand-panel-row">
+                            <tr class="expand-panel-row" [style.--dot-color]="getThemeColor(g)">
                                 <td colspan="9" class="expand-panel-cell">
                                     <div class="expand-panel">
                                         <div class="panel-header section">
                                             <span class="panel-title primary">
-                                                <span class="color-dot sm" [style.--dot-color]="getThemeColor(g)"></span>
+                                                <span class="color-dot sm"></span>
                                                 {{ g.name }}
                                             </span>
 
@@ -152,7 +152,11 @@
                                                         }
                                                         Regenerate
                                                     </button>
-                                                    <button type="button" class="danger-btn outlined sm" (click)="deleteGenetics(g); $event.stopPropagation()">
+                                                    <button
+                                                        type="button"
+                                                        class="danger-btn outlined sm"
+                                                        (click)="deleteGenetics(g); $event.stopPropagation()"
+                                                    >
                                                         <i class="ph ph-trash"></i>
                                                     </button>
                                                 }
@@ -449,7 +453,11 @@
                                                         }
                                                         Regenerate
                                                     </button>
-                                                    <button type="button" class="danger-btn outlined sm" (click)="deleteTerpene(t); $event.stopPropagation()">
+                                                    <button
+                                                        type="button"
+                                                        class="danger-btn outlined sm"
+                                                        (click)="deleteTerpene(t); $event.stopPropagation()"
+                                                    >
                                                         <i class="ph ph-trash"></i>
                                                     </button>
                                                 }

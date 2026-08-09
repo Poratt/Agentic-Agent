@@ -1,7 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { google } from 'googleapis';
+import { google, calendar_v3 } from 'googleapis';
 import { randomBytes } from 'crypto';
 
 import { EncryptionService } from '../../core/services/encryption.service';
@@ -11,6 +11,8 @@ const STATE_TTL_MS = 10 * 60 * 1000; // OAuth state is valid for 10 minutes
 
 @Injectable()
 export class GoogleCalendarService {
+  private readonly logger = new Logger(GoogleCalendarService.name);
+
   constructor(
     @InjectRepository(GoogleCalendarTokenEntity)
     private readonly tokenRepo: Repository<GoogleCalendarTokenEntity>,
@@ -138,26 +140,58 @@ export class GoogleCalendarService {
     let timeMax: Date;
 
     if (date) {
-      // Specific date requested: fetch the full day
+      // Specific date requested: fetch the full day in local midnight boundaries.
+      // Use month arithmetic (not +86400000ms) to stay correct across DST transitions.
       const target = new Date(date);
       timeMin = new Date(target.getFullYear(), target.getMonth(), target.getDate());
-      timeMax = new Date(timeMin.getTime() + 24 * 60 * 60 * 1000);
+      timeMax = new Date(target.getFullYear(), target.getMonth(), target.getDate() + 1);
+    } else if (q) {
+      // Text search with no date: scan −1 month → +1 year so both past
+      // ("מה היה לי אתמול") and far-future ("פג תוקף תג נכה" months away)
+      // events are included. Uses month arithmetic to avoid DST/leap drift.
+      timeMin = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      timeMax = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
     } else {
-      // No date specified: today → +7 days
+      // No date and no query: today → +7 days (default overview).
       timeMin = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      timeMax = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      timeMax = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
     }
 
-    const res = await calendar.events.list({
-      calendarId: 'primary',
-      timeMin: timeMin.toISOString(),
-      timeMax: timeMax.toISOString(),
-      maxResults: 20,
-      singleEvents: true,
-      orderBy: 'startTime',
-      q: q || undefined, // Add text search query if provided
-    });
-    return res.data.items;
+    // For q-scans paginate until nextPageToken is exhausted — the API reliably
+    // stops returning tokens at the end of the result set.
+    // Hard cap at 10 000 total items to prevent flooding LLM context on calendars
+    // with many recurring events (e.g. daily meetings × 13 months).
+    // Non-q calls use a single page (20-event overview).
+    const MAX_ITEMS = 10_000;
+    const allItems: calendar_v3.Schema$Event[] = [];
+    let pageToken: string | undefined;
+
+    do {
+      const res = await calendar.events.list({
+        calendarId: 'primary',
+        timeMin: timeMin.toISOString(),
+        timeMax: timeMax.toISOString(),
+        // 2500 is the Google Calendar API maximum per page.
+        maxResults: q ? 2500 : 20,
+        singleEvents: true,
+        orderBy: 'startTime',
+        q: q || undefined,
+        pageToken,
+      });
+
+      allItems.push(...(res.data.items ?? []));
+      pageToken = res.data.nextPageToken ?? undefined;
+
+      // Non-q calls never need pagination.
+      if (!q) break;
+
+      if (allItems.length >= MAX_ITEMS) {
+        this.logger.warn(`q-scan reached ${MAX_ITEMS}-item cap; remaining pages skipped.`);
+        break;
+      }
+    } while (pageToken);
+
+    return allItems;
   }
 
   async createEvent(

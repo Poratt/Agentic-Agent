@@ -73,6 +73,8 @@ export type LlmToolCall = {
 export type LlmResponse = {
   content: string | null;
   toolCalls?: LlmToolCall[];
+  finishReason?: string | null;
+  rawCompletion?: unknown;
 };
 
 export type LlmMessage =

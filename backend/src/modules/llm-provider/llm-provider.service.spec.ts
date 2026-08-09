@@ -6,6 +6,7 @@ function makeService(mockDelete: jest.Mock): LlmProviderService {
     {} as any,
     {} as any,
     { delete: mockDelete } as any,
+    {} as any,
   );
   return svc;
 }

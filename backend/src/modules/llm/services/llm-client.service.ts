@@ -74,10 +74,11 @@ export class LlmClientService {
     const message = completion.choices[0].message;
     const content = typeof message?.content === 'string' ? message.content : null;
     const toolCalls = (message.tool_calls || []) as LlmToolCall[];
+    const finishReason = completion.choices[0]?.finish_reason ?? null;
 
     this.logger.log(`Response OK: content=${content?.length ?? 0} chars: ${content?.slice(0, 200)}... toolCalls=${toolCalls.length}`);
-    this.logger.log(`[RESPONSE] provider=${dbProvider.key} (${dbProvider.label}) model=${activeModel} tokens=${content?.length ?? 0}`);
-    return { content, toolCalls };
+    this.logger.log(`[RESPONSE] provider=${dbProvider.key} (${dbProvider.label}) model=${activeModel} tokens=${content?.length ?? 0} finish_reason=${finishReason}`);
+    return { content, toolCalls, finishReason, rawCompletion: completion };
   }
 
   async *generateStream(llmRequest: LlmRequest): AsyncIterable<string> {

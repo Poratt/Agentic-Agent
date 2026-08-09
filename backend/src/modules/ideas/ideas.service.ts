@@ -149,6 +149,15 @@ export class IdeasService {
         providerOverride,
         modelOverride,
       });
+
+      // RAW DEBUG LOG
+      this.logger.log(`[SIGNALS RAW] finish_reason=${res.finishReason} content_length=${res.content?.length ?? 0}`);
+      if (!res.content || res.content.length === 0) {
+        this.logger.warn(`[SIGNALS RAW] EMPTY content — rawCompletion=${JSON.stringify(res.rawCompletion).slice(0, 500)}`);
+      } else {
+        this.logger.log(`[SIGNALS RAW] content=${res.content.slice(0, 300)}`);
+      }
+
       const signals = parseLlmJson<Signal[]>(res.content, 'ideas-signals');
       if (!signals || !Array.isArray(signals) || signals.length === 0) {
         throw new Error('empty signals');
@@ -280,11 +289,20 @@ export class IdeasService {
       const res = await this.llm.generateResponse({
         prompt,
         systemContext: VALIDATION_PROMPT,
-        maxTokens: 1024,
+        maxTokens: 3072,
         userId,
         providerOverride,
         modelOverride,
       });
+
+      // RAW DEBUG LOG
+      this.logger.log(`[VALIDATION RAW] idea="${idea.title}" finish_reason=${res.finishReason} content_length=${res.content?.length ?? 0}`);
+      if (res.content && res.content.length > 0) {
+        this.logger.log(`[VALIDATION RAW] content=${res.content}`);
+      } else {
+        this.logger.warn(`[VALIDATION RAW] EMPTY content — rawCompletion=${JSON.stringify(res.rawCompletion).slice(0, 500)}`);
+      }
+
       const v = parseLlmJson<ValidationResult>(res.content, 'ideas-validation');
       if (!v) {
         throw new Error('invalid validation JSON');
@@ -299,6 +317,15 @@ export class IdeasService {
           }
         : undefined;
 
+      // Sanity check: if competition=3 (no competitors) but competitors list is not empty → clamp down
+      const competitors = v.competitors ?? [];
+      if (breakdown && breakdown.competition === 3 && competitors.length > 0) {
+        this.logger.warn(
+          `[SANITY] "${idea.title}": competition=3 but ${competitors.length} competitors found → clamping to ${Math.min(2, competitors.length)} `,
+        );
+        breakdown.competition = Math.min(2, competitors.length);
+      }
+
       const computedScore = breakdown
         ? breakdown.competition + breakdown.signalFit + breakdown.feasibility + breakdown.marketSize
         : this.clampScore(v.validationScore);
@@ -311,7 +338,7 @@ export class IdeasService {
         validationBreakdown: breakdown,
         validationReason: v.validationReason ?? '',
         risks: v.risks ?? [],
-        competitors: v.competitors ?? [],
+        competitors,
         nextSteps: v.nextSteps ?? [],
         signalsReferenced: v.signalsReferenced ?? [],
         groundedInSignals: signals.length > 0,

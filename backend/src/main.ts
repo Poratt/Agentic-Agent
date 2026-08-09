@@ -6,7 +6,8 @@ import { json } from 'body-parser';
 import { AppModule } from './app.module';
 import { seedAdmin } from './core/seeds/user.seed';
 import { seedLlmProviders } from './core/seeds/llm-providers.seed';
-// import { seedGenetics } from './modules/genetics/seeds/genetics.seed';
+import { seedTerpenes } from './core/seeds/terpene.seed';
+import { seedGenetics } from './core/seeds/genetics.seed';
 import { DataSource } from 'typeorm';
 import * as fs from 'fs';
 import { LlmModelEntity } from './modules/llm-provider/entities/llm-model.entity';
@@ -82,8 +83,9 @@ async function bootstrap() {
 
   const dataSource = app.get(DataSource);
   await seedAdmin(dataSource);
+  await seedTerpenes(dataSource);
+  await seedGenetics(dataSource);
   // await seedLlmProviders(dataSource);
-  // await seedGenetics(dataSource);
 
   const port = process.env.PORT || 3000;
   await app.listen(port);

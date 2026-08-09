@@ -2,12 +2,16 @@ import { lookup } from 'dns';
 import ipaddr from 'ipaddr.js';
 
 const BLOCKED_HOSTNAMES = new Set([
+  '169.254.169.254',
+  'metadata.google.internal',
+]);
+
+// Allow localhost/loopback in development for local services like OmniRoute
+const LOCALHOST_HOSTNAMES = new Set([
   'localhost',
   '127.0.0.1',
   '0.0.0.0',
   '::1',
-  '169.254.169.254',
-  'metadata.google.internal',
 ]);
 
 const BLOCKED_RANGES = new Set(['private', 'linkLocal', 'loopback', 'unspecified']);
@@ -30,11 +34,18 @@ export async function assertSafeUrl(url: string): Promise<void> {
   }
 
   const scheme = parsed.protocol.replace(':', '');
+  const hostname = parsed.hostname.toLowerCase();
+  const isDev = process.env.NODE_ENV !== 'production';
+  const isLocalhost = LOCALHOST_HOSTNAMES.has(hostname);
+
+  // Allow HTTP + localhost in development for local services (OmniRoute, etc.)
+  if (isDev && isLocalhost) {
+    return; // Skip all checks for localhost in dev
+  }
+
   if (scheme !== 'https') {
     throw new SsrfError(`Blocked: protocol '${scheme}' is not allowed (https only)`);
   }
-
-  const hostname = parsed.hostname.toLowerCase();
 
   // 2. Fast hostname blocklist (no DNS needed)
   if (BLOCKED_HOSTNAMES.has(hostname)) {

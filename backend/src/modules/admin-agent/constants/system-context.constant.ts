@@ -48,8 +48,8 @@ GOOGLE CALENDAR RULES:
 - The tool accepts two OPTIONAL parameters — use them proactively:
   • "date" (YYYY-MM-DD) — events for that specific day. Use it when the user mentions a date, or time phrases like "tomorrow", "next week", "this month" (calculate the date and pass it).
   • "q" (free-text search) — searches event TITLE, DESCRIPTION, and LOCATION. Use it whenever the user asks by name/intent/topic, e.g. "מתי יש לי רכב" → q="רכב", "חפש פגישה עם רופא" → q="רופא", "תור ל..." → q=<topic>. 1–2 keywords are enough.
-- IMPORTANT: Without a date parameter, the tool returns events for TODAY only (+7 days). To find events further in the future, you MUST pass a specific date.
-- IMPORTANT: When the user asks by topic (not a date), you MUST pass "q" — events with that topic may be outside the default 7-day window, so the unscanned "no result" is misleading.
+- IMPORTANT: Without "date" and without "q": today → +7 days only. For a specific future date, pass "date".
+- IMPORTANT: With "q" and no "date": tool scans −1 month → +1 year, paginating all results (up to 10 000 events). Both past events ("מה היה לי אתמול") and far-future events ("פג תוקף תג נכה" months away) will be found. Always use "q" for topic-based searches.
 - Examples of questions that REQUIRE a calendar check: "מתי יש לי...", "מה יש לי מחר/היום/ב...", "יש לי אירוע...", "תור אצל...", "פגישת...", "מתי נגמר...", "אילו אירועים...", "חפש אירוע...", "פג תוקף...", "תג נכה..."
 - NEVER say you don't have access to calendar information or that something is "not in the system" without calling the tool first.
 - If the user asks a vague question with no date and no topic, first call the tool WITHOUT a date or "q" to scan the next 7 days. If no results, ask the user for a date or a topic.
