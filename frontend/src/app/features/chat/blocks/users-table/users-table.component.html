@@ -10,8 +10,8 @@
             <span>לא נמצאו משתמשים.</span>
         </div>
     } @else {
-        <p-table [value]="sortedUsers()" [tableStyle]="{ width: '100%' }" styleClass="users-prime-table">
-            <ng-template pTemplate="header">
+        <p-table [value]="sortedUsers()" [tableStyle]="{ width: '100%' }" class="users-prime-table">
+            <ng-template #header>
                 <tr>
                     <th><span class="ph ph-hash"></span></th>
                     <th>שם מלא</th>
@@ -20,7 +20,7 @@
                     <th>נוצר בתאריך</th>
                 </tr>
             </ng-template>
-            <ng-template pTemplate="body" let-user>
+            <ng-template #body let-user>
                 <tr>
                     <td class="cell-id">{{ user.id }}</td>
                     <td>{{ user.fullName }}</td>

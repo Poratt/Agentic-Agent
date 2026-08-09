@@ -369,7 +369,7 @@
     .summary-value {
       /* font-family: var(--font-code); */
       font-variant-numeric: tabular-nums;
-  font-weight: 400;
+      font-weight: 400;
       color: var(--color-text-primary);
       font-size: var(--font-size-xxs);
 

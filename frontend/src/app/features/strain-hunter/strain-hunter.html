@@ -223,7 +223,7 @@
                     scrollHeight="flex"
                     (sortFunction)="sortTable($event)"
                 >
-                    <ng-template pTemplate="header">
+                    <ng-template #header>
                         <tr>
                             @for (column of columns(); track column) {
                                 <th [pSortableColumn]="column">
@@ -233,7 +233,7 @@
                             }
                         </tr>
                     </ng-template>
-                    <ng-template pTemplate="body" let-item>
+                    <ng-template #body let-item>
                         <tr>
                             @for (column of columns(); track column) {
                                 <td>
@@ -533,7 +533,7 @@
                         </tr>
                     </ng-template>
 
-                    <ng-template pTemplate="emptymessage">
+                    <ng-template #emptymessage>
                         <tr>
                             <td [attr.colspan]="columns().length">לא נמצאו תוצאות.</td>
                         </tr>

@@ -55,7 +55,7 @@
 
             <div class="glass-effect card table-container">
                 <p-table #table [value]="llmProviders()" dataKey="id" [globalFilterFields]="globalFilterFields" [rowHover]="true">
-                    <ng-template pTemplate="header">
+                    <ng-template #header>
                         <tr>
                             <th class="col-expand"></th>
                             <th pSortableColumn="key">Name <p-sortIcon field="key" /></th>
@@ -65,7 +65,7 @@
                         </tr>
                     </ng-template>
 
-                    <ng-template pTemplate="body" let-provider>
+                    <ng-template #body let-provider>
                         <tr>
                             <td class="col-expand">
                                 <button
@@ -152,7 +152,7 @@
                                             [sortOrder]="-1"
                                             sortMode="single"
                                         >
-                                            <ng-template pTemplate="header">
+                                            <ng-template #header>
                                                 <tr>
                                                     <th class="col-expand xs"></th>
                                                     <th pSortableColumn="label">Model <p-sortIcon field="label" /></th>
@@ -167,7 +167,7 @@
                                                 </tr>
                                             </ng-template>
 
-                                            <ng-template pTemplate="body" let-model>
+                                            <ng-template #body let-model>
                                                 <tr>
                                                     <td class="col-expand xs">
                                                         @if (model.hasTests) {
@@ -372,7 +372,7 @@
                                                 }
                                             </ng-template>
 
-                                            <ng-template pTemplate="empty">
+                                            <ng-template #emptymessage>
                                                 <tr>
                                                     <td colspan="6" class="empty-cell">
                                                         <div class="empty-state">
@@ -464,7 +464,7 @@
         </div>
     </form>
 
-    <ng-template pTemplate="footer">
+    <ng-template #footer>
         <button type="button" class="primary-btn sm" (click)="closeProviderDialog()">
             <i class="ph ph-x"></i>
             <span>Cancel</span>
@@ -518,7 +518,7 @@
         </div>
     </form>
 
-    <ng-template pTemplate="footer">
+    <ng-template #footer>
         <button type="button" class="primary-btn sm" (click)="closeModelDialog()">
             <i class="ph ph-x"></i>
             <span>Cancel</span>
