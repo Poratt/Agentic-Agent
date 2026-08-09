@@ -58,9 +58,24 @@
                     <ng-template #header>
                         <tr>
                             <th class="col-expand"></th>
-                            <th pSortableColumn="key">Name <p-sortIcon field="key" /></th>
-                            <th pSortableColumn="baseUrl">baseUrl <p-sortIcon field="baseUrl" /></th>
-                            <th class="col-count" pSortableColumn="modelsCount">Models <p-sortIcon field="modelsCount" /></th>
+                            <th pSortableColumn="key">
+                                <div class="sortable-header">
+                                    Name
+                                    <p-sort-icon field="key" />
+                                </div>
+                            </th>
+                            <th pSortableColumn="baseUrl">
+                                <div class="sortable-header">
+                                    baseUrl
+                                    <p-sort-icon field="baseUrl" />
+                                </div>
+                            </th>
+                            <th class="col-count" pSortableColumn="modelsCount">
+                                <div class="sortable-header">
+                                    Models
+                                    <p-sort-icon field="modelsCount" />
+                                </div>
+                            </th>
                             <th class="col-actions"></th>
                         </tr>
                     </ng-template>
@@ -155,12 +170,23 @@
                                             <ng-template #header>
                                                 <tr>
                                                     <th class="col-expand xs"></th>
-                                                    <th pSortableColumn="label">Model <p-sortIcon field="label" /></th>
+                                                    <th pSortableColumn="label">
+                                                        <div class="sortable-header">
+                                                            Model
+                                                            <p-sort-icon field="label" />
+                                                        </div>
+                                                    </th>
                                                     <th class="col-status" pSortableColumn="active">
-                                                        Active <p-sortIcon field="active" />
+                                                        <div class="sortable-header">
+                                                            Active
+                                                            <p-sort-icon field="active" />
+                                                        </div>
                                                     </th>
                                                     <th class="col-perf" pSortableColumn="performanceScore">
-                                                        Performance <p-sortIcon field="performanceScore" />
+                                                        <div class="sortable-header">
+                                                            Performance
+                                                            <p-sort-icon field="performanceScore" />
+                                                        </div>
                                                     </th>
                                                     <th class="col-test"></th>
                                                     <th class="col-actions-xs"></th>

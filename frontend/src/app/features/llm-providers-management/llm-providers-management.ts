@@ -9,6 +9,7 @@ import { RippleModule } from 'primeng/ripple';
 import { DialogModule } from 'primeng/dialog';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { Confirmation, ConfirmationService, MessageService } from 'primeng/api';
+import { confirmationDialogSettings } from '../../core/config/confirmation-dialog-settings';
 import { AuthStore } from '../../core/store/auth.store';
 import { UserRole } from '../../core/enums/user-role.enum';
 import { LlmProviderStore } from '../../core/store/llm-provider.store';
@@ -169,25 +170,12 @@ export class LlmProvidersManagement implements OnInit {
 
     deleteProvider(providerId: number) {
         let confirm: Confirmation = {
-            closeOnEscape: true,
-            dismissableMask: true,
+            ...confirmationDialogSettings(),
             message: 'Are you sure you want to delete this provider?',
             header: 'Delete Provider',
-            icon: 'ph ph-warning',
-            acceptIcon: 'ph ph-trash',
-            rejectIcon: 'ph ph-x',
-            rejectButtonProps: {
-                label: 'Cancel',
-                text: true,
-                severity: 'primary',
-                size: 'small'
-            },
             acceptButtonProps: {
+                ...confirmationDialogSettings().acceptButtonProps,
                 label: 'Delete',
-                text: true,
-                variant: 'danger',
-                severity: 'danger',
-                size: 'small',
             },
             accept: () => {
                 this.llmProviderStore.deleteProvider(providerId);
@@ -373,25 +361,12 @@ export class LlmProvidersManagement implements OnInit {
 
     deleteModel(providerId: number, modelId: number) {
         let confirm: Confirmation = {
-            closeOnEscape: true,
-            dismissableMask: true,
+            ...confirmationDialogSettings(),
             message: 'Are you sure you want to deactivate this model?',
             header: 'Deactivate Model',
-            icon: 'ph ph-warning',
-            acceptIcon: 'ph ph-trash',
-            rejectIcon: 'ph ph-x',
-            rejectButtonProps: {
-                label: 'Cancel',
-                text: true,
-                severity: 'primary',
-                size: 'small'
-            },
             acceptButtonProps: {
+                ...confirmationDialogSettings().acceptButtonProps,
                 label: 'Deactivate',
-                text: true,
-                variant: 'danger',
-                severity: 'danger',
-                size: 'small',
             },
             accept: () => {
                 this.llmProviderStore.softDeleteModel(providerId, modelId);
@@ -407,25 +382,12 @@ export class LlmProvidersManagement implements OnInit {
 
     deleteTestResult(providerId: number, modelId: number, testResultId: number) {
         let confirm: Confirmation = {
-            closeOnEscape: true,
-            dismissableMask: true,
+            ...confirmationDialogSettings(),
             message: 'Are you sure you want to delete this test result?',
             header: 'Delete Test Result',
-            icon: 'ph ph-warning',
-            acceptIcon: 'ph ph-trash',
-            rejectIcon: 'ph ph-x',
-            rejectButtonProps: {
-                label: 'Cancel',
-                text: true,
-                severity: 'primary',
-                size: 'small'
-            },
             acceptButtonProps: {
+                ...confirmationDialogSettings().acceptButtonProps,
                 label: 'Delete',
-                text: true,
-                variant: 'danger',
-                severity: 'danger',
-                size: 'small',
             },
             accept: () => {
                 this.llmProviderStore.deleteTestResult(providerId, modelId, testResultId);
@@ -441,25 +403,12 @@ export class LlmProvidersManagement implements OnInit {
 
     deleteAllTestResults(providerId: number, modelId: number, count: number) {
         let confirm: Confirmation = {
-            closeOnEscape: true,
-            dismissableMask: true,
+            ...confirmationDialogSettings(),
             message: `Are you sure you want to delete all ${count} test results for this model?`,
             header: 'Delete All Test Results',
-            icon: 'ph ph-warning',
-            acceptIcon: 'ph ph-trash',
-            rejectIcon: 'ph ph-x',
-            rejectButtonProps: {
-                label: 'Cancel',
-                text: true,
-                severity: 'primary',
-                size: 'small'
-            },
             acceptButtonProps: {
+                ...confirmationDialogSettings().acceptButtonProps,
                 label: 'Delete All',
-                text: true,
-                variant: 'danger',
-                severity: 'danger',
-                size: 'small',
             },
             accept: () => {
                 this.llmProviderStore.deleteAllTestResults(providerId, modelId);

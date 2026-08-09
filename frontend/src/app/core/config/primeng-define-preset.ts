@@ -3,6 +3,7 @@ import { definePreset } from '@primeuix/themes';
 import { PrimeNGConfigType, providePrimeNG } from 'primeng/config';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
+import { environment } from '../../environments/environment';
 
 export const DARK_MODE_SELECTOR = '[data-theme="dark"]';
 
@@ -27,18 +28,16 @@ export const AppThemePreset = definePreset(Aura, {
       light: {
         primary: {
           color: 'var(--color-primary)',
-          inverseColor: 'var(--color-white)',
+          contrastColor: 'var(--color-white)',
           hoverColor: 'var(--primary-300)',
-          focusColor: 'var(--color-primary)',
           activeColor: 'var(--color-primary)',
         },
       },
       dark: {
         primary: {
           color: 'var(--color-primary)',
-          inverseColor: 'var(--color-bg)',
+          contrastColor: 'var(--color-bg)',
           hoverColor: 'var(--primary-300)',
-          focusColor: 'var(--color-primary)',
           activeColor: 'var(--color-primary)',
         },
       },
@@ -47,6 +46,7 @@ export const AppThemePreset = definePreset(Aura, {
 });
 
 export const AppPrimeConfig: PrimeNGConfigType = {
+  license: environment.primeUiLicenseKey,
   theme: {
     preset: AppThemePreset,
     options: {

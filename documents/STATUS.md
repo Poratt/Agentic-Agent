@@ -1,6 +1,6 @@
 # Project Documentation Status
 
-Last updated: 2026-08-07
+Last updated: 2026-08-09
 
 ## ⚠️ Lesson: Every commit must be reviewed individually
 
@@ -21,6 +21,17 @@ Last updated: 2026-08-07
 **SSRF regression caught:** `82d9baa` bypassed all SSRF checks in dev mode → reverted `021224b` → 12/12 C3 tests pass ✅.
 
 Critical commit trail: C6 `8f4022c` → C1 encryption → C4 `376369d` (Google Calendar) → C3 `dc1d909` (extendVideo SSRF) → C5+H3 `56b6ac0` → H1 `6d45a7c` → SSRF revert `021224b`.
+
+## 2026-08-09 Session — PrimeNG 21 → 22 Upgrade
+
+- Completed: full PrimeNG upgrade from 21.1.8 to 22.0.0 on branch `upgrade/primeng-v22`.
+- Pre-upgrade cleanup committed: `0475124 fix: update template syntax for PrimeNG v22 migration compliance` (20 fixes across 9 files).
+- Package upgrade: `primeng` ^21.1.8 → ^22.0.0, `@primeuix/themes` ^2.0.3 → ^3.0.0.
+- Post-upgrade build fixes (uncommitted): `p-sortIcon` → `p-sort-icon` (4 files), `p-confirmDialog` → `p-confirm-dialog` (app.html), `p-tieredMenu` → `p-tiered-menu` (header.html), `inverseColor` → `contrastColor` + removed `focusColor` (primeng-define-preset.ts).
+- Bug found & fixed: `pTemplate="empty"` → `#emptymessage` in llm-providers-management.html (pre-existing, Table's @ContentChild only recognizes `'emptymessage'`).
+- Build: 0 errors, only pre-existing budget warnings.
+- Status: changes uncommitted, awaiting user review and commit.
+- Files: `frontend/package.json`, `app.html`, `primeng-define-preset.ts`, `header.html`, `llm-providers-management.html`, `strain-hunter-settings.html`, `strain-hunter.html`, `users-management.html`
 
 ## 2026-08-05 Session — C5: Confirmation flow activated + H3 self-confirmation closed
 

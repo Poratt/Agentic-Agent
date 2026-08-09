@@ -1,12 +1,27 @@
-export function confirmationDialogSettings() {
+import { Confirmation } from 'primeng/api';
+
+export function confirmationDialogSettings(): Partial<Confirmation> {
     return {
-        icon: 'ph ph-warning',
-        acceptLabel: 'מחק',
-        rejectLabel: 'ביטול',
-        acceptIcon: 'ph ph-trash',
-        rejectIcon: 'ph ph-x',
-        acceptButtonStyleClass: 'p-button-danger',
-        closable: true,
+        closeOnEscape: true,
         dismissableMask: true,
-    }
+        icon: 'ph ph-warning',
+
+        rejectButtonProps: {
+            text: true,
+            severity: 'primary',
+            label: 'Cancel',
+            size: 'small',
+            icon: 'ph ph-x',
+        },
+        acceptButtonProps: {
+            text: true,
+            severity: 'danger',
+            size: 'small',
+            icon: 'ph ph-trash',
+        },
+    };
+
+
+
+
 }

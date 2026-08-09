@@ -4,6 +4,25 @@
 
 `82d9baa` ("skip SSRF validation in dev mode") was committed as part of a batch without individual review. It added a **total SSRF bypass** when `NODE_ENV !== 'production'` — not just localhost. Worse: if `NODE_ENV` is unset, the bypass activates silently. Caught and reverted (`021224b`) only because each commit was examined separately before closing the session.
 
+## 2026-08-09 Session — PrimeNG 21 → 22 Upgrade
+
+- **Completed:** full PrimeNG upgrade from 21.1.8 to 22.0.0 on branch `upgrade/primeng-v22`.
+- **Pre-upgrade cleanup (committed `0475124`):** 20 fixes across 9 HTML files — `pTemplate` → `#` refs (16×), `styleClass` → `class` (2×), `responsiveLayout="stack"` removed (2×).
+- **Package upgrade:** `primeng` ^21.1.8 → ^22.0.0, `@primeuix/themes` ^2.0.3 → ^3.0.0. `npm install` succeeded.
+- **Post-upgrade build fixes (uncommitted):**
+  - `p-sortIcon` → `p-sort-icon` in 4 HTML files (users-management, llm-providers-management, strain-hunter, strain-hunter-settings)
+  - `p-confirmDialog` → `p-confirm-dialog` in `app.html`
+  - `p-tieredMenu` → `p-tiered-menu` in `header.html`
+  - `inverseColor` → `contrastColor` + removed `focusColor` in `primeng-define-preset.ts` (light + dark primary)
+- **Build status:** 0 errors, only pre-existing budget warnings remain.
+- **Re-scan:** no newly-relevant deprecated APIs found. Remaining camelCase selectors (`pInputText`, `pSortableColumn`) are directives that still use camelCase in v22.
+- **Bug found & fixed:** `pTemplate="empty"` in `llm-providers-management.html:375` → `#emptymessage` (Table's `@ContentChild` only recognizes `'emptymessage'`, not `'empty'`). This was a pre-existing bug caught during the v21→v22 audit.
+- **Files touched:** `frontend/package.json`, `frontend/package-lock.json`, `frontend/src/app/app.html`, `frontend/src/app/core/config/primeng-define-preset.ts`, `frontend/src/app/features/layout/header/header.html`, `frontend/src/app/features/llm-providers-management/llm-providers-management.html`, `frontend/src/app/features/settings/strain-hunter-settings/strain-hunter-settings.html`, `frontend/src/app/features/strain-hunter/strain-hunter.html`, `frontend/src/app/features/users/users-management.html`
+- **Decisions made:** removed `responsiveLayout="stack"` from strain-hunter-settings (horizontal scroll acceptable — tables are desktop-primary with 7+ columns); `contrastColor` chosen over `inverseColor` as the v22 rename.
+- **Next exact step:** user review → `git add` + commit on branch `upgrade/primeng-v22` → visual regression check in dev server → merge to main.
+- **Open questions for the user:** none — all changes verified with clean build.
+- **No architecture diagram update needed** — package upgrade only, no new module boundaries or endpoints.
+
 ## 2026-08-08 Session — H2: Genetics/Terpene AdminGuard + frontend hide admin buttons
 
 - **Completed:** H2 (High #2) — genetics/terpene write+enrich endpoints were only protected with `JwtAuthGuard` (any logged-in user could modify the shared catalog and run paid LLM enrich calls). Now:

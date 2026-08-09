@@ -57,8 +57,10 @@
                         <tr>
                             @for (column of columns; track column.field) {
                                 <th [pSortableColumn]="column.field">
-                                    <span>{{ column.label }}</span>
-                                    <p-sortIcon [field]="column.field" />
+                                    <div class="sortable-header">
+                                        <span>{{ column.label }}</span>
+                                        <p-sort-icon [field]="column.field" />
+                                    </div>
                                 </th>
                             }
                             @if (authStore.user()?.role === 1) {
