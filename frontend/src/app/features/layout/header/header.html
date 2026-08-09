@@ -8,6 +8,6 @@
         <button type="button" class="user-avatar user-menu-trigger" (click)="toggleMenu($event)" aria-haspopup="menu" aria-label="תפריט משתמש">
             <span>{{ avatarLetter() }}</span>
         </button>
-        <p-tieredMenu #userMenu [model]="menuItems()" [popup]="true" />
+        <p-tiered-menu #userMenu [model]="menuItems()" [popup]="true" />
     </div>
 </header>

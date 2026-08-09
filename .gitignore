@@ -67,6 +67,10 @@ temp/.codex/
 
 # Graphify cache
 graphify-out/
+
+# PrimeNG license key (contains secret)
+frontend/src/app/environments/environment.ts
+frontend/src/app/environments/environment.prod.ts
 # DB dumps and backups (may contain plaintext secrets)
 backup_*.sql
 *.sql.bak
