@@ -4,6 +4,22 @@
 
 `82d9baa` ("skip SSRF validation in dev mode") was committed as part of a batch without individual review. It added a **total SSRF bypass** when `NODE_ENV !== 'production'` — not just localhost. Worse: if `NODE_ENV` is unset, the bypass activates silently. Caught and reverted (`021224b`) only because each commit was examined separately before closing the session.
 
+## 2026-08-10 Session — Documenting commit `31eadd9` (seed rework + hidden changes)
+
+The commit `31eadd9` ("Add HTML-in-Canvas proposal and review calendar documentation") has a message that does NOT match its contents — the diff contains no docs at all. This entry records what is actually inside it.
+
+- **Seed rework (`llm-providers.seed.ts`):** rewritten to 5 providers / 46 models — `OmniRoute` (key `OmniRoute`, baseUrl default `http://localhost:20128/v1`, 1 model `auto/best-free`), `openrouter` (27 models), `agnes-ai` (5 models incl. image+video), `requesty` (1 model), `nvidia` (12 models). Models created only when the provider row is missing (no reconciliation of catalog additions to existing providers). **No Ollama provider** despite the DB plan. OmniRoute reads its API key from `OPENROUTER_API_KEY` (line 82) — likely copy-paste. Field is `apiKey`, stored plaintext from env (no encryption; plan marks it MANDATORY). `seedLlmProviders` is still **commented out** in `main.ts`.
+- **Genetics/Terpene seeds:** moved from `modules/{genetics,terpene}/seeds/` to `core/seeds/`, expanded (+354 / +184), and now executed on boot in `main.ts`. `genetics.seed.ts` = full Hebrew strain catalog (idempotent by `name`, one dense row per strain with description/parents/origin/type/thcRange/terpenes/effects/colors). `terpene.seed.ts` = 18 Hebrew-named terpenes (idempotent by `name`, with englishName/scent/effects/color). Both are no-ops on re-run. Cosmetic glitch in `genetics.seed.ts` comment: the word `name` is split by a newline (`matched by\n ame)`) — harmless comment-only artifact.
+- **Google Calendar q-scan (`google-calendar.service.ts`):** `q` with no date now scans −1 month → +1 year, paginates (2500/page) with a 10 000-item hard cap, and uses month arithmetic instead of `+86400000ms` (DST-safe). `system-context.constant.ts` updated to teach the LLM the new `q`/`date` semantics.
+- **`llm-client.service.ts` + `llm.types.ts`:** `LlmResponse` gained `finishReason` + `rawCompletion`; response log includes `finish_reason`.
+- **Ideas validation prompt (`idea-prompts.constant.ts` + `ideas.service.ts`):** rewritten with calibration examples, new JSON ordering (analysis before score), capped lists.
+- **Small fixes:** `llm-provider.service.spec.ts` constructor arity; `swagger-spec.json` 403 for `forceRefresh`; deleted `migrations/run-encryption-migration.ts`, `run-google-calendar-tokens-migration.ts`, `create_user_llm_defaults.sql`, and 2 zero-change migration files.
+
+- **⚠️ SSRF dev-bypass (`ssrf-guard.util.ts`):** `assertSafeUrl` now allows **HTTP + localhost/loopback** when `NODE_ENV !== 'production'` (hostname in `LOCALHOST_HOSTNAMES`: localhost, 127.0.0.1, 0.0.0.0, ::1). This is the same pattern as the reverted `82d9baa` regression, but **narrower** — the cloud-metadata blocklist (`169.254.169.254`, `metadata.google.internal`) stays blocked and https-only still applies to non-localhost hosts. Intent: local OmniRoute at `localhost:20128`. Documented here so it is a conscious decision, not a buried one.
+
+- **Next exact step:** decide whether `seedLlmProviders` should be re-enabled in `main.ts` (it currently does not run) and whether OmniRoute's API key should read its own env var.
+- **No architecture diagram update needed** — no new module boundary; seed + guard changes live inside existing modules.
+
 ## 2026-08-08 Session — H2: Genetics/Terpene AdminGuard + frontend hide admin buttons
 
 - **Completed:** H2 (High #2) — genetics/terpene write+enrich endpoints were only protected with `JwtAuthGuard` (any logged-in user could modify the shared catalog and run paid LLM enrich calls). Now:

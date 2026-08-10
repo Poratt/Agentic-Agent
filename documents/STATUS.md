@@ -1,10 +1,23 @@
 # Project Documentation Status
 
-Last updated: 2026-08-07
+Last updated: 2026-08-10
 
 ## ⚠️ Lesson: Every commit must be reviewed individually
 
 `82d9baa` added a total SSRF bypass (`NODE_ENV !== 'production'` → skip all validation) during a batch commit. It was caught and reverted (`021224b`) only because each commit was reviewed separately before closing. **Rule:** never approve a batch commit without reviewing every file diff, especially security-critical code.
+
+## 2026-08-10 Session — Commit `31eadd9` documented (message ≠ content)
+
+Commit `31eadd9` ("Add HTML-in-Canvas proposal and review calendar documentation") contains no docs — its real content was undocumented until now. Full inventory in `documents/HANDOFF.md` under the same session. Summary:
+
+- **Seed rework:** `llm-providers.seed.ts` rewritten → 5 providers / 46 models (OmniRoute, openrouter, agnes-ai, requesty, nvidia). Genetics/Terpene seeds moved to `core/seeds/`, expanded, enabled in `main.ts`. `seedLlmProviders` itself remains **commented out** in `main.ts`.
+- **Calendar q-scan:** −1 month → +1 year, pagination (2500/page), 10 000-item cap, DST-safe month arithmetic; LLM system-context updated.
+- **LLM:** `LlmResponse` + `finishReason` / `rawCompletion`.
+- **Ideas:** validation prompt rewritten (calibration examples, analysis-before-score JSON).
+- **⚠️ SSRF dev-bypass** in `ssrf-guard.util.ts`: HTTP + localhost allowed in dev — same pattern as reverted `82d9baa` but narrow (localhost set only; metadata hosts still blocked). Intent: local OmniRoute. Documented as a conscious decision.
+- Small fixes: spec constructor arity, swagger 403 for `forceRefresh`, deletion of 3 stale migration files.
+
+**Open (from this commit):** re-enable `seedLlmProviders`? OmniRoute API key env var (currently reuses `OPENROUTER_API_KEY`)? No Ollama provider in seed despite the DB plan.
 
 ## Audit Fix Status — `documents/audit/code-review-2026-08-05.md`
 
