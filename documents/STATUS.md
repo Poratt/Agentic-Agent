@@ -6,6 +6,18 @@ Last updated: 2026-08-11
 
 `82d9baa` added a total SSRF bypass (`NODE_ENV !== 'production'` → skip all validation) during a batch commit. It was caught and reverted (`021224b`) only because each commit was reviewed separately before closing. **Rule:** never approve a batch commit without reviewing every file diff, especially security-critical code.
 
+## 2026-08-11 Session — Nightly Topic Discovery + Solo-Dev Constraints (PUSHED)
+
+Upgraded the nightly ideas cron to discover topics automatically instead of a static env list, and aligned all idea prompts with solo-developer constraints.
+
+- **`IdeasService.discoverTopics()`** (new): 4 parallel SearXNG searches → single LLM extraction via `TOPIC_DISCOVERY_PROMPT` → `{ domain, rationale }[]`, domains sanitized. Replaces `IDEAS_NIGHTLY_DOMAINS`.
+- **`IdeasTasksService.runNightly()`**: discovery step first, then per-topic generation + `saveGeneration` (nightly/unread). One failing topic doesn't abort the rest.
+- **Prompts**: `IDEA_GENERATION_PROMPT` gains solo-dev constraints (no hardware/IoT, weeks-to-months, no enterprise procurement, bootstrap-friendly); `VALIDATION_PROMPT` feasibility now encodes solo-buildability; fixed Hebrew typos.
+- **Env**: `IDEAS_NIGHTLY_DOMAINS` removed → `IDEAS_NIGHTLY_TOPIC_COUNT` added (default 3). `backend/.env.example` updated.
+- **SearXNG dev setup** (operational): docker container on `:8080` with checked-in `docker/searxng/settings.yml` (limiter off + json). Fixed duplicate `SEARXNG_URL` in `.env` (8888 was overriding 8080).
+- Verification: backend build ✅, ideas tests 12/12 ✅, frontend build ✅.
+- Commits this session (all pushed): `f3f6c51`, `036d98a`, `98039c7`, `f784e71`, `1e1de52`.
+
 ## 2026-08-11 Session — Ideas Persistence Finalization + Sidebar Dropdown (PUSHED)
 
 **Completed:**

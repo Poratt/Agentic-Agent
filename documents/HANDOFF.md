@@ -18,6 +18,36 @@
 - Files touched (moved): `ideas-persistence-plan.md` → `archive/features/`
 - Verification: `npx nest build` (backend) ✅, `npx ng build --configuration=development` (frontend) ✅
 - Decisions made: sidebar dropdown uses identical pattern to chat (hover-triggered, `app-dropdown` component, `.nav-item-ideas` CSS wrapper); empty session check added at controller level (not just service level) for defense-in-depth
+
+## 2026-08-11 Session — Nightly Topic Discovery + Solo-Dev Constraints + SearXNG setup (PUSHED)
+
+**Nightly ideas cron upgraded**: instead of a static `IDEAS_NIGHTLY_DOMAINS` list, `IdeasTasksService.runNightly()` now calls `IdeasService.discoverTopics()` (4 parallel SearXNG searches → single LLM extraction via new `TOPIC_DISCOVERY_PROMPT`) and generates ideas per discovered topic. Added `IDEAS_NIGHTLY_TOPIC_COUNT` env (default 3); `IDEAS_NIGHTLY_DOMAINS` removed.
+
+- `discoverTopics()` returns `{ domain, rationale }[]` — domains sanitized through `sanitizeDomain`; rationale preserved/logged per topic (fix #6). Type surfaced through the whole call chain (service + tasks + specs).
+- `IDEA_GENERATION_PROMPT` gained a fixed solo-developer constraints block; `VALIDATION_PROMPT` feasibility scoring now encodes solo-dev reality (0 = needs team/hardware, 2 = solo-buildable in weeks). Fixed Hebrew typos (`_identify`→`זהה`, `ביקוש` misspelling).
+- Tests: `ideas-tasks.service.spec.ts` rewritten to 6 tests covering the discovery flow (disabled no-op — now also asserts `findFirstAdmin` NOT called, fix #4; 0-topics skip; per-topic loop; model override; topic count override; per-topic failure isolation). All 12 ideas tests pass.
+- Env docs: `backend/.env.example` updated (`IDEAS_NIGHTLY_DOMAINS` → `IDEAS_NIGHTLY_TOPIC_COUNT`). Env file creation also covered the full app vars list.
+- **SearXNG dev setup** (operational, not code): local `docker run -d -p 8080:8080` with a checked-in `docker/searxng/settings.yml` (limiter:false + json enabled) to stop 403s; `.gitignore` negation added so the settings file is tracked while the searxng data dir stays ignored. Fixed duplicate `SEARXNG_URL` in `backend/.env` (8888 was overriding 8080).
+- Verification: `npm run build` ✅, `npx jest ideas` 12/12 ✅, frontend build ✅.
+- Commits: `f3f6c51` (persistence feature), `036d98a` (chat-history fix), `98039c7` (UI polish), `f784e71` (env docs + searxng config), `1e1de52` (topic discovery upgrade) — all pushed to origin/main.
+- Architecture: no diagram update needed for the cron-internal discovery change (no new module boundary; already documented cron flow). 
+
+## 2026-08-11 Session — Ideas Persistence + Nightly Generation (COMPLETED)
+
+Completed the full `ideas-persistence-plan.md` (7-phase plan) for auto-saving generated ideas, history, favorites, and nightly cron generation.
+
+**What was done this session:**
+- **Backend (Phases 0–3):**
+  - Phase 0: Created `SavedIdeaSession` + `SavedIdea` entities with `ON DELETE CASCADE`, migration `AddSavedIdeasTables1786451852660.ts`, and wired `TypeOrmModule` into `IdeasModule`.
+  - Phase 1: Added `saveGeneration()` to `IdeasService` (transactional session+ideas write, skips empty results), plus `listSessions`, `getSession`, `deleteSession`, `setFavorite`, `unreadNightlyCount`, `markNightlyRead` — all ownership-checked via `ForbiddenException`.
+  - Phase 2: Added 6 controller endpoints (`GET /ideas/sessions`, `GET /ideas/sessions/:id`, `DELETE /ideas/sessions/:id`, `PATCH /ideas/ideas/:id`, `GET /ideas/nightly/unread-count`, `POST /ideas/nightly/mark-read`) with `JwtAuthGuard`, Swagger docs, and `ParseIntPipe`.
+  - Phase 3: Created `IdeasTasksService` with `@Cron('0 0 4 * * *')`, gated by `IDEAS_NIGHTLY_ENABLED`, resolves admin via `UsersService.findFirstAdmin()` + model via `LlmProviderService.findFirstActiveTextModel()`, per-domain try/catch.
+  - Fixed empty-session bug: `saveGeneration` now returns `0` (no session created) when `response.result` is empty.
+- **Frontend (Phases 4–6) — completed by a previous agent:**
+  - Phase 4: `IdeasService` gained 6 new API methods; `IdeasStore` gained history state + actions.
+  - Phase 5: `IdeasHistory` component with filter bar (הכל/ליליים/מועדפים), expandable sessions, search, delete, route `/ideas/history`, sidebar nav, nightly banner on `IdeasPage`.
+  - Phase 6: `IdeaCard` favorite star toggle (only in history view).
+- **Phase 7 (docs):** Updated `architecture-diagram.md` (entities + cron flow), `STATUS.md`, `ideas-persistence-plan.md` (all phases marked complete).
 - No architecture diagram update needed — no new module boundary; UI-only sidebar change + controller guard fix
 - Pushed to origin/main (6 commits ahead → 0 ahead)
 
