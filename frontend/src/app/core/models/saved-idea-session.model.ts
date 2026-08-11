@@ -10,6 +10,6 @@ export class SavedIdeaSession {
   unread!: boolean;
   createdAt!: string;
   updatedAt!: string;
-  ideas!: SavedIdea[];
+  ideas?: SavedIdea[];
   ideasCount?: number;
 }

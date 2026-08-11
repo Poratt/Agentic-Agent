@@ -66,6 +66,13 @@ export class SavedIdea {
   validationScore!: number;
 
   @ApiProperty({
+    description: 'Validation breakdown by category. Stored as JSON. Null when the LLM did not return one.',
+    nullable: true,
+  })
+  @Column({ type: 'simple-json', nullable: true })
+  validationBreakdown!: { competition: number; signalFit: number; feasibility: number; marketSize: number } | null;
+
+  @ApiProperty({
     description: 'Short Hebrew explanation of the validation score. Null when the model returned none.',
     example: 'חוזק השוק וחוסר מתחרים ישירים תומכים ברעיון.',
     nullable: true,

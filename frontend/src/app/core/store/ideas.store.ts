@@ -200,7 +200,7 @@ export class IdeasStore {
     this.sessions.update((sessions) =>
       sessions.map((session) => ({
         ...session,
-        ideas: session.ideas.map((idea: SavedIdea) =>
+        ideas: session.ideas?.map((idea: SavedIdea) =>
           idea.id === ideaId ? { ...idea, isFavorite } : idea,
         ),
       })),
@@ -211,7 +211,7 @@ export class IdeasStore {
       this.sessions.update((sessions) =>
         sessions.map((session) => ({
           ...session,
-          ideas: session.ideas.map((idea: SavedIdea) =>
+          ideas: session.ideas?.map((idea: SavedIdea) =>
             idea.id === ideaId ? { ...idea, isFavorite: !isFavorite } : idea,
           ),
         })),
@@ -245,14 +245,12 @@ export class IdeasStore {
     this.triggeringNightly.set(true);
     try {
       const result = await firstValueFrom(this.ideasService.triggerNightly());
-      await this.loadSessions();
       this.triggeringNightly.set(false);
       return result.message;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to trigger nightly generation';
-      this.historyError.set(msg);
       this.triggeringNightly.set(false);
-      return null;
+      const msg = err instanceof Error ? err.message : 'Failed to trigger nightly generation';
+      throw new Error(msg);
     }
   }
 }

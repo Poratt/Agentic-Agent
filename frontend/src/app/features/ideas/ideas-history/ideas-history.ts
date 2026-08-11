@@ -39,7 +39,7 @@ export class IdeasHistory implements OnInit {
             return sessions.filter((s) => s.nightly);
         }
         if (mode === 'favorites') {
-            return sessions.filter((s) => s.ideas.some((idea) => idea.isFavorite));
+            return sessions.filter((s) => s.ideas?.some((idea) => idea.isFavorite));
         }
         return sessions;
     });

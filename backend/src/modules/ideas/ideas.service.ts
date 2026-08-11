@@ -48,8 +48,6 @@ export class IdeasService {
   /**
    * Maps one generated BusinessIdea to a SavedIdea persistence row.
    * Centralized here so the field mapping exists in exactly one place.
-   * `validationBreakdown` is intentionally omitted — it is not rendered in the
-   * UI and is not present on the SavedIdea entity.
    */
   private mapIdeaToSaved(userId: number, sessionId: number, idea: BusinessIdea): SavedIdea {
     const saved = new SavedIdea();
@@ -59,6 +57,7 @@ export class IdeasService {
     saved.description = idea.description;
     saved.targetMarket = idea.targetMarket;
     saved.validationScore = idea.validationScore;
+    saved.validationBreakdown = idea.validationBreakdown ?? null;
     saved.validationReason = idea.validationReason ?? null;
     saved.risks = idea.risks?.length ? idea.risks : null;
     saved.competitors = idea.competitors?.length ? idea.competitors : null;

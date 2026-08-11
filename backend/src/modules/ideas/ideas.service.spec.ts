@@ -126,7 +126,7 @@ describe('IdeasService — persistence (Phase 1)', () => {
       await service.saveGeneration(1, 'd', null, null, response);
 
       expect(savedIdeas.length).toBe(1);
-      expect((savedIdeas[0] as any).validationBreakdown).toBeUndefined();
+      expect((savedIdeas[0] as any).validationBreakdown).toBeNull();
       // null provider/model → null columns
       expect(savedSessions[0].provider).toBeNull();
       expect(savedSessions[0].model).toBeNull();

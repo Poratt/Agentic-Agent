@@ -6,6 +6,7 @@ export class SavedIdea {
   description!: string;
   targetMarket!: string;
   validationScore!: number;
+  validationBreakdown?: { competition: number; signalFit: number; feasibility: number; marketSize: number };
   validationReason!: string | null;
   risks!: string[] | null;
   competitors!: string[] | null;
