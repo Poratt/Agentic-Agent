@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
-import { InputTextModule } from 'primeng/inputtext';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { firstValueFrom } from 'rxjs';
@@ -22,7 +20,7 @@ import { UserRole } from '../../../core/enums/user-role.enum';
 @Component({
     selector: 'app-strain-hunter-settings',
     standalone: true,
-    imports: [CommonModule, FormsModule, TableModule, Tabs, TabList, Tab, TabPanels, TabPanel, InputTextModule, ToastModule, ConfirmDialogModule, TooltipDirective],
+    imports: [CommonModule, FormsModule, TableModule, Tabs, TabList, Tab, TabPanels, TabPanel, ToastModule, TooltipDirective],
     templateUrl: './strain-hunter-settings.html',
     styleUrls: ['./strain-hunter-settings.css'],
     changeDetection: ChangeDetectionStrategy.Eager,

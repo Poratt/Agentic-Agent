@@ -52,12 +52,15 @@ export const AppPrimeConfig: PrimeNGConfigType = {
       darkModeSelector: DARK_MODE_SELECTOR,
     },
   },
-  ripple: true,
+  ripple: false,
   overlayAppendTo: 'body',
   inputVariant: 'filled',
   pt: {
     button: {},
     pagination: {},
+    toggleSwitch: {
+      root: { class: 'toggle-switch' },
+    },
     menu: {
       list: { class: '' },
       item: { class: '' },

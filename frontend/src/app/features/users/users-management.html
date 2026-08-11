@@ -57,7 +57,7 @@
                         <tr>
                             @for (column of columns; track column.field) {
                                 <th [pSortableColumn]="column.field">
-                                    <span>{{ column.label }}</span>
+                                    {{ column.label }}
                                     <p-sort-icon [field]="column.field" />
                                 </th>
                             }

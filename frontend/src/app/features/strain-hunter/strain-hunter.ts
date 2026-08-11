@@ -7,7 +7,6 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SliderModule } from 'primeng/slider';
 import { Table, TableModule } from 'primeng/table';
-import { TooltipModule } from 'primeng/tooltip';
 import { Subscription, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { PageStates } from '../../core/enums/page-states.enum';
@@ -107,7 +106,6 @@ const TOOLTIP_DELAY_MS = 400;
         FormsModule,
         TableModule,
         InputTextModule,
-        TooltipModule,
         DialogModule,
         SliderModule,
         MatchingPreferencesDrawer,

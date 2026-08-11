@@ -6,7 +6,6 @@ import { TooltipDirective } from '../../core/directives/tooltip.directive';
 import { LlmProviderStore } from '../../core/store/llm-provider.store';
 import { LlmProvider, LlmModel } from '../../core/services/llm-provider.service';
 import { MediaService, MediaImageResult, MediaVideoTask, MediaVideoResult } from '../../core/services/media.service';
-import { FloatLabelModule } from 'primeng/floatlabel';
 import { environment } from '../../environments/environment';
 import { ServiceResultContainer } from '../../core/models/service-result-container.model';
 import { HttpClient } from '@angular/common/http';
@@ -17,7 +16,7 @@ import { firstValueFrom } from 'rxjs';
 @Component({
     selector: 'app-media-studio',
     standalone: true,
-    imports: [CommonModule, FormsModule, Select, FloatLabelModule, TooltipDirective],
+    imports: [CommonModule, FormsModule, Select, TooltipDirective],
     templateUrl: './media-studio.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './media-studio.css',

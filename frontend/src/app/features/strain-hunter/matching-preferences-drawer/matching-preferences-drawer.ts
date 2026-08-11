@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
 import { MatchingEngineStore, ScoredStrain } from '../../../core/store/matching-engine.store';
 import { TerpeneStore } from '../../../core/store/terpene.store';
@@ -35,7 +34,7 @@ const GAP = 8;
 @Component({
     selector: 'app-matching-preferences-drawer',
     standalone: true,
-    imports: [CommonModule, FormsModule, DrawerModule, ButtonModule, Tooltip, TooltipDirective],
+    imports: [CommonModule, FormsModule, DrawerModule, Tooltip, TooltipDirective],
     templateUrl: './matching-preferences-drawer.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./matching-preferences-drawer.css'],

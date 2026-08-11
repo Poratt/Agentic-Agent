@@ -4,8 +4,6 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 
 import { InputTextModule } from 'primeng/inputtext';
 import { Table, TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { RippleModule } from 'primeng/ripple';
 import { DialogModule } from 'primeng/dialog';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { Confirmation, ConfirmationService, MessageService } from 'primeng/api';
@@ -39,8 +37,6 @@ export interface LlmProviderView extends Omit<LlmProvider, 'models'> {
         ReactiveFormsModule,
         InputTextModule,
         TableModule,
-        ButtonModule,
-        RippleModule,
         DialogModule,
         ToggleSwitchModule,
         TooltipDirective,

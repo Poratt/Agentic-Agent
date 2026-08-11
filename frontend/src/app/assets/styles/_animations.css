@@ -109,7 +109,7 @@
 @keyframes scaleUp {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.9);
   }
 
   to {
@@ -126,12 +126,29 @@
 
   to {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.9);
   }
 }
 
 
-/* FILE: src/app/assets/styles/_animations.css (Updated Set) */
+@keyframes rubberScale {
+  0% {
+    transform: scale(0.3);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  70% {
+    transform: scale(0.95);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
 
 @keyframes slideOutRight {
   from {
@@ -290,18 +307,53 @@
     animation-delay: calc(var(--delay) * (var(--i, 1) - 1));
   }
 
-  >:nth-child(1) { --i: 1; }
-  >:nth-child(2) { --i: 2; }
-  >:nth-child(3) { --i: 3; }
-  >:nth-child(4) { --i: 4; }
-  >:nth-child(5) { --i: 5; }
-  >:nth-child(6) { --i: 6; }
-  >:nth-child(7) { --i: 7; }
-  >:nth-child(8) { --i: 8; }
-  >:nth-child(9) { --i: 9; }
-  >:nth-child(10) { --i: 10; }
-  >:nth-child(11) { --i: 11; }
-  >:nth-child(12) { --i: 12; }
+  >:nth-child(1) {
+    --i: 1;
+  }
+
+  >:nth-child(2) {
+    --i: 2;
+  }
+
+  >:nth-child(3) {
+    --i: 3;
+  }
+
+  >:nth-child(4) {
+    --i: 4;
+  }
+
+  >:nth-child(5) {
+    --i: 5;
+  }
+
+  >:nth-child(6) {
+    --i: 6;
+  }
+
+  >:nth-child(7) {
+    --i: 7;
+  }
+
+  >:nth-child(8) {
+    --i: 8;
+  }
+
+  >:nth-child(9) {
+    --i: 9;
+  }
+
+  >:nth-child(10) {
+    --i: 10;
+  }
+
+  >:nth-child(11) {
+    --i: 11;
+  }
+
+  >:nth-child(12) {
+    --i: 12;
+  }
 }
 
 .stagger-up {
