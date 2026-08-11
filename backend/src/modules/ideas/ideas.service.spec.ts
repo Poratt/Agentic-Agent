@@ -157,6 +157,37 @@ describe('IdeasService — persistence (Phase 1)', () => {
     });
   });
 
+  describe('listSessions', () => {
+    it('loads the idea count via loadRelationCountAndMap and filters by user', async () => {
+      const fakeSessions = [{ id: 1, ideasCount: 5 }, { id: 2, ideasCount: 0 }] as unknown as SavedIdeaSession[];
+
+      // Chainable query builder mock for the list query.
+      const qb = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(fakeSessions),
+      };
+      // The service only calls andWhere/orderBy when needed — always wire them.
+      (sessionRepo.createQueryBuilder as jest.Mock).mockReturnValue(qb);
+      // loadRelationCountAndMap is a method on the builder — make it chainable too.
+      let loadRelationMock = jest.fn().mockReturnValue(qb);
+      // The service calls .loadRelationCountAndMap(...) right after createQueryBuilder.
+      // We attach it so it remains chainable.
+      // To keep the mock faithful, expose it as a method on qb:
+      Object.assign(qb, { loadRelationCountAndMap: loadRelationMock });
+
+      const result = await service.listSessions(7);
+
+      expect(sessionRepo.createQueryBuilder).toHaveBeenCalled();
+      expect(loadRelationMock).toHaveBeenCalledWith('session.ideasCount', 'session.ideas');
+      expect(qb.where).toHaveBeenCalledWith('session.userId = :userId', { userId: 7 });
+      expect(qb.orderBy).toHaveBeenCalledWith('session.createdAt', 'DESC');
+      expect(qb.andWhere).not.toHaveBeenCalled();
+      expect(result).toEqual(fakeSessions);
+    });
+  });
+
   describe('ownership checks', () => {
     it('getSession throws ForbiddenException when the session belongs to another user', async () => {
       sessionRepo.findOne!.mockResolvedValue(null);

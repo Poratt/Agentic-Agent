@@ -87,9 +87,12 @@ export class IdeasHistory implements OnInit {
         this.ideasStore.toggleFavorite(idea.id, !idea.isFavorite);
     }
 
-    getIdeasCount(session: SavedIdeaSession): number {
-        return session.ideas?.length ?? 0;
+  getIdeasCount(session: SavedIdeaSession): number {
+    if (session.ideasCount !== undefined) {
+      return session.ideasCount;
     }
+    return session.ideas?.length ?? 0;
+  }
 
     refresh() {
         const mode = this.filterMode();

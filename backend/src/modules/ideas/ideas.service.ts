@@ -115,6 +115,7 @@ export class IdeasService {
   ): Promise<SavedIdeaSession[]> {
     const qb = this.sessionRepository
       .createQueryBuilder('session')
+      .loadRelationCountAndMap('session.ideasCount', 'session.ideas')
       .where('session.userId = :userId', { userId });
 
     if (filters?.nightly) {

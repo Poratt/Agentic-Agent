@@ -11,4 +11,5 @@ export class SavedIdeaSession {
   createdAt!: string;
   updatedAt!: string;
   ideas!: SavedIdea[];
+  ideasCount?: number;
 }

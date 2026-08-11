@@ -7,7 +7,7 @@ import {
   OneToMany,
   Index,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SavedIdea } from './saved-idea.entity';
 
 /**
@@ -84,4 +84,15 @@ export class SavedIdeaSession {
   @ApiProperty({ description: 'Ideas generated in this session. Cascade-deleted with the session.', type: () => [SavedIdea] })
   @OneToMany(() => SavedIdea, (idea) => idea.session, { onDelete: 'CASCADE' })
   ideas!: SavedIdea[];
+
+  /**
+   * Number of ideas in this session. Not a persisted column — populated only by
+   * `listSessions` via `loadRelationCountAndMap` so the history list can render
+   * a count without loading every idea row.
+   */
+  @ApiPropertyOptional({
+    description: 'Idea count for this session. Populated by the list endpoint only; null when loaded otherwise.',
+    example: 5,
+  })
+  ideasCount?: number;
 }
