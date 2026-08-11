@@ -29,7 +29,9 @@ dist/
 .env.production
 
 # Local SearXNG dev instance (bind mount, contains generated secret_key)
-searxng/          
+searxng/
+!docker/searxng/
+!docker/searxng/settings.yml          
 
 # Diagnostics and Testing
 *.log

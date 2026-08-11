@@ -6,7 +6,7 @@ Last updated: 2026-08-11
 
 `82d9baa` added a total SSRF bypass (`NODE_ENV !== 'production'` → skip all validation) during a batch commit. It was caught and reverted (`021224b`) only because each commit was reviewed separately before closing. **Rule:** never approve a batch commit without reviewing every file diff, especially security-critical code.
 
-## 2026-08-11 Session — Ideas Persistence Finalization + Sidebar Dropdown
+## 2026-08-11 Session — Ideas Persistence Finalization + Sidebar Dropdown (PUSHED)
 
 **Completed:**
 - Audited entire `ideas-persistence-plan.md` — all backend + frontend phases verified complete
@@ -15,10 +15,11 @@ Last updated: 2026-08-11
 - Created ideas history sidebar dropdown matching chat history pattern (feather icon, hover slide-in, delete-with-confirm)
 - Updated plan checklist — all items checked; moved plan to `archive/features/`
 - Backend: `npm run build` ✅, Frontend: `npx ng build --configuration=development` ✅
+- Pushed to origin/main
 
 **Files touched:** `ideas.controller.ts`, `ideas.store.ts`, `main-sidebar.ts/html/css`, `ideas-persistence-plan.md` (moved)
 
-**Next:** visual test of sidebar dropdown, then commit
+**Next:** visual test of sidebar dropdown on running dev server
 
 ## 2026-08-11 Session — Ideas Persistence + Nightly Generation (COMPLETED)
 

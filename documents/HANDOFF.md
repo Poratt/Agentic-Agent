@@ -4,7 +4,7 @@
 
 `82d9baa` ("skip SSRF validation in dev mode") was committed as part of a batch without individual review. It added a **total SSRF bypass** when `NODE_ENV !== 'production'` — not just localhost. Worse, if `NODE_ENV` is unset, the bypass activates silently. Caught and reverted (`021224b`) only because each commit was examined separately before closing the session.
 
-## 2026-08-11 Session — Ideas Persistence Finalization + Sidebar Dropdown
+## 2026-08-11 Session — Ideas Persistence Finalization + Sidebar Dropdown (PUSHED)
 
 **Ideas Persistence — final fixes + sidebar dropdown**
 
@@ -19,7 +19,7 @@
 - Verification: `npx nest build` (backend) ✅, `npx ng build --configuration=development` (frontend) ✅
 - Decisions made: sidebar dropdown uses identical pattern to chat (hover-triggered, `app-dropdown` component, `.nav-item-ideas` CSS wrapper); empty session check added at controller level (not just service level) for defense-in-depth
 - No architecture diagram update needed — no new module boundary; UI-only sidebar change + controller guard fix
-- Next exact step: test the sidebar dropdown visually — hover over "מחולל רעיונות" in sidebar, confirm feather icon slides in, dropdown shows recent sessions, delete works
+- Pushed to origin/main (6 commits ahead → 0 ahead)
 
 ## 2026-08-11 Session — Ideas Persistence + Nightly Generation (COMPLETED)
 

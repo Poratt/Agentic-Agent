@@ -1,0 +1,28 @@
+use_default_settings: true
+
+general:
+  debug: false
+  instance_name: "Local SearXNG"
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "en"
+  formats:
+    - html
+    - json
+
+server:
+  port: 8080
+  bind_address: "0.0.0.0"
+  secret_key: "agentic-admin-local-dev-key-2026"
+  limiter: false
+  image_proxy: false
+
+ui:
+  default_locale: "en"
+  default_theme: "simple"
+
+outgoing:
+  request_timeout: 5.0
+  max_request_timeout: 15.0
