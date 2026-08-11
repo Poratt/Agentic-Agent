@@ -36,10 +36,66 @@
             <span class="nav-label">סטודיו מדיה</span>
         </button>
 
-        <button routerLink="/ideas" routerLinkActive="active" class="nav-item" appTooltip [text]="collapsed() ? 'מחולל רעיונות' : ''">
-            <span class="ph ph-lightbulb nav-icon"></span>
-            <span class="nav-label">מחולל רעיונות</span>
-        </button>
+        <div class="nav-item-ideas">
+            <button routerLink="/ideas" routerLinkActive="active" class="nav-item" appTooltip [text]="collapsed() ? 'מחולל רעיונות' : ''">
+                <span class="ph ph-lightbulb nav-icon"></span>
+                <span class="nav-label">מחולל רעיונות</span>
+            </button>
+            @if (ideasStore.recentSessions().length > 0) {
+                <app-dropdown #ideasDropdown [position]="'bottom-right'" (closed)="pendingDeleteIdeaSessionId.set(null)">
+                    <button
+                        button
+                        class="transparent-btn icon-only sm dropdown-trigger-btn"
+                        type="button"
+                        (click)="navigateToIdeas(); ideasDropdown.hideDropdown(); $event.stopPropagation()"
+                        appTooltip
+                        text="היסטוריית רעיונות"
+                    >
+                        <span class="ph ph-feather"></span>
+                    </button>
+                    <div content class="fade-in">
+                        <div class="nav-sub-list">
+                            @for (session of formattedIdeaSessions(); track session.id) {
+                                <div class="nav-sub-item stagger stagger-up" [class.active]="ideasStore.currentSessionId() === session.id">
+                                    @if (pendingDeleteIdeaSessionId() === session.id) {
+                                        <div class="delete-confirmation">
+                                            <span class="warning-text">
+                                                <span class="ph ph-warning-circle"></span>
+                                                <span class="typewriter">האם אתה בטוח?</span>
+                                            </span>
+                                            <div class="action-btns">
+                                                <button class="icon-only transparent-btn sm" type="button" (click)="cancelDeleteIdea()">
+                                                    <span class="ph ph-x"></span>
+                                                </button>
+                                                <button class="icon-only danger-btn sm" type="button" (click)="confirmDeleteIdea()">
+                                                    <span class="ph ph-check"></span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    } @else {
+                                        <button
+                                            class="nav-item sm"
+                                            type="button"
+                                            (click)="navigateToIdeas(session.id); ideasDropdown.hideDropdown()"
+                                        >
+                                            <span class="ph ph-lightbulb"></span>
+                                            <span class="nav-label session-title-label">{{ session.domain }}</span>
+                                        </button>
+                                        <button
+                                            class="icon-only sm hover-reveal-btn"
+                                            type="button"
+                                            (click)="setPendingDeleteIdea($event, session.id)"
+                                        >
+                                            <span class="ph ph-trash"></span>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </app-dropdown>
+            }
+        </div>
 
         <div class="nav-item-chat">
             <button routerLink="/chat" routerLinkActive="active" class="nav-item" appTooltip [text]="collapsed() ? 'צʼאט' : ''">
@@ -108,10 +164,6 @@
             <span class="custom-icon"></span>
             <span class="nav-label">כווץ</span>
         </button>
-        <!-- <button (click)="toggleSidebar()" class="nav-item toggle-btn" appTooltip [text]="collapsed() ? 'הרחב תפריט' : 'כווץ תפריט'">
-            <span class="ph ph-sidebar-simple toggle-icon nav-icon"></span>
-            <span class="nav-label">כווץ</span>
-        </button> -->
         <button (click)="authStore.logout()" class="nav-item" appTooltip [text]="collapsed() ? 'יציאה' : ''">
             <span class="ph ph-sign-out nav-icon"></span>
             <span class="nav-label">יציאה</span>

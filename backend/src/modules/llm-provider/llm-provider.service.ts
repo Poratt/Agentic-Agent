@@ -106,6 +106,22 @@ export class LlmProviderService {
     });
   }
 
+  /**
+   * Returns the first active text-capable model (with its provider) ordered by
+   * sortOrder then id. Used by background jobs (e.g. the nightly ideas cron)
+   * that run without a request/user context and need a concrete model to call.
+   * Returns null when no active text model exists.
+   */
+  async findFirstActiveTextModel(): Promise<{ provider: string; model: string } | null> {
+    const model = await this.modelRepo.findOne({
+      where: { active: true, capability: 'text' },
+      relations: ['provider'],
+      order: { sortOrder: 'ASC', id: 'ASC' },
+    });
+    if (!model || !model.provider) return null;
+    return { provider: model.provider.key, model: model.key };
+  }
+
   async createProvider(dto: CreateLlmProviderDto): Promise<ServiceResultContainer<LlmProviderEntity>> {
     const provider = this.providerRepo.create(dto);
     const saved = await this.providerRepo.save(provider);

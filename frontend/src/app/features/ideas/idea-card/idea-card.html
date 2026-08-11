@@ -2,14 +2,21 @@
     <div class="glass-effect card idea-card">
         <div class="idea-card-head">
             <h3 class="idea-card-title">{{ idea().title }}</h3>
-            <span
-                class="score-badge"
-                [class.score-success]="scoreVariant(idea().validationScore) === 'success'"
-                [class.score-warning]="scoreVariant(idea().validationScore) === 'warning'"
-                [class.score-danger]="scoreVariant(idea().validationScore) === 'danger'"
-            >
-                <span dir="ltr">{{ idea().validationScore }}/10</span>
-            </span>
+            <div class="idea-card-meta">
+                @if (savedIdeaId() !== undefined) {
+                    <button class="fav-btn" [class.active]="isFavorite()" (click)="onToggleFav()" [attr.data-testid]="'fav-' + savedIdeaId()">
+                        <i [class]="isFavorite() ? 'ph-fill ph-star' : 'ph ph-star'"></i>
+                    </button>
+                }
+                <span
+                    class="score-badge"
+                    [class.score-success]="scoreVariant(idea().validationScore) === 'success'"
+                    [class.score-warning]="scoreVariant(idea().validationScore) === 'warning'"
+                    [class.score-danger]="scoreVariant(idea().validationScore) === 'danger'"
+                >
+                    <span dir="ltr">{{ idea().validationScore }}/10</span>
+                </span>
+            </div>
         </div>
 
         <p class="idea-card-desc">{{ idea().description }}</p>

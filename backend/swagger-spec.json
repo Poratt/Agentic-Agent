@@ -3098,6 +3098,217 @@
         "toolIcon": "ph-lightbulb"
       }
     },
+    "/ideas/sessions": {
+      "get": {
+        "description": "Returns the authenticated user's saved idea-generation sessions ordered by creation time (newest first). Use ?nightly=true to limit to nightly cron runs, or ?favorites=true to limit to sessions containing a favorited idea.",
+        "operationId": "IdeasController_listSessions",
+        "parameters": [
+          {
+            "name": "nightly",
+            "required": false,
+            "in": "query",
+            "description": "When true, return only nightly sessions.",
+            "schema": {
+              "example": "false",
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "favorites",
+            "required": false,
+            "in": "query",
+            "description": "When true, return only sessions with a favorited idea.",
+            "schema": {
+              "example": "false",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saved idea sessions retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GenerateIdeasResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          }
+        },
+        "summary": "List saved idea sessions for the authenticated user",
+        "summaryHe": "מציג את רשימת שמירות הרעיונות שלך, מסודרת מהחדשה לישנה",
+        "tags": [
+          "ideas"
+        ],
+        "toolIcon": "ph-lightbulb"
+      }
+    },
+    "/ideas/sessions/{id}": {
+      "get": {
+        "description": "Returns one saved session owned by the authenticated user, including all of its ideas.",
+        "operationId": "IdeasController_getSession",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Numeric saved-idea session id.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session with ideas retrieved successfully."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "The session does not exist or does not belong to the authenticated user."
+          }
+        },
+        "summary": "Get a saved idea session with its ideas",
+        "summaryHe": "מציג שמירת רעיונות אחת עם כל הרעיונות שנוצרו בה",
+        "tags": [
+          "ideas"
+        ],
+        "toolIcon": "ph-lightbulb"
+      },
+      "delete": {
+        "description": "Permanently deletes a saved session owned by the authenticated user. All of its ideas are cascade-deleted.",
+        "operationId": "IdeasController_deleteSession",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Numeric saved-idea session id to delete.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Session deleted successfully."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "The session does not exist or does not belong to the authenticated user."
+          }
+        },
+        "summary": "Delete a saved idea session",
+        "summaryHe": "מוחק שמירת רעיונות אחת לצמיתות",
+        "tags": [
+          "ideas"
+        ],
+        "toolIcon": "ph-trash"
+      }
+    },
+    "/ideas/ideas/{id}": {
+      "patch": {
+        "description": "Toggles the isFavorite flag on a single saved idea owned by the authenticated user.",
+        "operationId": "IdeasController_setFavorite",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Numeric saved-idea id.",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetFavoriteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Favorite flag updated successfully."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "The idea does not exist or does not belong to the authenticated user."
+          }
+        },
+        "summary": "Set the favorite flag on a saved idea",
+        "summaryHe": "מסמן או מסיר רעיון שמור כמועדף",
+        "tags": [
+          "ideas"
+        ],
+        "toolIcon": "ph-star"
+      }
+    },
+    "/ideas/nightly/unread-count": {
+      "get": {
+        "description": "Returns the number of nightly cron sessions owned by the authenticated user that have not been read yet. Drives the \"new ideas this morning\" banner.",
+        "operationId": "IdeasController_nightlyUnreadCount",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Unread nightly session count.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          }
+        },
+        "summary": "Count unread nightly idea sessions",
+        "summaryHe": "מחזיר כמה שמירות ליליות טרם נקראו",
+        "tags": [
+          "ideas"
+        ],
+        "toolIcon": "ph-moon"
+      }
+    },
+    "/ideas/nightly/mark-read": {
+      "post": {
+        "description": "Clears the unread flag on all of the authenticated user's nightly sessions.",
+        "operationId": "IdeasController_markNightlyRead",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Nightly sessions marked as read."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          }
+        },
+        "summary": "Mark all nightly sessions as read",
+        "summaryHe": "מסמן את כל שמירות הלילה כנקראות",
+        "tags": [
+          "ideas"
+        ],
+        "toolIcon": "ph-check-circle"
+      }
+    },
     "/database-monitor/storage": {
       "get": {
         "description": "Returns row counts and storage sizes for all tables in the database.",
@@ -5155,6 +5366,123 @@
         },
         "required": [
           "domain"
+        ]
+      },
+      "BusinessIdeaDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "שם הרעיון"
+          },
+          "description": {
+            "type": "string",
+            "description": "תיאור קצר"
+          },
+          "targetMarket": {
+            "type": "string",
+            "description": "קהל יעד"
+          },
+          "validationScore": {
+            "type": "number",
+            "description": "ציון אימות 1–10",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "validationReason": {
+            "type": "string",
+            "description": "הסבר קצר בעברית"
+          },
+          "risks": {
+            "description": "סיכונים",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "competitors": {
+            "description": "מתחרים שנמצאו",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "nextSteps": {
+            "description": "צעדים הבאים",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "signalsReferenced": {
+            "description": "סיגנלים שעליהם הרעיון מבוסס",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "groundedInSignals": {
+            "type": "boolean",
+            "description": "האם הרעיון מעוגן במחקר שוק"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "targetMarket",
+          "validationScore",
+          "validationReason",
+          "risks",
+          "competitors",
+          "nextSteps",
+          "signalsReferenced",
+          "groundedInSignals"
+        ]
+      },
+      "GenerateIdeasResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "הצלחה"
+          },
+          "message": {
+            "type": "string",
+            "description": "הודעה"
+          },
+          "partial": {
+            "type": "boolean",
+            "description": "האם חלק מהרעיונות נכשלו"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BusinessIdeaDto"
+            }
+          },
+          "failedCount": {
+            "type": "number",
+            "description": "מספר רעיונות שנכשלו (רק כש-partial)"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "partial",
+          "result"
+        ]
+      },
+      "SetFavoriteDto": {
+        "type": "object",
+        "properties": {
+          "isFavorite": {
+            "type": "boolean",
+            "description": "Target favorite state for the idea. True marks it as a favorite, false clears the mark.",
+            "example": true
+          }
+        },
+        "required": [
+          "isFavorite"
         ]
       }
     }

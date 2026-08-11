@@ -20,7 +20,8 @@
 				max-width 200ms ease;
 		}
 
-		.nav-item-chat>app-dropdown {
+		.nav-item-chat>app-dropdown,
+		.nav-item-ideas>app-dropdown {
 			display: none;
 		}
 
@@ -161,6 +162,45 @@
 				}
 			}
 		}
+
+		.nav-item-ideas {
+			position: relative;
+			display: flex;
+			align-items: center;
+			width: 100%;
+
+			>.nav-item {
+				flex: 1;
+			}
+
+			>app-dropdown {
+				position: absolute;
+				width: auto;
+				inset-inline-end: 0;
+				flex: 0 0 auto;
+				transform: translateX(calc(-1 * var(--space-10)));
+				opacity: 0;
+				scale: 0;
+				transition:
+					opacity var(--transition-fast),
+					scale var(--transition-fast),
+					transform var(--transition-fast);
+
+				::ng-deep .dropdown-wrapper {
+					width: auto;
+					display: flex;
+					align-items: center;
+				}
+			}
+
+			&:hover {
+				>app-dropdown {
+					opacity: 1;
+					scale: 1;
+					transform: translateX(var(--space-8));
+				}
+			}
+		}
 	}
 
 	.nav-item {
@@ -240,6 +280,17 @@
 
 ::ng-deep .nav-item-chat:has(.dropdown-container:hover) .dropdown-trigger-btn,
 .dropdown-trigger-btn:hover {
+	color: var(--color-primary);
+}
+
+::ng-deep .nav-item-ideas:has(.dropdown-container:hover)>.nav-item,
+.nav-item-ideas:has(.dropdown-trigger-btn:hover)>.nav-item {
+	background: var(--color-surface-hover);
+	color: var(--color-primary);
+}
+
+::ng-deep .nav-item-ideas:has(.dropdown-container:hover) .dropdown-trigger-btn,
+.nav-item-ideas:has(.dropdown-trigger-btn:hover) .dropdown-trigger-btn {
 	color: var(--color-primary);
 }
 

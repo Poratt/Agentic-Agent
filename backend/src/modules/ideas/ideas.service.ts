@@ -1,4 +1,6 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { LlmClientService } from '../llm/services/llm-client.service';
 import { WebSearchService } from '../web-search/web-search.service';
 import { parseLlmJson } from '../llm/utils/llm-json-parser';
@@ -17,6 +19,8 @@ import {
   IDEA_GENERATION_PROMPT,
   VALIDATION_PROMPT,
 } from './constants/idea-prompts.constant';
+import { SavedIdeaSession } from './entities/saved-idea-session.entity';
+import { SavedIdea } from './entities/saved-idea.entity';
 
 const MAX_DOMAIN_LENGTH = 500;
 const MAX_PARALLEL_VALIDATION = 3;
@@ -29,7 +33,176 @@ export class IdeasService {
   constructor(
     private readonly llm: LlmClientService,
     private readonly webSearch: WebSearchService,
+    @InjectRepository(SavedIdeaSession)
+    private readonly sessionRepository: Repository<SavedIdeaSession>,
+    @InjectRepository(SavedIdea)
+    private readonly ideaRepository: Repository<SavedIdea>,
+    private readonly dataSource: DataSource,
   ) {}
+
+  // ---------------------------------------------------------------------------
+  // Persistence layer (Phase 1)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Maps one generated BusinessIdea to a SavedIdea persistence row.
+   * Centralized here so the field mapping exists in exactly one place.
+   * `validationBreakdown` is intentionally omitted — it is not rendered in the
+   * UI and is not present on the SavedIdea entity.
+   */
+  private mapIdeaToSaved(userId: number, sessionId: number, idea: BusinessIdea): SavedIdea {
+    const saved = new SavedIdea();
+    saved.userId = userId;
+    saved.sessionId = sessionId;
+    saved.title = idea.title;
+    saved.description = idea.description;
+    saved.targetMarket = idea.targetMarket;
+    saved.validationScore = idea.validationScore;
+    saved.validationReason = idea.validationReason ?? null;
+    saved.risks = idea.risks?.length ? idea.risks : null;
+    saved.competitors = idea.competitors?.length ? idea.competitors : null;
+    saved.nextSteps = idea.nextSteps?.length ? idea.nextSteps : null;
+    saved.signalsReferenced = idea.signalsReferenced?.length ? idea.signalsReferenced : null;
+    saved.groundedInSignals = idea.groundedInSignals;
+    saved.isFavorite = false;
+    return saved;
+  }
+
+  /**
+   * Persists a full generation run (one session + all its ideas) in a single
+   * transaction. Returns the new session id. Best-effort for callers — wrap in
+   * try/catch at the call site and never let a save failure break the response.
+   */
+  async saveGeneration(
+    userId: number,
+    domain: string,
+    provider: string | null,
+    model: string | null,
+    response: GenerateIdeasResponse,
+    opts?: { nightly?: boolean; unread?: boolean },
+  ): Promise<number> {
+    const ideas = response.result ?? [];
+    if (ideas.length === 0) {
+      return 0;
+    }
+
+    const session = new SavedIdeaSession();
+    session.userId = userId;
+    session.domain = domain;
+    session.provider = provider ?? null;
+    session.model = model ?? null;
+    session.nightly = opts?.nightly ?? false;
+    session.unread = opts?.unread ?? false;
+
+    await this.dataSource.transaction(async (manager) => {
+      const savedSession = await manager.save(session);
+      const savedIdeas = ideas.map((idea) => this.mapIdeaToSaved(userId, savedSession.id, idea));
+      await manager.save(SavedIdea, savedIdeas);
+    });
+
+    return session.id;
+  }
+
+  /**
+   * Lists the user's saved sessions (newest first). When `nightly` is true,
+   * only nightly cron sessions are returned. When `favorites` is true, only
+   * sessions that contain at least one favorited idea are returned.
+   */
+  async listSessions(
+    userId: number,
+    filters?: { nightly?: boolean; favorites?: boolean },
+  ): Promise<SavedIdeaSession[]> {
+    const qb = this.sessionRepository
+      .createQueryBuilder('session')
+      .where('session.userId = :userId', { userId });
+
+    if (filters?.nightly) {
+      qb.andWhere('session.nightly = :nightly', { nightly: true });
+    }
+
+    if (filters?.favorites) {
+      qb.andWhere(
+        `session.id IN (SELECT DISTINCT idea.sessionId FROM saved_ideas idea WHERE idea.userId = :userId AND idea.isFavorite = :fav)`,
+        { fav: true },
+      );
+    }
+
+    qb.orderBy('session.createdAt', 'DESC');
+    return qb.getMany();
+  }
+
+  /**
+   * Returns one session with its ideas. Throws ForbiddenException if the session
+   * does not exist or is not owned by the user.
+   */
+  async getSession(userId: number, sessionId: number): Promise<SavedIdeaSession> {
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId, userId },
+      relations: ['ideas'],
+    });
+
+    if (!session) {
+      throw new ForbiddenException('אינך מורשה לגשת לשמירת רעיונות זו או שהיא אינה קיימת.');
+    }
+
+    return session;
+  }
+
+  /**
+   * Deletes a session and (via cascade) all its ideas. Throws ForbiddenException
+   * if the session does not exist or is not owned by the user.
+   */
+  async deleteSession(userId: number, sessionId: number): Promise<void> {
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId, userId },
+    });
+
+    if (!session) {
+      throw new ForbiddenException('אינך מורשה למחוק שמירת רעיונות זו או שהיא אינה קיימת.');
+    }
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.delete(SavedIdeaSession, sessionId);
+    });
+  }
+
+  /**
+   * Toggles the favorite flag on a single idea. Ownership is enforced via the
+   * idea's denormalized `userId` column (no session join needed). Throws
+   * ForbiddenException if the idea does not exist or is not owned by the user.
+   */
+  async setFavorite(userId: number, ideaId: number, isFavorite: boolean): Promise<void> {
+    const idea = await this.ideaRepository.findOne({
+      where: { id: ideaId, userId },
+    });
+
+    if (!idea) {
+      throw new ForbiddenException('אינך מורשה לשנות רעיון זה או שהוא אינו קיים.');
+    }
+
+    idea.isFavorite = isFavorite;
+    await this.ideaRepository.save(idea);
+  }
+
+  /**
+   * Counts the user's nightly sessions that have not yet been read. Drives the
+   * "new ideas this morning" banner in the UI.
+   */
+  async unreadNightlyCount(userId: number): Promise<number> {
+    return this.sessionRepository.count({
+      where: { userId, nightly: true, unread: true },
+    });
+  }
+
+  /**
+   * Marks all of the user's unread nightly sessions as read.
+   */
+  async markNightlyRead(userId: number): Promise<void> {
+    await this.sessionRepository.update(
+      { userId, nightly: true, unread: true },
+      { unread: false },
+    );
+  }
 
   async generateIdeas(
     domain: string,

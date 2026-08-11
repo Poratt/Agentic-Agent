@@ -1,0 +1,187 @@
+<div class="page-content">
+    <div class="page-header">
+        <div class="header-row">
+            <div class="header-content">
+                <h2>היסטוריית רעיונות</h2>
+            </div>
+
+            <div class="header-actions">
+                <div class="action-row">
+                    <div class="toggle-group">
+                        <button
+                            type="button"
+                            class="toggle-btn"
+                            [class.active]="filterMode() === 'all'"
+                            (click)="setFilter('all')"
+                        >
+                            הכל
+                        </button>
+                        <button
+                            type="button"
+                            class="toggle-btn"
+                            [class.active]="filterMode() === 'nightly'"
+                            (click)="setFilter('nightly')"
+                        >
+                            ליליים
+                            @if ((ideasStore.nightlyUnread()) > 0) {
+                                <span class="badge">{{ ideasStore.nightlyUnread() }}</span>
+                            }
+                        </button>
+                        <button
+                            type="button"
+                            class="toggle-btn"
+                            [class.active]="filterMode() === 'favorites'"
+                            (click)="setFilter('favorites')"
+                        >
+                            מועדפים
+                        </button>
+                    </div>
+                </div>
+
+                <div class="action-row summary-row">
+                    <span class="summary-item">
+                        <span [ngClass]="filterMode() === 'all' ? 'ph ph-lightbulb' : 'ph ph-list-checks'"></span>
+                        <span class="summary-value">{{ filteredSessions().length }}</span>
+                        <span class="summary-label">סשנים</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @switch (pageState()) {
+        @case (PageStates.Loading) {
+            <div class="page-state loading-state">
+                <span class="custom-loader"></span>
+            </div>
+        }
+        @case (PageStates.Error) {
+            <div class="page-state error-state">
+                <span class="icon ph ph-warning"></span>
+                <h4 class="title">אירעה שגיאה בטעינת הסשנים.</h4>
+                <p class="subtitle">אנא נסה שוב מאוחר יותר.</p>
+                <button class="primary-btn sm" type="button" (click)="refresh()">רענן</button>
+            </div>
+        }
+        @case (PageStates.Empty) {
+            <div class="page-state empty-state">
+                <span class="icon ph ph-lightbulb-slash"></span>
+                <h4 class="title">עדיין אין לך סשנים שמורים.</h4>
+                <p class="subtitle">צור רעיונות בעמוד מחולל הרעיונות — הם יופיעו כאן.</p>
+            </div>
+        }
+        @case (PageStates.Ready) {
+            @if (filteredSessions().length === 0) {
+                <div class="page-state table-empty-state">
+                    <span class="icon ph ph-funnel-x"></span>
+                    <h4 class="title">לא נמצאו סשנים.</h4>
+                    <p class="subtitle">נסה לשנות את הסינון או ליצור רעיונות חדשים.</p>
+                </div>
+            } @else {
+                <div class="sessions-list stagger stagger-up">
+                    @for (session of filteredSessions(); track session.id) {
+                        <div
+                            class="session-row hover-parent"
+                            [class.active]="currentSessionId() === session.id"
+                            [class.danger]="pendingDeleteSessionId() === session.id"
+                            [class.expanded]="expandedSessionId() === session.id"
+                        >
+                            @if (pendingDeleteSessionId() === session.id) {
+                                <div class="delete-confirmation">
+                                    <span class="warning-text">
+                                        <span class="ph ph-warning-circle"></span>
+                                        <span class="typewriter">האם אתה בטוח?</span>
+                                    </span>
+                                    <div class="action-btns stagger stagger-up">
+                                        <button type="button" class="ghost-btn sm" (click)="cancelDelete()">ביטול</button>
+                                        <button type="button" class="danger-btn sm" (click)="confirmDelete()">
+                                            <span class="ph ph-trash"></span>
+                                            מחק
+                                        </button>
+                                    </div>
+                                </div>
+                            } @else {
+                                <div class="session-header" (click)="toggleExpand(session)">
+                                    <div class="session-icon">
+                                        <span class="ph ph-lightbulb"></span>
+                                    </div>
+
+                                    <div class="session-text">
+                                        <span class="title">
+                                            {{ session.domain }}
+                                            @if (session.nightly) {
+                                                <span class="badge nightly-badge">לילי</span>
+                                            }
+                                        </span>
+                                        <span class="date">{{ session.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                                    </div>
+
+                                    <div class="session-meta">
+                                        <span class="count-badge">
+                                            <span class="ph ph-lightbulb"></span>
+                                            {{ getIdeasCount(session) }}
+                                        </span>
+                                        @if (session.unread) {
+                                            <span class="unread-dot"></span>
+                                        }
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        class="icon-only transparent-btn delete-btn"
+                                        (click)="setPendingDelete($event, session.id)"
+                                        aria-label="מחק סשן"
+                                    >
+                                        <span class="ph ph-trash"></span>
+                                    </button>
+
+                                    <span class="expand-icon" [class.rotated]="expandedSessionId() === session.id">
+                                        <span class="ph ph-caret-down"></span>
+                                    </span>
+                                </div>
+
+                                @if (expandedSessionId() === session.id) {
+                                    <div class="ideas-list stagger stagger-up">
+                                        @if (!session.ideas || session.ideas.length === 0) {
+                                            <div class="ideas-loading">
+                                                <span class="custom-loader sm"></span>
+                                            </div>
+                                        } @else {
+                                            @for (idea of session.ideas; track idea.id) {
+                                                <div class="idea-row">
+                                                    <div class="idea-content">
+                                                        <div class="idea-title-row">
+                                                            <span class="idea-title">{{ idea.title }}</span>
+                                                            @if (idea.validationScore) {
+                                                                <span class="score-badge" [class]="getScoreClass(idea.validationScore)">
+                                                                    {{ idea.validationScore }}
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                        @if (idea.targetMarket) {
+                                                            <span class="idea-market">{{ idea.targetMarket }}</span>
+                                                        }
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        class="icon-only transparent-btn favorite-btn"
+                                                        [class.active]="idea.isFavorite"
+                                                        (click)="toggleFavorite(idea)"
+                                                        [attr.aria-label]="idea.isFavorite ? 'הסר ממועדפים' : 'הוסף למועדפים'"
+                                                    >
+                                                        <span class="ph" [class.ph-star]="!idea.isFavorite" [class.ph-star-fill]="idea.isFavorite"></span>
+                                                    </button>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        }
+    }
+</div>

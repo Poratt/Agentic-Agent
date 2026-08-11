@@ -72,6 +72,8 @@ flowchart TD
     ChatMessagesTable[(chat_messages)]
     TerpenesTable[(terpenes)]
     GeneticsTable[(genetics)]
+    SavedIdeaSessionsTable[(saved_idea_sessions)]
+    SavedIdeasTable[(saved_ideas)]
   end
 
   subgraph External["External Providers"]
@@ -90,6 +92,8 @@ flowchart TD
   StrainHunterUI --> SharedTooltip & FrontendServices
   StrainHunterUI --> StrainHunterModule
   IdeasUI --> FrontendServices & FrontendStores
+  IdeasUI --> IdeasHistory[IdeasHistory Page\n/ideas/history]
+  IdeasHistory --> FrontendStores
   ChatMessage --> AiFormat
   AuthUI --> FrontendServices
   FrontendServices --> AuthModule & UsersModule & AdminAgentController & LlmController & TerpeneModule & GeneticsModule & StrainHunterModule & IdeasModule
@@ -254,7 +258,7 @@ flowchart TB
     StrainHunter["StrainHunterModule\nJane API fetch and normalized items"]
     Terpene["TerpeneModule\nterpene catalog with effects, role lookup"]
     Genetics["GeneticsModule\nstrain lineage catalog with parent1/parent2/origin, role lookup"]
-    Ideas["IdeasModule\nbusiness idea generator\nSearXNG signals + LLM, SSE progress"]
+    Ideas["IdeasModule\nbusiness idea generator\nSearXNG signals + LLM, SSE progress\nPersistence: saved_idea_sessions\n+ saved_ideas (cascade)\nNightly cron: @Cron 04:00"]
   end
 
   Auth & Users --> UsersDb[(users)]
@@ -267,6 +271,9 @@ flowchart TB
   Terpene --> TerpenesDb[(terpenes)]
   Genetics --> GeneticsDb[(genetics)]
   LLM --> Providers[LLM Providers]
+  Ideas --> SavedIdeaSessionsTable
+  Ideas --> SavedIdeasTable
+  Ideas --> UsersTable
 ```
 
 ## GenUI Rendering Path
@@ -433,6 +440,7 @@ sequenceDiagram
   participant Service as IdeasService
   participant Search as WebSearchService
   participant LLM as LlmClientService
+  participant DB as Database
 
   User->>IdeasUI: Enter domain + count, click "צור רעיונות"
   IdeasUI->>API: GET /ideas/generate/stream?domain=...&count=...
@@ -458,7 +466,58 @@ sequenceDiagram
   Service-->>API: SSE { phase: 'done', result: BusinessIdea[] }
   API-->>IdeasUI: SSE event
   IdeasUI->>IdeasUI: render idea cards
+  API->>Service: saveGeneration() [best-effort]
+  Service->>DB: INSERT saved_idea_session + saved_ideas [transaction]
 ```
+
+## Ideas Persistence & Nightly Flow
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Cron as IdeasTasksService
+  participant Service as IdeasService
+  participant LLM as LlmClientService
+  participant Search as WebSearchService
+  participant DB as Database
+  participant UI as IdeasPage
+  participant History as IdeasHistory
+
+  Cron->>Cron: @Cron('0 0 4 * * *') [IDEAS_NIGHTLY_ENABLED=true]
+  Cron->>Cron: resolve admin user + model
+  loop Each domain in IDEAS_NIGHTLY_DOMAINS
+    Cron->>Service: generateIdeas(domain, count, userId, model)
+    Service->>Search: search signals × 3
+    Service->>LLM: generate + validate ideas
+    Service-->>Cron: GenerateIdeasResponse
+    Cron->>Service: saveGeneration(userId, domain, model, res, {nightly:true, unread:true})
+    Service->>DB: INSERT saved_idea_session (nightly=true, unread=true)
+    Service->>DB: INSERT saved_ideas [cascade]
+  end
+
+  UI->>API: GET /ideas/nightly/unread-count
+  API-->>UI: N unread sessions
+  UI->>UI: Show "N רעיונות חדשים נוצרו הלילה" banner
+  UI->>History: /ideas/history?nightly=true
+  History->>API: GET /ideas/sessions?nightly=true
+  History->>API: PATCH /ideas/ideas/:id {isFavorite:true}
+  History->>API: DELETE /ideas/sessions/:id
+  UI->>API: POST /ideas/nightly/mark-read
+  API-->>UI: unread cleared
+```
+
+## Ideas API Surface
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | /ideas/generate | Sync generation (auto-persists) |
+| GET | /ideas/generate/stream | SSE stream (auto-persists on phase:done) |
+| GET | /ideas/sessions | List sessions (supports ?nightly=, ?favorites=) |
+| GET | /ideas/sessions/:id | Full session with ideas |
+| DELETE | /ideas/sessions/:id | Delete session + cascade ideas |
+| PATCH | /ideas/ideas/:id | Toggle isFavorite |
+| GET | /ideas/nightly/unread-count | Count unread nightly sessions |
+| POST | /ideas/nightly/mark-read | Clear unread flag |
 
 ## Current Architecture Notes
 
@@ -484,3 +543,5 @@ sequenceDiagram
 - GenUI render blocks for Agnes: `agnes-image` (`agnes-image-card`) and `agnes-video` (`agnes-video-card`) are registered in `RenderHostComponent` and rendered inline in chat instead of markdown links. `RenderSpecService` maps `LlmController_generateImage`/`createVideo`/`extendVideo` to these types.
 - Image/video model fallback (`resolveCapabilityModel`) picks the highest-version active model of the requested capability when `modelId` is omitted (e.g. `agnes-image-2.1-flash` over `2.0-flash`). The resolved image model is logged by `LlmController`.
 - **Ideas module** (`IdeasModule`) is a business idea generator: `POST /ideas/generate` (sync) and `GET /ideas/generate/stream` (SSE progress). The service runs a 3-phase agentic loop — SearXNG signal gathering → LLM idea generation → per-idea validation — with 60s overall timeout, partial results via `Promise.allSettled`, and weighted rate limiting via `IdeasThrottlerGuard` (extends `ThrottlerGuard`, loops `increment()` `max(count,1)` times). The frontend `IdeasPage` uses `PageStates` and consumes the SSE stream via raw `fetch` + `AbortController`.
+- **Ideas persistence:** Every generation (manual or nightly) is persisted to `saved_idea_sessions` + `saved_ideas` tables (FK cascade on delete). Persistence is best-effort in the stream handler — wrapped in try/catch so save failures never break the SSE response. The history page (`/ideas/history`) loads past sessions via `GET /ideas/sessions` with optional `?nightly=` and `?favorites=` filters.
+- **Ideas nightly cron:** `IdeasTasksService` runs at 04:00 server time when `IDEAS_NIGHTLY_ENABLED=true`. Each domain in `IDEAS_NIGHTLY_DOMAINS` generates ideas for the admin user and saves them with `nightly=true, unread=true`. The `IdeasPage` calls `GET /ideas/nightly/unread-count` on load and shows a banner with a link to history. `POST /ideas/nightly/mark-read` clears the unread flag.

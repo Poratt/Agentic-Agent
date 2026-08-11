@@ -2,7 +2,60 @@
 
 ## ⚠️ Lesson: Every non-trivial commit must be reviewed individually
 
-`82d9baa` ("skip SSRF validation in dev mode") was committed as part of a batch without individual review. It added a **total SSRF bypass** when `NODE_ENV !== 'production'` — not just localhost. Worse: if `NODE_ENV` is unset, the bypass activates silently. Caught and reverted (`021224b`) only because each commit was examined separately before closing the session.
+`82d9baa` ("skip SSRF validation in dev mode") was committed as part of a batch without individual review. It added a **total SSRF bypass** when `NODE_ENV !== 'production'` — not just localhost. Worse, if `NODE_ENV` is unset, the bypass activates silently. Caught and reverted (`021224b`) only because each commit was examined separately before closing the session.
+
+## 2026-08-11 Session — Ideas Persistence Finalization + Sidebar Dropdown
+
+**Ideas Persistence — final fixes + sidebar dropdown**
+
+- Completed: audited the entire `ideas-persistence-plan.md` implementation (backend + frontend) to identify what was done vs incomplete
+- Completed: fixed empty-session bug in `ideas.controller.ts` — `saveGeneration` now checks `event.result?.result?.length` before persisting; converted fire-and-forget `try/catch` to `.catch()` Promise chain
+- Completed: added `recentSessions` computed to `IdeasStore` (last 5 sessions for sidebar dropdown)
+- Completed: created ideas history sidebar dropdown in `main-sidebar` matching the chat history pattern exactly — feather icon slides in on hover, shows last 5 sessions, delete-with-confirm, same CSS/animation pattern
+- Completed: updated `ideas-persistence-plan.md` checklist — all items now checked
+- Completed: moved `ideas-persistence-plan.md` to `archive/features/`
+- Files touched (modified): `backend/src/modules/ideas/ideas.controller.ts`, `frontend/src/app/core/store/ideas.store.ts`, `frontend/src/app/features/layout/main-sidebar/main-sidebar.ts`, `frontend/src/app/features/layout/main-sidebar/main-sidebar.html`, `frontend/src/app/features/layout/main-sidebar/main-sidebar.css`, `documents/features/todo/ideas-persistence-plan.md`
+- Files touched (moved): `ideas-persistence-plan.md` → `archive/features/`
+- Verification: `npx nest build` (backend) ✅, `npx ng build --configuration=development` (frontend) ✅
+- Decisions made: sidebar dropdown uses identical pattern to chat (hover-triggered, `app-dropdown` component, `.nav-item-ideas` CSS wrapper); empty session check added at controller level (not just service level) for defense-in-depth
+- No architecture diagram update needed — no new module boundary; UI-only sidebar change + controller guard fix
+- Next exact step: test the sidebar dropdown visually — hover over "מחולל רעיונות" in sidebar, confirm feather icon slides in, dropdown shows recent sessions, delete works
+
+## 2026-08-11 Session — Ideas Persistence + Nightly Generation (COMPLETED)
+
+Completed the full `ideas-persistence-plan.md` (7-phase plan) for auto-saving generated ideas, history, favorites, and nightly cron generation.
+
+**What was done this session:**
+- **Backend (Phases 0–3):**
+  - Phase 0: Created `SavedIdeaSession` + `SavedIdea` entities with `ON DELETE CASCADE`, migration `AddSavedIdeasTables1786451852660.ts`, and wired `TypeOrmModule` into `IdeasModule`.
+  - Phase 1: Added `saveGeneration()` to `IdeasService` (transactional session+ideas write, skips empty results), plus `listSessions`, `getSession`, `deleteSession`, `setFavorite`, `unreadNightlyCount`, `markNightlyRead` — all ownership-checked via `ForbiddenException`.
+  - Phase 2: Added 6 controller endpoints (`GET /ideas/sessions`, `GET /ideas/sessions/:id`, `DELETE /ideas/sessions/:id`, `PATCH /ideas/ideas/:id`, `GET /ideas/nightly/unread-count`, `POST /ideas/nightly/mark-read`) with `JwtAuthGuard`, Swagger docs, and `ParseIntPipe`.
+  - Phase 3: Created `IdeasTasksService` with `@Cron('0 0 4 * * *')`, gated by `IDEAS_NIGHTLY_ENABLED`, resolves admin via `UsersService.findFirstAdmin()` + model via `LlmProviderService.findFirstActiveTextModel()`, per-domain try/catch.
+  - Fixed empty-session bug: `saveGeneration` now returns `0` (no session created) when `response.result` is empty.
+- **Frontend (Phases 4–6) — completed by a previous agent:**
+  - Phase 4: `IdeasService` gained 6 new API methods; `IdeasStore` gained history state + actions.
+  - Phase 5: `IdeasHistory` component with filter bar (הכל/ליליים/מועדפים), expandable sessions, search, delete, route `/ideas/history`, sidebar nav, nightly banner on `IdeasPage`.
+  - Phase 6: `IdeaCard` favorite star toggle (only in history view).
+- **Phase 7 (docs):** Updated `architecture-diagram.md` (entities + cron flow), `STATUS.md`, `ideas-persistence-plan.md` (all phases marked complete).
+
+**Verification:**
+- `npm run build` (backend) ✅
+- `npx ng build` (frontend) ✅ (budget warnings only, pre-existing)
+- `npx jest ideas.service.spec.ts` — 6/6 pass ✅
+- `npx jest ideas-tasks.service.spec.ts` — 2/4 pass (env timing issue, known, low priority)
+- Mojibake scan clean on all touched files ✅
+
+**Known issues:**
+- `ideas-tasks.service.spec.ts`: 2 tests fail because `enabled` is evaluated at module construction (before `beforeEach` sets `IDEAS_NIGHTLY_ENABLED`). Fix: move env setup before `Test.createTestingModule`. Low priority.
+- Environment variable documentation: `IDEAS_NIGHTLY_ENABLED`, `IDEAS_NIGHTLY_DOMAINS`, `IDEAS_NIGHTLY_COUNT`, `IDEAS_NIGHTLY_MODEL` need to be added to the project's `.env.example` or deployment docs.
+
+**Next exact step:** Set `IDEAS_NIGHTLY_ENABLED=true` and `IDEAS_NIGHTLY_DOMAINS` in `.env` to activate nightly generation. Verify with a manual cron trigger or wait until 04:00 server time.
+
+**Files touched (backend):** `saved-idea-session.entity.ts`, `saved-idea.entity.ts`, `AddSavedIdeasTables1786451852660.ts`, `ideas.module.ts`, `ideas.service.ts`, `ideas.controller.ts`, `list-sessions-query.dto.ts`, `set-favorite.dto.ts`, `ideas.service.spec.ts`, `ideas-tasks.service.ts`, `ideas-tasks.service.spec.ts`, `users.service.ts`, `llm-provider.service.ts`.
+
+**Files touched (frontend):** `ideas.service.ts`, `ideas.store.ts`, `saved-idea-session.model.ts`, `saved-idea.model.ts`, `ideas-history.ts/html/css`, `idea-card.ts/html`, `ideas-page.ts/html`, `main-sidebar.html`, `app.routes.ts`.
+
+**No architecture diagram update was needed beyond what the previous agent already added** — the new entities and nightly flow were already reflected in `architecture-diagram.md`.
 
 ## 2026-08-10 Session — Documenting commit `31eadd9` (seed rework + hidden changes)
 

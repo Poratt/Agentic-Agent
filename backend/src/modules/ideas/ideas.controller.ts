@@ -1,11 +1,39 @@
-﻿import { Controller, Post, Get, Body, Query, Sse, ServiceUnavailableException, UseGuards, Req } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+﻿import {
+  Controller,
+  Post,
+  Get,
+  Delete,
+  Patch,
+  Body,
+  Param,
+  Query,
+  ParseIntPipe,
+  Sse,
+  HttpCode,
+  ServiceUnavailableException,
+  UnauthorizedException,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiParam,
+  ApiOkResponse,
+  ApiForbiddenResponse,
+  ApiQuery,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { Observable, Subscriber } from 'rxjs';
 import { MessageEvent } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { IdeasService } from './ideas.service';
 import { GenerateIdeasDto } from './dto/generate-ideas.dto';
 import { GenerateIdeasResponseDto } from './dto/idea-result.dto';
 import { GenerateIdeasResponse } from './interfaces/idea.interface';
+import { ListSessionsQueryDto } from './dto/list-sessions-query.dto';
+import { SetFavoriteDto } from './dto/set-favorite.dto';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RequestWithUser } from '../../core/interfaces/request-with-user.interface';
@@ -13,6 +41,8 @@ import { RequestWithUser } from '../../core/interfaces/request-with-user.interfa
 @ApiTags('ideas')
 @Controller('ideas')
 export class IdeasController {
+  private readonly logger = new Logger(IdeasController.name);
+
   constructor(private readonly ideasService: IdeasService) {}
 
   @UseGuards(JwtAuthGuard)
@@ -25,7 +55,16 @@ export class IdeasController {
   async generate(@Req() req: RequestWithUser, @Body() dto: GenerateIdeasDto): Promise<GenerateIdeasResponse> {
     try {
       const userId = req.user?.sub;
-      return await this.ideasService.generateIdeas(dto.domain, dto.count ?? 5, undefined, userId, dto.provider, dto.model);
+      const result = await this.ideasService.generateIdeas(dto.domain, dto.count ?? 5, undefined, userId, dto.provider, dto.model);
+      // Best-effort persistence: never fail the request over a save error.
+      if (userId != null && result.result?.length) {
+        this.ideasService
+          .saveGeneration(userId, dto.domain, dto.provider ?? null, dto.model ?? null, result)
+          .catch((saveErr) => {
+            this.logger?.error?.('Failed to persist idea generation', saveErr);
+          });
+      }
+      return result;
     } catch (error) {
       if (error instanceof Error && error.name === 'BadRequestException') {
         throw error;
@@ -50,9 +89,30 @@ export class IdeasController {
     const count = dto.count ?? 5;
     return new Observable<MessageEvent>((subscriber: Subscriber<MessageEvent>) => {
       this.ideasService
-        .generateIdeas(dto.domain, count, (event) => {
-          subscriber.next({ data: JSON.stringify(event) });
-        }, userId, dto.provider, dto.model)
+        .generateIdeas(
+          dto.domain,
+          count,
+          (event) => {
+            subscriber.next({ data: JSON.stringify(event) });
+            // Best-effort persistence on the final event — never breaks the stream.
+            if (event.phase === 'done' && userId != null && event.result?.result?.length) {
+              this.ideasService
+                .saveGeneration(
+                  userId,
+                  dto.domain,
+                  dto.provider ?? null,
+                  dto.model ?? null,
+                  event.result,
+                )
+                .catch((saveErr) => {
+                  this.logger.error('Failed to persist streamed idea generation', saveErr);
+                });
+            }
+          },
+          userId,
+          dto.provider,
+          dto.model,
+        )
         .then(() => subscriber.complete())
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : 'Unknown error';
@@ -62,5 +122,110 @@ export class IdeasController {
           subscriber.complete();
         });
     });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('sessions')
+  @ApiOperation({
+    summary: 'List saved idea sessions for the authenticated user',
+    summaryHe: 'מציג את רשימת שמירות הרעיונות שלך, מסודרת מהחדשה לישנה',
+    toolIcon: 'ph-lightbulb',
+    description:
+      'Returns the authenticated user\'s saved idea-generation sessions ordered by creation time (newest first). ' +
+      'Use ?nightly=true to limit to nightly cron runs, or ?favorites=true to limit to sessions containing a favorited idea.',
+  } as CustomApiOperationOptions)
+  @ApiQuery({ name: 'nightly', required: false, type: Boolean, description: 'When true, return only nightly sessions.' })
+  @ApiQuery({ name: 'favorites', required: false, type: Boolean, description: 'When true, return only sessions with a favorited idea.' })
+  @ApiOkResponse({ description: 'Saved idea sessions retrieved successfully.', type: [GenerateIdeasResponseDto] })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  async listSessions(@Req() req: RequestWithUser, @Query() dto: ListSessionsQueryDto) {
+    if (!req.user) throw new UnauthorizedException();
+    return this.ideasService.listSessions(req.user.sub, { nightly: dto.nightly, favorites: dto.favorites });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('sessions/:id')
+  @ApiOperation({
+    summary: 'Get a saved idea session with its ideas',
+    summaryHe: 'מציג שמירת רעיונות אחת עם כל הרעיונות שנוצרו בה',
+    toolIcon: 'ph-lightbulb',
+    description: 'Returns one saved session owned by the authenticated user, including all of its ideas.',
+  } as CustomApiOperationOptions)
+  @ApiParam({ name: 'id', type: Number, description: 'Numeric saved-idea session id.' })
+  @ApiOkResponse({ description: 'Session with ideas retrieved successfully.' })
+  @ApiForbiddenResponse({ description: 'The session does not exist or does not belong to the authenticated user.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  async getSession(@Req() req: RequestWithUser, @Param('id', ParseIntPipe) id: number) {
+    if (!req.user) throw new UnauthorizedException();
+    return this.ideasService.getSession(req.user.sub, id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('sessions/:id')
+  @HttpCode(204)
+  @ApiOperation({
+    summary: 'Delete a saved idea session',
+    summaryHe: 'מוחק שמירת רעיונות אחת לצמיתות',
+    toolIcon: 'ph-trash',
+    description: 'Permanently deletes a saved session owned by the authenticated user. All of its ideas are cascade-deleted.',
+  } as CustomApiOperationOptions)
+  @ApiParam({ name: 'id', type: Number, description: 'Numeric saved-idea session id to delete.' })
+  @ApiResponse({ status: 204, description: 'Session deleted successfully.' })
+  @ApiForbiddenResponse({ description: 'The session does not exist or does not belong to the authenticated user.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  async deleteSession(@Req() req: RequestWithUser, @Param('id', ParseIntPipe) id: number) {
+    if (!req.user) throw new UnauthorizedException();
+    await this.ideasService.deleteSession(req.user.sub, id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('ideas/:id')
+  @ApiOperation({
+    summary: 'Set the favorite flag on a saved idea',
+    summaryHe: 'מסמן או מסיר רעיון שמור כמועדף',
+    toolIcon: 'ph-star',
+    description: 'Toggles the isFavorite flag on a single saved idea owned by the authenticated user.',
+  } as CustomApiOperationOptions)
+  @ApiParam({ name: 'id', type: Number, description: 'Numeric saved-idea id.' })
+  @ApiOkResponse({ description: 'Favorite flag updated successfully.' })
+  @ApiForbiddenResponse({ description: 'The idea does not exist or does not belong to the authenticated user.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  async setFavorite(
+    @Req() req: RequestWithUser,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: SetFavoriteDto,
+  ) {
+    if (!req.user) throw new UnauthorizedException();
+    await this.ideasService.setFavorite(req.user.sub, id, dto.isFavorite);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('nightly/unread-count')
+  @ApiOperation({
+    summary: 'Count unread nightly idea sessions',
+    summaryHe: 'מחזיר כמה שמירות ליליות טרם נקראו',
+    toolIcon: 'ph-moon',
+    description: 'Returns the number of nightly cron sessions owned by the authenticated user that have not been read yet. Drives the "new ideas this morning" banner.',
+  } as CustomApiOperationOptions)
+  @ApiOkResponse({ description: 'Unread nightly session count.', type: Number })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  async nightlyUnreadCount(@Req() req: RequestWithUser) {
+    if (!req.user) throw new UnauthorizedException();
+    return this.ideasService.unreadNightlyCount(req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('nightly/mark-read')
+  @ApiOperation({
+    summary: 'Mark all nightly sessions as read',
+    summaryHe: 'מסמן את כל שמירות הלילה כנקראות',
+    toolIcon: 'ph-check-circle',
+    description: 'Clears the unread flag on all of the authenticated user\'s nightly sessions.',
+  } as CustomApiOperationOptions)
+  @ApiResponse({ status: 201, description: 'Nightly sessions marked as read.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  async markNightlyRead(@Req() req: RequestWithUser) {
+    if (!req.user) throw new UnauthorizedException();
+    await this.ideasService.markNightlyRead(req.user.sub);
   }
 }

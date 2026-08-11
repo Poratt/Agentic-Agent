@@ -13,7 +13,10 @@ import { BusinessIdea } from '../../../core/models/idea.interface';
 export class IdeaCard {
   idea = input.required<BusinessIdea>();
   expanded = input(false);
+  savedIdeaId = input<number | undefined>(undefined);
+  isFavorite = input<boolean>(false);
   toggled = output<void>();
+  toggleFav = output<{ ideaId: number; isFavorite: boolean }>();
 
   scoreVariant(score: number): 'success' | 'warning' | 'danger' {
     if (score >= 7) return 'success';
@@ -23,5 +26,11 @@ export class IdeaCard {
 
   toggle(): void {
     this.toggled.emit();
+  }
+
+  onToggleFav(): void {
+    if (this.savedIdeaId() != null) {
+      this.toggleFav.emit({ ideaId: this.savedIdeaId()!, isFavorite: !this.isFavorite() });
+    }
   }
 }

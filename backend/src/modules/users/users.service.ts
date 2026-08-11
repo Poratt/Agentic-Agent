@@ -42,6 +42,18 @@ export class UsersService {
     };
   }
 
+  /**
+   * Returns the first admin user (ordered by id ascending). Used by the nightly
+   * ideas cron, which runs without a request context and needs a concrete owner
+   * for the generated sessions. Returns null when no admin exists.
+   */
+  async findFirstAdmin(): Promise<User | null> {
+    return this.usersRepo.findOne({
+      where: { role: UserRole.Admin },
+      order: { id: 'ASC' },
+    });
+  }
+
   async updateRole(id: number, role: UserRole): Promise<ServiceResultContainer<UserResponseDto>> {
     const exists = await this.usersRepo.findOne({ where: { id } });
     if (!exists) throw new NotFoundException('User not found');

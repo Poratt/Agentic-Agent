@@ -3,3 +3,45 @@
         animation: none;
     }
 }
+
+.nightly-banner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-6);
+    margin-bottom: var(--space-6);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    background: var(--color-primary-bg);
+    border: 1px solid var(--color-primary-border);
+    border-radius: var(--radius-lg);
+
+    .ph {
+        color: var(--color-primary);
+        font-size: 1.25rem;
+    }
+
+    a {
+        color: var(--color-primary);
+        text-decoration: underline;
+
+        &:hover {
+            text-decoration: none;
+        }
+    }
+}
+
+.link-btn {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    padding: 0;
+    text-decoration: underline;
+    margin-inline-start: auto;
+
+    &:hover {
+        text-decoration: none;
+    }
+}

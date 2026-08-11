@@ -1,3 +1,18 @@
+.fav-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  transition: color 0.2s;
+  line-height: 1;
+}
+.fav-btn.active,
+.fav-btn:hover {
+  color: #f59e0b;
+}
+
 .idea-card-wrapper {
   position: relative;
   min-height: 400px;
@@ -44,6 +59,12 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: var(--space-6);
+
+    .idea-card-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
 
     .idea-card-title {
       font-size: var(--font-size-md);

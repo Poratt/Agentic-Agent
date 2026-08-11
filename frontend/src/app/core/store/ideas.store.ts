@@ -1,8 +1,10 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { IdeasService } from '../services/ideas.service';
 import { PageStates } from '../enums/page-states.enum';
 import { BusinessIdea, GenerateIdeasResponse, IdeasProgressEvent } from '../models/idea.interface';
+import { SavedIdeaSession } from '../models/saved-idea-session.model';
+import { SavedIdea } from '../models/saved-idea.model';
 
 export interface IdeasModelSelection {
   provider: string;
@@ -25,6 +27,21 @@ export class IdeasStore {
   partial = signal(false);
   failedCount = signal<number | null>(null);
   message = signal('');
+
+  sessions = signal<SavedIdeaSession[]>([]);
+  currentSessionId = signal<number | null>(null);
+  nightlyUnread = signal<number>(0);
+  historyLoading = signal(false);
+  historyError = signal<string | null>(null);
+
+  recentSessions = computed(() => this.sessions().slice(0, 5));
+
+  historyPageState = computed<PageStates>(() => {
+    if (this.historyError()) return PageStates.Error;
+    if (this.historyLoading()) return PageStates.Loading;
+    if (this.sessions().length > 0) return PageStates.Ready;
+    return PageStates.Empty;
+  });
 
   pageState = computed<PageStates>(() => {
     if (this.error()) return PageStates.Error;
@@ -128,5 +145,100 @@ export class IdeasStore {
 
   clearError(): void {
     this.error.set(null);
+  }
+
+  async loadSessions(params?: { nightly?: boolean; favorites?: boolean }): Promise<void> {
+    this.historyLoading.set(true);
+    this.historyError.set(null);
+    try {
+      const sessions = await firstValueFrom(this.ideasService.listSessions(params));
+      this.sessions.set(sessions);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to load sessions';
+      this.historyError.set(msg);
+    } finally {
+      this.historyLoading.set(false);
+    }
+  }
+
+  async loadSession(id: number): Promise<void> {
+    this.currentSessionId.set(id);
+    this.historyLoading.set(true);
+    this.historyError.set(null);
+    try {
+      const session = await firstValueFrom(this.ideasService.getSession(id));
+      const existing = this.sessions();
+      const idx = existing.findIndex((s) => s.id === id);
+      if (idx >= 0) {
+        const updated = [...existing];
+        updated[idx] = session;
+        this.sessions.set(updated);
+      } else {
+        this.sessions.set([...existing, session]);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to load session';
+      this.historyError.set(msg);
+    } finally {
+      this.historyLoading.set(false);
+    }
+  }
+
+  async deleteSession(id: number): Promise<void> {
+    try {
+      await firstValueFrom(this.ideasService.deleteSession(id));
+      this.sessions.update((sessions) => sessions.filter((s) => s.id !== id));
+      if (this.currentSessionId() === id) {
+        this.currentSessionId.set(null);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete session';
+      this.historyError.set(msg);
+    }
+  }
+
+  async toggleFavorite(ideaId: number, isFavorite: boolean): Promise<void> {
+    this.sessions.update((sessions) =>
+      sessions.map((session) => ({
+        ...session,
+        ideas: session.ideas.map((idea: SavedIdea) =>
+          idea.id === ideaId ? { ...idea, isFavorite } : idea,
+        ),
+      })),
+    );
+    try {
+      await firstValueFrom(this.ideasService.setFavorite(ideaId, isFavorite));
+    } catch {
+      this.sessions.update((sessions) =>
+        sessions.map((session) => ({
+          ...session,
+          ideas: session.ideas.map((idea: SavedIdea) =>
+            idea.id === ideaId ? { ...idea, isFavorite: !isFavorite } : idea,
+          ),
+        })),
+      );
+    }
+  }
+
+  async loadNightlyUnread(): Promise<void> {
+    try {
+      const count = await firstValueFrom(this.ideasService.nightlyUnreadCount());
+      this.nightlyUnread.set(count);
+    } catch {
+      this.nightlyUnread.set(0);
+    }
+  }
+
+  async markNightlyRead(): Promise<void> {
+    try {
+      await firstValueFrom(this.ideasService.markNightlyRead());
+      this.nightlyUnread.set(0);
+      this.sessions.update((sessions) =>
+        sessions.map((s) => (s.nightly ? { ...s, unread: false } : s)),
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to mark as read';
+      this.historyError.set(msg);
+    }
   }
 }
