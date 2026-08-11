@@ -5,7 +5,6 @@ import { IdeasStore } from '../../../core/store/ideas.store';
 import { IdeasForm } from '../ideas-form/ideas-form';
 import { IdeasProgress } from '../ideas-progress/ideas-progress';
 import { IdeasGrid } from '../ideas-grid/ideas-grid';
-
 @Component({
   selector: 'app-ideas-page',
   standalone: true,
