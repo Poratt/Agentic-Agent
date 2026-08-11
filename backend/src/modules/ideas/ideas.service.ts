@@ -18,6 +18,7 @@ import {
   SIGNAL_GATHERING_PROMPT,
   IDEA_GENERATION_PROMPT,
   VALIDATION_PROMPT,
+  TOPIC_DISCOVERY_PROMPT,
 } from './constants/idea-prompts.constant';
 import { SavedIdeaSession } from './entities/saved-idea-session.entity';
 import { SavedIdea } from './entities/saved-idea.entity';
@@ -260,6 +261,79 @@ export class IdeasService {
 
     onProgress?.({ phase: 'done', result: response });
     return response;
+  }
+
+  /**
+   * Discovers N topics/domains suitable for a solo bootstrapped developer by
+   * searching the web for trends and pain points, then asking the LLM to
+   * extract concrete domains. Used by the nightly cron to replace the static
+   * IDEAS_NIGHTLY_DOMAINS list.
+   *
+   * Returns an array of `{ domain, rationale }` objects where `domain` is the
+   * sanitized search term passed to `generateIdeas` and `rationale` is the
+   * LLM's reasoning for why it fits a solo developer. Returns an empty array
+   * on failure (caller should skip the run).
+   */
+  async discoverTopics(
+    count: number,
+    userId?: number,
+    providerOverride?: LlmProvider,
+    modelOverride?: string,
+  ): Promise<{ domain: string; rationale: string }[]> {
+    const queries = [
+      'indie hacker pain points 2025 2026',
+      'underserved SaaS niches solo founder bootstrap',
+      'solo developer business ideas software only',
+      'prosumer tools underserved market 2025',
+    ];
+
+    const settled = await Promise.allSettled(
+      queries.map((q) => this.webSearch.search(q)),
+    );
+
+    const contents: string[] = [];
+    for (const s of settled) {
+      if (s.status === 'fulfilled' && s.value.success && s.value.result) {
+        for (const r of s.value.result.results) {
+          contents.push(`${r.title}: ${r.content}`);
+        }
+      }
+    }
+
+    if (contents.length === 0) {
+      this.logger.warn('Topic discovery: web search returned no results');
+      return [];
+    }
+
+    const prompt = `תוצאות חיפוש:\n${contents.slice(0, 30).join('\n\n')}\n\nכמה נושאים לגלות: ${count}`;
+    try {
+      const res = await this.llm.generateResponse({
+        prompt,
+        systemContext: TOPIC_DISCOVERY_PROMPT,
+        maxTokens: 1024,
+        userId,
+        providerOverride,
+        modelOverride,
+      });
+
+      const parsed = parseLlmJson<{ topics: { domain: string; rationale: string }[] }>(
+        res.content,
+        'topic-discovery',
+      );
+      if (!parsed?.topics || !Array.isArray(parsed.topics) || parsed.topics.length === 0) {
+        throw new Error('empty topics');
+      }
+
+      return parsed.topics
+        .slice(0, count)
+        .map((t) => ({ domain: this.sanitizeDomain(t.domain), rationale: t.rationale }))
+        .filter((t) => t.domain.length > 0);
+    } catch (error) {
+      this.logger.warn(
+        `Topic discovery failed: ${error instanceof Error ? error.message : 'unknown'}`,
+      );
+      return [];
+    }
   }
 
   private sanitizeDomain(domain: string): string {

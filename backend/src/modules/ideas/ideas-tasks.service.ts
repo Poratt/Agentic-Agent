@@ -3,17 +3,20 @@ import { Cron } from '@nestjs/schedule';
 import { IdeasService } from './ideas.service';
 import { UsersService } from '../users/users.service';
 import { LlmProviderService } from '../llm-provider/llm-provider.service';
+import { LlmProvider } from '../llm/types/llm.types';
 
 /**
  * Nightly ideas generation cron.
  *
  * Runs once per day (default 04:00 server time) when IDEAS_NIGHTLY_ENABLED=true.
- * For each domain in IDEAS_NIGHTLY_DOMAINS it generates business ideas for the
- * admin user and persists them as a `nightly + unread` session so they surface
- * in the ideas history / "new ideas this morning" banner on the next visit.
+ * Instead of reading a static domain list, the cron first discovers trending
+ * topics suitable for a solo bootstrapped developer via web search + LLM
+ * (the `discoverTopics` step). For each discovered topic it generates business
+ * ideas and persists them as a `nightly + unread` session so they surface in
+ * the ideas history / "new ideas this morning" banner on the next visit.
  *
  * No external notification channel is used — delivery is in-app (the UI pulls
- * the unread nightly sessions). Each domain is isolated in its own try/catch so
+ * the unread nightly sessions). Each topic is isolated in its own try/catch so
  * a single failure does not abort the rest of the batch.
  */
 @Injectable()
@@ -28,21 +31,9 @@ export class IdeasTasksService {
 
   @Cron('0 0 4 * * *')
   async runNightly(): Promise<void> {
-    // Read the env flag at run time so a config change takes effect on the next
-    // cron tick without a process restart, and so tests can set the flag before
-    // each run instead of before module construction.
     const enabled = process.env.IDEAS_NIGHTLY_ENABLED === 'true';
     if (!enabled) {
       this.logger.log('Nightly ideas generation disabled (IDEAS_NIGHTLY_ENABLED !== "true"), skipping');
-      return;
-    }
-
-    const domains = (process.env.IDEAS_NIGHTLY_DOMAINS ?? '')
-      .split(';')
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (domains.length === 0) {
-      this.logger.warn('Nightly ideas generation skipped: IDEAS_NIGHTLY_DOMAINS is empty');
       return;
     }
 
@@ -59,25 +50,42 @@ export class IdeasTasksService {
     }
 
     const count = Number(process.env.IDEAS_NIGHTLY_COUNT ?? 5);
+    const topicCount = Number(process.env.IDEAS_NIGHTLY_TOPIC_COUNT ?? 3);
 
-    this.logger.log(`Starting nightly ideas generation for ${domains.length} domain(s) as user ${admin.id}`);
-    for (const domain of domains) {
+    // --- Discovery step ---
+    this.logger.log(`Discovering ${topicCount} topics for nightly ideas generation`);
+    const topics = await this.ideasService.discoverTopics(
+      topicCount,
+      admin.id,
+      model.provider as LlmProvider,
+      model.model,
+    );
+
+    if (topics.length === 0) {
+      this.logger.warn('Nightly ideas generation skipped: topic discovery returned 0 topics');
+      return;
+    }
+
+    this.logger.log(`Discovered ${topics.length} topic(s): ${topics.map((t) => t.domain).join(', ')}`);
+
+    // --- Generation step ---
+    for (const topic of topics) {
       try {
         const res = await this.ideasService.generateIdeas(
-          domain,
+          topic.domain,
           count,
           undefined,
           admin.id,
-          model.provider,
+          model.provider as LlmProvider,
           model.model,
         );
-        await this.ideasService.saveGeneration(admin.id, domain, model.provider, model.model, res, {
+        await this.ideasService.saveGeneration(admin.id, topic.domain, model.provider, model.model, res, {
           nightly: true,
           unread: true,
         });
-        this.logger.log(`Nightly ideas generation succeeded for domain "${domain}" (${res.result?.length ?? 0} ideas)`);
+        this.logger.log(`Nightly ideas generation succeeded for domain "${topic.domain}" (rationale: ${topic.rationale}) — ${res.result?.length ?? 0} ideas`);
       } catch (e) {
-        this.logger.error(`Nightly ideas generation failed for domain "${domain}"`, e);
+        this.logger.error(`Nightly ideas generation failed for domain "${topic.domain}" (rationale: ${topic.rationale})`, e);
       }
     }
     this.logger.log('Nightly ideas generation finished');
