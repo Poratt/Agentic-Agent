@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -13,10 +13,14 @@ import { PageStates } from '../../../core/enums/page-states.enum';
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./chat-history.css'],
 })
-export class ChatHistory {
+export class ChatHistory implements OnInit {
     private chatStore = inject(ChatStore);
 
     protected readonly PageStates = PageStates;
+
+    ngOnInit() {
+        this.loadSessions();
+    }
 
     searchQuery = signal('');
     pendingDeleteSessionId = signal<number | null>(null);
