@@ -33,6 +33,7 @@ export class IdeasStore {
   nightlyUnread = signal<number>(0);
   historyLoading = signal(false);
   historyError = signal<string | null>(null);
+  triggeringNightly = signal(false);
 
   recentSessions = computed(() => this.sessions().slice(0, 5));
 
@@ -167,15 +168,13 @@ export class IdeasStore {
     this.historyError.set(null);
     try {
       const session = await firstValueFrom(this.ideasService.getSession(id));
-      const existing = this.sessions();
-      const idx = existing.findIndex((s) => s.id === id);
-      if (idx >= 0) {
-        const updated = [...existing];
-        updated[idx] = session;
-        this.sessions.set(updated);
-      } else {
-        this.sessions.set([...existing, session]);
-      }
+      this.sessions.update((sessions) => {
+        const idx = sessions.findIndex((s) => s.id === id);
+        if (idx >= 0) {
+          return sessions.map((s) => (s.id === id ? session : s));
+        }
+        return [...sessions, session];
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load session';
       this.historyError.set(msg);
@@ -239,6 +238,21 @@ export class IdeasStore {
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to mark as read';
       this.historyError.set(msg);
+    }
+  }
+
+  async triggerNightly(): Promise<string | null> {
+    this.triggeringNightly.set(true);
+    try {
+      const result = await firstValueFrom(this.ideasService.triggerNightly());
+      await this.loadSessions();
+      this.triggeringNightly.set(false);
+      return result.message;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to trigger nightly generation';
+      this.historyError.set(msg);
+      this.triggeringNightly.set(false);
+      return null;
     }
   }
 }

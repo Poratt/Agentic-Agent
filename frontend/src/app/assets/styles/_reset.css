@@ -104,10 +104,6 @@ a {
 
 .ph {
   transition: var(--transition-fast);
-
-  @starting-style {
-    opacity: 0;
-  }
 }
 
 /* --- וריאציות גדלים קבועים --- */

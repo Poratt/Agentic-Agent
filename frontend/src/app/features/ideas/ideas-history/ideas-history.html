@@ -39,6 +39,22 @@
                 </div>
 
                 <div class="action-row summary-row">
+                    @if (isAdmin()) {
+                        <button
+                            type="button"
+                            class="button primary-btn sm"
+                            [disabled]="ideasStore.triggeringNightly()"
+                            (click)="triggerNightly()"
+                        >
+                            @if (ideasStore.triggeringNightly()) {
+                                <span class="custom-loader xs"></span>
+                                מריץ...
+                            } @else {
+                                <span class="ph ph-lightning"></span>
+                                הפעל לילה
+                            }
+                        </button>
+                    }
                     <span class="summary-item">
                         <span [ngClass]="filterMode() === 'all' ? 'ph ph-lightbulb' : 'ph ph-list-checks'"></span>
                         <span class="summary-value">{{ filteredSessions().length }}</span>
@@ -78,7 +94,7 @@
                     <p class="subtitle">נסה לשנות את הסינון או ליצור רעיונות חדשים.</p>
                 </div>
             } @else {
-                <div class="sessions-list stagger stagger-up">
+                <div class="sessions-list" [class.stagger]="!initialLoadDone" [class.stagger-up]="!initialLoadDone">
                     @for (session of filteredSessions(); track session.id) {
                         <div
                             class="session-row hover-parent"

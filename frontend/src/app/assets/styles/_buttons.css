@@ -1,7 +1,3 @@
-.ph {
-  animation: rubberScale 0.5s ease-out;
-}
-
 /* 1. Base Button Structure - Shared by ALL buttons */
 button {
   padding: var(--space-4);

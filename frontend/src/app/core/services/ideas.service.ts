@@ -212,4 +212,20 @@ export class IdeasService {
         .catch((err) => observer.error(err));
     });
   }
+
+  triggerNightly(): Observable<{ success: boolean; message: string }> {
+    return new Observable<{ success: boolean; message: string }>((observer) => {
+      fetch(`${this.base}/nightly/trigger`, { method: 'POST', credentials: 'include' })
+        .then(async (response) => {
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            observer.error(new Error(body?.message || `Failed to trigger nightly: ${response.statusText}`));
+            return;
+          }
+          observer.next(body);
+          observer.complete();
+        })
+        .catch((err) => observer.error(err));
+    });
+  }
 }

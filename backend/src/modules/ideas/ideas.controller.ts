@@ -36,14 +36,19 @@ import { ListSessionsQueryDto } from './dto/list-sessions-query.dto';
 import { SetFavoriteDto } from './dto/set-favorite.dto';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
+import { AdminGuard } from '../../core/guards/admin.guard';
 import { RequestWithUser } from '../../core/interfaces/request-with-user.interface';
+import { IdeasTasksService } from './ideas-tasks.service';
 
 @ApiTags('ideas')
 @Controller('ideas')
 export class IdeasController {
   private readonly logger = new Logger(IdeasController.name);
 
-  constructor(private readonly ideasService: IdeasService) {}
+  constructor(
+    private readonly ideasService: IdeasService,
+    private readonly ideasTasksService: IdeasTasksService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Post('generate')
@@ -227,5 +232,25 @@ export class IdeasController {
   async markNightlyRead(@Req() req: RequestWithUser) {
     if (!req.user) throw new UnauthorizedException();
     await this.ideasService.markNightlyRead(req.user.sub);
+  }
+
+  @UseGuards(AdminGuard)
+  @Post('nightly/trigger')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Manually trigger nightly ideas generation',
+    summaryHe: 'מריץ את מחולל הרעיונות הלילי ידנית',
+    toolIcon: 'ph-lightning',
+    description:
+      'Triggers the same flow as the nightly cron: discovers trending topics via web search + LLM, then generates and persists ideas for each. Admin only.',
+  } as CustomApiOperationOptions)
+  @ApiOkResponse({ description: 'Nightly generation triggered successfully.' })
+  @ApiForbiddenResponse({ description: 'Only admin users can trigger nightly generation.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
+  async triggerNightly(@Req() req: RequestWithUser) {
+    this.logger.log(`Nightly ideas generation triggered manually by user ${req.user?.sub}`);
+    // Fire-and-forget: runNightly handles its own errors internally and logs results.
+    this.ideasTasksService.runNightly();
+    return { success: true, message: 'יצירת רעיונות לילית הופעלה. התוצאות יופיעו בהיסטוריה לאחר סיום.' };
   }
 }

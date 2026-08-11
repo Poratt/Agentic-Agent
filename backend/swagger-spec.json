@@ -3309,6 +3309,30 @@
         "toolIcon": "ph-check-circle"
       }
     },
+    "/ideas/nightly/trigger": {
+      "post": {
+        "description": "Triggers the same flow as the nightly cron: discovers trending topics via web search + LLM, then generates and persists ideas for each. Admin only.",
+        "operationId": "IdeasController_triggerNightly",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Nightly generation triggered successfully."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          },
+          "403": {
+            "description": "Only admin users can trigger nightly generation."
+          }
+        },
+        "summary": "Manually trigger nightly ideas generation",
+        "summaryHe": "מריץ את מחולל הרעיונות הלילי ידנית",
+        "tags": [
+          "ideas"
+        ],
+        "toolIcon": "ph-lightning"
+      }
+    },
     "/database-monitor/storage": {
       "get": {
         "description": "Returns row counts and storage sizes for all tables in the database.",

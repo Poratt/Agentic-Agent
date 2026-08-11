@@ -5,6 +5,8 @@ import { IdeasStore } from '../../../core/store/ideas.store';
 import { PageStates } from '../../../core/enums/page-states.enum';
 import { SavedIdeaSession } from '../../../core/models/saved-idea-session.model';
 import { SavedIdea } from '../../../core/models/saved-idea.model';
+import { AuthStore } from '../../../core/store/auth.store';
+import { UserRole } from '../../../core/enums/user-role.enum';
 
 type FilterMode = 'all' | 'nightly' | 'favorites';
 
@@ -18,12 +20,17 @@ type FilterMode = 'all' | 'nightly' | 'favorites';
 })
 export class IdeasHistory implements OnInit {
     protected ideasStore = inject(IdeasStore);
+    private authStore = inject(AuthStore);
 
     protected readonly PageStates = PageStates;
+
+    isAdmin = computed(() => this.authStore.userRole() === UserRole.Admin);
+    triggerSuccess = signal<string | null>(null);
 
     filterMode = signal<FilterMode>('all');
     expandedSessionId = signal<number | null>(null);
     pendingDeleteSessionId = signal<number | null>(null);
+    initialLoadDone = false;
 
     filteredSessions = computed(() => {
         const sessions = this.ideasStore.sessions();
@@ -45,7 +52,9 @@ export class IdeasHistory implements OnInit {
     });
 
     ngOnInit() {
-        this.ideasStore.loadSessions();
+        this.ideasStore.loadSessions().then(() => {
+            this.initialLoadDone = true;
+        });
     }
 
     setFilter(mode: FilterMode) {
@@ -100,6 +109,15 @@ export class IdeasHistory implements OnInit {
         if (mode === 'nightly') params.nightly = true;
         if (mode === 'favorites') params.favorites = true;
         this.ideasStore.loadSessions(params);
+    }
+
+    async triggerNightly() {
+        this.triggerSuccess.set(null);
+        const message = await this.ideasStore.triggerNightly();
+        if (message) {
+            this.triggerSuccess.set(message);
+            setTimeout(() => this.triggerSuccess.set(null), 5000);
+        }
     }
 
     getScoreClass(score: number): string {
