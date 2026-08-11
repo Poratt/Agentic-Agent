@@ -7,6 +7,20 @@
 
             <div class="header-actions">
                 <div class="action-row">
+                    <button
+                        type="button"
+                        class="button primary-btn sm"
+                        *accessTo="[UserRole.Admin]"
+                        [disabled]="ideasStore.triggeringNightly()"
+                        (click)="triggerNightly()"
+                    >
+                        @if (ideasStore.triggeringNightly()) {
+                            <span class="custom-loader xs"></span>
+                        } @else {
+                            <span class="ph ph-lightning"></span>
+                        }
+                        הפעל לילה
+                    </button>
                     <div class="toggle-group">
                         <button
                             type="button"
@@ -39,22 +53,6 @@
                 </div>
 
                 <div class="action-row summary-row">
-                    @if (isAdmin()) {
-                        <button
-                            type="button"
-                            class="button primary-btn sm"
-                            [disabled]="ideasStore.triggeringNightly()"
-                            (click)="triggerNightly()"
-                        >
-                            @if (ideasStore.triggeringNightly()) {
-                                <span class="custom-loader xs"></span>
-                                מריץ...
-                            } @else {
-                                <span class="ph ph-lightning"></span>
-                                הפעל לילה
-                            }
-                        </button>
-                    }
                     <span class="summary-item">
                         <span [ngClass]="filterMode() === 'all' ? 'ph ph-lightbulb' : 'ph ph-list-checks'"></span>
                         <span class="summary-value">{{ filteredSessions().length }}</span>

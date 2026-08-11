@@ -5,7 +5,7 @@ import { IdeasStore } from '../../../core/store/ideas.store';
 import { PageStates } from '../../../core/enums/page-states.enum';
 import { SavedIdeaSession } from '../../../core/models/saved-idea-session.model';
 import { SavedIdea } from '../../../core/models/saved-idea.model';
-import { AuthStore } from '../../../core/store/auth.store';
+import { AccessToDirective } from '../../../core/directives/access-to.directive';
 import { UserRole } from '../../../core/enums/user-role.enum';
 
 type FilterMode = 'all' | 'nightly' | 'favorites';
@@ -13,18 +13,17 @@ type FilterMode = 'all' | 'nightly' | 'favorites';
 @Component({
     selector: 'app-ideas-history',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, AccessToDirective],
     templateUrl: './ideas-history.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./ideas-history.css'],
 })
 export class IdeasHistory implements OnInit {
     protected ideasStore = inject(IdeasStore);
-    private authStore = inject(AuthStore);
 
     protected readonly PageStates = PageStates;
+    protected readonly UserRole = UserRole;
 
-    isAdmin = computed(() => this.authStore.userRole() === UserRole.Admin);
     triggerSuccess = signal<string | null>(null);
 
     filterMode = signal<FilterMode>('all');
@@ -113,10 +112,14 @@ export class IdeasHistory implements OnInit {
 
     async triggerNightly() {
         this.triggerSuccess.set(null);
+        const expandedId = this.expandedSessionId();
         const message = await this.ideasStore.triggerNightly();
         if (message) {
             this.triggerSuccess.set(message);
             setTimeout(() => this.triggerSuccess.set(null), 5000);
+        }
+        if (expandedId) {
+            await this.ideasStore.loadSession(expandedId);
         }
     }
 
