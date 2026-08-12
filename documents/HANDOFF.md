@@ -4,6 +4,45 @@
 
 `82d9baa` ("skip SSRF validation in dev mode") was committed as part of a batch without individual review. It added a **total SSRF bypass** when `NODE_ENV !== 'production'` — not just localhost. Worse, if `NODE_ENV` is unset, the bypass activates silently. Caught and reverted (`021224b`) only because each commit was examined separately before closing the session.
 
+
+## 2026-08-12 Session — Glass Effect Rendering Fix (Banding)
+
+**Objective:** fix vertical stripes/banding artifacts on glass-effect cards in Dark Mode, especially on radial gradients.
+
+- **Global Fix:** added `transform: translateZ(0)` and `backface-visibility: hidden` to `.glass-effect` in `_utilities.css`. This forces GPU acceleration and stable layer sampling for the `backdrop-filter`, eliminating rendering artifacts on sub-pixel boundaries.
+- **IdeaCard Fix:** added identical stability rules to `.idea-card` in `idea-card.css` to prevent flickering/banding during scale transitions.
+- **Files touched:** `frontend/src/app/assets/styles/_utilities.css`, `frontend/src/app/features/ideas/idea-card/idea-card.css`.
+- **Verification:** `npx ng build` (frontend) ✅. Visual artifacts are reduced/eliminated by forcing hardware-accelerated layer composition.
+- **Decisions made:** forced GPU layering for all glass-effect elements as the banding is a recurring issue with `backdrop-filter` + `radial-gradient` in Chromium.
+
+## 2026-08-12 Session — SavedIdea unification + apiKey transformer fix + CSS dedupe
+
+**Objective:** unify the entire frontend (IdeaCard, ideas-grid, ideas-history) on `SavedIdea` as the single source of truth; eliminate `BusinessIdea`/`IdeaCardData` from UI components; normalize nullable arrays at the store boundary; fix the `apiKey` transformer so an empty PATCH doesn't NULL a stored key; remove duplicated CSS in `ideas-history.css`.
+
+**Completed:**
+- `saved-idea.model.ts`: `risks`/`competitors`/`nextSteps`/`signalsReferenced` and `validationReason` normalized to non-null (clean contract).
+- `ideas.store.ts`: `ideas` signal → `SavedIdea[]`; SSE `BusinessIdea[]` mapped to `SavedIdea` via `toSavedIdea` (null arrays → `[]`, `validationReason` → `''`); added `normalizeSaved`; `loadSessions`/`loadSession` normalize history ideas at the boundary. The 4 nullable-array computeds were removed from `IdeaCard`.
+- `ideas-grid.ts`: input → `SavedIdea[]`; removed `toCardData()` boilerplate.
+- `idea-card.ts`/`.html`: input → `SavedIdea`; template reads `idea().risks` etc. directly; favorite toggle guarded on `id`.
+- `ideas-history.ts`/`.html`: `toggleFavorite` now consumes the `{ideaId, isFavorite}` event emitted by `IdeaCard` (no longer a `SavedIdea`).
+- `llm-provider.entity.ts`: `apiKey` transformer returns `undefined` for empty/`undefined` input so TypeORM `update()` leaves the existing column untouched (prevents a PATCH without a key from wiping a previously-encrypted key).
+- `ideas-history.css`: removed 12 properties that duplicated global assets — `.toggle-btn` (align-items/border-radius/background/font-weight/cursor from global `button`), `.badge` (display/align/justify from global `.badge`), `.delete-confirmation` (display/align/justify/padding from global `.delete-confirmation`); kept the `.delete-confirmation { gap }` override.
+
+**Verification:** `npx ng build` (frontend) ✅. Only pre-existing unrelated warning: `strain-hunter.css` budget.
+
+**Decisions made:**
+- Kept `BusinessIdea` as the SSE DTO in `idea.interface.ts` (user-sanctioned) — mapped to `SavedIdea` once at the store boundary. Changing the SSE contract to return the persisted `SavedIdea` (with `id`) would require restructuring the backend generate/save flow + `ideas.service.spec.ts`, so deferred.
+- Generated (live, unsaved) ideas have no `id` → `IdeaCard` favorite toggle hidden; only persisted history ideas (with `id`) show it.
+- 4 pre-existing modified files were left uncommitted (not part of this work): `backend/src/modules/ideas/ideas-tasks.service.ts`, `backend/src/modules/llm/llm.module.ts`, `frontend/src/app/core/store/llm-provider.store.ts`, `frontend/src/app/features/llm-providers-management/llm-providers-management.ts`.
+
+**Commits (not pushed):** `dc98cda` (fix(llm): don't NULL stored apiKey when PATCH sends empty string — `llm-provider.entity.ts`), `461234b` (refactor(ideas): unify frontend on SavedIdea, drop null guards + css dupes — 8 frontend files).
+
+**Files touched:** `saved-idea.model.ts`, `ideas.store.ts`, `idea-card.ts`, `idea-card.html`, `ideas-grid.ts`, `ideas-history.ts`, `ideas-history.html`, `ideas-history.css`, `llm-provider.entity.ts`.
+
+**Next exact step:** (optional) update `documents/architecture-diagram.md` for the frontend data-model change — judged not needed (no new module boundary, backend entities unchanged). Pre-existing `user.service.spec.ts` failures are unrelated.
+
+**No architecture diagram update needed** — frontend-internal data-model refactor + a transformer fix inside `LlmProviderModule`; no new module boundary or external provider.
+
 ## 2026-08-11 Session — Ideas Persistence Finalization + Sidebar Dropdown (PUSHED)
 
 **Ideas Persistence — final fixes + sidebar dropdown**

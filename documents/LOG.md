@@ -1,5 +1,13 @@
 # Documentation Change Log
 
+## 2026-08-12 A1 — SavedIdea as the frontend single source of truth
+- The frontend now consumes `SavedIdea` everywhere (IdeaCard, ideas-grid, ideas-history). `BusinessIdea` is retained ONLY as the SSE DTO in `idea.interface.ts`; the store maps it → `SavedIdea` via `toSavedIdea` (null arrays → `[]`, `validationReason` → `''`).
+- `SavedIdea` fields (`risks`/`competitors`/`nextSteps`/`signalsReferenced`/`validationReason`) are normalized to non-null, with null coercion at the store boundary (`toSavedIdea`, `normalizeSaved`). This removes the 4 nullable-array computeds from `IdeaCard`.
+- Generated (live) ideas have no `id` → favorite toggle hidden in `IdeaCard`; only persisted history ideas (with `id`) expose it.
+
+## 2026-08-12 A2 — apiKey transformer must not clobber stored keys
+- `llm-provider.entity.ts`: the `apiKey` transformer returns `undefined` when the input is `undefined` or empty, so a PATCH that omits the key leaves the existing encrypted column untouched (TypeORM `update()` skips `undefined` columns).
+
 ## 2026-08-05 C5 — Confirmation flow activated + H3 self-confirmation closed
 
 - **Architectural decision:** the `@RequiresConfirmation` decorator now writes two things via `applyDecorators`: NestJS metadata (`SetMetadata`) for runtime Reflector checks, and an OpenAPI extension (`ApiExtension('x-requires-confirmation', true)`) so the swagger-spec.json reflects the dangerous operations. This was the minimal fix — a full `DiscoveryService` registry was considered unnecessary.

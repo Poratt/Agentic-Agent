@@ -1,10 +1,25 @@
 # Project Documentation Status
 
-Last updated: 2026-08-11
+Last updated: 2026-08-12
 
 ## ⚠️ Lesson: Every commit must be reviewed individually
 
 `82d9baa` added a total SSRF bypass (`NODE_ENV !== 'production'` → skip all validation) during a batch commit. It was caught and reverted (`021224b`) only because each commit was reviewed separately before closing. **Rule:** never approve a batch commit without reviewing every file diff, especially security-critical code.
+
+
+## 2026-08-12 Session — Glass Effect Rendering Fix (PUSHED)
+
+- **DONE:** Fixed vertical stripes/banding artifacts on glass-effect cards by forcing GPU acceleration (`transform: translateZ(0)`) and stable layer sampling in `_utilities.css` and `idea-card.css`.
+- **Verified:** Frontend build ✅.
+- **Commits:** `[current-session]` (fix(css): eliminate banding artifacts on glass-effect cards).
+
+## 2026-08-12 Session — SavedIdea unification + apiKey transformer fix + CSS dedupe
+
+- **DONE:** Frontend unified on `SavedIdea` as single source of truth (IdeaCard, ideas-grid, ideas-history); `BusinessIdea`/`IdeaCardData` removed from UI; nullable arrays normalized at store boundary; `apiKey` transformer no longer NULLs stored key on empty PATCH; `ideas-history.css` deduped (12 props removed).
+- **Verified:** `npx ng build` ✅ (only pre-existing unrelated `strain-hunter.css` budget warning).
+- **Commits (not pushed):** `dc98cda` (apiKey fix), `461234b` (SavedIdea unification).
+- **Left for user:** 4 pre-existing modified files uncommitted (ideas-tasks.service.ts, llm.module.ts, llm-provider.store.ts, llm-providers-management.ts) — not part of this work; pre-existing `user.service.spec.ts` failures unrelated.
+- **No architecture diagram update needed** (frontend-internal data-model refactor + `LlmProviderModule` transformer fix).
 
 ## 2026-08-11 Session — Nightly Topic Discovery + Solo-Dev Constraints (PUSHED)
 

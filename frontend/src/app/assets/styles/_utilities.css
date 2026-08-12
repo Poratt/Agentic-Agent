@@ -90,6 +90,9 @@
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   will-change: transform;
+  /* Force GPU acceleration to prevent banding/artifacts with backdrop-filter */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 
   &::before {
     content: '';
@@ -99,6 +102,10 @@
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
     z-index: -1;
+    /* Extra safety to prevent filter leakage */
+    pointer-events: none;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
 }
 
