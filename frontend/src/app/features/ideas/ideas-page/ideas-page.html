@@ -1,9 +1,12 @@
 <div class="page-content flush">
     @if (store.nightlyUnread() > 0 && !nightlyBannerDismissed()) {
         <div class="glass-effect nightly-banner">
-            <span class="ph ph-envelope-open"></span>
-            <span>{{ store.nightlyUnread() }} רעיונות חדשים נוצרו הלילה — <a href="/ideas/history?nightly=true">צפה בהם</a></span>
-            <button class="link-btn" type="button" (click)="dismissNightlyBanner()">סמן כנקרא</button>
+            <div class="nightly-banner-content">
+                <span class="ph ph-lightbulb-filament"></span>
+                <span>{{ store.nightlyUnread() }}</span>
+                <span> רעיונות חדשים נוצרו הלילה — <a href="/ideas/history?nightly=true">צפה בהם</a></span>
+            </div>
+            <button class="transparent-btn sm" type="button" (click)="dismissNightlyBanner()">סמן כנקרא</button>
         </div>
     }
     <div class="page-scroll">
