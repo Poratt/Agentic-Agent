@@ -8,7 +8,12 @@ import { encryptValue, decryptValue, isEncryptedValue } from '../../../core/serv
  */
 const apiKeyTransformer: ValueTransformer = {
   to(plaintext: string | null): string | null {
-    if (!plaintext) return null;
+    // Treat empty string as "no change" — return undefined so TypeORM's
+    // `update()` leaves the existing column value untouched. This prevents a
+    // PATCH with apiKey: '' (e.g. from a form that didn't change the field)
+    // from accidentally NULL-ing out a previously stored key.
+    if (plaintext === '' || plaintext === undefined) return undefined as unknown as string;
+    if (plaintext === null) return null;
     if (isEncryptedValue(plaintext)) return plaintext;
     return encryptValue(plaintext);
   },
