@@ -46,6 +46,33 @@
 
 **No architecture diagram update needed** — frontend-internal data-model refactor + a transformer fix inside `LlmProviderModule`; no new module boundary or external provider.
 
+## 2026-08-12 Session — Fix "stuck on research" (ideas generation timeout) + header styling
+
+**Objective:** fix bug #1 (ideas generation hangs on the research/signal step with SSE timeout) and bug #2 (top bar not styled well).
+
+**Root cause of bug #1 (confirmed by repro):**
+- `gatherSignals` → `llm.generateResponse` → `client.chat.completions.create` was **non-streaming** with `timeout: 60_000`. The active provider is `AI_PROVIDER=omniroute` → DB model `auto/best-free`, which routes to a **reasoning model** (`hy3-free`).
+- Reproduced end-to-end: a non-streaming call to `auto/best-free` took **161s** (SDK waits for the entire body incl. reasoning tokens) → always exceeds the 60s `OVERALL_TIMEOUT_MS` → OpenAI SDK `APIConnectionTimeoutError` → "Request timed out" surfaced as `Idea generation failed` / `Signal extraction failed — fallback mode`.
+- SearXNG (`:8080`) was NOT the cause — axios/curl to it return in ~500ms. The timeout string was the OpenAI SDK message, not web search.
+- The reasoning model also burns its whole `max_tokens` budget on `reasoning_content` and returns empty `content` at the default budgets (1024/2048/3072) → JSON parse fails → fallback "stuck on research".
+
+**Fix (bug #1):**
+- `llm-client.service.ts` `generateResponse`: switched to **streaming** (`stream: true`) and accumulate `content`/`tool_calls`/`finish_reason` from deltas (same mechanism as `generateStream`). Keeps the `LlmResponse` contract; `rawCompletion` now a minimal object so the existing debug `JSON.stringify(res.rawCompletion)` logs stay safe.
+- `llm-client.service.ts` `getClient`: `timeout` 60_000 → 180_000.
+- `ideas.service.ts`: `OVERALL_TIMEOUT_MS` 60_000 → 150_000; signal-gathering `maxTokens` 1024 → 2048; idea-generation 2048 → 4096; validation 3072 → 4096 (so the reasoning model finishes and emits real JSON content).
+- Verified streaming call to `auto/best-free` returns content in ~25–65s (vs 161s non-streaming hang). With 4096 budget it produces valid JSON.
+
+**Bug #2 (header):**
+- Verified `header.css` is correctly scoped (ViewEncapsulation), bundled into `main.js`, and **all design tokens it uses resolve** in `_variables.css`. No code defect found — it's a purely visual issue I could not see (no browser automation tool available in this environment).
+- Applied a safe visual improvement: `.shell-header` now uses `border: 1px solid var(--glass-border)` (top + inline sides removed, only bottom separator) and `min-height: var(--space-20)` so the bar is clearly delineated instead of blending into the background. Purely cosmetic; frontend build ✅.
+- **Open question for user:** exact visual symptom still unknown (user didn't answer the prompt). If it persists, need a screenshot or description (width / background / spacing / user-menu).
+
+**Verification:** backend `npx tsc --noEmit` ✅; frontend `npx ng build` ✅. No architecture-diagram change needed (LLM call-path internal change, no new module/boundary).
+
+**Files touched:** `backend/src/modules/llm/services/llm-client.service.ts`, `backend/src/modules/ideas/ideas.service.ts`, `frontend/src/app/features/layout/header/header.css`.
+
+**Next exact step:** confirm header visual after user provides screenshot/description; optionally commit these 3 files (not yet committed). If generation still slow, recommend switching the omniroute default model away from the reasoning `auto/best-free` to a faster non-reasoning model (data/config change for the user to decide).
+
 ## 2026-08-11 Session — Ideas Persistence Finalization + Sidebar Dropdown (PUSHED)
 
 **Ideas Persistence — final fixes + sidebar dropdown**

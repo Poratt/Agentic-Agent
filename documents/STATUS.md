@@ -18,8 +18,15 @@ Last updated: 2026-08-12
 - **DONE:** Frontend unified on `SavedIdea` as single source of truth (IdeaCard, ideas-grid, ideas-history); `BusinessIdea`/`IdeaCardData` removed from UI; nullable arrays normalized at store boundary; `apiKey` transformer no longer NULLs stored key on empty PATCH; `ideas-history.css` deduped (12 props removed).
 - **Verified:** `npx ng build` ✅ (only pre-existing unrelated `strain-hunter.css` budget warning).
 - **Commits (not pushed):** `dc98cda` (apiKey fix), `461234b` (SavedIdea unification).
-- **Left for user:** 4 pre-existing modified files uncommitted (ideas-tasks.service.ts, llm.module.ts, llm-provider.store.ts, llm-providers-management.ts) — not part of this work; pre-existing `user.service.spec.ts` failures unrelated.
+- **4 pre-existing files also committed (separate commits, not part of this work):** `442f6dc` (backend nightly model AI_PROVIDER fallback + `LlmProviderConfigService` export), `944d1bc` (frontend provider partial-update payload + silent error reload). Pre-existing `user.service.spec.ts` failures unrelated.
 - **No architecture diagram update needed** (frontend-internal data-model refactor + `LlmProviderModule` transformer fix).
+
+## 2026-08-12 Session — Fix "stuck on research" (ideas generation timeout) + header styling
+
+- **DONE:** Root-caused ideas "stuck on research" to non-streaming LLM call (60s OpenAI SDK timeout) against the omniroute `auto/best-free` reasoning model; fixed by switching `generateResponse` to streaming + raising timeouts/token budgets (150s overall, 180s client, 2048/4096/4096 max_tokens). Repro: non-streaming 161s → streaming 25–65s with valid JSON.
+- **DONE:** Header styling — verified CSS valid/bundled/tokens-resolve; applied cosmetic separator (`glass-border` bottom + `min-height`) since no browser tool available to see the exact defect. Needs user screenshot to confirm.
+- **Verified:** backend `tsc --noEmit` ✅; frontend `ng build` ✅. Not yet committed.
+- **Open:** exact header visual symptom unknown (user didn't answer); if generation still slow, switch omniroute default model off the reasoning `auto/best-free`.
 
 ## 2026-08-11 Session — Nightly Topic Discovery + Solo-Dev Constraints (PUSHED)
 
