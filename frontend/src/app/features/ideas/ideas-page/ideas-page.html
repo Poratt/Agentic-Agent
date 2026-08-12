@@ -26,12 +26,19 @@
                 </div>
             }
             @case (PageStates.Ready) {
-                <app-ideas-grid
-                    [ideas]="store.ideas()"
-                    [partial]="store.partial()"
-                    [failedCount]="store.failedCount()"
-                    [totalRequested]="store.totalRequested()"
-                />
+                <div class="grid-3">
+                    @if (store.partial()) {
+                        <div class="badge badge-default ideas-partial-banner">
+                            <span class="ph ph-warning"></span>
+                            הוצגו <span dir="ltr">{{ store.ideas().length }}</span> מתוך
+                            <span dir="ltr">{{ store.totalRequested() }}</span> רעיונות (חלק מהרעיונות נכשלו)
+                        </div>
+                    }
+
+                    @for (idea of store.ideas(); track idea.id; let i = $index) {
+                        <app-idea-card [idea]="idea" [expanded]="expandedIndex() === i" (toggled)="onToggle(i)" />
+                    }
+                </div>
             }
         }
     </div>

@@ -21,6 +21,11 @@ Last updated: 2026-08-12
 - **4 pre-existing files also committed (separate commits, not part of this work):** `442f6dc` (backend nightly model AI_PROVIDER fallback + `LlmProviderConfigService` export), `944d1bc` (frontend provider partial-update payload + silent error reload). Pre-existing `user.service.spec.ts` failures unrelated.
 - **No architecture diagram update needed** (frontend-internal data-model refactor + `LlmProviderModule` transformer fix).
 
+## 2026-08-12 Session — Fix ideas-grid/ideas-history card overlap
+
+- **DONE:** Added `::ng-deep` block inside `.idea-card` in `idea-card.css` to pierce Angular's emulated view encapsulation. This sets `min-height: 0` on `.idea-card-wrapper` and `position: static` / `transform: none` on `.idea-card`, so expanded cards in both the grid and history views push siblings down instead of overlapping. Previously the overrides were scoped to the parent component's attribute selector and were silently ignored due to emulated encapsulation.
+- **Verified:** Frontend build ✅ (same pre-existing `strain-hunter.css` budget warning).
+
 ## 2026-08-12 Session — Fix "stuck on research" (ideas generation timeout) + header styling
 
 - **DONE:** Root-caused ideas "stuck on research" to non-streaming LLM call (60s OpenAI SDK timeout) against the omniroute `auto/best-free` reasoning model; fixed by switching `generateResponse` to streaming + raising timeouts/token budgets (150s overall, 180s client, 2048/4096/4096 max_tokens). Repro: non-streaming 161s → streaming 25–65s with valid JSON.
