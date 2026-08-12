@@ -144,8 +144,8 @@
                                     </span>
                                 </div>
 
-                                @if (expandedSessionId() === session.id) {
-                                    <div class="ideas-list stagger stagger-up">
+                                <div class="ideas-list" [class.expanded]="expandedSessionId() === session.id">
+                                    <div class="ideas-list-inner">
                                         @if (!session.ideas || session.ideas.length === 0) {
                                             <div class="ideas-loading">
                                                 <span class="custom-loader sm"></span>
@@ -161,7 +161,7 @@
                                             }
                                         }
                                     </div>
-                                }
+                                </div>
                             }
                         </div>
                     }

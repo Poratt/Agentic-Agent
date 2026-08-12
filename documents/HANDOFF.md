@@ -18,7 +18,24 @@
 - **Verification:** `npx ng build` (frontend) ✅. Visual artifacts are reduced/eliminated by forcing hardware-accelerated layer composition.
 - **Decisions made:** forced GPU layering for all glass-effect elements as the banding is a recurring issue with `backdrop-filter` + `radial-gradient` in Chromium.
 
-## 2026-08-12 Session — SavedIdea unification + apiKey transformer fix + CSS dedupe
+## 2026-08-12 Session — Ideas History accordion layout-shift / flicker fix
+
+**Objective:** eliminate the layout shift and flicker when expanding a history session accordion for the first time.
+
+**Root cause (3 combined):**
+1. `@if (expandedSessionId() === session.id)` mounted/unmounted the whole `.ideas-list` DOM on every expand → sudden reflow.
+2. `loadSession` is async — the section expanded first, then items populated a microtask later → content jump.
+3. No height transition — hard snap.
+
+**Fix:**
+- Removed the `@if` around `.ideas-list`; it now stays in the DOM always with `[class.expanded]`, wrapped in `.ideas-list-inner`.
+- Animated open via `grid-template-rows: 0fr → 1fr` + `opacity` transition (same pattern as `IdeaCard` details), so the structure is pre-calculated.
+- Moved `border/background/padding` onto `.ideas-list-inner` (with `min-height: 0; overflow: hidden`) so it collapses/expands cleanly with the grid row.
+- Added `@media (prefers-reduced-motion: reduce)` to disable the transition.
+- Files touched: `frontend/src/app/features/ideas/ideas-history/ideas-history.html`, `frontend/src/app/features/ideas/ideas-history/ideas-history.css`.
+- Verification: `npx ng build` (frontend) ✅.
+
+
 
 **Objective:** unify the entire frontend (IdeaCard, ideas-grid, ideas-history) on `SavedIdea` as the single source of truth; eliminate `BusinessIdea`/`IdeaCardData` from UI components; normalize nullable arrays at the store boundary; fix the `apiKey` transformer so an empty PATCH doesn't NULL a stored key; remove duplicated CSS in `ideas-history.css`.
 
