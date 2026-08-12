@@ -19,7 +19,7 @@ export class IdeasStore {
   domain = signal('');
   count = signal(5);
   modelSelection = signal<IdeasModelSelection | undefined>(undefined);
-  ideas = signal<BusinessIdea[]>([]);
+  ideas = signal<SavedIdea[]>([]);
   phase = signal<number | 'done' | 'error'>(0);
   statusText = signal('');
   loading = signal(false);
@@ -135,13 +135,52 @@ export class IdeasStore {
   }
 
   private applyResult(result: GenerateIdeasResponse): void {
-    this.ideas.set(result.result ?? []);
+    // The backend auto-saves every generated idea, but the SSE event carries a
+    // BusinessIdea (no DB id yet). Normalize it to SavedIdea so IdeaCard has a
+    // single shape to render, and coerce nullable arrays to [] at this boundary.
+    this.ideas.set((result.result ?? []).map((idea: BusinessIdea) => this.toSavedIdea(idea)));
     this.partial.set(result.partial);
     this.failedCount.set(result.failedCount ?? null);
     this.message.set(result.message ?? '');
     if (!result.success) {
       this.error.set(result.message || 'יצירת הרעיונות נכשלה');
     }
+  }
+
+  /**
+   * Maps a freshly-streamed BusinessIdea to the SavedIdea shape used everywhere
+   * in the UI. Live (unsaved) ideas have no id/userId/sessionId yet, so those are
+   * left undefined. Nullable arrays are normalized to [] so templates never guard.
+   */
+  private toSavedIdea(idea: BusinessIdea): SavedIdea {
+    const saved = new SavedIdea();
+    saved.title = idea.title;
+    saved.description = idea.description;
+    saved.targetMarket = idea.targetMarket;
+    saved.validationScore = idea.validationScore;
+    saved.validationReason = idea.validationReason ?? '';
+    saved.risks = idea.risks ?? [];
+    saved.competitors = idea.competitors ?? [];
+    saved.nextSteps = idea.nextSteps ?? [];
+    saved.signalsReferenced = idea.signalsReferenced ?? [];
+    saved.groundedInSignals = idea.groundedInSignals;
+    saved.isFavorite = false;
+    return saved;
+  }
+
+  /**
+   * Normalizes a persisted SavedIdea (which may carry null arrays from the API)
+   * into the clean non-null shape the UI expects, so IdeaCard never guards null.
+   */
+  private normalizeSaved(raw: SavedIdea): SavedIdea {
+    return {
+      ...raw,
+      validationReason: raw.validationReason ?? '',
+      risks: raw.risks ?? [],
+      competitors: raw.competitors ?? [],
+      nextSteps: raw.nextSteps ?? [],
+      signalsReferenced: raw.signalsReferenced ?? [],
+    };
   }
 
   clearError(): void {
@@ -153,7 +192,10 @@ export class IdeasStore {
     this.historyError.set(null);
     try {
       const sessions = await firstValueFrom(this.ideasService.listSessions(params));
-      this.sessions.set(sessions);
+      this.sessions.set(sessions.map((session) => ({
+        ...session,
+        ideas: session.ideas?.map((idea) => this.normalizeSaved(idea)),
+      })));
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load sessions';
       this.historyError.set(msg);
@@ -168,12 +210,16 @@ export class IdeasStore {
     this.historyError.set(null);
     try {
       const session = await firstValueFrom(this.ideasService.getSession(id));
+      const normalized = {
+        ...session,
+        ideas: session.ideas?.map((idea) => this.normalizeSaved(idea)),
+      };
       this.sessions.update((sessions) => {
         const idx = sessions.findIndex((s) => s.id === id);
         if (idx >= 0) {
-          return sessions.map((s) => (s.id === id ? session : s));
+          return sessions.map((s) => (s.id === id ? normalized : s));
         }
-        return [...sessions, session];
+        return [...sessions, normalized];
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load session';

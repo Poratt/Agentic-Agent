@@ -3,9 +3,9 @@
         <div class="idea-card-head">
             <h3 class="idea-card-title">{{ idea().title }}</h3>
             <div class="idea-card-meta">
-                @if (savedIdeaId() !== undefined) {
-                    <button class="fav-btn" [class.active]="isFavorite()" (click)="onToggleFav()" [attr.data-testid]="'fav-' + savedIdeaId()">
-                        <i [class]="isFavorite() ? 'ph-fill ph-star' : 'ph ph-star'"></i>
+                @if (idea().id !== undefined) {
+                    <button class="fav-btn" [class.active]="idea().isFavorite" (click)="onToggleFav()" [attr.data-testid]="'fav-' + idea().id">
+                        <i [class]="idea().isFavorite ? 'ph-fill ph-star' : 'ph ph-star'"></i>
                     </button>
                 }
                 <span
@@ -80,6 +80,16 @@
                         <ul class="idea-card-list">
                             @for (s of idea().nextSteps; track s) {
                                 <li>{{ s }}</li>
+                            }
+                        </ul>
+                    </div>
+                }
+                @if (idea().signalsReferenced.length) {
+                    <div class="idea-card-section">
+                        <h4 class="idea-card-section-title">סיגנלים שנאספו</h4>
+                        <ul class="idea-card-list">
+                            @for (sig of idea().signalsReferenced; track sig) {
+                                <li>{{ sig }}</li>
                             }
                         </ul>
                     </div>

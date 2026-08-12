@@ -22,22 +22,12 @@
                         הפעל לילה
                     </button>
                     <div class="toggle-group">
-                        <button
-                            type="button"
-                            class="toggle-btn"
-                            [class.active]="filterMode() === 'all'"
-                            (click)="setFilter('all')"
-                        >
+                        <button type="button" class="toggle-btn" [class.active]="filterMode() === 'all'" (click)="setFilter('all')">
                             הכל
                         </button>
-                        <button
-                            type="button"
-                            class="toggle-btn"
-                            [class.active]="filterMode() === 'nightly'"
-                            (click)="setFilter('nightly')"
-                        >
+                        <button type="button" class="toggle-btn" [class.active]="filterMode() === 'nightly'" (click)="setFilter('nightly')">
                             ליליים
-                            @if ((ideasStore.nightlyUnread()) > 0) {
+                            @if (ideasStore.nightlyUnread() > 0) {
                                 <span class="badge">{{ ideasStore.nightlyUnread() }}</span>
                             }
                         </button>
@@ -162,31 +152,11 @@
                                             </div>
                                         } @else {
                                             @for (idea of session.ideas; track idea.id) {
-                                                <div class="idea-row">
-                                                    <div class="idea-content">
-                                                        <div class="idea-title-row">
-                                                            <span class="idea-title">{{ idea.title }}</span>
-                                                            @if (idea.validationScore) {
-                                                                <span class="score-badge" [class]="getScoreClass(idea.validationScore)">
-                                                                    {{ idea.validationScore }}
-                                                                </span>
-                                                            }
-                                                        </div>
-                                                        @if (idea.targetMarket) {
-                                                            <span class="idea-market">{{ idea.targetMarket }}</span>
-                                                        }
-                                                    </div>
-
-                                                    <button
-                                                        type="button"
-                                                        class="icon-only transparent-btn favorite-btn"
-                                                        [class.active]="idea.isFavorite"
-                                                        (click)="toggleFavorite(idea)"
-                                                        [attr.aria-label]="idea.isFavorite ? 'הסר ממועדפים' : 'הוסף למועדפים'"
-                                                    >
-                                                        <span class="ph" [class.ph-star]="!idea.isFavorite" [class.ph-star-fill]="idea.isFavorite"></span>
-                                                    </button>
-                                                </div>
+                                                <app-idea-card
+                                                    [idea]="idea"
+                                                    [expanded]="false"
+                                                    (toggleFav)="toggleFavorite($event)"
+                                                />
                                             }
                                         }
                                     </div>

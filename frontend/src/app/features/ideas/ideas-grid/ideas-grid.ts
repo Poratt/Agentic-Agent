@@ -1,6 +1,6 @@
 import { Component, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BusinessIdea } from '../../../core/models/idea.interface';
+import { SavedIdea } from '../../../core/models/saved-idea.model';
 import { IdeaCard } from '../idea-card/idea-card';
 
 @Component({
@@ -11,7 +11,7 @@ import { IdeaCard } from '../idea-card/idea-card';
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class IdeasGrid {
-  ideas = input<BusinessIdea[]>([]);
+  ideas = input<SavedIdea[]>([]);
   partial = input<boolean>(false);
   failedCount = input<number | null>(null);
   totalRequested = input<number>(0);

@@ -1,6 +1,6 @@
 import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BusinessIdea } from '../../../core/models/idea.interface';
+import { SavedIdea } from '../../../core/models/saved-idea.model';
 
 @Component({
   selector: 'app-idea-card',
@@ -11,10 +11,8 @@ import { BusinessIdea } from '../../../core/models/idea.interface';
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class IdeaCard {
-  idea = input.required<BusinessIdea>();
+  idea = input.required<SavedIdea>();
   expanded = input(false);
-  savedIdeaId = input<number | undefined>(undefined);
-  isFavorite = input<boolean>(false);
   toggled = output<void>();
   toggleFav = output<{ ideaId: number; isFavorite: boolean }>();
 
@@ -29,8 +27,9 @@ export class IdeaCard {
   }
 
   onToggleFav(): void {
-    if (this.savedIdeaId() != null) {
-      this.toggleFav.emit({ ideaId: this.savedIdeaId()!, isFavorite: !this.isFavorite() });
+    const id = this.idea().id;
+    if (id != null) {
+      this.toggleFav.emit({ ideaId: id, isFavorite: !this.idea().isFavorite });
     }
   }
 }

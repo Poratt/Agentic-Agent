@@ -7,13 +7,14 @@ import { SavedIdeaSession } from '../../../core/models/saved-idea-session.model'
 import { SavedIdea } from '../../../core/models/saved-idea.model';
 import { AccessToDirective } from '../../../core/directives/access-to.directive';
 import { UserRole } from '../../../core/enums/user-role.enum';
+import { IdeaCard } from "../idea-card/idea-card";
 
 type FilterMode = 'all' | 'nightly' | 'favorites';
 
 @Component({
     selector: 'app-ideas-history',
     standalone: true,
-    imports: [CommonModule, FormsModule, AccessToDirective],
+    imports: [CommonModule, FormsModule, AccessToDirective, IdeaCard],
     templateUrl: './ideas-history.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./ideas-history.css'],
@@ -91,16 +92,16 @@ export class IdeasHistory implements OnInit {
         }
     }
 
-    toggleFavorite(idea: SavedIdea) {
-        this.ideasStore.toggleFavorite(idea.id, !idea.isFavorite);
+    toggleFavorite(event: { ideaId: number; isFavorite: boolean }) {
+        this.ideasStore.toggleFavorite(event.ideaId, event.isFavorite);
     }
 
-  getIdeasCount(session: SavedIdeaSession): number {
-    if (session.ideasCount !== undefined) {
-      return session.ideasCount;
+    getIdeasCount(session: SavedIdeaSession): number {
+        if (session.ideasCount !== undefined) {
+            return session.ideasCount;
+        }
+        return session.ideas?.length ?? 0;
     }
-    return session.ideas?.length ?? 0;
-  }
 
     refresh() {
         const mode = this.filterMode();
@@ -121,11 +122,5 @@ export class IdeasHistory implements OnInit {
         if (expandedId) {
             await this.ideasStore.loadSession(expandedId);
         }
-    }
-
-    getScoreClass(score: number): string {
-        if (score >= 70) return 'score-high';
-        if (score >= 40) return 'score-mid';
-        return 'score-low';
     }
 }
