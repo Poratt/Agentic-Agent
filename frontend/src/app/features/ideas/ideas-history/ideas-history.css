@@ -229,9 +229,13 @@
                     & + app-idea-card {
                         margin-top: var(--space-6);
                     }
+                }
 
-                    /* Override the global IdeaCard absolute layout so an expanded
-                       card pushes its siblings down instead of overlapping them. */
+                /* Override IdeaCard's absolute positioning so expanded cards push
+                   siblings down instead of overlapping. ::ng-deep needed because
+                   Angular's emulated encapsulation prevents direct descendant
+                   selectors from reaching into child components. */
+                ::ng-deep {
                     .idea-card-wrapper {
                         min-height: 0;
                     }
