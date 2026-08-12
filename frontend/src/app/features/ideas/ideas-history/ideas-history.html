@@ -151,10 +151,11 @@
                                                 <span class="custom-loader sm"></span>
                                             </div>
                                         } @else {
-                                            @for (idea of session.ideas; track idea.id) {
+                                            @for (idea of session.ideas; track idea.id; let i = $index) {
                                                 <app-idea-card
                                                     [idea]="idea"
-                                                    [expanded]="false"
+                                                    [expanded]="expandedIdeaIndex() === i"
+                                                    (toggled)="toggleIdea(i)"
                                                     (toggleFav)="toggleFavorite($event)"
                                                 />
                                             }

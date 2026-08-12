@@ -229,6 +229,20 @@
                     & + app-idea-card {
                         margin-top: var(--space-6);
                     }
+
+                    /* Override the global IdeaCard absolute layout so an expanded
+                       card pushes its siblings down instead of overlapping them. */
+                    .idea-card-wrapper {
+                        min-height: 0;
+                    }
+
+                    .idea-card {
+                        position: static;
+                        transform: none;
+                        -webkit-transform: none;
+                        transition: none;
+                        will-change: auto;
+                    }
                 }
             }
 

@@ -30,6 +30,7 @@ export class IdeasHistory implements OnInit {
     filterMode = signal<FilterMode>('all');
     expandedSessionId = signal<number | null>(null);
     pendingDeleteSessionId = signal<number | null>(null);
+    expandedIdeaIndex = signal(-1);
     initialLoadDone = false;
 
     filteredSessions = computed(() => {
@@ -66,10 +67,15 @@ export class IdeasHistory implements OnInit {
             this.expandedSessionId.set(null);
         } else {
             this.expandedSessionId.set(session.id);
+            this.expandedIdeaIndex.set(-1);
             if (!session.ideas || session.ideas.length === 0) {
                 this.ideasStore.loadSession(session.id);
             }
         }
+    }
+
+    toggleIdea(index: number): void {
+        this.expandedIdeaIndex.update((current) => (current === index ? -1 : index));
     }
 
     setPendingDelete(event: Event, id: number) {

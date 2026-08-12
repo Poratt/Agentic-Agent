@@ -13,6 +13,7 @@
 - **IdeaCard Fix:** added identical stability rules to `.idea-card` in `idea-card.css` to prevent flickering/banding during scale transitions.
 - **Files touched:** `frontend/src/app/assets/styles/_utilities.css`, `frontend/src/app/features/ideas/idea-card/idea-card.css`.
 - **IdeaCard Fix:** Converted `expanded` from a read-only input to a local `signal` synchronized via `effect`. This allows the "More Details" button to work independently in the Ideas History page where parent state management was missing. Fixes non-responsive details button.
+- **IdeaCard History Rendering Fix:** Made `IdeaCard` a clean controlled component (parent manages `expanded` via `expandedIdeaIndex` + `(toggled)` like `ideas-grid`). In `ideas-history.css` overrode the global `position: absolute` on `.idea-card` to `static` so an expanded card pushes its siblings down instead of overlapping them. Files: `ideas-history.ts`, `ideas-history.html`, `ideas-history.css`, `idea-card.ts`.
 
 - **Verification:** `npx ng build` (frontend) ✅. Visual artifacts are reduced/eliminated by forcing hardware-accelerated layer composition.
 - **Decisions made:** forced GPU layering for all glass-effect elements as the banding is a recurring issue with `backdrop-filter` + `radial-gradient` in Chromium.

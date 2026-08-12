@@ -1,4 +1,4 @@
-import { Component, input, output, ChangeDetectionStrategy, signal, effect } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SavedIdea } from '../../../core/models/saved-idea.model';
 
@@ -12,18 +12,9 @@ import { SavedIdea } from '../../../core/models/saved-idea.model';
 })
 export class IdeaCard {
   idea = input.required<SavedIdea>();
-  expandedInitial = input(false, { alias: 'expanded' });
-  
+  expanded = input(false);
   toggled = output<void>();
   toggleFav = output<{ ideaId: number; isFavorite: boolean }>();
-
-  expanded = signal(false);
-
-  constructor() {
-    effect(() => {
-      this.expanded.set(this.expandedInitial());
-    }, { allowSignalWrites: true });
-  }
 
   scoreVariant(score: number): 'success' | 'warning' | 'danger' {
     if (score >= 7) return 'success';
@@ -32,7 +23,6 @@ export class IdeaCard {
   }
 
   toggle(): void {
-    this.expanded.update(v => !v);
     this.toggled.emit();
   }
 
