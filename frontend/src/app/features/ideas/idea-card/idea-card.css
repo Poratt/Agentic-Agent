@@ -40,6 +40,24 @@
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
 
+    /* ::ng-deep overrides because Angular's emulated encapsulation prevents
+       direct descendant selectors from reaching into child components.
+       This allows the grid and history parent views to override positioning
+       so expanded cards push siblings down instead of overlapping. */
+    ::ng-deep {
+      .idea-card-wrapper {
+        min-height: 0;
+      }
+
+      .idea-card {
+        position: static;
+        transform: none;
+        -webkit-transform: none;
+        transition: none;
+        will-change: auto;
+      }
+    }
+
     &:has(.idea-card-details.expanded) {
       z-index: 10;
       box-shadow: var(--shadow-elevated);
