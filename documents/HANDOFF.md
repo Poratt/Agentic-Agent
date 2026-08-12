@@ -12,6 +12,8 @@
 - **Global Fix:** added `transform: translateZ(0)` and `backface-visibility: hidden` to `.glass-effect` in `_utilities.css`. This forces GPU acceleration and stable layer sampling for the `backdrop-filter`, eliminating rendering artifacts on sub-pixel boundaries.
 - **IdeaCard Fix:** added identical stability rules to `.idea-card` in `idea-card.css` to prevent flickering/banding during scale transitions.
 - **Files touched:** `frontend/src/app/assets/styles/_utilities.css`, `frontend/src/app/features/ideas/idea-card/idea-card.css`.
+- **IdeaCard Fix:** Converted `expanded` from a read-only input to a local `signal` synchronized via `effect`. This allows the "More Details" button to work independently in the Ideas History page where parent state management was missing. Fixes non-responsive details button.
+
 - **Verification:** `npx ng build` (frontend) ✅. Visual artifacts are reduced/eliminated by forcing hardware-accelerated layer composition.
 - **Decisions made:** forced GPU layering for all glass-effect elements as the banding is a recurring issue with `backdrop-filter` + `radial-gradient` in Chromium.
 
@@ -33,9 +35,9 @@
 **Decisions made:**
 - Kept `BusinessIdea` as the SSE DTO in `idea.interface.ts` (user-sanctioned) — mapped to `SavedIdea` once at the store boundary. Changing the SSE contract to return the persisted `SavedIdea` (with `id`) would require restructuring the backend generate/save flow + `ideas.service.spec.ts`, so deferred.
 - Generated (live, unsaved) ideas have no `id` → `IdeaCard` favorite toggle hidden; only persisted history ideas (with `id`) show it.
-- 4 pre-existing modified files were left uncommitted (not part of this work): `backend/src/modules/ideas/ideas-tasks.service.ts`, `backend/src/modules/llm/llm.module.ts`, `frontend/src/app/core/store/llm-provider.store.ts`, `frontend/src/app/features/llm-providers-management/llm-providers-management.ts`.
+- 4 pre-existing modified files were committed separately at session close (not part of the SavedIdea/apiKey work): `backend/src/modules/ideas/ideas-tasks.service.ts`, `backend/src/modules/llm/llm.module.ts`, `frontend/src/app/core/store/llm-provider.store.ts`, `frontend/src/app/features/llm-providers-management/llm-providers-management.ts`.
 
-**Commits (not pushed):** `dc98cda` (fix(llm): don't NULL stored apiKey when PATCH sends empty string — `llm-provider.entity.ts`), `461234b` (refactor(ideas): unify frontend on SavedIdea, drop null guards + css dupes — 8 frontend files).
+**Commits (not pushed):** `dc98cda` (fix(llm): don't NULL stored apiKey when PATCH sends empty string — `llm-provider.entity.ts`), `461234b` (refactor(ideas): unify frontend on SavedIdea, drop null guards + css dupes — 8 frontend files), `442f6dc` (refactor(ideas): AI_PROVIDER env fallback for nightly model + export `LlmProviderConfigService`), `944d1bc` (refactor(llm-providers): partial update payload + silent error reload).
 
 **Files touched:** `saved-idea.model.ts`, `ideas.store.ts`, `idea-card.ts`, `idea-card.html`, `ideas-grid.ts`, `ideas-history.ts`, `ideas-history.html`, `ideas-history.css`, `llm-provider.entity.ts`.
 
