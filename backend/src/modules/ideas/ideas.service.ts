@@ -25,7 +25,7 @@ import { SavedIdea } from './entities/saved-idea.entity';
 
 const MAX_DOMAIN_LENGTH = 500;
 const MAX_PARALLEL_VALIDATION = 3;
-const OVERALL_TIMEOUT_MS = 60_000;
+const OVERALL_TIMEOUT_MS = 150_000;
 
 @Injectable()
 export class IdeasService {
@@ -391,7 +391,7 @@ export class IdeasService {
       const res = await this.llm.generateResponse({
         prompt,
         systemContext: SIGNAL_GATHERING_PROMPT,
-        maxTokens: 1024,
+        maxTokens: 2048,
         userId,
         providerOverride,
         modelOverride,
@@ -435,7 +435,7 @@ export class IdeasService {
       const res = await this.llm.generateResponse({
         prompt,
         systemContext: IDEA_GENERATION_PROMPT,
-        maxTokens: 2048,
+        maxTokens: 4096,
         userId,
         providerOverride,
         modelOverride,
@@ -536,7 +536,7 @@ export class IdeasService {
       const res = await this.llm.generateResponse({
         prompt,
         systemContext: VALIDATION_PROMPT,
-        maxTokens: 3072,
+        maxTokens: 4096,
         userId,
         providerOverride,
         modelOverride,

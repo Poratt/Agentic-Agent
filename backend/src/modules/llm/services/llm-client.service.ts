@@ -47,10 +47,17 @@ export class LlmClientService {
 
     this.logger.log(`Generating response via ${activeProvider} (model: ${activeModel})`);
 
+    // Streaming is required even though callers consume a single full response:
+    // reasoning models (e.g. omniroute `auto/best-free` → hy3-free) emit large
+    // reasoning token streams. With a non-streaming request the OpenAI SDK waits
+    // for the entire body before resolving, which routinely exceeds the 60s
+    // client timeout. Streaming surfaces the final content incrementally and
+    // resolves promptly (the same mechanism used by generateStream).
     const start = Date.now();
     const completion = await this.withRetry(async () => {
-      const result = await client.chat.completions.create({
+      const stream = await client.chat.completions.create({
         model: activeModel,
+        stream: true,
         messages: [
           { role: 'system', content: systemContext || 'You are a helpful assistant.' },
           ...(messageHistory?.length ? messageHistory : []),
@@ -60,25 +67,56 @@ export class LlmClientService {
         temperature: 0.2,
         max_tokens: maxTokens ?? 1024,
         ...(activeProvider === 'openrouter' && { reasoning: { enabled: false } }),
-      } as any, {});
+      } as OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming);
 
-      const firstChoice = result?.choices?.[0];
-      if (!firstChoice?.message) {
-        throw new Error('Returned no choices from AI model');
+      let content: string | null = null;
+      const toolCalls: LlmToolCall[] = [];
+      let finishReason: string | null = null;
+
+      for await (const chunk of stream) {
+        const choice = chunk.choices?.[0];
+        if (!choice) {
+          continue;
+        }
+        const delta = choice.delta;
+        if (delta?.content) {
+          content = (content ?? '') + delta.content;
+        }
+        if (delta?.tool_calls?.length) {
+          for (const tc of delta.tool_calls) {
+            const idx = tc.index ?? 0;
+            toolCalls[idx] = toolCalls[idx] ?? { id: '', type: 'function', function: { name: '', arguments: '' } };
+            if (tc.id) toolCalls[idx].id = tc.id;
+            if (tc.function?.name) toolCalls[idx].function.name += tc.function.name;
+            if (tc.function?.arguments) toolCalls[idx].function.arguments += tc.function.arguments;
+          }
+        }
+        if (choice.finish_reason) {
+          finishReason = choice.finish_reason;
+        }
       }
 
-      return result;
+      if (content === null && toolCalls.length === 0) {
+        throw new Error('Returned no content or tool calls from AI model');
+      }
+
+      return { content, toolCalls, finishReason };
     }, 'generateResponse');
     this.logger.log(`LLM response took ${((Date.now() - start) / 1000).toFixed(1)}s`);
 
-    const message = completion.choices[0].message;
-    const content = typeof message?.content === 'string' ? message.content : null;
-    const toolCalls = (message.tool_calls || []) as LlmToolCall[];
-    const finishReason = completion.choices[0]?.finish_reason ?? null;
+    const { content, toolCalls, finishReason } = completion;
 
     this.logger.log(`Response OK: content=${content?.length ?? 0} chars: ${content?.slice(0, 200)}... toolCalls=${toolCalls.length}`);
     this.logger.log(`[RESPONSE] provider=${dbProvider.key} (${dbProvider.label}) model=${activeModel} tokens=${content?.length ?? 0} finish_reason=${finishReason}`);
-    return { content, toolCalls, finishReason, rawCompletion: completion };
+    return {
+      content,
+      toolCalls,
+      finishReason,
+      // Non-streaming callers used rawCompletion for debug logging only; the
+      // streaming path exposes content/finishReason directly, so we surface a
+      // minimal object that keeps the existing debug logs safe.
+      rawCompletion: { choices: [{ finish_reason: finishReason, message: { content, tool_calls: toolCalls } }] },
+    };
   }
 
   async *generateStream(llmRequest: LlmRequest): AsyncIterable<string> {
@@ -199,7 +237,7 @@ export class LlmClientService {
       client: new OpenAI({
         baseURL: dbProvider.baseUrl,
         apiKey: apiKey || 'local-no-key',
-        timeout: 60_000,
+        timeout: 180_000,
         defaultHeaders: this.providerConfig.getDefaultHeaders(dbProvider.key as any),
       }),
       dbProvider,
