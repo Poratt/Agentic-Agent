@@ -1,9 +1,10 @@
 # Documentation Change Log
 
 ## 2026-08-12 A1 — SavedIdea as the frontend single source of truth
-- The frontend now consumes `SavedIdea` everywhere (IdeaCard, ideas-grid, ideas-history). `BusinessIdea` is retained ONLY as the SSE DTO in `idea.interface.ts`; the store maps it → `SavedIdea` via `toSavedIdea` (null arrays → `[]`, `validationReason` → `''`).
+- The frontend now consumes `SavedIdea` everywhere (IdeaCard, ideas-history, ideas-page). `BusinessIdea` is retained ONLY as the SSE DTO in `idea.interface.ts`; the store maps it → `SavedIdea` via `toSavedIdea` (null arrays → `[]`, `validationReason` → `''`).
 - `SavedIdea` fields (`risks`/`competitors`/`nextSteps`/`signalsReferenced`/`validationReason`) are normalized to non-null, with null coercion at the store boundary (`toSavedIdea`, `normalizeSaved`). This removes the 4 nullable-array computeds from `IdeaCard`.
 - Generated (live) ideas have no `id` → favorite toggle hidden in `IdeaCard`; only persisted history ideas (with `id`) expose it.
+- **Finalization:** `ideas-grid` component deleted; `ideas-page.html` renders `<app-idea-card>` directly with parent-managed `expandedIndex`. `IdeaCard` is a clean controlled component. Since the backend auto-saves every idea on generation, the `SavedIdea` shape is the single source of truth across the entire frontend; `BusinessIdea` is strictly an internal SSE streaming type.
 
 ## 2026-08-12 A2 — apiKey transformer must not clobber stored keys
 - `llm-provider.entity.ts`: the `apiKey` transformer returns `undefined` when the input is `undefined` or empty, so a PATCH that omits the key leaves the existing encrypted column untouched (TypeORM `update()` skips `undefined` columns).

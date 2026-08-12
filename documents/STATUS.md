@@ -15,7 +15,7 @@ Last updated: 2026-08-12
 
 ## 2026-08-12 Session — SavedIdea unification + apiKey transformer fix + CSS dedupe
 
-- **DONE:** Frontend unified on `SavedIdea` as single source of truth (IdeaCard, ideas-grid, ideas-history); `BusinessIdea`/`IdeaCardData` removed from UI; nullable arrays normalized at store boundary; `apiKey` transformer no longer NULLs stored key on empty PATCH; `ideas-history.css` deduped (12 props removed).
+- **DONE:** Frontend unified on `SavedIdea` as single source of truth (IdeaCard, ideas-history, ideas-page); `BusinessIdea`/`IdeaCardData`/`toCardData` removed from UI (verified clean scan); nullable arrays normalized at store boundary; `apiKey` transformer no longer NULLs stored key on empty PATCH; `ideas-history.css` deduped (12 props removed). `ideas-grid` component deleted — `ideas-page.html` now renders `<app-idea-card>` directly with parent-managed `expandedIndex`.
 - **Verified:** `npx ng build` ✅ (only pre-existing unrelated `strain-hunter.css` budget warning).
 - **Commits (not pushed):** `dc98cda` (apiKey fix), `461234b` (SavedIdea unification).
 - **4 pre-existing files also committed (separate commits, not part of this work):** `442f6dc` (backend nightly model AI_PROVIDER fallback + `LlmProviderConfigService` export), `944d1bc` (frontend provider partial-update payload + silent error reload). Pre-existing `user.service.spec.ts` failures unrelated.
