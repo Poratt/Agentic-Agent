@@ -145,8 +145,8 @@ export class LlmProviderStore {
             next: () => {
                 this.providersResource.reload();
             },
-            error: (err) => {
-                this.error.set(err?.error?.message ?? 'Failed to create provider');
+            error: () => {
+                this.providersResource.reload();
             }
         });
     }
@@ -156,8 +156,8 @@ export class LlmProviderStore {
             next: () => {
                 this.providersResource.reload();
             },
-            error: (err) => {
-                this.error.set(err?.error?.message ?? 'Failed to update provider');
+            error: () => {
+                this.providersResource.reload();
             }
         });
     }
@@ -167,8 +167,8 @@ export class LlmProviderStore {
             next: () => {
                 this.providersResource.reload();
             },
-            error: (err) => {
-                this.error.set(err?.error?.message ?? 'Failed to delete provider');
+            error: () => {
+                this.providersResource.reload();
             }
         });
     }
@@ -178,8 +178,8 @@ export class LlmProviderStore {
             next: () => {
                 this.providersResource.reload();
             },
-            error: (err) => {
-                this.error.set(err?.error?.message ?? 'Failed to create model');
+            error: () => {
+                this.providersResource.reload();
             }
         });
     }
@@ -189,8 +189,8 @@ export class LlmProviderStore {
             next: () => {
                 this.providersResource.reload();
             },
-            error: (err) => {
-                this.error.set(err?.error?.message ?? 'Failed to delete model');
+            error: () => {
+                this.providersResource.reload();
             }
         });
     }
@@ -200,8 +200,8 @@ export class LlmProviderStore {
             next: () => {
                 this.providersResource.reload();
             },
-            error: (err) => {
-                this.error.set(err?.error?.message ?? 'Failed to delete test result');
+            error: () => {
+                this.providersResource.reload();
             }
         });
     }
@@ -211,8 +211,8 @@ export class LlmProviderStore {
             next: () => {
                 this.providersResource.reload();
             },
-            error: (err) => {
-                this.error.set(err?.error?.message ?? 'Failed to delete test results');
+            error: () => {
+                this.providersResource.reload();
             }
         });
     }
@@ -222,8 +222,8 @@ export class LlmProviderStore {
             next: () => {
                 this.providersResource.reload();
             },
-            error: (err) => {
-                this.error.set(err?.error?.message ?? 'Failed to update model');
+            error: () => {
+                this.providersResource.reload();
             }
         });
     }

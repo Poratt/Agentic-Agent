@@ -284,26 +284,24 @@ export class LlmProvidersManagement implements OnInit {
 
         const id = this.editingProviderId();
         const formValue = this.providerForm.getRawValue();
-        const payload: Partial<LlmProvider> = { ...formValue };
-
-        if (!payload.apiKey) {
-            delete payload.apiKey;
-        }
 
         if (id === null) {
+            const payload: Partial<LlmProvider> = { ...formValue };
+            if (!payload.apiKey) delete payload.apiKey;
             this.llmProviderStore.createProvider(payload);
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Created',
-                detail: 'Provider has been created successfully.'
-            });
         } else {
+            const original = this.llmProviders().find(p => p.id === id);
+            const payload: Partial<LlmProvider> = {};
+            if (original) {
+                if (formValue.key !== original.key) payload.key = formValue.key;
+                if (formValue.label !== original.label) payload.label = formValue.label;
+                if (formValue.baseUrl !== original.baseUrl) payload.baseUrl = formValue.baseUrl;
+                if (formValue.active !== original.active) payload.active = formValue.active;
+            } else {
+                Object.assign(payload, formValue);
+            }
+            if (formValue.apiKey) payload.apiKey = formValue.apiKey;
             this.llmProviderStore.updateProvider(id, payload);
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Updated',
-                detail: 'Provider has been updated successfully.'
-            });
         }
 
         this.closeProviderDialog();
