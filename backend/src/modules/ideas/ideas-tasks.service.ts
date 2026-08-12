@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { IdeasService } from './ideas.service';
 import { UsersService } from '../users/users.service';
 import { LlmProviderService } from '../llm-provider/llm-provider.service';
+import { LlmProviderConfigService } from '../llm/services/llm-provider-config.service';
 import { LlmProvider } from '../llm/types/llm.types';
 
 /**
@@ -27,6 +28,7 @@ export class IdeasTasksService {
     private readonly ideasService: IdeasService,
     private readonly usersService: UsersService,
     private readonly llmProviderService: LlmProviderService,
+    private readonly llmProviderConfigService: LlmProviderConfigService,
   ) {}
 
   @Cron('0 0 4 * * *')
@@ -92,17 +94,30 @@ export class IdeasTasksService {
   }
 
   /**
-   * Resolves the model to use for nightly runs. Prefers the IDEAS_NIGHTLY_MODEL
-   * env override ("provider/model"); otherwise falls back to the first active
-   * text-capable model (same path the chat uses for its default). Never relies
-   * on a per-request/user context.
+   * Resolves the model to use for nightly runs, in order of preference:
+   * 1. IDEAS_NIGHTLY_MODEL env override ("provider/model")
+   * 2. DB-stored first active text-capable model
+   * 3. AI_PROVIDER env fallback (via LlmProviderConfigService)
    */
   private async resolveModel(): Promise<{ provider: string; model: string } | null> {
+    // 1. Explicit env override
     const override = process.env.IDEAS_NIGHTLY_MODEL;
     if (override && override.includes('/')) {
       const [provider, model] = override.split('/', 2);
       return { provider, model };
     }
-    return this.llmProviderService.findFirstActiveTextModel();
+
+    // 2. First active text model from DB
+    const dbModel = await this.llmProviderService.findFirstActiveTextModel();
+    if (dbModel) return dbModel;
+
+    // 3. AI_PROVIDER env fallback
+    try {
+      const provider = this.llmProviderConfigService.getActiveProvider();
+      const model = this.llmProviderConfigService.getActiveModel();
+      return { provider, model };
+    } catch {
+      return null;
+    }
   }
 }

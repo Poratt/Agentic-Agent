@@ -17,6 +17,6 @@ import { LlmProviderModule } from '../llm-provider/llm-provider.module';
     LlmHealthService,
     LlmTasksService // 🚀 רישום שירות הקרון כאן
   ],
-  exports: [LlmService, LlmClientService],
+  exports: [LlmService, LlmClientService, LlmProviderConfigService],
 })
 export class LlmModule { }
