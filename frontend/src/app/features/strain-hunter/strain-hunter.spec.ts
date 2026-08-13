@@ -338,14 +338,14 @@ describe('StrainHunter', () => {
             mockAuthStore.userRole.mockReturnValue(UserRole.User);
             fixture = TestBed.createComponent(StrainHunter);
             component = fixture.componentInstance;
-            expect(component.isAdmin()).toBe(false);
+            expect((component as StrainHunter).isAdmin()).toBe(false);
         });
 
         it('should return true for admin', () => {
             mockAuthStore.userRole.mockReturnValue(UserRole.Admin);
             fixture = TestBed.createComponent(StrainHunter);
             component = fixture.componentInstance;
-            expect(component.isAdmin()).toBe(true);
+            expect((component as StrainHunter).isAdmin()).toBe(true);
         });
     });
 });

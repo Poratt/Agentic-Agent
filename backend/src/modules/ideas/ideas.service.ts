@@ -19,6 +19,7 @@ import {
   IDEA_GENERATION_PROMPT,
   VALIDATION_PROMPT,
   TOPIC_DISCOVERY_PROMPT,
+  DISCOVERY_QUERY_GENERATION_PROMPT,
 } from './constants/idea-prompts.constant';
 import { SavedIdeaSession } from './entities/saved-idea-session.entity';
 import { SavedIdea } from './entities/saved-idea.entity';
@@ -31,6 +32,19 @@ const OVERALL_TIMEOUT_MS = 150_000;
 export class IdeasService {
   private readonly logger = new Logger(IdeasService.name);
 
+  /**
+   * Static search queries used as a fallback when the LLM fails to generate
+   * current, date-aware discovery queries. Kept so the nightly cron still has
+   * something to search even if the query-generation step fails.
+   */
+  private readonly FALLBACK_DISCOVERY_QUERIES = [
+    'indie hacker pain points 2025 2026',
+    'underserved SaaS niches solo founder bootstrap',
+    'solo developer business ideas software only',
+    'prosumer tools underserved market 2025',
+  ];
+
+
   constructor(
     private readonly llm: LlmClientService,
     private readonly webSearch: WebSearchService,
@@ -39,7 +53,7 @@ export class IdeasService {
     @InjectRepository(SavedIdea)
     private readonly ideaRepository: Repository<SavedIdea>,
     private readonly dataSource: DataSource,
-  ) {}
+  ) { }
 
   // ---------------------------------------------------------------------------
   // Persistence layer (Phase 1)
@@ -274,18 +288,62 @@ export class IdeasService {
    * LLM's reasoning for why it fits a solo developer. Returns an empty array
    * on failure (caller should skip the run).
    */
+  /**
+   * Generates date-aware web-search queries for topic discovery by asking the
+   * LLM to suggest currently hot/trending pain points instead of relying on a
+   * static evergreen list. Today's date is injected into the prompt so the
+   * suggestions stay current.
+   *
+   * @param userId - optional user id passed through to the LLM client for
+   *   provider/model resolution and usage attribution.
+   * @param providerOverride - optional explicit LLM provider.
+   * @param modelOverride - optional explicit LLM model.
+   * @returns An array of 1-6 non-empty search query strings. Falls back to
+   *   {@link FALLBACK_DISCOVERY_QUERIES} if the LLM call fails or returns no
+   *   usable queries, so the nightly cron never loses its search step.
+   */
+  private async generateDiscoveryQueries(
+    userId?: number,
+    providerOverride?: LlmProvider,
+    modelOverride?: string,
+  ): Promise<string[]> {
+    const today = new Date().toISOString().slice(0, 10);
+    const prompt = `Today's date: ${today}\n\nSuggest 4 short, specific web-search queries in English that would surface currently hot, trending pain points, underserved niches, or emerging tools relevant to a solo bootstrapped developer right now. Base them on what's actually current — not generic evergreen phrasing. Return ONLY a JSON array of strings, nothing else.`;
+
+    try {
+      const res = await this.llm.generateResponse({
+        prompt,
+        systemContext: DISCOVERY_QUERY_GENERATION_PROMPT,
+        maxTokens: 256,
+        userId,
+        providerOverride,
+        modelOverride,
+      });
+
+      const parsed = parseLlmJson<string[]>(res.content, 'discovery-query-generation');
+      const queries = Array.isArray(parsed)
+        ? parsed.filter((q) => typeof q === 'string' && q.trim().length > 0).slice(0, 6)
+        : [];
+
+      if (queries.length > 0) {
+        return queries;
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Discovery query generation failed, using fallback queries: ${error instanceof Error ? error.message : 'unknown'}`,
+      );
+    }
+
+    return this.FALLBACK_DISCOVERY_QUERIES;
+  }
+
   async discoverTopics(
     count: number,
     userId?: number,
     providerOverride?: LlmProvider,
     modelOverride?: string,
   ): Promise<{ domain: string; rationale: string }[]> {
-    const queries = [
-      'indie hacker pain points 2025 2026',
-      'underserved SaaS niches solo founder bootstrap',
-      'solo developer business ideas software only',
-      'prosumer tools underserved market 2025',
-    ];
+    const queries = await this.generateDiscoveryQueries(userId, providerOverride, modelOverride);
 
     const settled = await Promise.allSettled(
       queries.map((q) => this.webSearch.search(q)),
@@ -557,11 +615,11 @@ export class IdeasService {
 
       const breakdown: ValidationBreakdown | undefined = v.validationBreakdown
         ? {
-            competition: this.clampBreakdownScore(v.validationBreakdown.competition, 3),
-            signalFit: this.clampBreakdownScore(v.validationBreakdown.signalFit, 3),
-            feasibility: this.clampBreakdownScore(v.validationBreakdown.feasibility, 2),
-            marketSize: this.clampBreakdownScore(v.validationBreakdown.marketSize, 2),
-          }
+          competition: this.clampBreakdownScore(v.validationBreakdown.competition, 3),
+          signalFit: this.clampBreakdownScore(v.validationBreakdown.signalFit, 3),
+          feasibility: this.clampBreakdownScore(v.validationBreakdown.feasibility, 2),
+          marketSize: this.clampBreakdownScore(v.validationBreakdown.marketSize, 2),
+        }
         : undefined;
 
       // Sanity check: if competition=3 (no competitors) but competitors list is not empty → clamp down

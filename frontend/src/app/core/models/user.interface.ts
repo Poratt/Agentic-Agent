@@ -8,4 +8,5 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
   lastLoginAt?: Date;
+  refreshToken?: string;
 }

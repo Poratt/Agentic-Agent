@@ -25,6 +25,8 @@ export const TOPIC_DISCOVERY_PROMPT = `אתה אנליסט סטארטאפים. �
   ]
 }`;
 
+export const DISCOVERY_QUERY_GENERATION_PROMPT = `You are a research assistant helping discover currently trending pain points and underserved niches for solo bootstrapped developers. Given today's date, suggest concise, high-signal web search queries that would surface recent discussions, launches, or complaints. Prefer specific and current phrasing over generic evergreen terms. Respond with a raw JSON array of strings only — no markdown, no explanation.`;
+
 export const IDEA_GENERATION_PROMPT = `אתה אנליסט סטארטאפים. צור רעיונות עסקיים שמטפלים ישירות בנקודות הכאב שלהלן.
 אסור להמציא נקודות כאב — השתמש רק בסיגנלים שסופקו.
 חובה להחזיר את כל הטקסטים (title, description, targetMarket) בעברית בלבד.

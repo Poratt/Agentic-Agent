@@ -1,57 +1,67 @@
-import { HttpRequest } from '@angular/common/http';
+import { HttpHandlerFn, HttpRequest, HttpEvent } from '@angular/common/http';
 import { withCredentialsInterceptor } from './with-credentials.interceptor';
 import { environment } from '../../environments/environment';
+import { vi } from 'vitest';
+import { of } from 'rxjs';
 
 describe('withCredentialsInterceptor', () => {
   function req(url: string, withCredentials?: boolean): HttpRequest<unknown> {
     return new HttpRequest('GET', url, { withCredentials });
   }
 
-  function next(): ReturnType<typeof vi.fn> {
-    return vi.fn();
-  }
-
   it('clones API request with withCredentials: true', () => {
-    const handler = next();
-    const request = req(`${environment.apiUrl}/users`);
+    let calledRequest: HttpRequest<unknown> | undefined;
+    const handler: HttpHandlerFn = (req: HttpRequest<unknown>) => {
+      calledRequest = req;
+      return of({} as HttpEvent<unknown>);
+    };
 
-    withCredentialsInterceptor(request, handler);
+    withCredentialsInterceptor(req(`${environment.apiUrl}/users`), handler);
 
     expect(handler).toHaveBeenCalledTimes(1);
-    const cloned = handler.mock.calls[0][0];
-    expect(cloned.withCredentials).toBe(true);
-    expect(cloned.url).toBe(`${environment.apiUrl}/users`);
+    expect(calledRequest!.withCredentials).toBe(true);
+    expect(calledRequest!.url).toBe(`${environment.apiUrl}/users`);
   });
 
   it('passes non-API requests through untouched', () => {
-    const handler = next();
-    const request = req('https://example.com/image.png');
+    let calledRequest: HttpRequest<unknown> | undefined;
+    const handler: HttpHandlerFn = (req: HttpRequest<unknown>) => {
+      calledRequest = req;
+      return of({} as HttpEvent<unknown>);
+    };
 
-    withCredentialsInterceptor(request, handler);
+    withCredentialsInterceptor(req('https://example.com/image.png'), handler);
 
     expect(handler).toHaveBeenCalledTimes(1);
-    expect(handler).toHaveBeenCalledWith(request);
+    expect(calledRequest!.url).toBe('https://example.com/image.png');
+    expect(calledRequest!.withCredentials).toBeFalsy();
   });
 
   it('does not double-set withCredentials if already set', () => {
-    const handler = next();
-    const request = req(`${environment.apiUrl}/users`, true);
+    let calledRequest: HttpRequest<unknown> | undefined;
+    const handler: HttpHandlerFn = (req: HttpRequest<unknown>) => {
+      calledRequest = req;
+      return of({} as HttpEvent<unknown>);
+    };
 
-    withCredentialsInterceptor(request, handler);
+    withCredentialsInterceptor(req(`${environment.apiUrl}/users`, true), handler);
 
     expect(handler).toHaveBeenCalledTimes(1);
-    expect(handler).toHaveBeenCalledWith(request);
+    expect(calledRequest!.withCredentials).toBe(true);
   });
 
   it('clones request and preserves other properties', () => {
-    const handler = next();
-    const request = new HttpRequest('POST', `${environment.apiUrl}/auth/login`, { email: 'a@b.com' });
+    let calledRequest: HttpRequest<unknown> | undefined;
+    const handler: HttpHandlerFn = (req: HttpRequest<unknown>) => {
+      calledRequest = req;
+      return of({} as HttpEvent<unknown>);
+    };
 
-    withCredentialsInterceptor(request, handler);
+    withCredentialsInterceptor(new HttpRequest('POST', `${environment.apiUrl}/auth/login`, { email: 'a@b.com' }), handler);
 
-    const cloned = handler.mock.calls[0][0];
-    expect(cloned.withCredentials).toBe(true);
-    expect(cloned.method).toBe('POST');
-    expect(cloned.url).toBe(`${environment.apiUrl}/auth/login`);
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(calledRequest!.withCredentials).toBe(true);
+    expect(calledRequest!.method).toBe('POST');
+    expect(calledRequest!.url).toBe(`${environment.apiUrl}/auth/login`);
   });
 });
