@@ -1,81 +1,21 @@
-.fav-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  font-size: 1.2rem;
-  color: var(--text-muted);
-  transition: color 0.2s;
-  line-height: 1;
-}
-.fav-btn.active,
-.fav-btn:hover {
-  color: #f59e0b;
-}
-
-.idea-card-wrapper {
-  position: relative;
-  min-height: 400px;
-  /* over-estimate of closed-card height; tune after measuring in DevTools */
-
-  .idea-card {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    transform: scale(0.99);
-
-
-    /* z-index transition delayed on close so card stays above neighbors until its
-       box-shadow/transform animation finishes. Do NOT simplify or "fix" this —
-       the inverted 0s linear 0s on .expanded is intentional and load-bearing. */
-    transition:
-      transform 350ms cubic-bezier(0.16, 1, 0.3, 1),
-      box-shadow 350ms cubic-bezier(0.16, 1, 0.3, 1),
-      z-index 0s linear 350ms;
-    will-change: transform, box-shadow, z-index;
-    transform: scale(0.99) translateZ(0);
-    -webkit-transform: scale(0.99) translateZ(0);
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-
-    /* ::ng-deep overrides because Angular's emulated encapsulation prevents
-       direct descendant selectors from reaching into child components.
-       This allows the grid and history parent views to override positioning
-       so expanded cards push siblings down instead of overlapping. */
-    ::ng-deep {
-      .idea-card-wrapper {
-        min-height: 0;
-      }
-
-      .idea-card {
-        position: static;
-        transform: none;
-        -webkit-transform: none;
-        transition: none;
-        will-change: auto;
-      }
-    }
-
-    &:has(.idea-card-details.expanded) {
-      z-index: 10;
-      box-shadow: var(--shadow-elevated);
-      transform: scale(1) translateZ(0);
-      -webkit-transform: scale(1) translateZ(0);
-
-      transition:
-        transform 350ms cubic-bezier(0.16, 1, 0.3, 1),
-        box-shadow 350ms cubic-bezier(0.16, 1, 0.3, 1),
-        z-index 0s linear 0s;
-    }
-  }
-}
-
 .idea-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: box-shadow 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow, z-index;
+
+
+  &:has(.idea-card-details.expanded) {
+    box-shadow: var(--shadow-elevated);
+    transition: box-shadow 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .top-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    width: 100%;
+  }
 
   .idea-card-head {
     display: flex;
@@ -90,11 +30,9 @@
     }
 
     .idea-card-title {
-      font-size: var(--font-size-md);
+      font-size: var(--font-size-sm);
       font-weight: var(--font-weight-semibold);
       color: var(--color-text-primary);
-      margin: 0;
-      line-height: var(--line-height-tight);
     }
   }
 
@@ -128,34 +66,7 @@
     gap: var(--space-4);
   }
 
-  .score-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px var(--space-6);
-    border-radius: var(--radius-pill);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
-    border: 1px solid transparent;
-    white-space: nowrap;
 
-    &.score-success {
-      background: var(--color-success-bg);
-      color: var(--color-success);
-      border-color: var(--color-success-border);
-    }
-
-    &.score-warning {
-      background: var(--color-warning-bg);
-      color: var(--color-warning);
-      border-color: var(--color-warning-border);
-    }
-
-    &.score-danger {
-      background: var(--color-danger-bg);
-      color: var(--color-danger);
-      border-color: var(--color-danger-border);
-    }
-  }
 
   .idea-card-actions {
     align-self: flex-start;
@@ -163,24 +74,54 @@
 
   .idea-card-details {
     display: grid;
+    position: relative;
     grid-template-rows: 0fr;
     opacity: 0;
     overflow: hidden;
+    max-height: 0;
+    transform: translateY(-20px);
     transition:
       grid-template-rows var(--transition-standard),
-      opacity var(--transition-standard);
+      max-height var(--transition-standard),
+      transform var(--transition-standard),
+      opacity var(--transition-slow);
+
+    &::after {
+      position: absolute;
+      content: '';
+      top: var(--space-4);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1px;
+      height: 1px;
+      background-color: var(--color-border);
+      opacity: 0;
+      transition: opacity var(--transition-standard), width var(--transition-slow);
+    }
 
     &.expanded {
       grid-template-rows: 1fr;
       opacity: 1;
+      transform: translateY(0);
+      max-height: 100%;
+
+
+      &::after {
+        position: absolute;
+        content: '';
+        width: 100%;
+        height: 1px;
+        background-color: var(--color-border);
+        opacity: 1;
+      }
     }
+
 
     .idea-card-details-inner {
       display: flex;
       flex-direction: column;
       gap: var(--space-8);
       min-height: 0;
-      border-top: 1px solid var(--color-border);
       padding-top: var(--space-8);
     }
 

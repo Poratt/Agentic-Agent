@@ -241,7 +241,7 @@
                     app-idea-card {
                         display: block;
 
-                        & + app-idea-card {
+                        &+app-idea-card {
                             margin-top: var(--space-6);
                         }
                     }

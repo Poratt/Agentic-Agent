@@ -2,8 +2,8 @@
     @if (store.nightlyUnread() > 0 && !nightlyBannerDismissed()) {
         <div class="glass-effect nightly-banner">
             <div class="nightly-banner-content">
-                <span class="ph ph-lightbulb-filament"></span>
                 <span>{{ store.nightlyUnread() }}</span>
+                <span class="ph ph-lightbulb-filament"></span>
                 <span> רעיונות חדשים נוצרו הלילה — <a href="/ideas/history?nightly=true">צפה בהם</a></span>
             </div>
             <button class="transparent-btn sm" type="button" (click)="dismissNightlyBanner()">סמן כנקרא</button>
@@ -29,15 +29,15 @@
                 </div>
             }
             @case (PageStates.Ready) {
-                <div class="grid-3">
-                    @if (store.partial()) {
-                        <div class="badge badge-default ideas-partial-banner">
-                            <span class="ph ph-warning"></span>
-                            הוצגו <span dir="ltr">{{ store.ideas().length }}</span> מתוך
-                            <span dir="ltr">{{ store.totalRequested() }}</span> רעיונות (חלק מהרעיונות נכשלו)
-                        </div>
-                    }
+                @if (store.partial()) {
+                    <div class="badge badge-default badge-compact">
+                        <span class="ph ph-warning"></span>
+                        הוצגו <span dir="ltr">{{ store.ideas().length }}</span> מתוך
+                        <span dir="ltr">{{ store.totalRequested() }}</span> רעיונות (חלק מהרעיונות נכשלו)
+                    </div>
+                }
 
+                <div class="ideas-list">
                     @for (idea of store.ideas(); track idea.id; let i = $index) {
                         <app-idea-card [idea]="idea" [expanded]="expandedIndex() === i" (toggled)="onToggle(i)" />
                     }

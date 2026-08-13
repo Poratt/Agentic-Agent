@@ -150,6 +150,18 @@
     border-color: var(--color-danger-border);
   }
 
+  &.badge-success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border-color: var(--color-success-border);
+  }
+
+  &.badge-warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+    border-color: var(--color-warning-border);
+  }
+
   &.badge-info {
     background: var(--color-info-bg);
     color: var(--color-info);
@@ -193,17 +205,7 @@
     border-color: var(--color-border);
   }
 
-  &.badge-success {
-    background: var(--color-success-bg);
-    color: var(--color-success);
-    border-color: var(--color-success-border);
-  }
 
-  &.badge-warning {
-    background: var(--color-warning-bg);
-    color: var(--color-warning);
-    border-color: var(--color-warning-border);
-  }
 }
 
 /* --- Screen Reader Only (accessible, hidden visually) --- */

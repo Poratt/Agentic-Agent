@@ -1,5 +1,34 @@
 # Documentation Handoff
 
+## 2026-08-12 (late) Session — Nightly banner + IdeaCard CSS consolidation + star-btn unification
+
+**Objective:** align the Ideas feature UI with `css-conventions` / `css-deduplicate` skills; unify the duplicate star-button styling.
+
+**Nightly banner (`ideas-page.css` / `.html`):**
+- Fixed two broken tokens (`--color-primary-bg`, `--color-primary-border` did not exist) → now `var(--color-primary-glow-bg)` tint + `var(--glass-border)` (later removed as redundant with `.glass-effect`) + `border-inline-start: 3px solid var(--color-primary)` accent + `box-shadow: var(--glass-shadow), 0 0 12px var(--color-primary-glow)`.
+- Layout: `display:flex; justify-content: space-between; gap: var(--space-4); padding: var(--space-6)`.
+- Wrapped icon + label in `.nightly-banner-content` (nested inside `.nightly-banner`, per mandatory nesting rule) with `display:flex; align-items:center; gap: var(--space-2)`.
+- Replaced dead local `.link-btn` with global `transparent-btn sm` (fixes missing hover + smaller). Removed the orphaned `.link-btn` CSS.
+- Dedupe: removed `border: 1px solid var(--glass-border)` (already on `.glass-effect`).
+- No architecture-diagram change (CSS-only).
+
+**IdeaCard CSS (`idea-card.css`):**
+- Merged the duplicate flat `.idea-card` block into the one nested under `.idea-card-wrapper`; nested `.fav-btn` into `.idea-card-meta`; removed a redundant `transform: scale(0.99)` line that was immediately overwritten. Pure structure change, values unchanged.
+
+**star-btn unification (the key cleanup):**
+- Root cause: `fav-btn` (local in `idea-card.css`) and `star-btn` were doing the same job (star toggle) but as two separate classes. `star-btn` was actually **nested inside `li.p-select-option`** in `_primeng-overrides.css`, so it only reached star buttons inside a PrimeNG `p-select` option — NOT the IdeaCard's plain button.
+- Promoted `button.star-btn` to a real **global** rule in `_buttons.css` (section 4c), targeting both `.ph` and `span.ph` icons. Keeps the token-based `--color-warning` (chat + ideas-form) instead of `fav-btn`'s hard-coded `#f59e0b`.
+- Switched `idea-card.html`: `fav-btn` → `star-btn`, `[class.active]` → `[class.star-active]`, icon `<i>` → `<span class="ph">` to match the styled selector.
+- Deleted the entire local `.fav-btn` block from `idea-card.css`.
+- `data-testid="fav-..."` intentionally kept unchanged so existing tests don't break.
+- Verified: `fav-btn` class appears nowhere; `star-btn`/`star-active` now used in chat, ideas-form, and idea-card.
+
+**Verification:** `npx ng build` ✅ (only pre-existing `strain-hunter.css` budget warning); mojibake scan clean on all touched files.
+
+**Decisions made:** generic star-toggle button belongs in `_buttons.css` (with other button themes), not `_primeng-overrides.css`; `<span class="ph">` is the consistent icon element across all three usages.
+
+**Status:** all uncommitted — part of the larger in-progress working tree (also includes `ideas-grid` deletion still pending user decision). Not yet committed.
+
 ## ⚠️ Lesson: Every non-trivial commit must be reviewed individually
 
 `82d9baa` ("skip SSRF validation in dev mode") was committed as part of a batch without individual review. It added a **total SSRF bypass** when `NODE_ENV !== 'production'` — not just localhost. Worse, if `NODE_ENV` is unset, the bypass activates silently. Caught and reverted (`021224b`) only because each commit was examined separately before closing the session.

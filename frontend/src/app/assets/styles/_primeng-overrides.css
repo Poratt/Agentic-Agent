@@ -314,35 +314,6 @@ li.p-select-option {
       }
     }
   }
-
-  button.star-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 var(--space-1) 0 0;
-    min-width: unset;
-    width: auto;
-    height: var(--space-5);
-    color: var(--color-text-muted);
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-xs);
-    cursor: pointer;
-    transition: color var(--transition-fast), transform var(--transition-fast);
-
-    span.ph {
-      font-size: var(--font-size-xs);
-    }
-
-    &:hover {
-      color: var(--color-warning);
-      transform: scale(1.2);
-    }
-
-    &.star-active {
-      color: var(--color-warning);
-    }
-  }
 }
 
 /* ── Dialogs ─────────────────────────────────────────────────────────────── */
