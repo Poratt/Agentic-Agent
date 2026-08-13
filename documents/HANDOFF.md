@@ -1,4 +1,16 @@
 # Documentation Handoff
+## 2026-08-13 Session — Fix `clampScore` TS type error (ideas.service.ts)
+
+**What was done:** Fixed `ts(2345)` — `clampScore(v.validationScore)` failed because `validationScore` is `number | undefined` but `clampScore` accepted only `number`.
+
+**Files touched:** `backend/src/modules/ideas/ideas.service.ts` — changed `clampScore(score: number)` → `clampScore(score: number | undefined)`. Existing `typeof` guard already handles `undefined` (returns 1). No runtime behavior change.
+
+**Verification:** `npx tsc --noEmit` ✅.
+
+**No architecture diagram update needed.**
+
+**Next exact step:** none — standalone fix.
+
 ## 2026-08-13 Session — Ideas-history first-click flicker fix (deep root cause)
 
 **What was done:** Fixed a subtle but visible first-click layout shift in the Ideas History accordion. The fix required four layered changes because the visible flicker had four cooperating root causes, not one.

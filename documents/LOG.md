@@ -1,5 +1,8 @@
 # Documentation Change Log
 
+## 2026-08-13 A2 — `clampScore` accepts optional `validationScore`
+- **Decision:** `ValidationResult.validationScore` is optional (`number | undefined`). `clampScore` parameter widened to match. No runtime change — existing `typeof` guard already returns 1 for `undefined`.
+
 ## 2026-08-13 A1 — Separate page-level vs per-item loading signals in `IdeasStore`
 - **Architectural decision:** `loadSessions()` (full list) and `loadSession(id)` (single item) used to share the same `historyLoading` signal. This caused a visible flicker on first accordion expand because `loadSession` momentarily flipped `historyPageState` from `Ready` to `Loading`, unmounting the entire `@switch` block (sessions list + stagger animations) and remounting it on resolution.
 - **Architectural decision:** the store now exposes a granular API — `historyLoading` (page-level, used by `loadSessions` only) and `loadingSessionIds: signal<Set<number>>` (per-item, used by `loadSession`) + `isSessionLoading(id)` helper. The component reads `ideasStore.isSessionLoading(session.id)` for per-row spinners without affecting the page-level state.

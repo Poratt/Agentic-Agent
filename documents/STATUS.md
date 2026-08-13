@@ -1,6 +1,11 @@
 # Project Documentation Status
 
 Last updated: 2026-08-13
+
+## 2026-08-13 Session — Fix `clampScore` TS type error
+
+- **DONE:** `clampScore` in `ideas.service.ts` now accepts `number | undefined`. `validationScore` is optional in `ValidationResult` → `ts(2345)` on the call site. Guard already handles `undefined`. `tsc --noEmit` ✅.
+
 ## 2026-08-13 Session — Ideas-history first-click flicker fix
 
 - **DONE:** Eliminated the first-click layout shift in the Ideas History accordion. Four layered fixes applied:
