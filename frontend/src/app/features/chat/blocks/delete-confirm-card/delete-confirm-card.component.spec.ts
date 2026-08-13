@@ -44,7 +44,7 @@ describe('DeleteConfirmCardComponent', () => {
 
     it('should show deleted badge when deleted is true', () => {
         const el = fixture.nativeElement as HTMLElement;
-        const badge = el.querySelector('.status-badge.deleted');
+        const badge = el.querySelector('.badge.badge-danger');
         expect(badge).toBeTruthy();
         expect(badge?.textContent).toContain('נמחק');
     });
@@ -53,7 +53,7 @@ describe('DeleteConfirmCardComponent', () => {
         fixture.componentRef.setInput('data', { ...sampleData, deleted: false });
         fixture.detectChanges();
         const el = fixture.nativeElement as HTMLElement;
-        const badge = el.querySelector('.status-badge.pending');
+        const badge = el.querySelector('.badge.badge-warning');
         expect(badge).toBeTruthy();
         expect(badge?.textContent).toContain('ממתין למחיקה');
     });

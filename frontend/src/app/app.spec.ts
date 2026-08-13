@@ -1,10 +1,16 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { App } from './app';
+import { ConfirmationService, MessageService } from 'primeng/api';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [
+        { provide: MessageService, useValue: { add: vi.fn(), messages: signal([]) } },
+        { provide: ConfirmationService, useValue: { confirm: vi.fn() } },
+      ],
     }).compileComponents();
   });
 

@@ -40,7 +40,7 @@ describe('UserProfileCardComponent', () => {
 
     it('should display Admin badge for role 1', () => {
         const el = fixture.nativeElement as HTMLElement;
-        const badge = el.querySelector('.role-badge.admin');
+        const badge = el.querySelector('.badge.role-admin');
         expect(badge).toBeTruthy();
         expect(badge?.textContent).toContain('Admin');
     });
@@ -49,7 +49,7 @@ describe('UserProfileCardComponent', () => {
         fixture.componentRef.setInput('data', { ...sampleData, role: 2 });
         fixture.detectChanges();
         const el = fixture.nativeElement as HTMLElement;
-        const badge = el.querySelector('.role-badge.user');
+        const badge = el.querySelector('.badge.role-user');
         expect(badge).toBeTruthy();
         expect(badge?.textContent).toContain('User');
     });

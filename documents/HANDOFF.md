@@ -1,4 +1,48 @@
 # Documentation Handoff
+## 2026-08-13 Session — Ideas-history first-click flicker fix (deep root cause)
+
+**What was done:** Fixed a subtle but visible first-click layout shift in the Ideas History accordion. The fix required four layered changes because the visible flicker had four cooperating root causes, not one.
+
+**Root causes (in order of impact):**
+1. **`loadSession` toggled `historyLoading` → `historyPageState` flipped from `Ready` to `Loading` → the entire `@switch` block unmounted/remounted the whole sessions list, including the `stagger` animations.** This was the main flicker — even a single async toggle of `historyLoading` rebuilds the whole DOM subtree.
+2. **DOM insertion + grid animation in the same paint frame.** Calling `await loadSession()` then `expandedSessionId.set()` mounted the `<app-idea-card>` children and toggled the grid `0fr → 1fr` transition at the same time, so the browser couldn't interpolate cleanly.
+3. **Unnecessary `::ng-deep` override in `ideas-history.css`** that fought with `glass-effect`'s `transform: translateZ(0)`. Caused a style-recalculation flash on every first mount of `<app-idea-card>`. The override was solving a problem that didn't exist — `.idea-card` had no `position: absolute` anywhere, and `.idea-card-wrapper` doesn't even exist in the DOM.
+4. **`backdrop-filter: blur()` on `.glass-effect::before`** is GPU-expensive on first paint. The first time N glass cards became visible in the same frame, the browser did N concurrent compositing passes → brief flash.
+
+**Files touched (modified):**
+- `frontend/src/app/core/store/ideas.store.ts` — added `loadingSessionIds: signal<Set<number>>` + `isSessionLoading(id)` helper; `loadSession()` no longer touches `historyLoading`. `loadSessions()` (full-list) still uses `historyLoading` as before, so the page-level loading state is preserved for the right caller.
+- `frontend/src/app/features/ideas/ideas-history/ideas-history.ts` — `toggleExpand()` is now `async`: `await loadSession()` → `await requestAnimationFrame()` → `expandedSessionId.set()`. The DOM paints the cards before the grid animation begins.
+- `frontend/src/app/features/ideas/ideas-history/ideas-history.html` — added `ideasStore.isSessionLoading(session.id)` to the loader `@if` so `triggerNightly`'s post-call `loadSession` also shows a local spinner (the accordion stays open, only the inner content swaps).
+- `frontend/src/app/features/ideas/ideas-history/ideas-history.css` — added `min-height: 220px; align-items: center` to `.ideas-loading` (safety net for slow networks) and removed the entire dead `::ng-deep` block (12 lines, never matched anything in the DOM).
+- `frontend/src/app/assets/styles/_utilities.css` — added `will-change: filter` to `.glass-effect::before` so the browser pre-composites the `backdrop-filter: blur()` on first paint.
+
+**Verification:** `npx ng build` (frontend) ✅. ideas-history chunk 51.31 → 50.98 kB (smaller after the `::ng-deep` removal). No backend changes. No new tests needed — the fix is in the signal/state boundary, not in business logic.
+
+**Decisions made:**
+- Separate signals for page-level (`historyLoading`) vs per-session (`loadingSessionIds`) loading. The store now exposes a granular API that the UI can consume without side effects on the page-level state. The same pattern is reusable for any "load one item from a list" operation.
+- The `requestAnimationFrame` gap before `expandedSessionId.set()` is a 1-frame (~16ms) delay. Imperceptible to users, but gives the browser a separate paint cycle to commit the new `<app-idea-card>` elements before the grid animation tries to interpolate to their height.
+- Removed `::ng-deep` block entirely rather than patching it — it targeted `.idea-card-wrapper` which doesn't exist in the template (verified by grep). Dead code that was causing real harm.
+- No architecture-diagram update needed — signal/state refactor inside an existing store, plus 2 cosmetic CSS changes. No new module boundary.
+
+**No architecture diagram update needed.**
+
+**Open questions:** none. `triggerNightly()` and any other post-expand `loadSession` calls now benefit from the same fix automatically (the `isSessionLoading` branch shows a local spinner without touching the page state).
+
+**Next exact step:** user can test the fix in a dev server — first-click expand of any history session should now animate smoothly without any visible layout shift. Not committed yet (per existing uncommitted working tree pattern). When ready to commit, this set is safe to batch as a single `fix(ideas-history): eliminate first-click accordion flicker` commit (no security-critical code, all four changes are surgical and isolated to the Ideas feature).
+
+## 2026-08-13 Session — Test coverage finalization (docs only)
+
+**What was done:** Verified `documents/test-coverage-gaps.md` against the code. Actual scanned totals: Backend **43 spec files / 376 tests** (8 security + 26 business-logic + 9 admin-agent); Frontend **56 spec files / 482 tests** (matches `434/482` passing, 51/56 suites). Rewrote the coverage doc to reflect verified reality (fixed wrong totals 48/20/core-7; marked already-covered frontend stores/guards/interceptors/login-register/chat/ideas/settings/media/layout as ✅) and kept only genuine gaps.
+
+**Files touched:** `documents/test-coverage-gaps.md` (rewritten + `.spec.ts` typo fix), `documents/HANDOFF.md`, `documents/STATUS.md`.
+
+**Decisions made:** use verified filesystem counts over previously-reported round totals; backend business-logic = 26 suites/224 tests (was 19/145), frontend = 56/482 (was 51/469).
+
+**Remaining (genuine gaps):** frontend `users-management.ts`, `design-system.ts`, 4 chat block-cards (agnes-image/video, auth-url, weather-summary), services database-monitor/genetics/llm-provider/terpene/theme, directives access-to/auto-scroll-bottom/badge-color/tooltip; backend `cannlytics.service`, controllers/DTOs for analytics/database-monitor/llm-provider/google-calendar, mcp-bridge config/server-client, core filters/strategies.
+
+**Next exact step:** (backend) add `cannlytics.service.spec.ts`; (frontend) add `users-management.spec.ts`; tick remaining low-priority items in `test-coverage-gaps.md`.
+
+**Open questions:** none.
 
 ## 2026-08-12 (late) Session — Nightly banner + IdeaCard CSS consolidation + star-btn unification
 

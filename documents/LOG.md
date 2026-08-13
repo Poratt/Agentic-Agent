@@ -1,5 +1,12 @@
 # Documentation Change Log
 
+## 2026-08-13 A1 — Separate page-level vs per-item loading signals in `IdeasStore`
+- **Architectural decision:** `loadSessions()` (full list) and `loadSession(id)` (single item) used to share the same `historyLoading` signal. This caused a visible flicker on first accordion expand because `loadSession` momentarily flipped `historyPageState` from `Ready` to `Loading`, unmounting the entire `@switch` block (sessions list + stagger animations) and remounting it on resolution.
+- **Architectural decision:** the store now exposes a granular API — `historyLoading` (page-level, used by `loadSessions` only) and `loadingSessionIds: signal<Set<number>>` (per-item, used by `loadSession`) + `isSessionLoading(id)` helper. The component reads `ideasStore.isSessionLoading(session.id)` for per-row spinners without affecting the page-level state.
+- **Architectural decision:** `toggleExpand()` in `ideas-history.ts` is now `async`: `await loadSession()` → `await requestAnimationFrame()` → `expandedSessionId.set()`. The 1-frame gap (~16ms) lets Angular commit the new `<app-idea-card>` children before the grid `0fr → 1fr` animation tries to interpolate to their height. Imperceptible to users; eliminates the "snap-from-60px-to-600px" content jump.
+- **Architectural decision:** the `::ng-deep` block in `ideas-history.css` (12 lines) was deleted entirely. It targeted `.idea-card-wrapper` (a class that does not exist in the template — verified by grep) and was overriding `position: static` / `transform: none` / `transition: none` on `.idea-card` to fight a `position: absolute` that was never actually set. Dead code that was causing real style-recalculation cost on every first mount.
+- **No architecture diagram update needed** — signal separation inside an existing store + 2 cosmetic CSS changes (`.glass-effect::before will-change: filter`, `.ideas-loading min-height: 220px`).
+
 ## 2026-08-12 A1 — SavedIdea as the frontend single source of truth
 - The frontend now consumes `SavedIdea` everywhere (IdeaCard, ideas-history, ideas-page). `BusinessIdea` is retained ONLY as the SSE DTO in `idea.interface.ts`; the store maps it → `SavedIdea` via `toSavedIdea` (null arrays → `[]`, `validationReason` → `''`).
 - `SavedIdea` fields (`risks`/`competitors`/`nextSteps`/`signalsReferenced`/`validationReason`) are normalized to non-null, with null coercion at the store boundary (`toSavedIdea`, `normalizeSaved`). This removes the 4 nullable-array computeds from `IdeaCard`.

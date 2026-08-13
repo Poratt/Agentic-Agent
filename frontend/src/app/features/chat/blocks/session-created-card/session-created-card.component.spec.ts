@@ -49,7 +49,7 @@ describe('SessionCreatedCardComponent', () => {
 
     it('should show success badge', () => {
         const el = fixture.nativeElement as HTMLElement;
-        const badge = el.querySelector('.status-badge.success');
+        const badge = el.querySelector('.badge.badge-success');
         expect(badge).toBeTruthy();
     });
 });

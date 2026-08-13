@@ -41,14 +41,14 @@ describe('UsersTableComponent', () => {
 
     it('should display Admin badge for role 1', () => {
         const el = fixture.nativeElement as HTMLElement;
-        const badges = el.querySelectorAll('.role-badge.admin');
+        const badges = el.querySelectorAll('.badge.role-admin');
         expect(badges.length).toBe(1);
         expect(badges[0].textContent).toContain('Admin');
     });
 
     it('should display User badge for role 2', () => {
         const el = fixture.nativeElement as HTMLElement;
-        const badges = el.querySelectorAll('.role-badge.user');
+        const badges = el.querySelectorAll('.badge.role-user');
         expect(badges.length).toBe(1);
         expect(badges[0].textContent).toContain('User');
     });

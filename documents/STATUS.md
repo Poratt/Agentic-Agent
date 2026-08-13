@@ -1,6 +1,24 @@
 # Project Documentation Status
 
-Last updated: 2026-08-12
+Last updated: 2026-08-13
+## 2026-08-13 Session — Ideas-history first-click flicker fix
+
+- **DONE:** Eliminated the first-click layout shift in the Ideas History accordion. Four layered fixes applied:
+  1. Split `historyLoading` (page-level) from a new `loadingSessionIds: signal<Set<number>>` (per-session) in `ideas.store.ts`. `loadSession()` no longer toggles `historyPageState`, so the `@switch` block no longer remounts the entire sessions list.
+  2. Made `toggleExpand()` async — `await loadSession()` then `await requestAnimationFrame()` before `expandedSessionId.set()`. One paint frame between data arrival and grid animation.
+  3. Removed dead `::ng-deep` block in `ideas-history.css` (12 lines, targeted a `.idea-card-wrapper` class that doesn't exist in the DOM).
+  4. Added `will-change: filter` to `.glass-effect::before` to pre-composite the `backdrop-filter: blur()`.
+- **HTML also updated** — loader `@if` now also checks `ideasStore.isSessionLoading(session.id)` so `triggerNightly`'s post-call `loadSession` shows a local spinner (per-session, not page-level).
+- **CSS safety net** — `.ideas-loading` now has `min-height: 220px; align-items: center` so even on a slow network the spinner reserves a realistic area.
+- **Verified:** `npx ng build` ✅. ideas-history chunk 51.31 → 50.98 kB. No backend changes. Not yet committed (matches existing uncommitted working tree pattern).
+- **No architecture diagram update needed** — signal separation inside an existing store + cosmetic CSS.
+
+## 2026-08-13 Session — Test coverage verification & test-coverage-gaps.md finalize
+
+- **DONE:** Verified `documents/test-coverage-gaps.md` against the actual filesystem. Scanned all `*.spec.ts` and counted `it(`/`test(`. Actual totals: Backend **43 spec files / 376 tests** (8 security + 26 business-logic + 9 admin-agent); Frontend **56 spec files / 482 tests** (matches `434/482` passing, 51 of 56 suites).
+- **DONE:** Rewrote the coverage doc to match verified reality. Fixed wrong totals (doc said backend 48 / core 7 / frontend 20), corrected per-module counts (e.g. auth.service 13, llm-provider-config 27), and marked already-covered frontend items as ✅ (all 8 stores, auth/role guards, auth/with-credentials interceptors, login/register, chat+blocks, ideas, settings, media-studio, layout, llm-providers, strain-hunter). Kept only the genuine gaps (users-management, design-system, 4 chat block-cards, 5 services, 4 directives).
+- **Decision:** use verified filesystem counts over the previously-reported round totals (round-2 backend business-logic is 26/224, not 19/145; frontend total is 56/482, not 51/469).
+- **No architecture diagram update** (docs-only change).
 
 ## ⚠️ Lesson: Every commit must be reviewed individually
 

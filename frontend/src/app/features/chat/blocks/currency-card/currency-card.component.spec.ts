@@ -80,7 +80,7 @@ describe('CurrencyCardComponent', () => {
 
         it('should render rates title', () => {
             const el = fixture.nativeElement as HTMLElement;
-            expect(el.querySelector('.rates-title')?.textContent).toContain('Exchange Rates');
+            expect(el.querySelector('.rates-title')?.textContent).toContain('שערי חליפין');
         });
 
         it('should render rate rows', () => {
