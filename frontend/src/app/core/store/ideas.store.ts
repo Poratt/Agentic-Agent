@@ -33,7 +33,12 @@ export class IdeasStore {
   nightlyUnread = signal<number>(0);
   historyLoading = signal(false);
   historyError = signal<string | null>(null);
+  loadingSessionIds = signal<Set<number>>(new Set());
   triggeringNightly = signal(false);
+
+  isSessionLoading(id: number): boolean {
+    return this.loadingSessionIds().has(id);
+  }
 
   recentSessions = computed(() => this.sessions().slice(0, 5));
 
@@ -206,7 +211,7 @@ export class IdeasStore {
 
   async loadSession(id: number): Promise<void> {
     this.currentSessionId.set(id);
-    this.historyLoading.set(true);
+    this.loadingSessionIds.update((ids) => new Set(ids).add(id));
     this.historyError.set(null);
     try {
       const session = await firstValueFrom(this.ideasService.getSession(id));
@@ -225,7 +230,11 @@ export class IdeasStore {
       const msg = err instanceof Error ? err.message : 'Failed to load session';
       this.historyError.set(msg);
     } finally {
-      this.historyLoading.set(false);
+      this.loadingSessionIds.update((ids) => {
+        const next = new Set(ids);
+        next.delete(id);
+        return next;
+      });
     }
   }
 

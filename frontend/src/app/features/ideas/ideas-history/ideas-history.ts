@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { IdeasStore } from '../../../core/store/ideas.store';
 import { PageStates } from '../../../core/enums/page-states.enum';
 import { SavedIdeaSession } from '../../../core/models/saved-idea-session.model';
-import { SavedIdea } from '../../../core/models/saved-idea.model';
 import { AccessToDirective } from '../../../core/directives/access-to.directive';
 import { UserRole } from '../../../core/enums/user-role.enum';
 import { IdeaCard } from "../idea-card/idea-card";
@@ -62,16 +61,21 @@ export class IdeasHistory implements OnInit {
         this.filterMode.set(mode);
     }
 
-    toggleExpand(session: SavedIdeaSession) {
+    async toggleExpand(session: SavedIdeaSession) {
         if (this.expandedSessionId() === session.id) {
             this.expandedSessionId.set(null);
-        } else {
-            this.expandedSessionId.set(session.id);
-            this.expandedIdeaIndex.set(-1);
-            if (!session.ideas || session.ideas.length === 0) {
-                this.ideasStore.loadSession(session.id);
-            }
+            return;
         }
+
+        // Load ideas BEFORE expanding — accordion animates to final height from the start
+        if (!session.ideas || session.ideas.length === 0) {
+            await this.ideasStore.loadSession(session.id);
+            // Let Angular paint the new DOM cards before triggering the grid animation
+            await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+        }
+
+        this.expandedSessionId.set(session.id);
+        this.expandedIdeaIndex.set(-1);
     }
 
     toggleIdea(index: number): void {

@@ -101,6 +101,7 @@
     border-radius: inherit;
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
+    will-change: filter;
     z-index: -1;
     /* Extra safety to prevent filter leakage */
     pointer-events: none;

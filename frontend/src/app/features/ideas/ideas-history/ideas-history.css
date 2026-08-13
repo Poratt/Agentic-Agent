@@ -235,6 +235,8 @@
                     .ideas-loading {
                         display: flex;
                         justify-content: center;
+                        align-items: center;
+                        min-height: 220px;
                         padding: var(--space-8);
                     }
 
@@ -243,24 +245,6 @@
 
                         &+app-idea-card {
                             margin-top: var(--space-6);
-                        }
-                    }
-
-                    /* Override IdeaCard's absolute positioning so expanded cards push
-                       siblings down instead of overlapping. ::ng-deep needed because
-                       Angular's emulated encapsulation prevents direct descendant
-                       selectors from reaching into child components. */
-                    ::ng-deep {
-                        .idea-card-wrapper {
-                            min-height: 0;
-                        }
-
-                        .idea-card {
-                            position: static;
-                            transform: none;
-                            -webkit-transform: none;
-                            transition: none;
-                            will-change: auto;
                         }
                     }
                 }
