@@ -656,7 +656,7 @@ export class IdeasService {
     }
   }
 
-  private clampScore(score: number): number {
+  private clampScore(score: number | undefined): number {
     if (typeof score !== 'number' || Number.isNaN(score)) {
       return 1;
     }
