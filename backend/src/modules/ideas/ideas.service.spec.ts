@@ -8,6 +8,10 @@ import { SavedIdea } from './entities/saved-idea.entity';
 import { GenerateIdeasResponse } from './interfaces/idea.interface';
 import { LlmClientService } from '../llm/services/llm-client.service';
 import { WebSearchService } from '../web-search/web-search.service';
+import {
+  TOPIC_DISCOVERY_PROMPT,
+  DISCOVERY_QUERY_GENERATION_PROMPT,
+} from './constants/idea-prompts.constant';
 
 function makeBusinessIdea(title: string, score = 7): GenerateIdeasResponse['result'][number] {
   return {
