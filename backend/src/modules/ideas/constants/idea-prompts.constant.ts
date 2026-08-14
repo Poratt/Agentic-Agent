@@ -6,46 +6,80 @@
   { "signal": "תיאור נקודת הכאב", "source": "מקור קצר (למשל שם האתר או הסקר)" }
 ]`;
 
-export const TOPIC_DISCOVERY_PROMPT = `אתה אנליסט סטארטאפים ומומחה ל-Micro-SaaS ו-Solo Developers.
-קיבלת תוצאות חיפוש אינטרנט על טרנדים, כאבים וכלים חדשים.
-זהה 3 עד 5 נישות/תחומים ספציפיים ורווחיים (לא נושאים רחבים וגנריים) שמתאימים למוצר תוכנה קטן וממוקד.
+/**
+ * שלב 1: יצירת שאילתות חיפוש
+ * שינוי: הכוונה מפורשת לקהלים לא-טכניים (עסקים קטנים, יוצרים, איקומרס, שיווק)
+ * והרחקה מתת-רדיטים של מתכנתים שרק בוכים על תשתיות.
+ */
+export const DISCOVERY_QUERY_GENERATION_PROMPT = `You are a startup research assistant finding hot, underserved business software niches for non-technical users.
+Given today's date, output 4 concise, high-signal English web search queries.
+Target real business workflows, marketing pains, eCommerce hurdles, agency bottlenecks, creator monetisation, and SMB operations.
 
-## אילוצים קשיחים:
-- Micro-SaaS / B2C / Prosumer / עסקים קטנים בלבד.
-- תוכנה בלבד (ללא חומרה/IoT).
-- ניתן לבנייה והשקה ע"י מפתח בודד בתוך 2-6 שבועות.
-- התמקד ב-Underserved niches עם כאב ברור ומוכנות לשלם.
+STRICT RULES:
+- Target communities like r/smallbusiness, r/ecommerce, r/marketing, r/freelance, Shopify/Etsy forums, or creator platforms.
+- NEVER search for developer tools, devops, programming frameworks, CI/CD, or coding utilities.
+- Return ONLY a raw JSON array of 4 strings. No markdown, no explanation.`;
 
-חובה להחזיר JSON תקין בלבד בפורמט הבא:
+/**
+ * שלב 2: מיצוי נושאים (Topic Discovery)
+ * שינוי: הוספת Blacklist קשיח על DevTools + כיוונון לאנשים שמשלמים בשמחה
+ */
+export const TOPIC_DISCOVERY_PROMPT = `אתה אנליסט סטארטאפים ומומחה ל-Micro-SaaS עסקי ורווחי.
+קיבלת תוצאות חיפוש אינטרנט על כאבים וטרנדים של עסקים, יוצרי תוכן ופרילנסרים.
+זהה 3 עד 5 נישות ספציפיות, מעשיות ורווחיות.
+
+## ⛔ רשימה שחורה (איסור מוחלט - לפסול מיידית):
+- כלי מפתחים (DevTools, Feature Flags, CI/CD, ניטור שגיאות, SDKs, לוגים, מסדי נתונים).
+- קהל יעד של מהנדסי תוכנה, מתכנתים או אנשי DevOps.
+- תשתיות קריטיות (Mission-Critical) שאם השירות נופל הלקוח מושבת לחלוטין.
+- פתרונות AI גנריים כמו "עוד כותב בלוגים" או "צ'אטבוט גנרי".
+
+## ✅ קהלי יעד מועדפים (אנשים שלא יודעים לקודד ומשלמים בשמחה):
+- עסקים מקומיים ונותני שירות (מרפאות, מתווכי נדל"ן, מאמנים, יועצים).
+- בעלי חנויות eCommerce (Shopify, Etsy, Amazon).
+- סוכנויות שיווק, דיגיטל ועיצוב (Agencies).
+- יוצרי תוכן ומשפיענים שמנהלים עסק.
+- פרילנסרים לא-טכניים (מעצבים, רואי חשבון, משווקים).
+
+חובה להחזיר JSON תקין בלבד:
 {
   "topics": [
     {
-      "domain": "שם הנישה בעברית ברורה וקונקרטית (למשל: תזמון תוכן אוטומטי ליוצרי טיקטוק)",
-      "searchQuery": "concise english search phrase for this niche (e.g. tiktok auto scheduler creators)",
-      "rationale": "הסבר קצר בעברית למה יש כאן הזדמנות למפתח בודד"
+      "domain": "שם הנישה בעברית ברורה (למשל: אוטומציית מעקב הצעות מחיר למתווכי נדל\"ן)",
+      "searchQuery": "concise english search phrase (e.g. real estate quote follow up automation tool)",
+      "rationale": "למה יש כאן לקוחות לא-טכניים שמוכנים לשלם למפתח בודד"
     }
   ]
 }`;
 
-export const DISCOVERY_QUERY_GENERATION_PROMPT = `You are a research assistant finding trending software pain points and underserved micro-SaaS niches.
-Given today's date, output 4 concise, high-signal English search queries targeting recent Reddit complaints, ProductHunt launches, or IndieHackers discussions.
-Do NOT include markdown formatting or explanations. Output ONLY a raw JSON array of 4 strings.`;
+/**
+ * שלב 3: ייצור רעיונות (Idea Generation)
+ * שינוי: חוק הגיוון (Diversity Rule) - איסור מוחלט על שכפול אותו רעיון
+ */
+export const IDEA_GENERATION_PROMPT = `אתה אנליסט סטארטאפים ומפתח מוצרים. צור רעיונות עסקיים מקוריים המבוססים אך ורק על הסיגנלים שסופקו.
+חובה להחזיר את כל הטקסטים בעברית בלבד (למעט מונחים טכניים בינלאומיים).
 
-export const IDEA_GENERATION_PROMPT = `אתה אנליסט סטארטאפים. צור רעיונות עסקיים שמטפלים ישירות בנקודות הכאב שלהלן.
-אסור להמציא נקודות כאב — השתמש רק בסיגנלים שסופקו.
-חובה להחזיר את כל הטקסטים (title, description, targetMarket) בעברית בלבד.
+## ⛔ כללי איסור קשיחים:
+- אסור לפנות למפתחים/מתכנתים. קהל היעד חייב להיות עסקים קטנים, פרילנסרים, יוצרים או סוכנויות.
+- אסור להציע כלי פיתוח, SDKs, או תשתיות קריטיות.
 
-## אילוצים קבועים לכל רעיון שמופק:
-- הבונה הוא מפתח יחיד (solo developer), ללא צוות, ללא תקציב חיצוני או גיוס הון.
-- אין ציוד פיזי, חיישנים, IoT, או כל תלות בחומרה — תוכנה/SaaS בלבד.
-- הרעיון חייב להיות בר-מימוש והשקה על ידי אדם אחד בטווח של שבועות עד מספר חודשים, לא שנה+.
-- להעדיף B2C, פרוסיומר (prosumer), או עסקים קטנים — להימנע מרעיונות שדורשים מחזור מכירות B2B ארוך או תהליכי רכש ארגוניים (procurement).
-- ידידותי ל-bootstrap: עלות תשתית נמוכה/אפסית בהתחלה, ניתן לאמת עם landing page + MVP מינימלי.
-- להימנע מרעיונות שתלויים באינטגרציה עם מערכות ארגוניות סגורות (ERP, HRIS פנים-אכרגיים וכו') כתנאי הכרחי לשימוש.
+## 🔀 חוק הגיוון (Anti-Cloning Rule) - קריטי:
+- אסור בתכלית האיסור לייצר וריאציות או שיבוטים של אותו מוצר!
+- כל רעיון ברשימה חייב לתקוף זווית עסקית שונה לחלוטין. לדוגמה:
+  * רעיון 1: כלי להבאת לקוחות/לידים (Acquisition / Marketing).
+  * רעיון 2: כלי לאוטומציה תפעולית וחוסך זמן (Operations / Automation).
+  * רעיון 3: כלי לשימור לקוחות או הגדלת הכנסה (Retention / Monetization).
 
 חזר JSON בלבד בצורה:
 [
-  { "title": "שם הרעיון", "description": "תיאור קצר", "targetMarket": "קהל היעד" }
+  {
+    "title": "שם המוצר/הרעיון",
+    "description": "מה המוצר עושה, איך הוא עובד ולמה הוא פשוט",
+    "targetMarket": "קהל היעד המדויק (לא טכנולוגי!)",
+    "techStackSuggestion": "סטק פשוט וזול (למשל: Next.js + Supabase + Resend API)",
+    "firstDistributionStep": "צעד ראשון ספציפי להבאת 10 לקוחות ראשונים (למשל: פוסט ב-r/ecommerce עם מדריך חינמי)",
+    "estimatedMvpDays": מספר ימים משוער (למשל: 14)
+  }
 ]`;
 
 export const VALIDATION_PROMPT = `אתה אנליסט סטארטאפים. קיבלת רעיון עסקי, תוצאות חיפוש מתחרים, וסיגנלים של שוק.
