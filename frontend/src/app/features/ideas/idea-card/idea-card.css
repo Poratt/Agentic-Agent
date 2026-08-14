@@ -1,6 +1,7 @@
 .idea-card {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  padding: var(--space-8);
   transition: box-shadow 350ms cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, box-shadow, z-index;
 
@@ -62,15 +63,18 @@
 
   .idea-card-tags {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
     gap: var(--space-4);
+
+    .idea-card-tags-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-4);
+    }
   }
 
 
-
-  .idea-card-actions {
-    align-self: flex-start;
-  }
 
   .idea-card-details {
     display: grid;

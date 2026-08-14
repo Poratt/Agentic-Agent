@@ -31,16 +31,16 @@
             </div>
         }
         <div class="idea-card-tags">
-            @if (idea().groundedInSignals) {
-                <span class="tag tag-primary"><span class="ph ph-check"></span> מבוסס על סיגנלים</span>
-            } @else {
-                <span class="tag tag-muted"><span class="ph ph-warning"></span> ללא עיגון מלא</span>
-            }
-            @if (idea().competitors.length) {
-                <span class="tag tag-muted">{{ idea().competitors.length }} מתחרים נמצאו</span>
-            }
-        </div>
-        <div class="idea-card-actions">
+            <span class="idea-card-tags-list">
+                @if (idea().groundedInSignals) {
+                    <span class="tag tag-primary"><span class="ph ph-check"></span> מבוסס על סיגנלים</span>
+                } @else {
+                    <span class="tag tag-muted"><span class="ph ph-warning"></span> ללא עיגון מלא</span>
+                }
+                @if (idea().competitors.length) {
+                    <span class="tag tag-muted">{{ idea().competitors.length }} מתחרים נמצאו</span>
+                }
+            </span>
             <button class="primary-btn xs" type="button" (click)="toggle()">
                 <span class="ph" [class.ph-caret-down]="expanded()" [class.ph-caret-left]="!expanded()"></span>
                 {{ expanded() ? 'הסתר פרטים' : 'פרטים נוספים' }}

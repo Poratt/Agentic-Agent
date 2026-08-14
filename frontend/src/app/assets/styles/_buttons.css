@@ -301,6 +301,24 @@ button.bordered {
   }
 }
 
+/* 4b-b. Icon Badge — count badge overlay for icon-only buttons */
+.icon-badge {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  min-width: 12px;
+  height: 11px;
+  padding: 0 1px;
+  font-size: 8px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
+  background: var(--color-danger);
+  border-radius: var(--radius-pill);
+  display: inline-grid;
+  place-items: center;
+  line-height: 1;
+}
+
 /* 4c. Star toggle — favorite / set-default button (icon-only) */
 button.star-btn {
   display: inline-flex;
@@ -368,22 +386,6 @@ button.star-btn {
   &.active {
     background: var(--color-primary-glow-bg);
     color: var(--color-primary);
-  }
-
-  /* icon-only variant: absolute-positioned badge overlay for unread counts */
-  &.icon-only {
-    position: relative;
-
-    .badge {
-      position: absolute;
-      top: -6px;
-      inset-inline-end: -6px;
-      min-width: 16px;
-      height: 16px;
-      padding: 0 var(--space-1);
-      border-radius: var(--radius-full);
-      line-height: 1;
-    }
   }
 }
 

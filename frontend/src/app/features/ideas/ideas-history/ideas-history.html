@@ -28,7 +28,7 @@
                         <button type="button" class="toggle-btn icon-only" [class.active]="filterMode() === 'nightly'" (click)="setFilter('nightly')" appTooltip text="הפעלה אוטומטית">
                             <span class="ph ph-moon"></span>
                             @if (ideasStore.nightlyUnread() > 0) {
-                                <span class="badge badge-danger badge-compact">{{ ideasStore.nightlyUnread() }}</span>
+                                <span class="icon-badge">{{ ideasStore.nightlyUnread() }}</span>
                             }
                         </button>
                         <button
@@ -114,17 +114,14 @@
                                     <div class="session-text">
                                         <span class="title">
                                             {{ session.domain }}
-                                            @if (session.nightly) {
-                                                <span class="badge badge-strain-type">
-                                                    <span class="ph ph-fill ph-moon"></span>
-                                                    לילי
-                                                </span>
-                                            }
                                         </span>
                                         <span class="date">{{ session.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
                                     </div>
 
                                     <div class="session-meta">
+                                        @if (session.nightly) {
+                                            <span class="ph ph-fill ph-moon nightly-icon"></span>
+                                        }
                                         <span class="count-badge">
                                             <span class="ph ph-lightbulb"></span>
                                             {{ getIdeasCount(session) }}
@@ -150,20 +147,22 @@
 
                                 <div class="ideas-list" [class.expanded]="expandedSessionId() === session.id">
                                     <div class="ideas-list-inner">
-                                        @if (ideasStore.isSessionLoading(session.id) || !session.ideas || session.ideas.length === 0) {
-                                            <div class="ideas-loading">
-                                                <span class="custom-loader sm"></span>
-                                            </div>
-                                        } @else {
-                                            @for (idea of session.ideas; track idea.id; let i = $index) {
-                                                <app-idea-card
-                                                    [idea]="idea"
-                                                    [expanded]="expandedIdeaIndex() === i"
-                                                    (toggled)="toggleIdea(i)"
-                                                    (toggleFav)="toggleFavorite($event)"
-                                                />
+                                        <div class="ideas-list-content">
+                                            @if (ideasStore.isSessionLoading(session.id) || !session.ideas || session.ideas.length === 0) {
+                                                <div class="ideas-loading">
+                                                    <span class="custom-loader sm"></span>
+                                                </div>
+                                            } @else {
+                                                @for (idea of session.ideas; track idea.id; let i = $index) {
+                                                    <app-idea-card
+                                                        [idea]="idea"
+                                                        [expanded]="expandedIdeaIndex() === i"
+                                                        (toggled)="toggleIdea(i)"
+                                                        (toggleFav)="toggleFavorite($event)"
+                                                    />
+                                                }
                                             }
-                                        }
+                                        </div>
                                     </div>
                                 </div>
                             }

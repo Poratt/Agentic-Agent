@@ -16,24 +16,6 @@
   color: var(--color-primary);
 }
 
-/* --- Icon Badge (count on icon-only buttons) --- */
-.icon-badge {
-  position: absolute;
-  top: var(--space-1);
-  right: var(--space-1);
-  min-width: 12px;
-  height: 11px;
-  padding: 0 1px;
-  font-size: 8px;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-white);
-  background: var(--color-danger);
-  border-radius: var(--radius-pill);
-  display: inline-grid;
-  place-items: center;
-  line-height: 1;
-}
-
 /* --- Collapsible Row (0fr/1fr trick) --- */
 .collapsible-row {
   display: grid;
