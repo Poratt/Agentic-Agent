@@ -22,22 +22,23 @@
                         הפעל לילה
                     </button>
                     <div class="toggle-group">
-                        <button type="button" class="toggle-btn" [class.active]="filterMode() === 'all'" (click)="setFilter('all')">
-                            הכל
+                        <button type="button" class="toggle-btn icon-only" [class.active]="filterMode() === 'all'" (click)="setFilter('all')" appTooltip text="הכל">
+                            <span class="ph ph-squares-four"></span>
                         </button>
-                        <button type="button" class="toggle-btn" [class.active]="filterMode() === 'nightly'" (click)="setFilter('nightly')">
-                            ליליים
+                        <button type="button" class="toggle-btn icon-only" [class.active]="filterMode() === 'nightly'" (click)="setFilter('nightly')" appTooltip text="הפעלה אוטומטית">
+                            <span class="ph ph-moon"></span>
                             @if (ideasStore.nightlyUnread() > 0) {
-                                <span class="badge">{{ ideasStore.nightlyUnread() }}</span>
+                                <span class="badge badge-danger badge-compact">{{ ideasStore.nightlyUnread() }}</span>
                             }
                         </button>
                         <button
                             type="button"
-                            class="toggle-btn"
+                            class="toggle-btn icon-only"
                             [class.active]="filterMode() === 'favorites'"
                             (click)="setFilter('favorites')"
+                            appTooltip text="מועדפים"
                         >
-                            מועדפים
+                            <span class="ph ph-star"></span>
                         </button>
                     </div>
                 </div>
@@ -114,7 +115,10 @@
                                         <span class="title">
                                             {{ session.domain }}
                                             @if (session.nightly) {
-                                                <span class="badge nightly-badge">לילי</span>
+                                                <span class="badge badge-strain-type">
+                                                    <span class="ph ph-fill ph-moon"></span>
+                                                    לילי
+                                                </span>
                                             }
                                         </span>
                                         <span class="date">{{ session.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</span>

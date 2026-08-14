@@ -56,6 +56,7 @@ describe('IdeasHistory', () => {
     deleteSession: ReturnType<typeof vi.fn>;
     toggleFavorite: ReturnType<typeof vi.fn>;
     triggerNightly: ReturnType<typeof vi.fn>;
+    markNightlyRead: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -75,6 +76,7 @@ describe('IdeasHistory', () => {
       deleteSession: vi.fn().mockResolvedValue(undefined),
       toggleFavorite: vi.fn().mockResolvedValue(undefined),
       triggerNightly: vi.fn().mockResolvedValue('Done'),
+      markNightlyRead: vi.fn().mockResolvedValue(undefined),
     };
 
     await TestBed.configureTestingModule({

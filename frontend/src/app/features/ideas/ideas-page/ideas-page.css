@@ -34,6 +34,12 @@
 
 }
 
+.ideas-toggle-row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--space-6);
+}
+
 .ideas-list {
     display: flex;
     flex-direction: column;

@@ -199,6 +199,7 @@ export class IdeasStore {
       const sessions = await firstValueFrom(this.ideasService.listSessions(params));
       this.sessions.set(sessions.map((session) => ({
         ...session,
+        unread: this.resolveUnread(session.nightly, session.unread),
         ideas: session.ideas?.map((idea) => this.normalizeSaved(idea)),
       })));
     } catch (err) {
@@ -209,6 +210,13 @@ export class IdeasStore {
     }
   }
 
+  // Once nightly has been marked read locally, keep it read even if the server
+  // still returns unread (avoids the dot reappearing after a refetch).
+  private resolveUnread(isNightly: boolean, serverUnread: boolean): boolean {
+    if (isNightly && this.nightlyUnread() === 0) return false;
+    return serverUnread;
+  }
+
   async loadSession(id: number): Promise<void> {
     this.currentSessionId.set(id);
     this.loadingSessionIds.update((ids) => new Set(ids).add(id));
@@ -217,6 +225,7 @@ export class IdeasStore {
       const session = await firstValueFrom(this.ideasService.getSession(id));
       const normalized = {
         ...session,
+        unread: this.resolveUnread(session.nightly, session.unread),
         ideas: session.ideas?.map((idea) => this.normalizeSaved(idea)),
       };
       this.sessions.update((sessions) => {

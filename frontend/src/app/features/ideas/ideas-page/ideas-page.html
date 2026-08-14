@@ -29,6 +29,44 @@
                 </div>
             }
             @case (PageStates.Ready) {
+                <div class="ideas-toggle-row">
+                    <div class="toggle-group">
+                        <button
+                            type="button"
+                            class="toggle-btn icon-only"
+                            [class.active]="viewMode() === 'all'"
+                            (click)="setViewMode('all')"
+                            appTooltip
+                            text="הכל"
+                        >
+                            <span class="ph ph-squares-four"></span>
+                        </button>
+                        <button
+                            type="button"
+                            class="toggle-btn icon-only"
+                            [class.active]="viewMode() === 'nightly'"
+                            (click)="setViewMode('nightly')"
+                            appTooltip
+                            text="הפעלה אוטומטית"
+                        >
+                            <span class="ph ph-moon"></span>
+                            @if (store.nightlyUnread() > 0) {
+                                <span class="badge badge-danger badge-compact">{{ store.nightlyUnread() }}</span>
+                            }
+                        </button>
+                        <button
+                            type="button"
+                            class="toggle-btn icon-only"
+                            [class.active]="viewMode() === 'favorites'"
+                            (click)="setViewMode('favorites')"
+                            appTooltip
+                            text="מועדפים"
+                        >
+                            <span class="ph ph-star"></span>
+                        </button>
+                    </div>
+                </div>
+
                 @if (store.partial()) {
                     <div class="badge badge-default badge-compact">
                         <span class="ph ph-warning"></span>
@@ -37,11 +75,35 @@
                     </div>
                 }
 
-                <div class="ideas-list">
-                    @for (idea of store.ideas(); track idea.id; let i = $index) {
-                        <app-idea-card [idea]="idea" [expanded]="expandedIndex() === i" (toggled)="onToggle(i)" />
+                @if (viewMode() === 'all') {
+                    <div class="ideas-list">
+                        @for (idea of store.ideas(); track idea.id; let i = $index) {
+                            <app-idea-card [idea]="idea" [expanded]="expandedIndex() === i" (toggled)="onToggle(i)" />
+                        }
+                    </div>
+                } @else {
+                    @if (sessionLoading()) {
+                        <div class="page-state loading-state">
+                            <span class="ph ph-circle-notch ph-spin xl"></span>
+                        </div>
+                    } @else if (sessionError()) {
+                        <div class="page-state error-state">
+                            <span class="icon ph ph-warning"></span>
+                            <h4 class="title">{{ sessionError() }}</h4>
+                        </div>
+                    } @else if (displayIdeas().length === 0) {
+                        <div class="page-empty-state stagger stagger-up">
+                            <span class="ph ph-lightbulb xl"></span>
+                            <h3>{{ viewMode() === 'nightly' ? 'אין רעיונות ליליים' : 'אין רעיונות מועדפים' }}</h3>
+                        </div>
+                    } @else {
+                        <div class="ideas-list">
+                            @for (idea of displayIdeas(); track idea.id; let i = $index) {
+                                <app-idea-card [idea]="idea" [expanded]="expandedIndex() === i" (toggled)="onToggle(i)" />
+                            }
+                        </div>
                     }
-                </div>
+                }
             }
         }
     </div>

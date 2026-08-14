@@ -25,6 +25,7 @@ describe('IdeasPage', () => {
     setCount: ReturnType<typeof vi.fn>;
     stopGenerating: ReturnType<typeof vi.fn>;
     modelSelection: ReturnType<typeof vi.fn>;
+    sessions: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -47,6 +48,7 @@ describe('IdeasPage', () => {
       setCount: vi.fn(),
       stopGenerating: vi.fn(),
       modelSelection: vi.fn().mockReturnValue(undefined),
+      sessions: vi.fn().mockReturnValue([]),
     };
 
     await TestBed.configureTestingModule({

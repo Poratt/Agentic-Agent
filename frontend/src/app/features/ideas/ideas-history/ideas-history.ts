@@ -7,13 +7,14 @@ import { SavedIdeaSession } from '../../../core/models/saved-idea-session.model'
 import { AccessToDirective } from '../../../core/directives/access-to.directive';
 import { UserRole } from '../../../core/enums/user-role.enum';
 import { IdeaCard } from "../idea-card/idea-card";
+import { TooltipDirective } from '../../../core/directives/tooltip.directive';
 
 type FilterMode = 'all' | 'nightly' | 'favorites';
 
 @Component({
     selector: 'app-ideas-history',
     standalone: true,
-    imports: [CommonModule, FormsModule, AccessToDirective, IdeaCard],
+    imports: [CommonModule, FormsModule, AccessToDirective, IdeaCard, TooltipDirective],
     templateUrl: './ideas-history.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./ideas-history.css'],
@@ -65,6 +66,11 @@ export class IdeasHistory implements OnInit {
         if (this.expandedSessionId() === session.id) {
             this.expandedSessionId.set(null);
             return;
+        }
+
+        // Opening an unread nightly session marks all nightly sessions as read
+        if (session.unread) {
+            this.ideasStore.markNightlyRead();
         }
 
         // Load ideas BEFORE expanding — accordion animates to final height from the start
