@@ -1,5 +1,13 @@
 # Documentation Change Log
 
+## 2026-08-14 A1 — Ideas validation: server-side riskPenalty + solo-dev actionable fields
+- **Architectural decision:** the final idea score is now computed server-side as `competition + signalFit + feasibility + marketSize − riskPenalty` (clamped 1–10) in `validateSingle`. The LLM returns `riskPenalty` (0–3) inside `validationBreakdown`, but the subtraction and clamp happen in the service — the model cannot inflate the score by omitting or under-weighting the penalty. Previously `risks` were purely decorative and never affected the score.
+- **Architectural decision:** a missing `riskPenalty` in LLM output defaults to 0 (`clampBreakdownScore` treats non-numbers as 0), keeping backward compatibility with models/outputs that predate the field.
+- **Architectural decision:** the three new solo-dev fields (`techStackSuggestion`, `firstDistributionStep`, `estimatedMvpDays`) are nullable columns on `saved_ideas` with no migration file — TypeORM `synchronize: true` applies them, matching the precedent set when `validationBreakdown` was added. Frontend guards all three with `@if`, so pre-existing rows (nulls) render unchanged.
+- **Architectural decision:** competitor names link out to Google search (`competitorSearchUrl`) rather than to competitor sites — competitor data is plain strings with no URLs; a search link needs no backend change.
+- **Architectural decision:** `VALIDATION_PROMPT` now mandates concrete solo-dev outputs: real API/library names for the stack, one zero-budget distribution channel, and an honest MVP-days estimate (clamped 1–365 server-side).
+- **No architecture diagram update needed** — scoring formula and card rendering are IdeasModule internals; module boundaries and request flow unchanged.
+
 ## 2026-08-13 A2 — `clampScore` accepts optional `validationScore`
 - **Decision:** `ValidationResult.validationScore` is optional (`number | undefined`). `clampScore` parameter widened to match. No runtime change — existing `typeof` guard already returns 1 for `undefined`.
 

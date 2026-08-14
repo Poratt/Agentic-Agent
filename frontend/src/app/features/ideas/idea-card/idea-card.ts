@@ -22,6 +22,10 @@ export class IdeaCard {
     return 'danger';
   }
 
+  competitorSearchUrl(name: string): string {
+    return `https://www.google.com/search?q=${encodeURIComponent(name)}`;
+  }
+
   toggle(): void {
     this.toggled.emit();
   }

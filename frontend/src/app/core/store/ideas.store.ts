@@ -169,6 +169,9 @@ export class IdeasStore {
     saved.nextSteps = idea.nextSteps ?? [];
     saved.signalsReferenced = idea.signalsReferenced ?? [];
     saved.groundedInSignals = idea.groundedInSignals;
+    saved.techStackSuggestion = idea.techStackSuggestion;
+    saved.firstDistributionStep = idea.firstDistributionStep;
+    saved.estimatedMvpDays = idea.estimatedMvpDays;
     saved.isFavorite = false;
     return saved;
   }

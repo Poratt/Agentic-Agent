@@ -70,7 +70,7 @@ export class SavedIdea {
     nullable: true,
   })
   @Column({ type: 'simple-json', nullable: true })
-  validationBreakdown!: { competition: number; signalFit: number; feasibility: number; marketSize: number } | null;
+  validationBreakdown!: { competition: number; signalFit: number; feasibility: number; marketSize: number; riskPenalty?: number } | null;
 
   @ApiProperty({
     description: 'Short Hebrew explanation of the validation score. Null when the model returned none.',
@@ -95,6 +95,30 @@ export class SavedIdea {
   @ApiProperty({ description: 'List of market signals the idea was grounded in. Stored as JSON. Null when empty.', nullable: true, type: [String] })
   @Column({ type: 'simple-json', nullable: true })
   signalsReferenced!: string[] | null;
+
+  @ApiProperty({
+    description: 'Suggested tech stack for a fast solo-dev MVP. Null for ideas generated before this field existed.',
+    example: 'Whisper API + Next.js + Stripe',
+    nullable: true,
+  })
+  @Column({ type: 'text', nullable: true })
+  techStackSuggestion!: string | null;
+
+  @ApiProperty({
+    description: 'First concrete zero-budget distribution step. Null for ideas generated before this field existed.',
+    example: 'פוסט השקה בקהילת r/podcasting',
+    nullable: true,
+  })
+  @Column({ type: 'text', nullable: true })
+  firstDistributionStep!: string | null;
+
+  @ApiProperty({
+    description: 'Estimated days to MVP for a solo developer. Null for ideas generated before this field existed.',
+    example: 21,
+    nullable: true,
+  })
+  @Column({ type: 'int', nullable: true })
+  estimatedMvpDays!: number | null;
 
   @ApiProperty({
     description: 'True when the idea was generated from real market signals rather than fallback mode.',

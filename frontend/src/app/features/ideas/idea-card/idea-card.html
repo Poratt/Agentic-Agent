@@ -79,11 +79,20 @@
                         <span class="ph ph-sword"></span>
                         <h4 class="idea-card-section-title">המתחרים</h4>
                     </div>
-                    <ul class="idea-card-list">
+                    <div class="tag-list competitor-chips">
                         @for (c of idea().competitors; track c) {
-                            <li>{{ c }}</li>
+                            <a
+                                class="tag tag-muted competitor-chip"
+                                [href]="competitorSearchUrl(c)"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                [attr.data-testid]="'competitor-chip-' + c"
+                            >
+                                {{ c }}
+                                <span class="ph ph-arrow-up-right"></span>
+                            </a>
                         }
-                    </ul>
+                    </div>
                 </div>
             }
             @if (idea().nextSteps.length) {
@@ -97,6 +106,33 @@
                             <li>{{ s }}</li>
                         }
                     </ul>
+                </div>
+            }
+            @if (idea().techStackSuggestion) {
+                <div class="idea-card-section">
+                    <div class="idea-card-section-header">
+                        <span class="ph ph-code"></span>
+                        <h4 class="idea-card-section-title">סטק מוצע</h4>
+                    </div>
+                    <p class="idea-card-section-text">{{ idea().techStackSuggestion }}</p>
+                </div>
+            }
+            @if (idea().firstDistributionStep) {
+                <div class="idea-card-section">
+                    <div class="idea-card-section-header">
+                        <span class="ph ph-megaphone"></span>
+                        <h4 class="idea-card-section-title">ערוץ הפצה ראשון</h4>
+                    </div>
+                    <p class="idea-card-section-text">{{ idea().firstDistributionStep }}</p>
+                </div>
+            }
+            @if (idea().estimatedMvpDays) {
+                <div class="idea-card-section">
+                    <div class="idea-card-section-header">
+                        <span class="ph ph-clock"></span>
+                        <h4 class="idea-card-section-title">זמן ל-MVP</h4>
+                    </div>
+                    <p class="idea-card-section-text">כ-{{ idea().estimatedMvpDays }} ימי עבודה למפתח יחיד</p>
                 </div>
             }
             @if (idea().signalsReferenced.length) {

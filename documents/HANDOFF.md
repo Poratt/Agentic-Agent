@@ -1,4 +1,27 @@
 # Documentation Handoff
+## 2026-08-14 Session — Ideas validation overhaul (riskPenalty + card UX + solo-dev fields)
+
+**What was done:** Implemented the 4-phase upgrade plan from the product review:
+1. **riskPenalty** — `VALIDATION_PROMPT` now requires a `riskPenalty` (0–3) in `validationBreakdown` (with a calibration example where risk drops an idea from 8 to 5). Server computes `score = competition + signalFit + feasibility + marketSize − riskPenalty`, clamped 1–10. Missing penalty (old model output) defaults to 0.
+2. **Competitor chips** — competitor names render as clickable `.tag` chips linking to a Google search (`competitorSearchUrl`), replacing full-width `<li>` rows (dead-space fix).
+3. **2-column grid** — `.idea-card-details-inner` switched from flex-column to a 2-column grid (collapses to 1 column ≤640px) to cut scroll fatigue.
+4. **Solo-dev actionable fields** — `techStackSuggestion` (text), `firstDistributionStep` (text), `estimatedMvpDays` (int, clamped 1–365) end-to-end: prompt → `validateSingle` sanitizers → entity columns (nullable) → `mapIdeaToSaved` → frontend models/store → three new `@if`-guarded IdeaCard sections (סטק מוצע / ערוץ הפצה ראשון / זמן ל-MVP). Old ideas with nulls render cleanly.
+
+**Files touched:** backend — `idea-prompts.constant.ts`, `idea.interface.ts`, `ideas.service.ts`, `saved-idea.entity.ts`, `ideas.service.spec.ts`; frontend — `idea.interface.ts`, `saved-idea.model.ts`, `ideas.store.ts`, `idea-card.{ts,html,css,spec.ts}`.
+
+**Verification:** backend ideas suite 33/33 ✅ (baseline was 28); frontend ideas suite 32/32 ✅; frontend `tsc --noEmit` ✅; no mojibake. **Stale spec mocks fixed in the same session:** ideas-history store mock was missing `isSessionLoading` (9 tests) and `toggleExpand` tests didn't await the async method; ideas-form `domain` mock was a plain `vi.fn` while `canGenerate` is a `computed` that cached forever — replaced with a real `signal('')` (1 test). **Remaining pre-existing failures (unrelated, not touched):** app.spec (2), auth.interceptor (2), with-credentials.interceptor (4), auth.guard (1), strain-hunter-settings (7), backend 8 tests in llm-client/other suites.
+
+**Decisions made:**
+- Score penalty computed server-side, not prompt-only — the LLM cannot inflate scores by omitting the penalty.
+- No migration file for the 3 new nullable columns — TypeORM `synchronize: true` applies them (same precedent as `validationBreakdown` column).
+- Grid uses DOM auto-placement rather than explicit per-section column assignment (keeps DOM order accessible, no template surgery).
+
+**No architecture diagram update needed** — changes are inside IdeasModule internals (scoring formula, card rendering, nullable columns); module boundaries and request flow unchanged.
+
+**Next exact step:** run a real generation (`ng serve` + backend) to eyeball score distribution (expect lower scores on risky ideas) and the new card layout. Remaining stale-spec failures (interceptors/guards/app/strain-hunter-settings) are separate tasks.
+
+**Open questions:** none — all three user decisions (server-side penalty, nullable columns, phase order) were confirmed before starting.
+
 ## 2026-08-13 Session — Fix `clampScore` TS type error (ideas.service.ts)
 
 **What was done:** Fixed `ts(2345)` — `clampScore(v.validationScore)` failed because `validationScore` is `number | undefined` but `clampScore` accepted only `number`.

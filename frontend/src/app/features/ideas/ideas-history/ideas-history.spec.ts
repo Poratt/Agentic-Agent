@@ -57,6 +57,7 @@ describe('IdeasHistory', () => {
     toggleFavorite: ReturnType<typeof vi.fn>;
     triggerNightly: ReturnType<typeof vi.fn>;
     markNightlyRead: ReturnType<typeof vi.fn>;
+    isSessionLoading: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -77,6 +78,7 @@ describe('IdeasHistory', () => {
       toggleFavorite: vi.fn().mockResolvedValue(undefined),
       triggerNightly: vi.fn().mockResolvedValue('Done'),
       markNightlyRead: vi.fn().mockResolvedValue(undefined),
+      isSessionLoading: vi.fn().mockReturnValue(false),
     };
 
     await TestBed.configureTestingModule({
@@ -119,16 +121,17 @@ describe('IdeasHistory', () => {
     expect(component.filteredSessions()[0].id).toBe(2);
   });
 
-  it('toggleExpand should expand a session', () => {
+  it('toggleExpand should expand a session', async () => {
     const session = makeSession({ id: 5 });
-    component.toggleExpand(session);
+    // toggleExpand awaits loadSession + a requestAnimationFrame before expanding
+    await component.toggleExpand(session);
     expect(component.expandedSessionId()).toBe(5);
   });
 
-  it('toggleExpand should collapse if already expanded', () => {
+  it('toggleExpand should collapse if already expanded', async () => {
     const session = makeSession({ id: 1 });
     component.expandedSessionId.set(1);
-    component.toggleExpand(session);
+    await component.toggleExpand(session);
     expect(component.expandedSessionId()).toBeNull();
   });
 

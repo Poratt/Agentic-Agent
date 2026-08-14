@@ -14,6 +14,9 @@ export interface BusinessIdea {
   nextSteps: string[];
   signalsReferenced: string[]; // pain points / trends from signal gathering
   groundedInSignals: boolean; // false if Phase 0 failed → fallback mode
+  techStackSuggestion?: string; // concrete stack for a fast solo-dev MVP
+  firstDistributionStep?: string; // first zero-budget distribution channel
+  estimatedMvpDays?: number; // estimated days to MVP for one developer
 }
 
 export interface GenerateIdeasResponse {

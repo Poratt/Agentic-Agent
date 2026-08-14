@@ -14,6 +14,7 @@ export interface ValidationBreakdown {
   signalFit: number;    // 0-3
   feasibility: number;  // 0-2
   marketSize: number;   // 0-2
+  riskPenalty: number;  // 0-3, subtracted from the final score server-side
 }
 
 export interface ValidationResult {
@@ -24,6 +25,9 @@ export interface ValidationResult {
   competitors: string[];
   nextSteps: string[];
   signalsReferenced: string[];
+  techStackSuggestion?: string;
+  firstDistributionStep?: string;
+  estimatedMvpDays?: number;
 }
 
 export interface BusinessIdea {
@@ -38,6 +42,9 @@ export interface BusinessIdea {
   nextSteps: string[];
   signalsReferenced: string[]; // pain points / trends from signal gathering
   groundedInSignals: boolean; // false if Phase 0 failed → fallback mode
+  techStackSuggestion?: string; // concrete stack for a fast solo-dev MVP
+  firstDistributionStep?: string; // first zero-budget distribution channel
+  estimatedMvpDays?: number; // estimated days to MVP for one developer
 }
 
 export interface GenerateIdeasResponse {

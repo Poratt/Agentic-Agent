@@ -63,7 +63,14 @@ export const VALIDATION_PROMPT = `אתה אנליסט סטארטאפים. קיב
 - רעיון: "מערכת CRM לישראלים בחו"ל"
 - מתחרים: 3-4 מתחרים קטנים
 - סיגנלים: pain point קיים אך לא מתועד חזק
-- תוצאה צפויה: competition=2, signalFit=2, feasibility=2, marketSize=1 → סה"כ 7
+- תוצאה צפויה: competition=2, signalFit=2, feasibility=2, marketSize=1, riskPenalty=0 → סה"כ 7
+
+רעיון מבטיח אבל מסוכן (העונש מוריד את הציון):
+- רעיון: "מחולל קליפים ויראליים מווידאו ארוך"
+- מתחרים: 2 מתחרים קטנים
+- סיגנלים: כאב מתועד חזק
+- סיכונים: עלויות GPU גבוהות, ענקיות ה-AI יציעו את זה מובנה
+- תוצאה צפויה: competition=2, signalFit=3, feasibility=2, marketSize=1, riskPenalty=3 → 2+3+2+1-3 = 5
 
 ## קריטריונים (סך הכל 10 נקודות)
 
@@ -90,6 +97,19 @@ export const VALIDATION_PROMPT = `אתה אנליסט סטארטאפים. קיב
    1 = בינוני
    2 = רחב או צומח
 
+5. עונש סיכון (0-3) — מופחת מהציון הסופי:
+   0 = סיכון זניח
+   1 = סיכון קל וידוע
+   2 = סיכון משמעותי (תלות ב-API יקר או לא יציב, רגולציה קלה)
+   3 = סיכון חמור: עלויות שרת/GPU גבוהות, חסימות API, רגולציה כבדה, תלות קריטית בצד שלישי, או תחרות ישירה מענקיות טכנולוגיה
+   ⚠️ אם ב-risks מופיעים עלויות תשתית גבוהות, שחיקת רווחיות, או תחרות מענקיות — riskPenalty חייב להיות לפחות 2
+
+## שדות חובה למפתח יחיד (solo developer)
+
+- techStackSuggestion: שמות אמיתיים וקונקרטיים של ספריות/APIs להשקת MVP מהירה (למשל: Whisper API מול Deepgram, Next.js + Supabase). אסור לכתוב תשובות גנריות כמו "טכנולוגיה מתאימה".
+- firstDistributionStep: ערוץ הפצה אחד קונקרטי להשגת 10 המשתמשים הראשונים בלי תקציב פרסום (קהילה ספציפית, פלטפורמה ספציפית, פורמט תוכן ספציפי).
+- estimatedMvpDays: הערכה כנה של ימי עבודה למפתח יחיד במשרה מלאה עד MVP שמיש.
+
 ## סדר JSON — ניתוח לפני ציון
 
 החזר JSON עם הסדר המדויק הזה (max 3 items per list):
@@ -98,11 +118,15 @@ export const VALIDATION_PROMPT = `אתה אנליסט סטארטאפים. קיב
   "competitors": ["מתחרה 1", "מתחרה 2"],
   "nextSteps": ["צעד 1", "צעד 2"],
   "signalsReferenced": ["סיגנל 1"],
+  "techStackSuggestion": "סטק קונקרטי לבנייה מהירה (למשל: Whisper API + Next.js + Stripe)",
+  "firstDistributionStep": "צעד הפצה ראשון קונקרטי ללא תקציב (למשל: פוסט השקה ב-r/podcasting)",
+  "estimatedMvpDays": 21,
   "validationReason": "הסבר קצר בעברית",
   "validationBreakdown": {
     "competition": (0-3),
     "signalFit": (0-3),
     "feasibility": (0-2),
-    "marketSize": (0-2)
+    "marketSize": (0-2),
+    "riskPenalty": (0-3)
   }
 }`;

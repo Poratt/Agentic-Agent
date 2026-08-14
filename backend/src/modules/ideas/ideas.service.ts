@@ -78,6 +78,9 @@ export class IdeasService {
     saved.competitors = idea.competitors?.length ? idea.competitors : null;
     saved.nextSteps = idea.nextSteps?.length ? idea.nextSteps : null;
     saved.signalsReferenced = idea.signalsReferenced?.length ? idea.signalsReferenced : null;
+    saved.techStackSuggestion = idea.techStackSuggestion ?? null;
+    saved.firstDistributionStep = idea.firstDistributionStep ?? null;
+    saved.estimatedMvpDays = idea.estimatedMvpDays ?? null;
     saved.groundedInSignals = idea.groundedInSignals;
     saved.isFavorite = false;
     return saved;
@@ -632,6 +635,7 @@ export class IdeasService {
           signalFit: this.clampBreakdownScore(v.validationBreakdown.signalFit, 3),
           feasibility: this.clampBreakdownScore(v.validationBreakdown.feasibility, 2),
           marketSize: this.clampBreakdownScore(v.validationBreakdown.marketSize, 2),
+          riskPenalty: this.clampBreakdownScore(v.validationBreakdown.riskPenalty, 3),
         }
         : undefined;
 
@@ -644,8 +648,12 @@ export class IdeasService {
         breakdown.competition = Math.min(2, competitors.length);
       }
 
+      // Score = sum of criteria minus riskPenalty, clamped to 1-10 server-side
+      // so the LLM cannot inflate it by omitting the penalty.
       const computedScore = breakdown
-        ? breakdown.competition + breakdown.signalFit + breakdown.feasibility + breakdown.marketSize
+        ? this.clampScore(
+          breakdown.competition + breakdown.signalFit + breakdown.feasibility + breakdown.marketSize - breakdown.riskPenalty,
+        )
         : this.clampScore(v.validationScore);
 
       return {
@@ -660,6 +668,9 @@ export class IdeasService {
         nextSteps: v.nextSteps ?? [],
         signalsReferenced: v.signalsReferenced ?? [],
         groundedInSignals: signals.length > 0,
+        techStackSuggestion: this.sanitizeOptionalText(v.techStackSuggestion),
+        firstDistributionStep: this.sanitizeOptionalText(v.firstDistributionStep),
+        estimatedMvpDays: this.sanitizeMvpDays(v.estimatedMvpDays),
       };
     } catch (error) {
       this.logger.warn(
@@ -681,6 +692,23 @@ export class IdeasService {
       return 0;
     }
     return Math.min(max, Math.max(0, Math.round(score)));
+  }
+
+  /** Keeps only non-empty strings from optional LLM text fields. */
+  private sanitizeOptionalText(value: unknown): string | undefined {
+    if (typeof value !== 'string') {
+      return undefined;
+    }
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  /** Rounds the solo-dev MVP estimate and clamps it to a sane 1-365 day range. */
+  private sanitizeMvpDays(value: unknown): number | undefined {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return undefined;
+    }
+    return Math.min(365, Math.max(1, Math.round(value)));
   }
 
   private sortByScore(ideas: BusinessIdea[]): BusinessIdea[] {

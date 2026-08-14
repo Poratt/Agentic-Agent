@@ -56,6 +56,13 @@ describe('IdeaCard', () => {
     expect(component.scoreVariant(3)).toBe('danger');
   });
 
+  it('competitorSearchUrl builds an encoded Google search link', () => {
+    expect(component.competitorSearchUrl('Vidyo.ai')).toBe('https://www.google.com/search?q=Vidyo.ai');
+    expect(component.competitorSearchUrl('כלי וידאו')).toBe(
+      `https://www.google.com/search?q=${encodeURIComponent('כלי וידאו')}`,
+    );
+  });
+
   it('toggle emits toggled event', () => {
     const spy = vi.fn();
     component.toggled.subscribe(spy);
@@ -68,5 +75,27 @@ describe('IdeaCard', () => {
     component.toggleFav.subscribe(spy);
     component.onToggleFav();
     expect(spy).toHaveBeenCalledWith({ ideaId: 1, isFavorite: true });
+  });
+
+  it('hides solo-dev sections when the fields are absent (old ideas)', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).not.toContain('סטק מוצע');
+    expect(el.textContent).not.toContain('ערוץ הפצה ראשון');
+    expect(el.textContent).not.toContain('זמן ל-MVP');
+  });
+
+  it('renders solo-dev sections when the fields exist', () => {
+    fixture.componentRef.setInput('idea', {
+      ...mockIdea,
+      techStackSuggestion: 'Whisper API + Next.js',
+      firstDistributionStep: 'פוסט ב-r/podcasting',
+      estimatedMvpDays: 21,
+    });
+    fixture.componentRef.setInput('expanded', true);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Whisper API + Next.js');
+    expect(el.textContent).toContain('פוסט ב-r/podcasting');
+    expect(el.textContent).toContain('21');
   });
 });

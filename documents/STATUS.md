@@ -1,6 +1,17 @@
 # Project Documentation Status
 
-Last updated: 2026-08-13
+Last updated: 2026-08-14
+
+## 2026-08-14 Session — Ideas validation overhaul (4 phases, all DONE)
+
+- **DONE (Phase 1):** `riskPenalty` (0–3) added to `validationBreakdown` in `VALIDATION_PROMPT` (criteria + calibration example where risk drops a strong idea to 5/10). Server-side formula: `competition + signalFit + feasibility + marketSize − riskPenalty`, clamped 1–10 in `validateSingle`. Missing penalty → 0 (backward compat).
+- **DONE (Phase 2):** Competitors rendered as clickable `.tag` chips with a Google-search link (`competitorSearchUrl`), killing the full-width dead-space list.
+- **DONE (Phase 3):** IdeaCard details switched to a 2-column grid (1 column ≤640px) — scroll fatigue fix.
+- **DONE (Phase 4):** `techStackSuggestion` / `firstDistributionStep` / `estimatedMvpDays` end-to-end (prompt → service sanitizers → nullable entity columns → store → 3 new `@if` IdeaCard sections). Old ideas render clean.
+- **Verified:** backend ideas 33/33 ✅, frontend ideas suite 32/32 ✅, `tsc --noEmit` ✅. Not yet committed.
+- **DONE (same session):** stale ideas specs fixed — ideas-history mock got `isSessionLoading` + `toggleExpand` tests now `await`; ideas-form `domain` mock converted to a real `signal('')` (`canGenerate` is a cached `computed`).
+- **Remaining pre-existing failures (unrelated):** app.spec 2, auth.interceptor 2, with-credentials.interceptor 4, auth.guard 1, strain-hunter-settings 7, backend 8 tests in unrelated suites.
+- **No architecture diagram update needed** (IdeasModule internals only).
 
 ## 2026-08-13 Session — Fix `clampScore` TS type error
 

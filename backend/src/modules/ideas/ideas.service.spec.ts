@@ -208,4 +208,68 @@ describe('IdeasService — persistence (Phase 1)', () => {
       expect(ideaRepo.findOne).toHaveBeenCalledWith({ where: { id: 555, userId: 2 } });
     });
   });
+
+  describe('validateSingle — riskPenalty', () => {
+    const rawIdea = { title: 'מחולל קליפים', description: 'd', targetMarket: 'm' };
+
+    // Wire llm/webSearch mocks per breakdown and run validation.
+    async function runValidation(breakdown: Record<string, number> | undefined, extra: Record<string, unknown> = {}) {
+      (service as any).webSearch = {
+        search: jest.fn().mockResolvedValue({ success: true, result: { results: [{ title: 't', content: 'c' }] } }),
+      };
+      (service as any).llm = {
+        generateResponse: jest.fn().mockResolvedValue({
+          content: JSON.stringify({
+            risks: ['עלויות GPU גבוהות'],
+            competitors: ['OpusClip'],
+            nextSteps: ['צעד'],
+            signalsReferenced: ['סיגנל'],
+            validationReason: 'סיבה',
+            ...extra,
+            validationBreakdown: breakdown,
+          }),
+          finishReason: 'stop',
+        }),
+      };
+      return service['validateSingle'](rawIdea, [{ signal: 'כאב', source: 'reddit' }], 'clip generator');
+    }
+
+    it('subtracts riskPenalty from the breakdown sum', async () => {
+      const idea = await runValidation({ competition: 2, signalFit: 3, feasibility: 2, marketSize: 1, riskPenalty: 3 });
+      // 2+3+2+1-3 = 5
+      expect(idea!.validationScore).toBe(5);
+      expect(idea!.validationBreakdown!.riskPenalty).toBe(3);
+    });
+
+    it('clamps the penalized score to a minimum of 1', async () => {
+      const idea = await runValidation({ competition: 0, signalFit: 0, feasibility: 1, marketSize: 0, riskPenalty: 3 });
+      // 0+0+1+0-3 = -2 → clamped to 1
+      expect(idea!.validationScore).toBe(1);
+    });
+
+    it('treats a missing riskPenalty as 0 (backward compat with old model output)', async () => {
+      const idea = await runValidation({ competition: 2, signalFit: 2, feasibility: 1, marketSize: 1 });
+      // 2+2+1+1-0 = 6
+      expect(idea!.validationScore).toBe(6);
+      expect(idea!.validationBreakdown!.riskPenalty).toBe(0);
+    });
+
+    it('passes through solo-dev actionable fields, trimming text and rounding MVP days', async () => {
+      const idea = await runValidation(
+        { competition: 2, signalFit: 2, feasibility: 2, marketSize: 1, riskPenalty: 0 },
+        { techStackSuggestion: '  Whisper API + Next.js  ', firstDistributionStep: 'פוסט ב-r/podcasting', estimatedMvpDays: 21.4 },
+      );
+      expect(idea!.techStackSuggestion).toBe('Whisper API + Next.js');
+      expect(idea!.firstDistributionStep).toBe('פוסט ב-r/podcasting');
+      expect(idea!.estimatedMvpDays).toBe(21);
+    });
+
+    it('clamps estimatedMvpDays to 1-365 and drops garbage values', async () => {
+      const over = await runValidation(undefined, { estimatedMvpDays: 9999 });
+      expect(over!.estimatedMvpDays).toBe(365);
+      const garbage = await runValidation(undefined, { estimatedMvpDays: 'שבועיים', techStackSuggestion: '   ' });
+      expect(garbage!.estimatedMvpDays).toBeUndefined();
+      expect(garbage!.techStackSuggestion).toBeUndefined();
+    });
+  });
 });

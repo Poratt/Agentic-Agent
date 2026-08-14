@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal, WritableSignal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { IdeasForm } from './ideas-form';
 import { IdeasStore } from '../../../core/store/ideas.store';
@@ -9,7 +9,9 @@ describe('IdeasForm', () => {
   let component: IdeasForm;
   let fixture: ComponentFixture<IdeasForm>;
   let storeMock: {
-    domain: ReturnType<typeof vi.fn>;
+    // Must be a real signal — IdeasForm.canGenerate is a computed() and would
+    // cache its first result forever against a plain vi.fn() mock.
+    domain: WritableSignal<string>;
     count: ReturnType<typeof vi.fn>;
     loading: ReturnType<typeof vi.fn>;
     setDomain: ReturnType<typeof vi.fn>;
@@ -21,7 +23,7 @@ describe('IdeasForm', () => {
 
   beforeEach(async () => {
     storeMock = {
-      domain: vi.fn().mockReturnValue(''),
+      domain: signal(''),
       count: vi.fn().mockReturnValue(5),
       loading: vi.fn().mockReturnValue(false),
       setDomain: vi.fn(),
@@ -83,18 +85,18 @@ describe('IdeasForm', () => {
   });
 
   it('canGenerate should return true when domain is non-empty', () => {
-    storeMock.domain.mockReturnValue('tech');
+    storeMock.domain.set('tech');
     expect(component.canGenerate()).toBe(true);
   });
 
   it('canGenerate should return false when domain is empty', () => {
-    storeMock.domain.mockReturnValue('');
+    storeMock.domain.set('');
     expect(component.canGenerate()).toBe(false);
   });
 
   it('onGenerate should call store.generate when not loading', () => {
     storeMock.loading.mockReturnValue(false);
-    storeMock.domain.mockReturnValue('tech');
+    storeMock.domain.set('tech');
     component.onGenerate();
     expect(storeMock.generate).toHaveBeenCalled();
   });
