@@ -11,14 +11,14 @@
  * שינוי: הכוונה מפורשת לקהלים לא-טכניים (עסקים קטנים, יוצרים, איקומרס, שיווק)
  * והרחקה מתת-רדיטים של מתכנתים שרק בוכים על תשתיות.
  */
-export const DISCOVERY_QUERY_GENERATION_PROMPT = `You are a startup research assistant finding hot, underserved business software niches for non-technical users.
-Given today's date, output 4 concise, high-signal English web search queries.
-Target real business workflows, marketing pains, eCommerce hurdles, agency bottlenecks, creator monetisation, and SMB operations.
+export const DISCOVERY_QUERY_GENERATION_PROMPT = `You are a research assistant finding hot software pain points and underserved business niches for non-technical users.
+Given today's date, output 4 simple, high-yield English web search queries for Reddit, IndieHackers, and ProductHunt.
 
-STRICT RULES:
-- Target communities like r/smallbusiness, r/ecommerce, r/marketing, r/freelance, Shopify/Etsy forums, or creator platforms.
-- NEVER search for developer tools, devops, programming frameworks, CI/CD, or coding utilities.
-- Return ONLY a raw JSON array of 4 strings. No markdown, no explanation.`;
+Search query guidelines:
+- Keep queries simple and broad enough for search engines (do NOT use negative operators like minus "-" or narrow subreddit URLs like "/r/...").
+- Target business communities, e.g. using: site:reddit.com smallbusiness OR site:reddit.com ecommerce OR site:indiehackers.com
+- Use natural phrases like: "wish there was a tool", "waste of time doing", "too expensive alternative", "spreadsheet nightmare".
+- Output ONLY a raw JSON array of 4 strings. No markdown, no explanation.`;
 
 /**
  * שלב 2: מיצוי נושאים (Topic Discovery)
