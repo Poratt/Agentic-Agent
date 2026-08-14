@@ -24,6 +24,12 @@
     align-items: flex-start;
     gap: var(--space-6);
 
+    .idea-card-title-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
     .idea-card-meta {
       display: flex;
       align-items: center;
@@ -34,6 +40,12 @@
       font-size: var(--font-size-sm);
       font-weight: var(--font-weight-semibold);
       color: var(--color-text-primary);
+      cursor: pointer;
+      transition: color var(--transition-fast);
+
+      &:hover {
+        color: var(--color-primary);
+      }
     }
   }
 
@@ -64,7 +76,6 @@
   .idea-card-tags {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: var(--space-4);
 
     .idea-card-tags-list {

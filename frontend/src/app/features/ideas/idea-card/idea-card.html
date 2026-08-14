@@ -1,7 +1,12 @@
 <div class="glass-effect card idea-card">
     <div class="top-card">
         <div class="idea-card-head">
-            <h3 class="idea-card-title">{{ idea().title }}</h3>
+            <div class="idea-card-title-row">
+                <button class="primary-btn xs" type="button" (click)="toggle()">
+                    <span class="ph" [class.ph-caret-down]="expanded()" [class.ph-caret-left]="!expanded()"></span>
+                </button>
+                <h3 class="idea-card-title" (click)="toggle()">{{ idea().title }}</h3>
+            </div>
             <div class="idea-card-meta">
                 @if (idea().id !== undefined) {
                     <button
@@ -41,10 +46,6 @@
                     <span class="tag tag-muted">{{ idea().competitors.length }} מתחרים נמצאו</span>
                 }
             </span>
-            <button class="primary-btn xs" type="button" (click)="toggle()">
-                <span class="ph" [class.ph-caret-down]="expanded()" [class.ph-caret-left]="!expanded()"></span>
-                {{ expanded() ? 'הסתר פרטים' : 'פרטים נוספים' }}
-            </button>
         </div>
     </div>
 
