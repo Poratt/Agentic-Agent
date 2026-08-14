@@ -12,21 +12,21 @@
                         class="button primary-btn sm"
                         *accessTo="[UserRole.Admin]"
                         [disabled]="ideasStore.triggeringNightly()"
-                        (click)="triggerNightly()"
+(click)="triggerNightly()"
+                        appTooltip text="הפעלה אוטומטית"
                     >
                         @if (ideasStore.triggeringNightly()) {
                             <span class="custom-loader xs"></span>
                         } @else {
                             <span class="ph ph-lightning"></span>
                         }
-                        הפעל לילה
                     </button>
                     <div class="toggle-group">
                         <button type="button" class="toggle-btn icon-only" [class.active]="filterMode() === 'all'" (click)="setFilter('all')" appTooltip text="הכל">
                             <span class="ph ph-squares-four"></span>
                         </button>
-                        <button type="button" class="toggle-btn icon-only" [class.active]="filterMode() === 'nightly'" (click)="setFilter('nightly')" appTooltip text="הפעלה אוטומטית">
-                            <span class="ph ph-moon"></span>
+                        <button type="button" class="toggle-btn icon-only" [class.active]="filterMode() === 'nightly'" (click)="setFilter('nightly')" appTooltip text="אוטומטיים">
+                            <span class="ph ph-circuitry"></span>
                             @if (ideasStore.nightlyUnread() > 0) {
                                 <span class="icon-badge">{{ ideasStore.nightlyUnread() }}</span>
                             }
@@ -77,10 +77,10 @@
         }
         @case (PageStates.Ready) {
             @if (filteredSessions().length === 0) {
-                <div class="page-state table-empty-state">
-                    <span class="icon ph ph-funnel-x"></span>
-                    <h4 class="title">לא נמצאו סשנים.</h4>
-                    <p class="subtitle">נסה לשנות את הסינון או ליצור רעיונות חדשים.</p>
+                <div class="page-empty-state stagger stagger-up">
+                    <span class="ph ph-funnel-x xl"></span>
+                    <h3>לא נמצאו סשנים.</h3>
+                    <p>נסה לשנות את הסינון או ליצור רעיונות חדשים.</p>
                 </div>
             } @else {
                 <div class="sessions-list" [class.stagger]="!initialLoadDone" [class.stagger-up]="!initialLoadDone">
@@ -120,7 +120,7 @@
 
                                     <div class="session-meta">
                                         @if (session.nightly) {
-                                            <span class="ph ph-fill ph-moon nightly-icon"></span>
+                                            <span class="ph ph-fill ph-circuitry nightly-icon"></span>
                                         }
                                         <span class="count-badge">
                                             <span class="ph ph-lightbulb"></span>
@@ -140,9 +140,14 @@
                                         <span class="ph ph-trash"></span>
                                     </button>
 
-                                    <span class="expand-icon" [class.rotated]="expandedSessionId() === session.id">
-                                        <span class="ph ph-caret-down"></span>
-                                    </span>
+                                    <button
+                                        type="button"
+                                        class="icon-only transparent-btn chevron-btn rtl"
+                                        [class.open]="expandedSessionId() === session.id"
+                                        [attr.aria-label]="expandedSessionId() === session.id ? 'הסתר פרטים' : 'הרחב פרטים'"
+                                    >
+                                        <i class="ph ph-caret-right"></i>
+                                    </button>
                                 </div>
 
                                 <div class="ideas-list" [class.expanded]="expandedSessionId() === session.id">

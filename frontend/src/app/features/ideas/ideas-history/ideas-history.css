@@ -153,17 +153,6 @@
                 }
             }
 
-            .expand-icon {
-                flex: 0 0 auto;
-                color: var(--color-text-muted);
-                font-size: var(--font-size-sm);
-                transition: transform var(--transition-fast);
-
-                &.rotated {
-                    transform: rotate(180deg);
-                }
-            }
-
             .ideas-list {
                 display: grid;
                 grid-template-rows: 0fr;

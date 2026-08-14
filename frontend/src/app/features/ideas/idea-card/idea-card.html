@@ -52,13 +52,19 @@
         <div class="idea-card-details-inner">
             @if (idea().validationReason) {
                 <div class="idea-card-section">
-                    <h4 class="idea-card-section-title">הסבר הציון</h4>
+                    <div class="idea-card-section-header">
+                        <span class="ph ph-chart-line-up"></span>
+                        <h4 class="idea-card-section-title">הרעיון</h4>
+                    </div>
                     <p class="idea-card-section-text">{{ idea().validationReason }}</p>
                 </div>
             }
             @if (idea().risks.length) {
                 <div class="idea-card-section">
-                    <h4 class="idea-card-section-title">סיכונים</h4>
+                    <div class="idea-card-section-header">
+                        <span class="ph ph-warning-octagon"></span>
+                        <h4 class="idea-card-section-title">הסיכונים</h4>
+                    </div>
                     <ul class="idea-card-list">
                         @for (r of idea().risks; track r) {
                             <li>{{ r }}</li>
@@ -68,7 +74,10 @@
             }
             @if (idea().competitors.length) {
                 <div class="idea-card-section">
-                    <h4 class="idea-card-section-title">מתחרים</h4>
+                    <div class="idea-card-section-header">
+                        <span class="ph ph-sword"></span>
+                        <h4 class="idea-card-section-title">המתחרים</h4>
+                    </div>
                     <ul class="idea-card-list">
                         @for (c of idea().competitors; track c) {
                             <li>{{ c }}</li>
@@ -78,7 +87,10 @@
             }
             @if (idea().nextSteps.length) {
                 <div class="idea-card-section">
-                    <h4 class="idea-card-section-title">צעדי המשך</h4>
+                    <div class="idea-card-section-header">
+                        <span class="ph ph-list-checks"></span>
+                        <h4 class="idea-card-section-title">צעדי המשך</h4>
+                    </div>
                     <ul class="idea-card-list">
                         @for (s of idea().nextSteps; track s) {
                             <li>{{ s }}</li>
@@ -88,7 +100,10 @@
             }
             @if (idea().signalsReferenced.length) {
                 <div class="idea-card-section">
-                    <h4 class="idea-card-section-title">סיגנלים שנאספו</h4>
+                    <div class="idea-card-section-header">
+                        <span class="ph ph-pulse"></span>
+                        <h4 class="idea-card-section-title">סיגנלים</h4>
+                    </div>
                     <ul class="idea-card-list">
                         @for (sig of idea().signalsReferenced; track sig) {
                             <li>{{ sig }}</li>

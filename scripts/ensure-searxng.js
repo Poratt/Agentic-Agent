@@ -97,13 +97,17 @@ function sleep(ms) {
     fail("docker daemon not running — open Docker Desktop and wait until the tray icon shows 'running'");
   }
 
+  // A running container does not guarantee the host port is mapped/usable.
+  // Always verify HTTP reachability first; only trust it when both conditions hold.
   if (dockerPsRunning()) {
-    log(`already running on port ${PORT}`);
-    process.exit(0);
-  }
-
-  // Port 8080 may already have SearXNG responding (another container or manual run).
-  if (await httpReady()) {
+    if (await httpReady()) {
+      log(`already running on port ${PORT}`);
+      process.exit(0);
+    }
+    log('container is running but port 8080 is not reachable from the host — recreating with port mapping');
+    execFileSync('docker', ['rm', '-f', CONTAINER_NAME], { stdio: 'inherit' });
+  } else if (await httpReady()) {
+    // Port 8080 may already have SearXNG responding (another container or manual run).
     log(`already responding on port ${PORT} (external or another container)`);
     process.exit(0);
   }
