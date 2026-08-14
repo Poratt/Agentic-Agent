@@ -48,6 +48,15 @@ export interface GenerateIdeasResponse {
   failedCount?: number; // present only when partial === true
 }
 
+/** A discovered niche/domain returned by topic discovery (nightly cron).
+ *  `domain` is Hebrew for display, `searchQuery` is the English search term
+ *  used for web searches, `rationale` explains the opportunity. */
+export interface DiscoveredTopic {
+  domain: string;
+  searchQuery?: string;
+  rationale: string;
+}
+
 export type IdeasProgressEvent =
   | { phase: 0; status: string }
   | { phase: 1; status: string }

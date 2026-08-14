@@ -13,6 +13,7 @@ import {
   BusinessIdea,
   GenerateIdeasResponse,
   IdeasProgressEvent,
+  DiscoveredTopic,
 } from './interfaces/idea.interface';
 import {
   SIGNAL_GATHERING_PROMPT,
@@ -226,6 +227,7 @@ export class IdeasService {
     userId?: number,
     providerOverride?: string,
     modelOverride?: string,
+    searchQuery?: string,
   ): Promise<GenerateIdeasResponse> {
     const cleanDomain = this.sanitizeDomain(domain);
     if (!cleanDomain) {
@@ -234,9 +236,11 @@ export class IdeasService {
 
     const providerKey = providerOverride as LlmProvider | undefined;
     const deadline = Date.now() + OVERALL_TIMEOUT_MS;
+    const searchTerm = this.sanitizeDomain(searchQuery ?? '') || cleanDomain;
 
     const { signals, groundedInSignals } = await this.gatherSignals(
       cleanDomain,
+      searchTerm,
       onProgress,
       deadline,
       userId,
@@ -251,6 +255,7 @@ export class IdeasService {
     const { ideas, failedCount } = await this.validateIdeas(
       rawIdeas,
       signals,
+      searchTerm,
       onProgress,
       deadline,
       userId,
@@ -308,13 +313,14 @@ export class IdeasService {
     modelOverride?: string,
   ): Promise<string[]> {
     const today = new Date().toISOString().slice(0, 10);
-    const prompt = `Today's date: ${today}\n\nSuggest 4 short, specific web-search queries in English that would surface currently hot, trending pain points, underserved niches, or emerging tools relevant to a solo bootstrapped developer right now. Base them on what's actually current — not generic evergreen phrasing. Return ONLY a JSON array of strings, nothing else.`;
+    const prompt = `Today's date: ${today}\n\nSuggest 4 specific web-search queries in English to find recent software pain points and underserved niches for solo builders. Return ONLY a JSON array of strings.`;
 
     try {
       const res = await this.llm.generateResponse({
         prompt,
         systemContext: DISCOVERY_QUERY_GENERATION_PROMPT,
-        maxTokens: 256,
+        // הגדלת maxTokens למניעת חיתוך במודלים חינמיים/thinking
+        maxTokens: 1024, // הוגדל מ-256
         userId,
         providerOverride,
         modelOverride,
@@ -342,7 +348,7 @@ export class IdeasService {
     userId?: number,
     providerOverride?: LlmProvider,
     modelOverride?: string,
-  ): Promise<{ domain: string; rationale: string }[]> {
+  ): Promise<DiscoveredTopic[]> {
     const queries = await this.generateDiscoveryQueries(userId, providerOverride, modelOverride);
 
     const settled = await Promise.allSettled(
@@ -374,7 +380,7 @@ export class IdeasService {
         modelOverride,
       });
 
-      const parsed = parseLlmJson<{ topics: { domain: string; rationale: string }[] }>(
+      const parsed = parseLlmJson<{ topics: { domain: string; searchQuery?: string; rationale?: string }[] }>(
         res.content,
         'topic-discovery',
       );
@@ -384,7 +390,11 @@ export class IdeasService {
 
       return parsed.topics
         .slice(0, count)
-        .map((t) => ({ domain: this.sanitizeDomain(t.domain), rationale: t.rationale }))
+        .map((t) => ({
+          domain: this.sanitizeDomain(t.domain),
+          searchQuery: this.sanitizeDomain(t.searchQuery ?? '') || undefined,
+          rationale: typeof t.rationale === 'string' ? t.rationale : '',
+        }))
         .filter((t) => t.domain.length > 0);
     } catch (error) {
       this.logger.warn(
@@ -407,16 +417,17 @@ export class IdeasService {
     return stripped;
   }
 
-  private buildSignalQueries(domain: string): string[] {
+  private buildSignalQueries(searchTerm: string): string[] {
     return [
-      `pain points in ${domain} 2024 2025`,
-      `trends in ${domain} market gaps`,
-      `challenges ${domain} freelancers businesses`,
+      `"${searchTerm}" pain points OR complaints 2025 2026`,
+      `"${searchTerm}" alternative missing features`,
+      `best tools for ${searchTerm} reddit`,
     ];
   }
 
   private async gatherSignals(
     domain: string,
+    searchTerm: string,
     onProgress: ((event: IdeasProgressEvent) => void) | undefined,
     deadline: number,
     userId?: number,
@@ -425,7 +436,7 @@ export class IdeasService {
   ): Promise<{ signals: Signal[]; groundedInSignals: boolean }> {
     onProgress?.({ phase: 0, status: 'מחפש סיגנלים בשוק...' });
 
-    const queries = this.buildSignalQueries(domain);
+    const queries = this.buildSignalQueries(searchTerm);
     const settled = await Promise.allSettled(
       queries.map((q) => this.webSearch.search(q)),
     );
@@ -514,6 +525,7 @@ export class IdeasService {
   private async validateIdeas(
     rawIdeas: RawIdea[],
     signals: Signal[],
+    searchTerm: string,
     onProgress: ((event: IdeasProgressEvent) => void) | undefined,
     deadline: number,
     userId?: number,
@@ -540,7 +552,7 @@ export class IdeasService {
       }
 
       const settled = await Promise.allSettled(
-        batch.map((idea) => this.validateSingle(idea, signals, userId, providerOverride, modelOverride)),
+        batch.map((idea) => this.validateSingle(idea, signals, searchTerm, userId, providerOverride, modelOverride)),
       );
 
       for (const s of settled) {
@@ -565,12 +577,13 @@ export class IdeasService {
   private async validateSingle(
     idea: RawIdea,
     signals: Signal[],
+    searchTerm: string,
     userId?: number,
     providerOverride?: LlmProvider,
     modelOverride?: string,
   ): Promise<BusinessIdea | null> {
     const searchResult = await this.webSearch.search(
-      `competitors for ${idea.title} ${idea.targetMarket}`,
+      `competitors for ${idea.title} ${idea.targetMarket} "${searchTerm}"`,
     );
 
     const searchResults = searchResult.success && searchResult.result

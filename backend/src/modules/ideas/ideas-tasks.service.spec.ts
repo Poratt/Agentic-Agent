@@ -3,6 +3,7 @@ import { IdeasTasksService } from './ideas-tasks.service';
 import { IdeasService } from './ideas.service';
 import { UsersService } from '../users/users.service';
 import { LlmProviderService } from '../llm-provider/llm-provider.service';
+import { LlmProviderConfigService } from '../llm/services/llm-provider-config.service';
 import { User } from '../users/entities/user.entity';
 
 function makeAdmin(): User {
@@ -42,6 +43,7 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery)', () => {
         { provide: IdeasService, useValue: ideasService },
         { provide: UsersService, useValue: usersService },
         { provide: LlmProviderService, useValue: llmProviderService },
+        { provide: LlmProviderConfigService, useValue: { getActiveProvider: jest.fn(), getActiveModel: jest.fn() } },
       ],
     }).compile();
 
@@ -83,8 +85,8 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery)', () => {
     usersService.findFirstAdmin.mockResolvedValue(makeAdmin());
     llmProviderService.findFirstActiveTextModel.mockResolvedValue({ provider: 'openrouter', model: 'gpt-4o' });
     ideasService.discoverTopics.mockResolvedValue([
-      { domain: 'freelancer invoicing', rationale: 'solo-friendly niche' },
-      { domain: 'solo dev analytics', rationale: 'underserved market' },
+      { domain: 'ניהול חשבוניות לפרילנסרים', searchQuery: 'freelancer invoicing tools', rationale: 'solo-friendly niche' },
+      { domain: 'אנליטיקה למפתחים', searchQuery: 'solo dev analytics', rationale: 'underserved market' },
     ]);
     ideasService.generateIdeas.mockResolvedValue({
       success: true,
@@ -102,8 +104,8 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery)', () => {
     expect(ideasService.saveGeneration).toHaveBeenCalledTimes(2);
 
     const calls = (ideasService.saveGeneration as jest.Mock).mock.calls;
-    expect(calls[0][1]).toBe('freelancer invoicing');
-    expect(calls[1][1]).toBe('solo dev analytics');
+    expect(calls[0][1]).toBe('ניהול חשבוניות לפרילנסרים');
+    expect(calls[1][1]).toBe('אנליטיקה למפתחים');
     for (const call of calls) {
       expect(call[0]).toBe(1); // admin.id
       expect(call[5]).toEqual({ nightly: true, unread: true });
@@ -115,7 +117,7 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery)', () => {
     process.env.IDEAS_NIGHTLY_MODEL = 'agnes-ai/agnes-text-2.0';
 
     usersService.findFirstAdmin.mockResolvedValue(makeAdmin());
-    ideasService.discoverTopics.mockResolvedValue([{ domain: 'ai tools', rationale: 'solo dev niche' }]);
+    ideasService.discoverTopics.mockResolvedValue([{ domain: 'כלי AI', searchQuery: 'ai tools', rationale: 'solo dev niche' }]);
     ideasService.generateIdeas.mockResolvedValue({
       success: true,
       message: 'ok',
@@ -129,12 +131,13 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery)', () => {
     expect(llmProviderService.findFirstActiveTextModel).not.toHaveBeenCalled();
     expect(ideasService.discoverTopics).toHaveBeenCalledWith(3, 1, 'agnes-ai', 'agnes-text-2.0');
     expect(ideasService.generateIdeas).toHaveBeenCalledWith(
-      'ai tools',
+      'כלי AI',
       5,
       undefined,
       1,
       'agnes-ai',
       'agnes-text-2.0',
+      'ai tools',
     );
   });
 

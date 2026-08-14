@@ -80,6 +80,7 @@ export class IdeasTasksService {
           admin.id,
           model.provider as LlmProvider,
           model.model,
+          topic.searchQuery,
         );
         await this.ideasService.saveGeneration(admin.id, topic.domain, model.provider, model.model, res, {
           nightly: true,

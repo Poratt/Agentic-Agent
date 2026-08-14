@@ -6,26 +6,30 @@
   { "signal": "תיאור נקודת הכאב", "source": "מקור קצר (למשל שם האתר או הסקר)" }
 ]`;
 
-export const TOPIC_DISCOVERY_PROMPT = `אתה אנליסט סטארטאפים. קיבלת תוצאות חיפוש אינטרנט על נושאים וטרנדים בתחום התוכנה והטכנולוגיה.
-זהה 3 עד 5 נושאים/תחומים קונקרטיים המתאימים למפתח בודד (solo developer) שרוצה לבנות עסק תוכנה עצמאי.
+export const TOPIC_DISCOVERY_PROMPT = `אתה אנליסט סטארטאפים ומומחה ל-Micro-SaaS ו-Solo Developers.
+קיבלת תוצאות חיפוש אינטרנט על טרנדים, כאבים וכלים חדשים.
+זהה 3 עד 5 נישות/תחומים ספציפיים ורווחיים (לא נושאים רחבים וגנריים) שמתאימים למוצר תוכנה קטן וממוקד.
 
-## אילוצים לנושאים:
-- הבונה הוא מפתח יחיד, ללא צוות, ללא תקציב חיצוני או גיוס הון.
-- תוכנה/SaaS בלבד — אין חומרה, חיישנים, IoT.
-- בר-מימוש והשקה על ידי אדם אחד בטווח של שבועות עד מספר חודשים.
-- להעדיף B2C, פרוסיומר (prosumer), או עסקים קטנים.
-- ידידותי ל-bootstrap: עלות תשתית נמוכה/אפסית בהתחלה.
-- להימנע ממחזור מכירות B2B ארוך או תהליכי רכש ארגוניים.
+## אילוצים קשיחים:
+- Micro-SaaS / B2C / Prosumer / עסקים קטנים בלבד.
+- תוכנה בלבד (ללא חומרה/IoT).
+- ניתן לבנייה והשקה ע"י מפתח בודד בתוך 2-6 שבועות.
+- התמקד ב-Underserved niches עם כאב ברור ומוכנות לשלם.
 
-התעלם מתוכן שיווקי; התמקד בתחומים שיש בהם ביקוש אמיתי או כאב לא פתור.
-חזר JSON בלבד בצורה:
+חובה להחזיר JSON תקין בלבד בפורמט הבא:
 {
   "topics": [
-    { "domain": "שם התחום", "rationale": "סיבה קצרה למה זה מתאים למפתח בודד" }
+    {
+      "domain": "שם הנישה בעברית ברורה וקונקרטית (למשל: תזמון תוכן אוטומטי ליוצרי טיקטוק)",
+      "searchQuery": "concise english search phrase for this niche (e.g. tiktok auto scheduler creators)",
+      "rationale": "הסבר קצר בעברית למה יש כאן הזדמנות למפתח בודד"
+    }
   ]
 }`;
 
-export const DISCOVERY_QUERY_GENERATION_PROMPT = `You are a research assistant helping discover currently trending pain points and underserved niches for solo bootstrapped developers. Given today's date, suggest concise, high-signal web search queries that would surface recent discussions, launches, or complaints. Prefer specific and current phrasing over generic evergreen terms. Respond with a raw JSON array of strings only — no markdown, no explanation.`;
+export const DISCOVERY_QUERY_GENERATION_PROMPT = `You are a research assistant finding trending software pain points and underserved micro-SaaS niches.
+Given today's date, output 4 concise, high-signal English search queries targeting recent Reddit complaints, ProductHunt launches, or IndieHackers discussions.
+Do NOT include markdown formatting or explanations. Output ONLY a raw JSON array of 4 strings.`;
 
 export const IDEA_GENERATION_PROMPT = `אתה אנליסט סטארטאפים. צור רעיונות עסקיים שמטפלים ישירות בנקודות הכאב שלהלן.
 אסור להמציא נקודות כאב — השתמש רק בסיגנלים שסופקו.

@@ -444,22 +444,22 @@ sequenceDiagram
 
   User->>IdeasUI: Enter domain + count, click "צור רעיונות"
   IdeasUI->>API: GET /ideas/generate/stream?domain=...&count=...
-  API->>Service: generateIdeas(domain, count, onProgress)
-  Service->>Service: sanitizeDomain()
-  Service->>Search: search("pain points in domain") × 3 (parallel)
+  API->>Service: generateIdeas(domain, count, onProgress, ..., searchQuery?)
+  Service->>Service: sanitizeDomain() → cleanDomain; searchTerm = searchQuery || cleanDomain
+  Service->>Search: search(English searchTerm queries) × 3 (parallel)
   Search-->>Service: merged results
   Service->>LLM: generateResponse(SIGNAL_GATHERING_PROMPT)
   LLM-->>Service: Signal[]
   Service-->>API: SSE { phase: 0, status: "מחפש סיגנלים..." }
   API-->>IdeasUI: SSE event
-  Service->>LLM: generateResponse(IDEA_GENERATION_PROMPT + signals)
+  Service->>LLM: generateResponse(IDEA_GENERATION_PROMPT + signals) → Hebrew ideas
   LLM-->>Service: RawIdea[]
   Service-->>API: SSE { phase: 1, status: "מייצר רעיונות..." }
   API-->>IdeasUI: SSE event
   loop Per idea (max 3 parallel)
-    Service->>Search: search("competitors for idea")
+    Service->>Search: search("competitors for idea "searchTerm"") [English anchor]
     Search-->>Service: results
-    Service->>LLM: generateResponse(VALIDATION_PROMPT + results)
+    Service->>LLM: generateResponse(VALIDATION_PROMPT + results) → Hebrew score/reason
     LLM-->>Service: ValidationResult
   end
   Service->>Service: merge + sort by score
@@ -485,10 +485,15 @@ sequenceDiagram
 
   Cron->>Cron: @Cron('0 0 4 * * *') [IDEAS_NIGHTLY_ENABLED=true]
   Cron->>Cron: resolve admin user + model
-  loop Each domain in IDEAS_NIGHTLY_DOMAINS
-    Cron->>Service: generateIdeas(domain, count, userId, model)
-    Service->>Search: search signals × 3
-    Service->>LLM: generate + validate ideas
+  Cron->>Service: discoverTopics(topicCount, adminId, provider, model)
+  Service->>LLM: generateDiscoveryQueries() → 4 English queries
+  Service->>Search: search(English queries) × 4 (parallel)
+  Service->>LLM: TOPIC_DISCOVERY_PROMPT → DiscoveredTopic[]
+  Service-->>Cron: [{ domain (Hebrew), searchQuery (English), rationale }]
+  loop Each discovered topic
+    Cron->>Service: generateIdeas(domain, count, userId, model, searchQuery)
+    Service->>Search: search signals × 3 (English searchQuery)
+    Service->>LLM: generate + validate ideas (Hebrew output)
     Service-->>Cron: GenerateIdeasResponse
     Cron->>Service: saveGeneration(userId, domain, model, res, {nightly:true, unread:true})
     Service->>DB: INSERT saved_idea_session (nightly=true, unread=true)
@@ -544,4 +549,4 @@ sequenceDiagram
 - Image/video model fallback (`resolveCapabilityModel`) picks the highest-version active model of the requested capability when `modelId` is omitted (e.g. `agnes-image-2.1-flash` over `2.0-flash`). The resolved image model is logged by `LlmController`.
 - **Ideas module** (`IdeasModule`) is a business idea generator: `POST /ideas/generate` (sync) and `GET /ideas/generate/stream` (SSE progress). The service runs a 3-phase agentic loop — SearXNG signal gathering → LLM idea generation → per-idea validation — with 60s overall timeout, partial results via `Promise.allSettled`, and weighted rate limiting via `IdeasThrottlerGuard` (extends `ThrottlerGuard`, loops `increment()` `max(count,1)` times). The frontend `IdeasPage` uses `PageStates` and consumes the SSE stream via raw `fetch` + `AbortController`.
 - **Ideas persistence:** Every generation (manual or nightly) is persisted to `saved_idea_sessions` + `saved_ideas` tables (FK cascade on delete). Persistence is best-effort in the stream handler — wrapped in try/catch so save failures never break the SSE response. The history page (`/ideas/history`) loads past sessions via `GET /ideas/sessions` with optional `?nightly=` and `?favorites=` filters.
-- **Ideas nightly cron:** `IdeasTasksService` runs at 04:00 server time when `IDEAS_NIGHTLY_ENABLED=true`. Each domain in `IDEAS_NIGHTLY_DOMAINS` generates ideas for the admin user and saves them with `nightly=true, unread=true`. The `IdeasPage` calls `GET /ideas/nightly/unread-count` on load and shows a banner with a link to history. `POST /ideas/nightly/mark-read` clears the unread flag.
+- **Ideas nightly cron:** `IdeasTasksService` runs at 04:00 server time when `IDEAS_NIGHTLY_ENABLED=true`. It first discovers topics via `IdeasService.discoverTopics()` — the LLM generates 4 English search queries (`DISCOVERY_QUERY_GENERATION_PROMPT`), SearXNG runs them in parallel, and the LLM extracts `DiscoveredTopic[]` via `TOPIC_DISCOVERY_PROMPT`, where `domain` is Hebrew (for display) and `searchQuery` is the English search term. For each topic it calls `generateIdeas(domain, count, userId, model, searchQuery)`: signals and competitor searches hit SearXNG with English-only queries anchored on `searchQuery` (never mixed Hebrew/English), while idea titles/descriptions/scores stay Hebrew. Results save with `nightly=true, unread=true`. The `IdeasPage` calls `GET /ideas/nightly/unread-count` on load and shows a banner with a link to history. `POST /ideas/nightly/mark-read` clears the unread flag.
