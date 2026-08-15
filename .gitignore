@@ -76,3 +76,6 @@ frontend/src/app/environments/environment.prod.ts
 # DB dumps and backups (may contain plaintext secrets)
 backup_*.sql
 *.sql.bak
+
+# Freebuff local tool state
+.freebuff/
