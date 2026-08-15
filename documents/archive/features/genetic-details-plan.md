@@ -1678,3 +1678,619 @@
   }
 ]
 ```
+
+---
+
+# Implementation Plan — Genetics Tooltip (mirror the terpene pipeline)
+
+Goal: enrich each genetics chip in `MatchingPreferencesDrawer` (and any future consumer) with a hover-popover that shows the strain's description, parent cross (`parent1 × parent2`), origin country, type (`היברידי / סאטיבה / אינדיקה`), and a per-strain accent color. The component is generic enough to render **both** terpene rows and genetics rows — we replace the terpene-specific tooltip with the new generic one.
+
+The mock JSON at the top of this file is the seed source — one row per strain, keyed by Hebrew `name`.
+
+## High-level shape
+
+```
+NestJS (TerpeneModule pattern, renamed)
+└── GeneticsModule
+    ├── Genetics entity (DB: genetics table)
+    ├── DTOs (GeneticsDto, GeneticsResultResponseDto, GeneticsListResultResponseDto)
+    ├── GeneticsService (findAll, findByName)
+    ├── GeneticsController (GET /genetics, GET /genetics/:name, JwtAuthGuard)
+    ├── GeneticsModule (TypeOrmModule.forFeature + register in AppModule)
+    └── genetics.seed.ts (idempotent seed from the JSON mock above)
+        invoked from backend/src/main.ts alongside seedAdmin / seedLlmProviders
+
+Angular
+├── IGenetics interface (core/models)
+├── GeneticsService (HttpClient GET /genetics)
+├── GeneticsStore (signals, byName lookup, mirrors TerpeneStore)
+├── components/shared/tooltip/tooltip.{ts,html,css}
+│   selector: app-tooltip
+│   inputs: name (required), category ('terpene' | 'genetics', required),
+│           role ('origin' | 'parent1' | 'parent2' | null, optional, genetics only)
+│   resolves the right store by category and renders the matching card
+└── MatchingPreferencesDrawer updated
+    ├── replace `terpene-tooltip` with `tooltip`
+    ├── collectGenetics() now preserves role info (origin > parent1 > parent2 first-wins)
+    ├── TooltipPos carries category + role
+    ├── call GeneticsStore.loadAll() on visible()
+    └── rename local position constants if needed
+```
+
+## Phase 1 — Backend (Genetics catalog)
+
+Mirror `backend/src/modules/terpene/` exactly, swapping only the noun.
+
+### 1.1 Entity — `backend/src/modules/genetics/entities/genetics.entity.ts`
+
+```ts
+import { ApiProperty } from '@nestjs/swagger';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+
+/**
+ * TypeORM entity backing the `genetics` table.
+ *
+ * One row per unique Hebrew strain name seen in the StrainHunter dataset.
+ * `name` is the lookup key consumed by the frontend matching drawer.
+ *
+ * Mirrors the terpene schema so the frontend can use the same hover
+ * component for both categories.
+ */
+@Entity('genetics')
+export class Genetics {
+    @ApiProperty({ description: 'Auto-incremented primary key.', example: 1 })
+    @PrimaryGeneratedColumn()
+    id!: number;
+
+    @ApiProperty({
+        description: 'Hebrew display name. Unique — used as the lookup key from the frontend.',
+        example: 'גורילה גלו',
+    })
+    @Column({ type: 'varchar', length: 200, unique: true })
+    name!: string;
+
+    @ApiProperty({
+        description: 'Short Hebrew description of the strain. Optional.',
+        example: 'זן חזק במיוחד שזכה במקומות ראשונים ב-Cannabis Cup...',
+        required: false,
+    })
+    @Column({ type: 'text', nullable: true })
+    description!: string | null;
+
+    @ApiProperty({
+        description: 'First genetic parent (parent1) — Hebrew or English name.',
+        example: 'Chem Sis',
+        required: false,
+    })
+    @Column({ type: 'varchar', length: 200, nullable: true })
+    parent1!: string | null;
+
+    @ApiProperty({
+        description: 'Second genetic parent (parent2) — Hebrew or English name.',
+        example: 'Sour Dubb',
+        required: false,
+    })
+    @Column({ type: 'varchar', length: 200, nullable: true })
+    parent2!: string | null;
+
+    @ApiProperty({
+        description: 'Country / region of origin (Hebrew text).',
+        example: 'ארה"ב',
+        required: false,
+    })
+    @Column({ type: 'varchar', length: 200, nullable: true })
+    origin!: string | null;
+
+    @ApiProperty({
+        description: 'Cannabis type — היברידי / סאטיבה / אינדיקה.',
+        enum: ['היברידי', 'סאטיבה', 'אינדיקה'],
+        example: 'היברידי',
+        required: false,
+    })
+    @Column({ type: 'varchar', length: 20, nullable: true })
+    type!: string | null;
+
+    @ApiProperty({
+        description: 'Hex accent color used by the frontend for per-strain UI accents.',
+        example: '#228B22',
+    })
+    @Column({ type: 'varchar', length: 9 })
+    color!: string;
+}
+```
+
+### 1.2 DTO — `backend/src/modules/genetics/dto/genetics.dto.ts`
+
+Same shape as `terpene.dto.ts` — copy the file verbatim and rename field-by-field. **Mirror the existing terpene DTO Swagger style exactly:** use `@ApiProperty({ ..., required: false })` for nullable fields (NOT `@ApiPropertyOptional`). Each property carries a description written for an LLM agent reading the Swagger spec, plus a realistic example. The DTO imports `ServiceResultContainer` only in the response wrappers (§1.3) — the single-record DTO does not.
+
+### 1.3 Response wrappers — `backend/src/modules/genetics/dto/`
+
+- `genetics.dto.ts` (single record)
+- `genetics-list-result-response.dto.ts` (`ServiceResultContainer<GeneticsDto[]>`)
+- `genetics-result-response.dto.ts` (`ServiceResultContainer<GeneticsDto | null>`)
+
+All three mirror the terpene wrappers — copy-paste and rename.
+
+### 1.4 Service — `backend/src/modules/genetics/genetics.service.ts`
+
+Mirrors `TerpeneService` — same `findAll()` (ordered by name ASC) and `findByName(name)` API.
+
+### 1.5 Controller — `backend/src/modules/genetics/genetics.controller.ts`
+
+Mirrors `TerpeneController` exactly:
+
+- `@Controller('genetics')`
+- `JwtAuthGuard` on the class
+- `GET /genetics` → `findAll()`
+- `GET /genetics/:name` → `findOne(@Param('name') name)`
+- Same Swagger decorators (`@ApiTags('genetics')`, `@ApiBearerAuth()`, `@ApiOperation` with `summaryHe` / `toolIcon: 'ph-tree-evergreen'`, `@ApiOkResponse`, `@ApiBadRequestResponse`, `@ApiUnauthorizedResponse`, etc.)
+
+### 1.6 Module — `backend/src/modules/genetics/genetics.module.ts`
+
+```ts
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Genetics } from './entities/genetics.entity';
+import { GeneticsService } from './genetics.service';
+import { GeneticsController } from './genetics.controller';
+
+@Module({
+    imports: [TypeOrmModule.forFeature([Genetics])],
+    controllers: [GeneticsController],
+    providers: [GeneticsService],
+    exports: [GeneticsService],
+})
+export class GeneticsModule {}
+```
+
+Register it in `backend/src/app.module.ts` next to `TerpeneModule` (and `import { GeneticsModule } from './modules/genetics/genetics.module';`).
+
+### 1.7 Seed — `backend/src/modules/genetics/seeds/genetics.seed.ts`
+
+Idempotent seed that walks the JSON in this file and upserts one row per strain:
+
+- `name` ← JSON `name`
+- `description` ← JSON `description`
+- `parent1` ← first side of `genetics` (split on ` x ` / ` × ` / ` X ` — case-insensitive, **with parenthetical handling**)
+- `parent2` ← second side
+- `origin` ← JSON `origin`
+- `type` ← JSON `type`
+- `color` ← JSON `color`
+
+Helper inside the seed — the JSON has several shapes that need careful handling:
+
+```ts
+type Split = { parent1: string | null; parent2: string | null };
+
+function splitGenetics(raw: string | null | undefined): Split {
+    if (!raw) return { parent1: null, parent2: null };
+
+    // Examples seen in the JSON:
+    //   "Chemdawg x Hindu Kush"                  → Chemdawg / Hindu Kush
+    //   "Chemdawg x Hindu Kush (Florida Cut)"    → Chemdawg / Hindu Kush (Florida Cut) — keep the cut note in parent2
+    //   "OG Kush Phenotype (GSC cut)"            → null / null — single parent with a phenotype note, no cross
+    //   "OG Kush Breath x Mendo Montage"          → OG Kush Breath / Mendo Montage
+    //   "Trop Cherry x #1 Strain"                → Trop Cherry / #1 Strain (preserve the "#")
+    //   "Alien Cookies x Starfighter x Colombian" → Alien Cookies / Starfighter x Colombian — take the first cross, drop the rest
+    //   "Jack Herer x White Widow"                → Jack Herer / White Widow
+    const cleaned = raw.replace(/\s+/g, ' ').trim();
+
+    // Split on the FIRST x/×/X surrounded by spaces. Anything inside parentheses belongs to the side it sits on.
+    const match = cleaned.match(/^(.+?)\s+[x×X]\s+(.+)$/);
+    if (!match) {
+        // No cross — single parent, no parent2.
+        return { parent1: null, parent2: null };
+    }
+
+    const parent1 = match[1].trim() || null;
+    let parent2 = match[2].trim() || null;
+
+    // If parent2 itself contains a second cross (e.g. "Starfighter x Colombian"),
+    // keep only the first side of that cross — we model two-parent crosses only.
+    const nestedMatch = parent2 && parent2.match(/^(.+?)\s+[x×X]\s+(.+)$/);
+    if (nestedMatch) {
+        parent2 = nestedMatch[1].trim() || null;
+    }
+
+    return { parent1, parent2 };
+}
+```
+
+**Phenotype-only rows** (e.g. `OG Kush Breath`, `Cookies x Cherry Pie Phenotype`, `Sunset Sherbet x Acai Berry Pheno`) get `parent1 = parent2 = null` and a still-populated `description`, `origin`, `type`, `color`. The genetics card will simply omit the parent row for these — that is the intended outcome.
+
+**Notes:**
+- The parenthetical `(Florida Cut)` is preserved on `parent2` — that matches the JSON's intent of describing a cut, not a separate parent.
+- "Trop Cherry x #1 Strain" keeps the `#` in `parent2` (it's a real strain name).
+- "Alien Cookies x Starfighter x Colombian" is treated as a two-parent cross (Alien Cookies × Starfighter); the third ancestor is dropped.
+- Rows with no `genetics` field at all (rare but possible) get `parent1 = parent2 = null`.
+
+Existing-row check is by `name` — re-running the seed is a no-op (same pattern as `seedTerpenes`).
+
+**Duplicate names in the JSON:** the mock contains near-duplicates such as `אייס קרים` vs `קרים`, `אייסי שרבט` vs `אייס שרבט`, `אייס ברן` vs `אייס קרים`. The unique constraint on `name` must be enforced **loudly** — the seed does NOT catch the error, and the bootstrap in `main.ts` does NOT silently fall through. Procedure:
+
+1. Before seeding, run a one-time normalization pass over the JSON:
+   - Sort rows by `name` ASC and walk consecutive duplicates.
+   - For each duplicate, keep the row with the more informative `description` (longer non-empty), then `origin`, then `type`. Ties → keep the first occurrence.
+   - Append a `(2)` suffix only when the two strains are genuinely different (different `origin` or `type`); otherwise drop the duplicate silently and log a warning.
+2. After normalization, assert `new Set(rows.map(r => r.name)).size === rows.length`. If false, abort the seed with a clear error message naming the duplicate strain(s).
+3. The `seedGenetics(...)` function itself does not catch duplicate-key errors — it lets the TypeORM `QueryFailedError` propagate to `main.ts`, which logs and exits with a non-zero code. This prevents silent data corruption from a future seed update.
+
+Wire the seed into `backend/src/main.ts`. The exact insertion point is the seed block at `backend/src/main.ts:32-34` — `await seedAdmin(dataSource); await seedLlmProviders(dataSource);`. Add `await seedGenetics(dataSource);` immediately after, BEFORE `app.listen(port)`:
+
+```ts
+// backend/src/main.ts (around lines 32-34)
+const dataSource = app.get(DataSource);
+await seedAdmin(dataSource);
+await seedLlmProviders(dataSource);
+await seedGenetics(dataSource); // <-- add this line
+```
+
+### 1.8 Backend verification
+
+- `npm.cmd run build` from `backend` — must pass.
+- `GET /genetics` (with JWT) returns ~200 rows ordered alphabetically.
+- `GET /genetics/גורילה גלו` returns the matching single record (URL-encode the Hebrew name).
+- Swagger UI lists the new tag.
+
+## Phase 2 — Frontend shared tooltip component
+
+Replace `frontend/src/app/features/strain-hunter/terpene-tooltip/` with `frontend/src/app/components/shared/tooltip/`. The new component is **generic** — it accepts a `category` input and reads from the matching store.
+
+### 2.1 `frontend/src/app/core/models/genetics.interface.ts`
+
+```ts
+export interface IGenetics {
+    id: number;
+    name: string;
+    description?: string;
+    parent1?: string;
+    parent2?: string;
+    origin?: string;
+    type?: string;
+    color: string;
+}
+```
+
+### 2.2 `frontend/src/app/core/services/genetics.service.ts`
+
+Mirror `TerpeneService` — `inject(HttpClient)`, `base = environment.apiUrl + '/genetics'`, `list()` returns `Observable<ServiceResultContainer<IGenetics[]>>`.
+
+### 2.3 `frontend/src/app/core/store/genetics.store.ts`
+
+Mirror `TerpeneStore` — `terpenes` → `genetics`, `byName` lookup, `loadAll()` idempotent cache, `getByName(name)`.
+
+### 2.4 `frontend/src/app/components/shared/tooltip/tooltip.ts`
+
+```ts
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { TerpeneStore } from '../../../core/store/terpene.store';
+import { GeneticsStore } from '../../../core/store/genetics.store';
+
+export type TooltipCategory = 'terpene' | 'genetics';
+
+/** Which genetics field the chip came from. Only meaningful for `category === 'genetics'`. */
+export type TooltipGeneticsRole = 'origin' | 'parent1' | 'parent2';
+
+@Component({
+    selector: 'app-tooltip',
+    standalone: true,
+    imports: [],
+    templateUrl: './tooltip.html',
+    styleUrl: './tooltip.css',
+    changeDetection: ChangeDetectionStrategy.Eager,
+})
+export class Tooltip {
+    private readonly terpeneStore = inject(TerpeneStore);
+    private readonly geneticsStore = inject(GeneticsStore);
+
+    /** Category switch — decides which store and which card template renders. */
+    readonly category = input.required<TooltipCategory>();
+
+    /** Display name — looked up in the matching store. */
+    readonly name = input.required<string>();
+
+    /**
+     * Genetic role label shown above the card header. Optional — only relevant for
+     * `category === 'genetics'`. When omitted, no role label is rendered.
+     */
+    readonly role = input<TooltipGeneticsRole | null>(null);
+
+    readonly terpene = computed(() =>
+        this.category() === 'terpene' ? this.terpeneStore.getByName(this.name()) : undefined,
+    );
+
+    readonly genetics = computed(() =>
+        this.category() === 'genetics' ? this.geneticsStore.getByName(this.name()) : undefined,
+    );
+
+    /** Human-readable Hebrew label for the genetics role (or null when not applicable). */
+    readonly roleLabel = computed<string | null>(() => {
+        if (this.category() !== 'genetics') return null;
+        switch (this.role()) {
+            case 'origin': return 'זן מקור';
+            case 'parent1': return 'הורה #1';
+            case 'parent2': return 'הורה #2';
+            default: return null;
+        }
+    });
+}
+```
+
+### 2.5 `frontend/src/app/components/shared/tooltip/tooltip.html`
+
+Two `@if` branches driven by `category()`. The genetics branch renders the role label inside the header when present, so users hovering an origin-strain chip vs a parent1 chip get a small disambiguating cue even though the underlying strain row is shared:
+
+```html
+@switch (category()) {
+    @case ('terpene') {
+        @if (terpene(); as t) {
+            <div class="tooltip-card" [style.--tooltip-color]="t.color">
+                <header class="tooltip-card-header">
+                    <span class="tooltip-card-dot"></span>
+                    <h4 class="tooltip-card-name">{{ t.name }}</h4>
+                </header>
+
+                @if (t.description) {
+                    <p class="tooltip-card-desc">{{ t.description }}</p>
+                }
+
+                @if (t.scent) {
+                    <div class="tooltip-card-row">
+                        <span class="ph ph-flower-lotus tooltip-card-icon"></span>
+                        <span>{{ t.scent }}</span>
+                    </div>
+                }
+
+                @if (t.effects?.length) {
+                    <div class="tooltip-card-effects">
+                        @for (effect of t.effects; track effect) {
+                            <span class="tooltip-card-effect-tag">{{ effect }}</span>
+                        }
+                    </div>
+                }
+            </div>
+        } @else {
+            <div class="tooltip-card tooltip-card-empty"><span>אין מידע זמין</span></div>
+        }
+    }
+    @case ('genetics') {
+        @if (genetics(); as g) {
+            <div class="tooltip-card" [style.--tooltip-color]="g.color">
+                <header class="tooltip-card-header">
+                    <span class="tooltip-card-dot"></span>
+                    <div class="tooltip-card-header-text">
+                        @if (roleLabel(); as label) {
+                            <span class="tooltip-card-role">{{ label }}</span>
+                        }
+                        <h4 class="tooltip-card-name">{{ g.name }}</h4>
+                    </div>
+                </header>
+
+                @if (g.description) {
+                    <p class="tooltip-card-desc">{{ g.description }}</p>
+                }
+
+                @if (g.parent1 || g.parent2) {
+                    <div class="tooltip-card-row">
+                        <span class="ph ph-tree-evergreen tooltip-card-icon"></span>
+                        <span>
+                            @if (g.parent1) { <span>{{ g.parent1 }}</span> }
+                            @if (g.parent1 && g.parent2) { <span> × </span> }
+                            @if (g.parent2) { <span>{{ g.parent2 }}</span> }
+                        </span>
+                    </div>
+                }
+
+                @if (g.origin) {
+                    <div class="tooltip-card-row">
+                        <span class="ph ph-globe-hemisphere-west tooltip-card-icon"></span>
+                        <span>{{ g.origin }}</span>
+                    </div>
+                }
+
+                @if (g.type) {
+                    <div class="tooltip-card-row">
+                        <span class="ph ph-leaf tooltip-card-icon"></span>
+                        <span>{{ g.type }}</span>
+                    </div>
+                }
+            </div>
+        } @else {
+            <div class="tooltip-card tooltip-card-empty"><span>אין מידע זמין</span></div>
+        }
+    }
+}
+```
+
+### 2.6 `frontend/src/app/components/shared/tooltip/tooltip.css`
+
+Renamed copy of `terpene-tooltip.css`. The following classes must be carried over verbatim from the terpene stylesheet (only the prefix changes from `.terpene-card-` → `.tooltip-card-`):
+
+**Terpene card classes** (used by the terpene branch):
+- `.tooltip-card` — glass-effect container (with `--tooltip-color` fallback, `::before` blur, `position: relative`, `isolation: isolate`)
+- `.tooltip-card-header` — flex row holding dot + name
+- `.tooltip-card-dot` — accent dot tinted with `--tooltip-color`
+- `.tooltip-card-name` — `<h4>` styling
+- `.tooltip-card-desc` — `<p>` description
+- `.tooltip-card-row` — flex row used by scent, parent cross, origin, type
+- `.tooltip-card-icon` — phosphor icon tinting
+- `.tooltip-card-effects` — flex wrap container for terpene effects
+- `.tooltip-card-effect-tag` — pill-shaped effect badge
+- `.tooltip-card-empty` — fallback empty state
+
+**New genetics-only classes** (used by the genetics branch):
+- `.tooltip-card-header-text` — vertical stack holding optional `.tooltip-card-role` above the name (no extra spacing — let the `.subtitle` global handle line-height if needed)
+- `.tooltip-card-role` — small uppercase/secondary label above the strain name; uses `var(--font-size-xs)` and `var(--color-text-secondary)`; no border, no background
+
+Keep the `:host { position: fixed; z-index: 1100; direction: rtl; pointer-events: none; }` shell — the drawer positions the tooltip via inline `[style.top.px]` / `[style.left.px]`.
+
+Use `var(--token)` exclusively (per project CSS rules). Only `--tooltip-color` is data-driven.
+
+If during implementation the merged CSS drifts above the 4 kB component budget (terpene CSS is ~3 kB today, plus the new genetics/role selectors), split the file: keep the shared shell + effects in `tooltip.css`, and move terpene-only (`.tooltip-card-effects`, `.tooltip-card-effect-tag`) and genetics-only (`.tooltip-card-role`, `.tooltip-card-header-text`) selectors into separate component-partial CSS files. **Do not** fall back to two separate components — the unification is still worth it; only split the CSS if the budget forces it.
+
+### 2.7 Remove the old component
+
+Delete:
+
+- `frontend/src/app/features/strain-hunter/terpene-tooltip/terpene-tooltip.ts`
+- `frontend/src/app/features/strain-hunter/terpene-tooltip/terpene-tooltip.html`
+- `frontend/src/app/features/strain-hunter/terpene-tooltip/terpene-tooltip.css`
+
+The shell folder disappears too.
+
+## Phase 3 — Update consumers
+
+### 3.1 `matching-preferences-drawer.ts`
+
+- Replace `import { TerpeneTooltip } from '../terpene-tooltip/terpene-tooltip';` with `import { Tooltip, TooltipCategory, TooltipGeneticsRole } from '../../../components/shared/tooltip/tooltip';`.
+- Add `private readonly geneticsStore = inject(GeneticsStore);` next to the existing terpene inject.
+- Imports array: `imports: [..., Tooltip]`.
+- Update the `collectGenetics(...)` private method to **preserve role information**, not just deduplicate strings. New shape:
+
+  ```ts
+  // New: a class-field map populated by collectGenetics(...).
+  // Keyed by strain name; value is the most specific role seen.
+  private readonly geneticsRoles = new Map<string, TooltipGeneticsRole>();
+
+  private collectGenetics(items: Record<string, unknown>[]): string[] {
+      const set = new Set<string>();
+      for (const item of items) {
+          for (const [key, role] of [
+              ['originStrain', 'origin'] as const,
+              ['parent1', 'parent1'] as const,
+              ['parent2', 'parent2'] as const,
+          ]) {
+              const value = item[key];
+              if (typeof value !== 'string') continue;
+              const trimmed = value.trim();
+              if (!trimmed) continue;
+              set.add(trimmed);
+              // First-write wins — origin wins over parent1 wins over parent2.
+              if (!this.geneticsRoles.has(trimmed)) {
+                  this.geneticsRoles.set(trimmed, role);
+              }
+          }
+      }
+      return [...set].sort((a, b) => a.localeCompare(b, 'he'));
+  }
+  ```
+
+  This keeps the existing `CategoryGroup.items: string[]` shape (so the chip-rendering loop in `matching-preferences-drawer.html:56-70` does not change) but **also remembers the most specific role** the strain was seen in. If the same name appears as `originStrain` in one product and as `parent1` in another, `origin` wins.
+
+  The `geneticsRoles` map MUST be cleared at the start of each `collectGenetics(...)` call so that a subsequent `items()` change (e.g. after filter/search) does not retain stale roles.
+
+- `CategoryGroup.items: string[]` — UNCHANGED for both branches. The role lookup happens out-of-band via `geneticsRoles.get(name)`. This is the minimum-churn shape and keeps the existing `@for (name of group.items; track name)` loop working without per-branch shape changes.
+
+- `onChipEnter(category, name, event)`: drop the `if (category !== 'terpene') return;` guard. Compute the position for any category. For `category === 'genetics'`, look up the role via `this.geneticsRoles.get(name)` and pass it into `tooltip.set({ name, category, role, top, left, openUp })`.
+
+- Extend `TooltipPos` so it carries the role for genetics chips:
+
+  ```ts
+  type TooltipPos = {
+      name: string;
+      category: TooltipCategory;
+      role?: TooltipGeneticsRole; // only set when category === 'genetics'
+      top: number;
+      left: number;
+      openUp: boolean;
+  };
+  ```
+
+  The `role` field is read from a `Map<string, TooltipGeneticsRole>` populated by `collectGenetics(...)`.
+
+- New `effect` on `visible()`:
+
+  ```ts
+  effect(() => {
+      if (this.visible()) {
+          this.terpeneStore.loadAll();
+          this.geneticsStore.loadAll();
+      }
+  });
+  ```
+
+### 3.2 `matching-preferences-drawer.html`
+
+The tooltip host line changes from:
+
+```html
+<app-terpene-tooltip class="terpene-tooltip-fixed" [name]="t.name" [style.top.px]="t.top" [style.left.px]="t.left" />
+```
+
+to:
+
+```html
+<app-tooltip class="tooltip-fixed" [category]="t.category" [name]="t.name" [role]="t.role" [style.top.px]="t.top" [style.left.px]="t.left" />
+```
+
+The chip rendering loop in `matching-preferences-drawer.html:56-70` iterates over `group.items: string[]` (UNCHANGED from the current code). The drawer reads the role from `geneticsRoles.get(name)` inside the `(mouseenter)` handler — no template change beyond the `<app-terpene-tooltip>` → `<app-tooltip>` swap below.
+
+Rename the `.terpene-tooltip-fixed` class to `.tooltip-fixed` in the drawer's CSS.
+
+### 3.3 `matching-preferences-drawer.css`
+
+- Remove all `.terpene-tooltip-fixed` rules and rename to `.tooltip-fixed` (only positioning is local — glass pattern is now in the shared component).
+- Note: `.terpene-tooltip-anchor` and `.chip-wrapper-terpene` rules do not exist in the current stylesheet (the pre-fixed-position approach was already removed). This bullet is a no-op — keep it here only as a reminder that the previous chip-wrapper pattern is gone for good.
+
+## Phase 4 — Verification
+
+1. **Backend build** — `npm.cmd run build` from `backend`. Pass.
+2. **Backend smoke test** — `npm.cmd run start:dev -w backend`, then `curl http://localhost:3000/genetics` with a JWT → 200, ~200 rows. `curl http://localhost:3000/genetics/גורילה%20גלו` → single row.
+3. **Frontend build** — `npx ng build` from `frontend`. Pass.
+4. **Frontend tests** — `npx ng test --watch=false` from `frontend`. Pass (no new tests required for the tooltip itself, but ensure existing tests still pass).
+5. **Visual check**:
+   - Open `/strain-hunter` → matching drawer → hover a terpene chip → see the terpene card (colored dot, scent, effects).
+   - Hover a genetics chip → see the genetics card (colored dot, description, parent1 × parent2, origin, type).
+   - Tooltip flips above/below and stays inside the viewport on small screens.
+
+## Risks / open questions
+
+- **URL encoding of Hebrew names** — `GET /genetics/גורילה גלו` must URL-encode the space. Document this in the Swagger `ApiParam`.
+- **Schema-synchronize** — `synchronize: true` is on for this dev DB; the new `genetics` table will auto-create. No migration needed.
+- **Duplicate names** — the JSON contains near-duplicate strains (e.g. `אייס קרים` / `קרים`). Resolution is in §1.7: a one-time normalization pass dedupes before seeding, then the seed asserts uniqueness and fails loudly if any duplicate slips through. The seed does NOT swallow `ER_DUP_ENTRY` — silent fall-through would hide future data corruption.
+- **Hebrew safety** — read seed data from this `.md` file via UTF-8 Read, never copy from terminal output. After seeding, sanity-check a few rows in the DB.
+- **Architecture diagram** — update `documents/architecture-diagram.md` to add `GeneticsModule` to `Backend` and a `GeneticsStore`/`Tooltip` flow on the frontend.
+
+## Files touched
+
+Backend (new):
+
+- `backend/src/modules/genetics/entities/genetics.entity.ts`
+- `backend/src/modules/genetics/dto/genetics.dto.ts`
+- `backend/src/modules/genetics/dto/genetics-list-result-response.dto.ts`
+- `backend/src/modules/genetics/dto/genetics-result-response.dto.ts`
+- `backend/src/modules/genetics/genetics.service.ts`
+- `backend/src/modules/genetics/genetics.controller.ts`
+- `backend/src/modules/genetics/genetics.module.ts`
+- `backend/src/modules/genetics/seeds/genetics.seed.ts`
+
+Backend (edit):
+
+- `backend/src/app.module.ts` — add `GeneticsModule`
+- `backend/src/main.ts` — call `seedGenetics(dataSource)`
+- `backend/swagger-spec.json` — regenerated by `main.ts`
+
+Frontend (new):
+
+- `frontend/src/app/core/models/genetics.interface.ts`
+- `frontend/src/app/core/services/genetics.service.ts`
+- `frontend/src/app/core/store/genetics.store.ts`
+- `frontend/src/app/components/shared/tooltip/tooltip.ts`
+- `frontend/src/app/components/shared/tooltip/tooltip.html`
+- `frontend/src/app/components/shared/tooltip/tooltip.css`
+
+Frontend (edit):
+
+- `frontend/src/app/features/strain-hunter/matching-preferences-drawer/matching-preferences-drawer.ts`
+- `frontend/src/app/features/strain-hunter/matching-preferences-drawer/matching-preferences-drawer.html`
+- `frontend/src/app/features/strain-hunter/matching-preferences-drawer/matching-preferences-drawer.css`
+
+Frontend (delete):
+
+- `frontend/src/app/features/strain-hunter/terpene-tooltip/` (whole folder)
+
+Docs:
+
+- `documents/architecture-diagram.md` — add `GeneticsModule` to the diagram
+- `documents/HANDOFF.md`, `documents/STATUS.md`, `documents/LOG.md` — session-end updates
+- This file (`documents/features/todo/genetic-details-plan.md`) — moves to `documents/done/` once verification passes

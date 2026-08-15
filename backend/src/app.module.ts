@@ -77,5 +77,4 @@ import { EncryptionModule } from './core/encryption.module';
 })
 export class AppModule {
 
-
 }

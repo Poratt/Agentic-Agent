@@ -98,6 +98,13 @@ const TOOLTIP_W = 240;
 const TOOLTIP_GAP = 8;
 const TOOLTIP_DELAY_MS = 400;
 
+type TerpeneTooltipPos = {
+    name: string;
+    top: number;
+    left: number;
+    openUp: boolean;
+};
+
 @Component({
     selector: 'app-strain-hunter',
     standalone: true,
@@ -129,6 +136,9 @@ export class StrainHunter implements OnInit {
     private requestSubscription: Subscription | null = null;
     private readonly numericSortColumns = new Set(['price', 'catalogPrice', 'matchScore']);
     private readonly textCollator = new Intl.Collator('he', { numeric: true, sensitivity: 'base' });
+    private readonly tooltipWidth = 240;
+    private readonly tooltipHeight = 140;
+    private readonly tooltipGap = 8;
 
     protected readonly PageStates = PageStates;
     protected readonly columnLabels: Record<string, string> = {
@@ -231,6 +241,9 @@ export class StrainHunter implements OnInit {
             }
         });
     }
+
+    /** Fixed-position terpene tooltip state — null = hidden */
+    readonly terpeneTooltip = signal<TerpeneTooltipPos | null>(null);
 
     items = computed<StrainRow[]>(() => {
         const raw = this.rawItems();
@@ -666,6 +679,42 @@ export class StrainHunter implements OnInit {
             .filter((terpene): terpene is TerpeneFilter => {
                 return terpene !== null;
             });
+    }
+
+    /**
+     * Show the terpene-tooltip popover above (or below) a terpene-node button.
+     * Lazy-loads the catalog on first hover so the table can be used without ever
+     * opening the matching-preferences drawer.
+     *
+     * @param name Hebrew terpene name (without trailing percentage).
+     * @param event MouseEvent whose currentTarget is the hovered button.
+     */
+    onTerpeneHover(name: string, event: MouseEvent): void {
+        if (!name) {
+            return;
+        }
+        this.terpeneStore.reload();
+
+        const el = event.currentTarget as HTMLElement;
+        const rect = el.getBoundingClientRect();
+
+        const openUp = rect.top >= this.tooltipHeight + this.tooltipGap;
+        const top = openUp
+            ? rect.top - this.tooltipHeight - this.tooltipGap
+            : rect.bottom + this.tooltipGap;
+
+        const chipCenter = rect.left + rect.width / 2;
+        const left = Math.max(
+            this.tooltipGap,
+            Math.min(chipCenter - this.tooltipWidth / 2, window.innerWidth - this.tooltipWidth - this.tooltipGap),
+        );
+
+        this.terpeneTooltip.set({ name, top, left, openUp });
+    }
+
+    /** Hide the terpene-tooltip popover. */
+    onTerpeneLeave(): void {
+        this.terpeneTooltip.set(null);
     }
 
     countryFlagUrl(value: unknown): string {

@@ -10,6 +10,7 @@ import { LlmRequest, LlmResponse, LlmToolCall } from '../types/llm.types';
 import { LlmProviderConfigService } from './llm-provider-config.service';
 import { LlmProviderService } from '../../llm-provider/llm-provider.service';
 import { assertSafeUrl, SsrfError } from '../../../core/utils/ssrf-guard.util';
+import { LlmProviderEntity } from '../../llm-provider/entities/llm-provider.entity';
 
 const execFileAsync = promisify(execFile);
 
@@ -205,7 +206,7 @@ export class LlmClientService {
     ];
   }
 
-  private async getClient(providerOverride?: string): Promise<{ client: OpenAI; dbProvider: Awaited<ReturnType<typeof this.dbProviderService.findProviderByKey>> }> {
+  private async getClient(providerOverride?: string): Promise<{ client: OpenAI; dbProvider: LlmProviderEntity }> {
     const providerKey = providerOverride || this.providerConfig.getActiveProvider();
 
     const dbProvider = await this.dbProviderService.findProviderByKey(providerKey);
@@ -290,7 +291,7 @@ export class LlmClientService {
    * Resolves the DB provider connection (base URL + API key) for a provider key.
    * Used by the image/video raw-fetch paths that the OpenAI SDK does not cover.
    */
-  private async getProviderConnection(providerOverride?: string): Promise<{ baseUrl: string; apiKey: string; dbProvider: Awaited<ReturnType<typeof this.dbProviderService.findProviderByKey>> }> {
+  private async getProviderConnection(providerOverride?: string): Promise<{ baseUrl: string; apiKey: string; dbProvider: LlmProviderEntity }> {
     const providerKey = providerOverride || this.providerConfig.getActiveProvider();
     const dbProvider = await this.dbProviderService.findProviderByKey(providerKey);
 

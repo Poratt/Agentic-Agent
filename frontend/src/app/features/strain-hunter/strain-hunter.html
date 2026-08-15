@@ -459,6 +459,8 @@
                                                                 (mouseenter)="onTerpeneEnter(terpene.name, $event)"
                                                                 (mouseleave)="onTooltipLeave()"
                                                                 (click)="applyDataFilter('terpenes', terpene.name, terpene.label)"
+                                                                (mouseenter)="onTerpeneHover(terpene.name, $event)"
+                                                                (mouseleave)="onTerpeneLeave()"
                                                             >
                                                                 {{ terpene.label }}
                                                             </button>
@@ -563,3 +565,16 @@
         }
     </div>
 </p-dialog>
+
+<app-matching-preferences-drawer [(visible)]="matchDrawerVisible" [items]="rawItems()" />
+
+<!-- Terpene tooltip rendered at page root so its fixed position escapes all overflow ancestors -->
+@if (terpeneTooltip(); as t) {
+    <app-tooltip
+        class="tooltip-fixed"
+        category="terpene"
+        [name]="t.name"
+        [style.top.px]="t.top"
+        [style.left.px]="t.left"
+    />
+}

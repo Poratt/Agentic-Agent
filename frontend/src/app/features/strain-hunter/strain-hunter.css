@@ -470,3 +470,23 @@
     border-radius: var(--radius-md);
   }
 }
+
+/* Terpene hover-tooltip — rendered at page root so its `position: fixed`
+   is not affected by any transformed/overflowed ancestor. The shared
+   `app-tooltip` :host already sets `position: fixed`, `z-index`,
+   `direction: rtl`, and `pointer-events: none`; this rule is a no-op
+   kept only for explicit host-class intent and future tweaks. */
+.tooltip-fixed {
+  display: block;
+}
+
+::ng-deep .p-dialog {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+::ng-deep .p-dialog .p-dialog-content {
+  background: transparent !important;
+  padding: 0 !important;
+}

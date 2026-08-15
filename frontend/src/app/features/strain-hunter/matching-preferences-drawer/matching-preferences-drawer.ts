@@ -114,6 +114,7 @@ export class MatchingPreferencesDrawer {
     constructor() {
         effect(() => {
             if (this.visible()) {
+
             }
         });
     }
@@ -224,12 +225,12 @@ export class MatchingPreferencesDrawer {
     private collectGenetics(items: Record<string, unknown>[]): string[] {
         const set = new Set<string>();
         for (const item of items) {
-            for (const key of ['originStrain', 'parent1', 'parent2'] as const) {
+            for (const key of ['originStrain', 'parent1', 'parent2']) {
                 const value = item[key];
-                if (typeof value === 'string') {
-                    const trimmed = value.trim();
-                    if (trimmed) set.add(trimmed);
-                }
+                if (typeof value !== 'string') continue;
+                const trimmed = value.trim();
+                if (!trimmed) continue;
+                set.add(trimmed);
             }
         }
         return [...set].sort((a, b) => a.localeCompare(b, 'he'));
