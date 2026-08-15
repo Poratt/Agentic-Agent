@@ -15,6 +15,7 @@ type ViewMode = 'all' | 'nightly' | 'favorites';
   standalone: true,
   imports: [CommonModule, IdeasForm, IdeasProgress, IdeaCard, TooltipDirective],
   templateUrl: './ideas-page.html',
+  styleUrls: ['./ideas-page.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class IdeasPage implements OnInit {
