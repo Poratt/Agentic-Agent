@@ -6,7 +6,7 @@
  * Cross-platform Node.js replacement for the original bash script — avoids
  * WSL/Git Bash PATH issues on Windows.
  */
-const { execFileSync } = require('child_process');
+const { execFileSync, spawn } = require('child_process');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
@@ -42,6 +42,50 @@ function commandExists(cmd) {
 function dockerAvailable() {
   try {
     execFileSync('docker', ['info'], { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function findDockerDesktopExe() {
+  if (process.platform !== 'win32') return null;
+  const candidates = [
+    path.join(process.env.ProgramFiles || 'C:\\Program Files', 'Docker', 'Docker', 'Docker Desktop.exe'),
+    path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'Docker', 'Docker', 'Docker Desktop.exe'),
+    path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Docker', 'Docker', 'Docker Desktop.exe'),
+  ];
+  return candidates.find((p) => p && fs.existsSync(p)) || null;
+}
+
+function tryStartDocker() {
+  if (process.platform === 'win32') {
+    const exe = findDockerDesktopExe();
+    if (!exe) return false;
+    log(`docker daemon not running — launching Docker Desktop at ${exe}`);
+    try {
+      const child = spawn(exe, [], { detached: true, stdio: 'ignore' });
+      child.unref();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  if (process.platform === 'darwin') {
+    log('docker daemon not running — launching Docker via `open -a Docker`');
+    try {
+      const child = spawn('open', ['-a', 'Docker'], { detached: true, stdio: 'ignore' });
+      child.unref();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  // Linux
+  log('docker daemon not running — attempting `systemctl start docker`');
+  try {
+    const child = spawn('systemctl', ['start', 'docker'], { detached: true, stdio: 'ignore' });
+    child.unref();
     return true;
   } catch {
     return false;
@@ -94,7 +138,25 @@ function sleep(ms) {
   }
 
   if (!dockerAvailable()) {
-    fail("docker daemon not running — open Docker Desktop and wait until the tray icon shows 'running'");
+    if (!tryStartDocker()) {
+      fail("docker daemon not running and could not auto-start — open Docker Desktop and wait until the tray icon shows 'running'");
+    }
+    // Docker Desktop cold start can take 20-60s before `docker info` succeeds.
+    const MAX_DOCKER_WAIT = 60;
+    process.stdout.write('ensure-searxng: waiting for docker daemon');
+    for (let i = 1; i <= MAX_DOCKER_WAIT; i++) {
+      if (dockerAvailable()) {
+        console.log('');
+        log('docker daemon is ready');
+        break;
+      }
+      if (i % 10 === 0) process.stdout.write('.');
+      await sleep(1000);
+    }
+    console.log('');
+    if (!dockerAvailable()) {
+      fail(`docker daemon did not become ready in ${MAX_DOCKER_WAIT}s — check Docker Desktop is starting properly`);
+    }
   }
 
   // A running container does not guarantee the host port is mapped/usable.
