@@ -1,18 +1,18 @@
 <div class="glass-effect card idea-card">
     <div class="top-card">
-        <div class="idea-card-head">
+        <div class="idea-card-head" (click)="toggle()">
             <div class="idea-card-title-row">
-                <button class="primary-btn xs" type="button" (click)="toggle()">
+                <button class="primary-btn xs" type="button">
                     <span class="ph" [class.ph-caret-down]="expanded()" [class.ph-caret-left]="!expanded()"></span>
                 </button>
-                <h3 class="idea-card-title" (click)="toggle()">{{ idea().title }}</h3>
+                <h3 class="idea-card-title">{{ idea().title }}</h3>
             </div>
             <div class="idea-card-meta">
                 @if (idea().id !== undefined) {
                     <button
                         class="star-btn"
                         [class.star-active]="idea().isFavorite"
-                        (click)="onToggleFav()"
+                        (click)="onToggleFav(); $event.stopPropagation()"
                         [attr.data-testid]="'fav-' + idea().id"
                     >
                         <span class="ph" [class]="idea().isFavorite ? 'ph-fill ph-star' : 'ph-star'"></span>

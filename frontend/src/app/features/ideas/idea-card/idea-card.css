@@ -23,6 +23,7 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: var(--space-6);
+    cursor: pointer;
 
     .idea-card-title-row {
       display: flex;
@@ -40,12 +41,11 @@
       font-size: var(--font-size-sm);
       font-weight: var(--font-weight-semibold);
       color: var(--color-text-primary);
-      cursor: pointer;
       transition: color var(--transition-fast);
+    }
 
-      &:hover {
-        color: var(--color-primary);
-      }
+    &:hover .idea-card-title {
+      color: var(--color-primary);
     }
   }
 

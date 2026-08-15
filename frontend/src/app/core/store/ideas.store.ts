@@ -132,6 +132,7 @@ export class IdeasStore {
     if (event.phase === 'done') {
       this.applyResult(event.result);
       this.loading.set(false);
+      this.loadSessions();
       return;
     }
 

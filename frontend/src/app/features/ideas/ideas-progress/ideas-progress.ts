@@ -106,27 +106,6 @@ import { CommonModule } from '@angular/common';
       min-width: 200px;
       text-align: center;
     }
-
-    .shimmer-text {
-      background: linear-gradient(
-        90deg,
-        var(--color-text-muted) 0%,
-        var(--color-text-muted) 40%,
-        var(--color-primary) 50%,
-        var(--color-text-muted) 60%,
-        var(--color-text-muted) 100%
-      );
-      background-size: 200% 100%;
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: shimmer-text-rtl 2s linear infinite;
-    }
-
-    @keyframes shimmer-text-rtl {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
   `]
 })
 export class IdeasProgress {

@@ -1,14 +1,15 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { IdeasProgressEvent } from '../models/idea.interface';
 import { SavedIdeaSession } from '../models/saved-idea-session.model';
-import { SavedIdea } from '../models/saved-idea.model';
 import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class IdeasService {
   private base = `${environment.apiUrl}/ideas`;
+  private http = inject(HttpClient);
   private authService = inject(AuthService);
 
   generateStream(
@@ -104,128 +105,39 @@ export class IdeasService {
   }
 
   listSessions(params?: { nightly?: boolean; favorites?: boolean }): Observable<SavedIdeaSession[]> {
-    return new Observable<SavedIdeaSession[]>((observer) => {
-      const searchParams = new URLSearchParams();
-      if (params?.nightly !== undefined) searchParams.set('nightly', String(params.nightly));
-      if (params?.favorites !== undefined) searchParams.set('favorites', String(params.favorites));
-      const query = searchParams.toString();
-      const url = `${this.base}/sessions${query ? `?${query}` : ''}`;
-
-      fetch(url, { method: 'GET', credentials: 'include' })
-        .then(async (response) => {
-          if (!response.ok) {
-            const body = await response.json().catch(() => ({}));
-            observer.error(new Error(body?.message || `Failed to list sessions: ${response.statusText}`));
-            return;
-          }
-          const data: SavedIdeaSession[] = await response.json();
-          observer.next(data);
-          observer.complete();
-        })
-        .catch((err) => observer.error(err));
-    });
+    let httpParams = new HttpParams();
+    if (params?.nightly !== undefined) httpParams = httpParams.set('nightly', String(params.nightly));
+    if (params?.favorites !== undefined) httpParams = httpParams.set('favorites', String(params.favorites));
+    return this.http.get<SavedIdeaSession[]>(`${this.base}/sessions`, { params: httpParams });
   }
 
   getSession(id: number): Observable<SavedIdeaSession> {
-    return new Observable<SavedIdeaSession>((observer) => {
-      fetch(`${this.base}/sessions/${id}`, { method: 'GET', credentials: 'include' })
-        .then(async (response) => {
-          if (!response.ok) {
-            const body = await response.json().catch(() => ({}));
-            observer.error(new Error(body?.message || `Failed to get session: ${response.statusText}`));
-            return;
-          }
-          const data: SavedIdeaSession = await response.json();
-          observer.next(data);
-          observer.complete();
-        })
-        .catch((err) => observer.error(err));
-    });
+    return this.http.get<SavedIdeaSession>(`${this.base}/sessions/${id}`);
   }
 
   deleteSession(id: number): Observable<void> {
-    return new Observable<void>((observer) => {
-      fetch(`${this.base}/sessions/${id}`, { method: 'DELETE', credentials: 'include' })
-        .then(async (response) => {
-          if (!response.ok) {
-            const body = await response.json().catch(() => ({}));
-            observer.error(new Error(body?.message || `Failed to delete session: ${response.statusText}`));
-            return;
-          }
-          observer.next();
-          observer.complete();
-        })
-        .catch((err) => observer.error(err));
-    });
+    return this.http.delete<void>(`${this.base}/sessions/${id}`);
   }
 
   setFavorite(ideaId: number, isFavorite: boolean): Observable<void> {
-    return new Observable<void>((observer) => {
-      fetch(`${this.base}/ideas/${ideaId}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isFavorite }),
-      })
-        .then(async (response) => {
-          if (!response.ok) {
-            const body = await response.json().catch(() => ({}));
-            observer.error(new Error(body?.message || `Failed to update favorite: ${response.statusText}`));
-            return;
-          }
-          observer.next();
-          observer.complete();
-        })
-        .catch((err) => observer.error(err));
-    });
+    return this.http.patch<void>(`${this.base}/ideas/${ideaId}`, { isFavorite });
   }
 
   nightlyUnreadCount(): Observable<number> {
     return new Observable<number>((observer) => {
-      fetch(`${this.base}/nightly/unread-count`, { method: 'GET', credentials: 'include' })
-        .then(async (response) => {
-          if (!response.ok) {
-            const body = await response.json().catch(() => ({}));
-            observer.error(new Error(body?.message || `Failed to get unread count: ${response.statusText}`));
-            return;
-          }
-          const data = await response.json();
-          observer.next(typeof data === 'number' ? data : data?.count ?? 0);
-          observer.complete();
-        })
-        .catch((err) => observer.error(err));
+      this.http.get(`${this.base}/nightly/unread-count`).subscribe({
+        next: (data: any) => observer.next(typeof data === 'number' ? data : data?.count ?? 0),
+        error: (err) => observer.error(err),
+        complete: () => observer.complete(),
+      });
     });
   }
 
   markNightlyRead(): Observable<void> {
-    return new Observable<void>((observer) => {
-      fetch(`${this.base}/nightly/mark-read`, { method: 'POST', credentials: 'include' })
-        .then(async (response) => {
-          if (!response.ok) {
-            const body = await response.json().catch(() => ({}));
-            observer.error(new Error(body?.message || `Failed to mark as read: ${response.statusText}`));
-            return;
-          }
-          observer.next();
-          observer.complete();
-        })
-        .catch((err) => observer.error(err));
-    });
+    return this.http.post<void>(`${this.base}/nightly/mark-read`, {});
   }
 
   triggerNightly(): Observable<{ success: boolean; message: string }> {
-    return new Observable<{ success: boolean; message: string }>((observer) => {
-      fetch(`${this.base}/nightly/trigger`, { method: 'POST', credentials: 'include' })
-        .then(async (response) => {
-          const body = await response.json().catch(() => ({}));
-          if (!response.ok) {
-            observer.error(new Error(body?.message || `Failed to trigger nightly: ${response.statusText}`));
-            return;
-          }
-          observer.next(body);
-          observer.complete();
-        })
-        .catch((err) => observer.error(err));
-    });
+    return this.http.post<{ success: boolean; message: string }>(`${this.base}/nightly/trigger`, {});
   }
 }

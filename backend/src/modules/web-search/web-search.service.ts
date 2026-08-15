@@ -35,6 +35,39 @@ export class WebSearchService {
     }
   }
 
+  /**
+   * מפשטת שאילתת חיפוש מורכבת לשאילתה נקייה ש-SearXNG יודע לעכל.
+   * מסירה טקסט בעברית, גרשיים על ביטויים ארוכים, ומילות קישור מיותרות.
+   */
+  private simplifyQuery(rawQuery: string): string {
+    // 1. הסר טקסט בעברית
+    const withoutHebrew = rawQuery.replace(/[֐-׿]+/g, '');
+
+    // 2. קצר גרשיים על ביטויים ארוכים (>30 תווים) ל-4 מילים ראשונות
+    const withoutLongQuotes = withoutHebrew.replace(
+      /"([^"]{30,})"/g,
+      (_match, inner: string) => {
+        const words = inner.trim().split(/\s+/).slice(0, 4);
+        return `"${words.join(' ')}"`;
+      },
+    );
+
+    // 3. הסר סימנים ומילות קישור
+    const cleaned = withoutLongQuotes
+      .replace(/[–—|]/g, ' ')
+      .replace(/\b(for|the|and|or|with|of|a|an)\b/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // 4. Fallback: אם נותר מעט מדי, החזר מקור
+    if (cleaned.split(/\s+/).length < 2) {
+      return rawQuery;
+    }
+
+    this.logger.debug(`[QueryRewrite] "${rawQuery.slice(0, 80)}..." → "${cleaned}"`);
+    return cleaned;
+  }
+
   async search(query: string): Promise<ServiceResultContainer<WebSearchResultDto | null>> {
     if (!this.baseUrl) {
       return {
@@ -43,6 +76,8 @@ export class WebSearchService {
         result: null,
       };
     }
+
+    const cleanQuery = this.simplifyQuery(query);
 
     try {
       const headers: Record<string, string> = { Accept: 'application/json' };
@@ -54,7 +89,7 @@ export class WebSearchService {
         `${this.baseUrl}/search`,
         {
           params: {
-            q: query,
+            q: cleanQuery,
             format: 'json',
             categories: 'general',
           },

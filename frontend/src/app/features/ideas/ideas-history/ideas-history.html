@@ -9,11 +9,12 @@
                 <div class="action-row">
                     <button
                         type="button"
-                        class="button primary-btn sm"
+                        class="icon-only primary-btn sm"
                         *accessTo="[UserRole.Admin]"
                         [disabled]="ideasStore.triggeringNightly()"
-(click)="triggerNightly()"
-                        appTooltip text="הפעלה אוטומטית"
+                        (click)="triggerNightly()"
+                        appTooltip
+                        text="הפעלה אוטומטית"
                     >
                         @if (ideasStore.triggeringNightly()) {
                             <span class="custom-loader xs"></span>
@@ -22,10 +23,24 @@
                         }
                     </button>
                     <div class="toggle-group">
-                        <button type="button" class="toggle-btn icon-only" [class.active]="filterMode() === 'all'" (click)="setFilter('all')" appTooltip text="הכל">
+                        <button
+                            type="button"
+                            class="toggle-btn icon-only"
+                            [class.active]="filterMode() === 'all'"
+                            (click)="setFilter('all')"
+                            appTooltip
+                            text="הכל"
+                        >
                             <span class="ph ph-squares-four"></span>
                         </button>
-                        <button type="button" class="toggle-btn icon-only" [class.active]="filterMode() === 'nightly'" (click)="setFilter('nightly')" appTooltip text="אוטומטיים">
+                        <button
+                            type="button"
+                            class="toggle-btn icon-only"
+                            [class.active]="filterMode() === 'nightly'"
+                            (click)="setFilter('nightly')"
+                            appTooltip
+                            text="אוטומטיים"
+                        >
                             <span class="ph ph-circuitry"></span>
                             @if (ideasStore.nightlyUnread() > 0) {
                                 <span class="icon-badge">{{ ideasStore.nightlyUnread() }}</span>
@@ -36,7 +51,8 @@
                             class="toggle-btn icon-only"
                             [class.active]="filterMode() === 'favorites'"
                             (click)="setFilter('favorites')"
-                            appTooltip text="מועדפים"
+                            appTooltip
+                            text="מועדפים"
                         >
                             <span class="ph ph-star"></span>
                         </button>
@@ -69,10 +85,10 @@
             </div>
         }
         @case (PageStates.Empty) {
-            <div class="page-state empty-state">
-                <span class="icon ph ph-lightbulb-slash"></span>
-                <h4 class="title">עדיין אין לך סשנים שמורים.</h4>
-                <p class="subtitle">צור רעיונות בעמוד מחולל הרעיונות — הם יופיעו כאן.</p>
+            <div class="page-empty-state stagger stagger-up">
+                <span class="ph ph-clock xl"></span>
+                <h3>עדיין אין לך סשנים שמורים.</h3>
+                <p>צור רעיונות בעמוד מחולל הרעיונות — הם יופיעו כאן.</p>
             </div>
         }
         @case (PageStates.Ready) {
@@ -107,47 +123,43 @@
                                 </div>
                             } @else {
                                 <div class="session-header" (click)="toggleExpand(session)">
-                                    <div class="session-icon">
-                                        <span class="ph ph-lightbulb"></span>
-                                    </div>
-
-                                    <div class="session-text">
-                                        <span class="title">
-                                            {{ session.domain }}
-                                        </span>
-                                        <span class="date">{{ session.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
-                                    </div>
-
-                                    <div class="session-meta">
-                                        @if (session.nightly) {
-                                            <span class="ph ph-fill ph-circuitry nightly-icon"></span>
-                                        }
-                                        <span class="count-badge">
-                                            <span class="ph ph-lightbulb"></span>
-                                            {{ getIdeasCount(session) }}
-                                        </span>
-                                        @if (session.unread) {
-                                            <span class="unread-dot"></span>
-                                        }
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        class="icon-only transparent-btn delete-btn"
-                                        (click)="setPendingDelete($event, session.id)"
-                                        aria-label="מחק סשן"
-                                    >
-                                        <span class="ph ph-trash"></span>
-                                    </button>
-
                                     <button
                                         type="button"
                                         class="icon-only transparent-btn chevron-btn rtl"
                                         [class.open]="expandedSessionId() === session.id"
                                         [attr.aria-label]="expandedSessionId() === session.id ? 'הסתר פרטים' : 'הרחב פרטים'"
                                     >
-                                        <i class="ph ph-caret-right"></i>
+                                        <i class="ph ph-caret-left"></i>
                                     </button>
+                                    <div class="session-text">
+                                        <span class="title">
+                                            {{ session.domain }}
+                                        </span>
+                                    </div>
+
+                                    <div class="session-meta">
+                                        <div class="meta-actions">
+                                            @if (session.nightly) {
+                                                <span class="ph ph-fill ph-circuitry nightly-icon"></span>
+                                            }
+                                            <span class="count-badge">
+                                                <span class="ph ph-lightbulb"></span>
+                                                {{ getIdeasCount(session) }}
+                                            </span>
+                                            @if (session.unread) {
+                                                <span class="unread-dot"></span>
+                                            }
+                                            <button
+                                                type="button"
+                                                class="icon-only transparent-btn delete-btn"
+                                                (click)="setPendingDelete($event, session.id)"
+                                                aria-label="מחק סשן"
+                                            >
+                                                <span class="ph ph-trash"></span>
+                                            </button>
+                                        </div>
+                                        <span class="date">{{ session.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                                    </div>
                                 </div>
 
                                 <div class="ideas-list" [class.expanded]="expandedSessionId() === session.id">

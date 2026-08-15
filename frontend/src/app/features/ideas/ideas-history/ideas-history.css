@@ -78,32 +78,31 @@
                 min-width: 0;
                 flex: 1;
 
-                    .title {
-                display: flex;
-                align-items: center;
-                gap: var(--space-2);
-                font-weight: var(--font-weight-semibold);
-                color: var(--color-text-primary);
-                font-size: var(--font-size-sm);
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
+                .title {
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-2);
+                    font-weight: var(--font-weight-semibold);
+                    color: var(--color-text-primary);
+                    font-size: var(--font-size-sm);
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
                 }
 
-                .date {
-                    font-size: var(--font-size-xs);
-                    color: var(--color-text-muted);
-                    font-variant-numeric: tabular-nums;
-                    direction: ltr;
-                    align-self: flex-start;
-                }
             }
 
             .session-meta {
                 display: flex;
                 align-items: center;
-                gap: var(--space-3);
+                flex-direction: column;
                 flex: 0 0 auto;
+
+                .meta-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-4);
+                }
 
                 .nightly-icon {
                     font-size: var(--font-size-lg);
@@ -120,6 +119,15 @@
                     color: var(--color-text-muted);
                     font-size: var(--font-size-xs);
                     font-weight: var(--font-weight-medium);
+                }
+
+
+                .date {
+                    font-size: var(--font-size-xxs);
+                    color: var(--color-text-muted);
+                    font-variant-numeric: tabular-nums;
+                    direction: ltr;
+                    align-self: flex-start;
                 }
 
                 .unread-dot {
@@ -180,7 +188,7 @@
                         background: var(--color-border);
                     }
 
-                    > .ideas-list-content {
+                    >.ideas-list-content {
                         min-height: 0;
                         overflow: hidden;
                         background: var(--color-surface-secondary);
@@ -212,6 +220,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+
         .ideas-list,
         .ideas-list-inner {
             transition: none;

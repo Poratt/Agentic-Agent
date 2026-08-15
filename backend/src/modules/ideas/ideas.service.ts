@@ -421,10 +421,14 @@ export class IdeasService {
   }
 
   private buildSignalQueries(searchTerm: string): string[] {
+    const term = searchTerm
+      .replace(/[\(\)\[\]"']/g, '')
+      .trim();
+
     return [
-      `"${searchTerm}" pain points OR complaints 2025 2026`,
-      `"${searchTerm}" alternative missing features`,
-      `best tools for ${searchTerm} reddit`,
+      `${term} pain points complaints 2025 2026`,
+      `site:reddit.com ${term} missing features OR problem`,
+      `best tools for ${term} alternative`,
     ];
   }
 
@@ -507,7 +511,7 @@ export class IdeasService {
       const res = await this.llm.generateResponse({
         prompt,
         systemContext: IDEA_GENERATION_PROMPT,
-        maxTokens: 4096,
+        maxTokens: 8192,
         userId,
         providerOverride,
         modelOverride,
@@ -585,9 +589,8 @@ export class IdeasService {
     providerOverride?: LlmProvider,
     modelOverride?: string,
   ): Promise<BusinessIdea | null> {
-    const searchResult = await this.webSearch.search(
-      `competitors for ${idea.title} ${idea.targetMarket} "${searchTerm}"`,
-    );
+    const competitorQuery = this.buildCompetitorQuery(idea, searchTerm);
+    const searchResult = await this.webSearch.search(competitorQuery);
 
     const searchResults = searchResult.success && searchResult.result
       ? searchResult.result.results
@@ -646,6 +649,23 @@ export class IdeasService {
           `[SANITY] "${idea.title}": competition=3 but ${competitors.length} competitors found → clamping to ${Math.min(2, competitors.length)} `,
         );
         breakdown.competition = Math.min(2, competitors.length);
+      }
+
+      // Sanity check #2: אם אין תוצאות חיפוש בכלל, אל תיתן ציון competition גבוה
+      if (breakdown && competitorCount === 0 && breakdown.competition >= 3) {
+        this.logger.warn(
+          `[SANITY] "${idea.title}": competition=${breakdown.competition} but 0 search results → clamping to 2`,
+        );
+        breakdown.competition = 2;
+      }
+
+      // Sanity check #3: אם כל התוצאות הן רעש (זוהה ע"י LLM ב-validationReason),
+      // ודא שהציון לא מנופח
+      if (breakdown && v.validationReason?.includes('לא רלוונטיות') && breakdown.competition > 2) {
+        this.logger.warn(
+          `[SANITY] "${idea.title}": irrelevant search results detected → clamping competition to 2`,
+        );
+        breakdown.competition = 2;
       }
 
       // Score = sum of criteria minus riskPenalty, clamped to 1-10 server-side
@@ -713,5 +733,20 @@ export class IdeasService {
 
   private sortByScore(ideas: BusinessIdea[]): BusinessIdea[] {
     return [...ideas].sort((a, b) => b.validationScore - a.validationScore);
+  }
+
+  /**
+   * בונה שאילתת חיפוש מתחרים נקייה באנגלית בלבד.
+   * מפרידה בין הכותרת/קהל היעד (עברית) לבין ה-searchTerm (אנגלית).
+   */
+  private buildCompetitorQuery(idea: RawIdea, searchTerm: string): string {
+    // שלוף רק את החלק האנגלי המשמעותי מה-searchTerm
+    const englishMatches = searchTerm.match(/[a-zA-Z][\w\s-]{3,}/g);
+    const englishPart = englishMatches?.join(' ').trim() ?? '';
+
+    // העדף את החלק האנגלי הנקי; fallback לכותרת (שתעבור simplifyQuery)
+    const coreTerms = englishPart.length > 10 ? englishPart : idea.title;
+
+    return `${coreTerms} software competitors alternative`;
   }
 }

@@ -302,6 +302,18 @@
   animation: spin 1s linear infinite;
   display: inline-block;
   box-sizing: border-box;
+
+  &.xs {
+    width: 14px;
+    height: 14px;
+    border-width: 2px;
+  }
+
+  &.sm {
+    width: 20px;
+    height: 20px;
+    border-width: 2px;
+  }
 }
 
 .ph-spin {
@@ -729,7 +741,7 @@
       color-mix(in srgb, var(--color-primary) 35%, transparent) 50%,
       transparent 100%);
   background-size: 200% 100%;
-  animation: shimmer-sweep 1.5s linear infinite;
+  animation: shimmer-sweep 8s linear infinite;
 }
 
 [dir="rtl"] .shimmer::before {
@@ -771,7 +783,7 @@
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: shimmer-sweep 1.5s linear infinite;
+  animation: shimmer-sweep 4s linear infinite;
 }
 
 [dir="rtl"] .shimmer-text {
