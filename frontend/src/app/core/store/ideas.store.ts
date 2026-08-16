@@ -100,6 +100,22 @@ export class IdeasStore {
           this.error.set(msg);
           this.loading.set(false);
         },
+        // הזרם נסגר בלי אירוע done (restart של השרת באמצע, ניתוק רשת) —
+        // בלי הטיפול הזה loading נשאר true לנצח והכפתור תקוע במצב פעיל.
+        complete: () => {
+          if (!this.loading()) {
+            return;
+          }
+          this.loading.set(false);
+          this.sub = null;
+          if (this.ideas().length > 0) {
+            this.partial.set(true);
+            this.phase.set('done');
+            this.message.set('החיבור לשרת הופסק לפני סיום — הוצגו התוצאות שהתקבלו');
+          } else {
+            this.error.set('החיבור לשרת הופסק לפני סיום היצירה');
+          }
+        },
       });
   }
 

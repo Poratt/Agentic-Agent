@@ -1,26 +1,27 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { firstValueFrom, take } from 'rxjs';
 import { IdeasService } from './ideas.service';
 
 describe('IdeasService', () => {
   let service: IdeasService;
+  let httpMock: HttpTestingController;
   let fetchSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        IdeasService,
-        provideZonelessChangeDetection(),
-        { provide: 'AuthService', useValue: { refresh: () => ({ subscribe: () => {} }) } },
-      ],
+      providers: [IdeasService, provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting()],
     });
     service = TestBed.inject(IdeasService);
+    httpMock = TestBed.inject(HttpTestingController);
     fetchSpy = vi.fn();
     vi.stubGlobal('fetch', fetchSpy);
   });
 
   afterEach(() => {
+    httpMock.verify();
     vi.restoreAllMocks();
   });
 
@@ -31,105 +32,84 @@ describe('IdeasService', () => {
   describe('listSessions', () => {
     it('should call GET /ideas/sessions', async () => {
       const mockSessions = [{ id: 1, domain: 'tech' }];
-      fetchSpy.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockSessions),
-      });
+      const promise = firstValueFrom(service.listSessions());
 
-      const result = await firstValueFrom(service.listSessions());
-      expect(result).toEqual(mockSessions);
-      expect(fetchSpy).toHaveBeenCalledWith(
-        expect.stringContaining('/ideas/sessions'),
-        expect.objectContaining({ method: 'GET' }),
-      );
+      const req = httpMock.expectOne((r) => r.url.includes('/ideas/sessions'));
+      expect(req.request.method).toBe('GET');
+      req.flush(mockSessions);
+
+      expect(await promise).toEqual(mockSessions);
     });
 
     it('should include query params when provided', async () => {
-      fetchSpy.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve([]),
-      });
+      const promise = firstValueFrom(service.listSessions({ nightly: true }));
 
-      await firstValueFrom(service.listSessions({ nightly: true }));
-      expect(fetchSpy.mock.calls[0][0]).toContain('nightly=true');
+      const req = httpMock.expectOne((r) => r.url.includes('/ideas/sessions'));
+      expect(req.request.params.get('nightly')).toBe('true');
+      req.flush([]);
+      await promise;
     });
   });
 
   describe('deleteSession', () => {
     it('should call DELETE /ideas/sessions/:id', async () => {
-      fetchSpy.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(),
-      });
+      const promise = firstValueFrom(service.deleteSession(42));
 
-      await firstValueFrom(service.deleteSession(42));
-      expect(fetchSpy).toHaveBeenCalledWith(
-        expect.stringContaining('/ideas/sessions/42'),
-        expect.objectContaining({ method: 'DELETE' }),
-      );
+      const req = httpMock.expectOne((r) => r.url.includes('/ideas/sessions/42'));
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+
+      await promise;
     });
   });
 
   describe('setFavorite', () => {
     it('should call PATCH /ideas/ideas/:id', async () => {
-      fetchSpy.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(),
-      });
+      const promise = firstValueFrom(service.setFavorite(10, true));
 
-      await firstValueFrom(service.setFavorite(10, true));
-      expect(fetchSpy).toHaveBeenCalledWith(
-        expect.stringContaining('/ideas/ideas/10'),
-        expect.objectContaining({ method: 'PATCH' }),
-      );
+      const req = httpMock.expectOne((r) => r.url.includes('/ideas/ideas/10'));
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ isFavorite: true });
+      req.flush(null);
+
+      await promise;
     });
   });
 
   describe('nightlyUnreadCount', () => {
     it('should call GET /ideas/nightly/unread-count', async () => {
-      fetchSpy.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(3),
-      });
+      const promise = firstValueFrom(service.nightlyUnreadCount());
 
-      const result = await firstValueFrom(service.nightlyUnreadCount());
-      expect(result).toBe(3);
-      expect(fetchSpy).toHaveBeenCalledWith(
-        expect.stringContaining('/ideas/nightly/unread-count'),
-        expect.objectContaining({ method: 'GET' }),
-      );
+      const req = httpMock.expectOne((r) => r.url.includes('/ideas/nightly/unread-count'));
+      expect(req.request.method).toBe('GET');
+      req.flush(3);
+
+      expect(await promise).toBe(3);
     });
   });
 
   describe('markNightlyRead', () => {
     it('should call POST /ideas/nightly/mark-read', async () => {
-      fetchSpy.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(),
-      });
+      const promise = firstValueFrom(service.markNightlyRead());
 
-      await firstValueFrom(service.markNightlyRead());
-      expect(fetchSpy).toHaveBeenCalledWith(
-        expect.stringContaining('/ideas/nightly/mark-read'),
-        expect.objectContaining({ method: 'POST' }),
-      );
+      const req = httpMock.expectOne((r) => r.url.includes('/ideas/nightly/mark-read'));
+      expect(req.request.method).toBe('POST');
+      req.flush(null);
+
+      await promise;
     });
   });
 
   describe('triggerNightly', () => {
     it('should call POST /ideas/nightly/trigger', async () => {
       const mockResult = { success: true, message: 'Done' };
-      fetchSpy.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockResult),
-      });
+      const promise = firstValueFrom(service.triggerNightly());
 
-      const result = await firstValueFrom(service.triggerNightly());
-      expect(result).toEqual(mockResult);
-      expect(fetchSpy).toHaveBeenCalledWith(
-        expect.stringContaining('/ideas/nightly/trigger'),
-        expect.objectContaining({ method: 'POST' }),
-      );
+      const req = httpMock.expectOne((r) => r.url.includes('/ideas/nightly/trigger'));
+      expect(req.request.method).toBe('POST');
+      req.flush(mockResult);
+
+      expect(await promise).toEqual(mockResult);
     });
   });
 

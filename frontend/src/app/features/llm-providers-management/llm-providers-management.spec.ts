@@ -19,7 +19,7 @@ describe('LlmProvidersManagement', () => {
     };
 
     const mockProviderStore = {
-        providers: vi.fn(() => []),
+        providers: vi.fn((): any[] => []),
         pageState: vi.fn(() => PageStates.Empty),
         loadUserDefaultModel: vi.fn(),
         defaultModelId: vi.fn(() => null),
@@ -240,7 +240,7 @@ describe('LlmProvidersManagement', () => {
             ]);
             component.openEditProviderDialog({
                 id: 1, key: 'test', label: 'Test Provider', baseUrl: 'https://test.com', active: true,
-                models: [], modelsCount: 0,
+                models: [], modelsCount: 0, createdAt: '', updatedAt: '',
             });
             expect(component.providerDialogTitle()).toContain('Edit Provider');
             expect(component.providerDialogTitle()).toContain('Test Provider');
