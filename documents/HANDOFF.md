@@ -7,6 +7,8 @@
 4. `RequiresConfirmation` decorator lives in admin-agent, consumed by llm-provider+users — relocate to `core/decorators/`.
 5. The 17 ❌ non-conform endpoints (audit-service-result-container.md) — being fixed cluster-by-cluster (2026-08-17).
 6. Minor: `main-sidebar.html:101` — `צʼאט` uses U+02BC modifier apostrophe instead of Hebrew geresh ׳ (U+05F3). Display-identical, cosmetic.
+7. **UI finding (from live browser session 2026-08-17): login button "כניסה" blocks Playwright actionability clicks** (likely PrimeNG modal-dialog overlay intercepting hit-target; dom_cua node click works, human clicks presumed fine). For manual verification next time in the UI — `frontend/src/app/features/` login page.
+8. **UI bug candidate (from live browser session): dashboard shows "משתמשים רשומים: 0"** despite the admin user existing and being logged in. CHECK when reaching the ideas-reads cluster (ב4) — may be the same read/count endpoint family.
 
 ## 2026-08-17 Session (v) — Full regression sweep + 3 audits (no code changes to app)
 

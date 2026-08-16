@@ -9,9 +9,9 @@ Legend: ✅ conform (typed container / container-shaped DTO / inline `{success,m
 
 | Verdict | Count | Notes |
 |---|---|---|
-| ✅ Conform (incl. 🔵 justified) | 66 | of which 6 are documented exceptions: 2×SSE (ideas stream, admin-agent query-stream), 3×HTTP-204 empty-body deletes, 1×OAuth redirect (calendar /auth) |
+| ✅ Conform (incl. 🔵 justified) | 70 | of which 6 are documented exceptions: 2×SSE (ideas stream, admin-agent query-stream), 3×HTTP-204 empty-body deletes, 1×OAuth redirect (calendar /auth) |
 | ⚠️ Partial | **0 — fixed 2026-08-17** | confirm-action now returns `{success, message, result}` in both branches; ideas favorite + mark-read are now HTTP-204 (matching their delete siblings); frontend chat.service type updated |
-| ❌ Non-conform | 10 | (events passthrough), ideas×3 (session reads + unread-count), llm×4 (image/video passthrough), strain-hunter×3 |
+| ❌ Non-conform | 6 | (events passthrough), ideas×3 (session reads + unread-count), llm×4 (image/video passthrough), strain-hunter×3 |
 
 **Total: 76 endpoints / 15 controllers.**
 
@@ -62,10 +62,10 @@ Legend: ✅ conform (typed container / container-shaped DTO / inline `{success,m
 | llm | DELETE /test-results/:id | ✅ | `ServiceResultContainer<void>` |
 | llm | POST /set-default-model | ✅ | inline `{success,message}` |
 | llm | GET /default-model | ✅ | inline `{success,message,result}` |
-| llm | POST /image/generate | ❌ | raw `{url/b64Json/mimeType/size, model}` — upstream passthrough |
-| llm | POST /video/generate | ❌ | raw task object passthrough |
-| llm | GET /video/:videoId | ❌ | raw status object passthrough |
-| llm | POST /video/extend | ❌ | raw continuation object passthrough |
+| llm | POST /image/generate | ✅ | container; b64Json payload unchanged under result |
+| llm | POST /video/generate | ✅ | container; task object under result |
+| llm | GET /video/:videoId | ✅ | container; status object under result |
+| llm | POST /video/extend | ✅ | container; LLM-agent-only consumer (no frontend usage) |
 | llm-provider | POST / | ✅ | typed container |
 | llm-provider | GET / | ✅ | typed container |
 | llm-provider | PATCH /:id | ✅ | typed container |

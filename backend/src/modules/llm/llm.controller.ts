@@ -30,6 +30,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RequestWithUser } from '../../core/interfaces/request-with-user.interface';
+import { ServiceResultContainer } from '../../core/models/service-result-container.model';
 import { LlmHealthService } from './services/llm-health.service';
 import { LlmProviderService } from '../llm-provider/llm-provider.service';
 import { LlmClientService } from './services/llm-client.service';
@@ -142,7 +143,11 @@ export class LlmController {
       returnBase64: dto.returnBase64,
     });
 
-    return { ...result, model: resolved.model.key };
+    return {
+      success: true,
+      message: 'התמונה נוצרה בהצלחה',
+      result: { ...result, model: resolved.model.key },
+    } satisfies ServiceResultContainer<unknown>;
   }
 
   @Post('video/generate')
@@ -170,19 +175,27 @@ export class LlmController {
       throw new NotFoundException('No active video model found');
     }
 
-    return this.client.createVideoTaskAndWait({
-      provider: resolved.providerKey,
-      model: resolved.model.key,
-      prompt: dto.prompt,
-      image: dto.image,
-      mode: dto.mode,
-      height: dto.height,
-      width: dto.width,
-      numFrames: dto.numFrames,
-      frameRate: dto.frameRate,
-      seed: dto.seed,
-      negativePrompt: dto.negativePrompt,
-    }).then((result) => ({ ...result, model: resolved.model.key }));
+    return this.client
+      .createVideoTaskAndWait({
+        provider: resolved.providerKey,
+        model: resolved.model.key,
+        prompt: dto.prompt,
+        image: dto.image,
+        mode: dto.mode,
+        height: dto.height,
+        width: dto.width,
+        numFrames: dto.numFrames,
+        frameRate: dto.frameRate,
+        seed: dto.seed,
+        negativePrompt: dto.negativePrompt,
+      })
+      .then(
+        (result): ServiceResultContainer<unknown> => ({
+          success: true,
+          message: 'משימת הווידאו הושלמה',
+          result: { ...result, model: resolved.model.key },
+        }),
+      );
   }
 
   @Get('video/:videoId')
@@ -212,7 +225,11 @@ export class LlmController {
     }
 
     const result = await this.client.getVideoResult(videoId, resolved.providerKey);
-    return { ...result, model: resolved.model.key };
+    return {
+      success: true,
+      message: `סטטוס משימה: ${result.status}`,
+      result: { ...result, model: resolved.model.key },
+    } satisfies ServiceResultContainer<unknown>;
   }
 
   @Post('video/extend')
@@ -259,7 +276,11 @@ export class LlmController {
       negativePrompt: dto.negativePrompt,
     });
 
-    return { ...result, model: resolved.model.key };
+    return {
+      success: true,
+      message: 'המשך הווידאו הושלם',
+      result: { ...result, model: resolved.model.key },
+    } satisfies ServiceResultContainer<unknown>;
   }
 
   /**

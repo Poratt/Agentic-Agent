@@ -104,7 +104,9 @@ describe('LlmController', () => {
         prompt: 'a cat',
         model: 'agnes-image',
       }));
-      expect(result).toHaveProperty('url', 'https://img.test/img.png');
+      expect(result.success).toBe(true);
+      expect(result.result).toHaveProperty('url', 'https://img.test/img.png');
+      expect(result.result).toHaveProperty('model', 'agnes-image');
     });
   });
 
@@ -129,7 +131,8 @@ describe('LlmController', () => {
         prompt: 'ocean waves',
         model: 'agnes-video',
       }));
-      expect(result).toHaveProperty('videoId', 'vid_1');
+      expect(result.success).toBe(true);
+      expect(result.result).toHaveProperty('videoId', 'vid_1');
     });
   });
 
@@ -147,7 +150,8 @@ describe('LlmController', () => {
       const result = await controller.getVideo('vid_1', '14');
 
       expect(client.getVideoResult).toHaveBeenCalledWith('vid_1', 'agnes-ai');
-      expect(result).toHaveProperty('status', 'completed');
+      expect(result.success).toBe(true);
+      expect(result.result).toHaveProperty('status', 'completed');
     });
   });
 
@@ -172,7 +176,8 @@ describe('LlmController', () => {
         sourceVideoId: 'vid_1',
         prompt: 'continue the scene',
       }));
-      expect(result).toHaveProperty('videoId', 'vid_2');
+      expect(result.success).toBe(true);
+      expect(result.result).toHaveProperty('videoId', 'vid_2');
     });
 
     it('throws BadRequestException when no source provided', async () => {

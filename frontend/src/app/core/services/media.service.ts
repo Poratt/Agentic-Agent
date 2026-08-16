@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { ServiceResultContainer } from '../models/service-result-container.model';
 
 export interface MediaImageResult {
     url?: string;
@@ -56,15 +57,21 @@ export class MediaService {
     private base = `${environment.apiUrl}/llm`;
 
     generateImage(request: MediaImageRequest): Observable<MediaImageResult> {
-        return this.http.post<MediaImageResult>(`${this.base}/image/generate`, request);
+        return this.http
+            .post<ServiceResultContainer<MediaImageResult>>(`${this.base}/image/generate`, request)
+            .pipe(map((res) => res.result));
     }
 
     createVideo(request: MediaVideoRequest): Observable<MediaVideoTask> {
-        return this.http.post<MediaVideoTask>(`${this.base}/video/generate`, request);
+        return this.http
+            .post<ServiceResultContainer<MediaVideoTask>>(`${this.base}/video/generate`, request)
+            .pipe(map((res) => res.result));
     }
 
     getVideo(videoId: string, modelId?: number): Observable<MediaVideoResult> {
         const query = modelId ? `?modelId=${modelId}` : '';
-        return this.http.get<MediaVideoResult>(`${this.base}/video/${encodeURIComponent(videoId)}${query}`);
+        return this.http
+            .get<ServiceResultContainer<MediaVideoResult>>(`${this.base}/video/${encodeURIComponent(videoId)}${query}`)
+            .pipe(map((res) => res.result));
     }
 }
