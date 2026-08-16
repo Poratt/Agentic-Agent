@@ -1,6 +1,21 @@
 # Project Documentation Status
 
-Last updated: 2026-08-16
+Last updated: 2026-08-17
+
+## Found during audit, NOT fixed
+- **Mojibake:** `frontend/src/app/features/chat/chat/chat.ts:593` — `'הבקשה פגה hoặc כבר טופלה. נסה שוב.'` ("hoặc" = Vietnamese, should be "או"). User-visible 404 error in confirmPendingAction.
+- SearXNG pool: google cse suspended 08-17 (ddg recovered) — proxy proposal pending user decision.
+- `frontend/tsconfig.spec.new.json` dead config; `RequiresConfirmation` decorator misplaced (admin-agent); 17 ❌ non-conform endpoints (see audit-service-result-container.md).
+
+
+## 2026-08-17 Session (v) — Regression sweep + audits — DONE (findings only, no fixes)
+
+- **Baseline green:** tsc backend 0 + frontend 0×3 · jest --runInBand **381/389** (8 fails = pre-existing, identical set to pre-commit baseline) · hook suite **92/92** · guards clean. Zero new regressions.
+- **Stage 2 →** `documents/audit-service-result-container.md`: 76 endpoints — 56✅ / 3⚠️ / 17❌ (raw passthrough). Fix-3-partial-first recommended; ❌ = breaking changes.
+- **Stage 3 →** `documents/audit-dependency-map.md`: zero runtime DI cycles / orphans. Dead: math.utils.ts, 16 over-exports, tsconfig.spec.new.json, misplaced RequiresConfirmation decorator.
+- **Stage 4 — SearXNG pool degraded further (BACKLOG):** google cse NOW suspended too → live = bing only; mojeek 0-results. Root cause: single static egress IP, no `outgoing.proxies`. Proposal: rotating proxy in settings.yml / engine cooldowns / paid API. Awaiting user decision.
+- No app code touched; no architecture-diagram change.
+
 
 ## 2026-08-16 Session (t) — site: post-filter + PullPush removal — DONE
 

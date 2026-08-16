@@ -1,4 +1,33 @@
 # Documentation Handoff
+## 2026-08-17 — Found during audit, NOT fixed (backlog items)
+
+1. **Mojibake in user-facing Hebrew — `frontend/src/app/features/chat/chat/chat.ts:593`**: `errorMessage = 'הבקשה פגה hoặc כבר טופלה. נסה שוב.';` — Vietnamese word "hoặc" (= "or") embedded in the 404 branch of `confirmPendingAction()` error handling; should be Hebrew "או". Cosmetic but user-visible. Fix: one-string edit + verify UTF-8 (`rg "hoặc"` afterwards).
+2. SearXNG engine pool — see Session (v) stage 4: google cse still suspended 08-17, ddg recovered; `outgoing.proxies` proposal awaiting decision.
+3. `frontend/tsconfig.spec.new.json` — dead vitest leftover, still tracked.
+4. `RequiresConfirmation` decorator lives in admin-agent, consumed by llm-provider+users — relocate to `core/decorators/`.
+5. The 17 ❌ non-conform endpoints (audit-service-result-container.md) — breaking changes, need coordinated frontend sweep.
+
+## 2026-08-17 Session (v) — Full regression sweep + 3 audits (no code changes to app)
+
+**Stage 1 — Regression baseline (all green, zero new regressions):**
+- `npx tsc --noEmit`: backend exit 0; frontend ×3 (solution/app/spec) exit 0.
+- `npx jest --runInBand`: **381 pass / 8 fail / 389** — the 8 failures are byte-identical to the pre-commit baseline (agent-session 3, llm-client 4, swagger-parser 1) → all pre-existing, none from last night's commits. Nothing to fix.
+- Hook suite `bash backend/scripts/test-hook-suite.sh`: **92/92**, exit 0.
+- `git status .claude .CLAUDE scripts/css-nesting-check.mjs`: clean at every stage.
+
+**Stage 2 — ServiceResultContainer audit → `documents/audit-service-result-container.md`:** 76 endpoints / 15 controllers. 56 conform (incl. 6 documented exceptions: SSE×2, HTTP-204×3, OAuth-redirect×1), 3 partial (confirm-action shape inconsistency; ideas favorite/mark-read return empty 200/201 instead of 204 or container), 17 non-conform raw-passthrough clusters (admin-agent sessions×4, calendar events×3, llm image/video×4, ideas reads×3, strain-hunter×3). Recommendation: fix the 3 ⚠️ first (low risk); ❌ fixes are breaking changes needing coordinated frontend sweep — not done.
+
+**Stage 3 — Dependency map + dead code → `documents/audit-dependency-map.md`:** 11 graph-level cycles ALL type-level (entities/DTOs/decorators/seeds) — zero runtime DI cycles, zero forwardRef, zero orphan modules/services. Findings: `core/utils/math.utils.ts` is a dead file; 16 over-exported symbols (incl. backend mirror of frontend's `getUserRoleData`); `RequiresConfirmation` decorator owned by admin-agent but consumed by llm-provider+users (suggest core/decorators/); core/seeds import feature entities (inverted boundary); `frontend/tsconfig.spec.new.json` = dead vitest leftover (tracked). Findings only — nothing modified.
+
+**Stage 4 — SearXNG engine pool (BACKLOG, not fixed):**
+- Fresh probe 2026-08-17: brave `too many requests`, ddg `CAPTCHA`, qwant `CAPTCHA`, startpage `Suspended: CAPTCHA`, mojeek responds but returns 0 results, **google cse newly suspended** (`too many requests` — was the site:-honoring workhorse on 08-16). Live engines = **bing only**, which ignores `site:` → the client-side post-filter (Session t) is currently the ONLY correctness layer for domain-restricted queries.
+- Root cause: single static egress IP (`5.29.22.109`, docker bridge network, NO `outgoing.proxies` in `docker/searxng/settings.yml`, `image_proxy: false`) — every upstream rate-limits/CAPTCHAs the same IP under nightly-cron load.
+- **Proposed fix (needs user decision):** add `outgoing.proxies` (rotating/residential SOCKS5/HTTP) to `docker/searxng/settings.yml`, global or per-engine; alternatives: engine-level cooldown rotation, or replacing self-hosted scraping with a paid search API.
+
+**Next exact step:** user picks backlog items (SearXNG proxy / ⚠️ endpoints / dead-code cleanup) — none are started.
+
+**Files touched:** `documents/audit-service-result-container.md` (new), `documents/audit-dependency-map.md` (new), `documents/LOG.md`, `documents/HANDOFF.md`, `documents/STATUS.md`. No app code, no architecture-diagram change (audits only).
+
 ## 2026-08-16 Session (u) — Hooks relocated to user home (both tools), all refs updated
 
 **What was done:** Per explicit user request (`Move-Item ... -Force` + "וגג ל claude's hooks"): `repo/.zcode/hooks` → `C:\Users\porat\.zcode\hooks` (7 guarded copies) and `repo/.claude/hooks` → `C:\Users\porat\.claude\hooks` (4 originals). Updated every path reference: `~/.zcode/cli/config.json` (8 refs) and `repo/.claude/settings.local.json` (4 refs — Claude settings touched under explicit user authorization, superseding the earlier no-touch constraint). Removed empty `repo/.zcode/`. `scripts/css-nesting-check.mjs` (committed repo file, referenced by Claude config) intentionally NOT moved.
