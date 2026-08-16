@@ -31,6 +31,7 @@ import { DeleteEventDto } from './dto/delete-event.dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RequestWithUser } from '../../core/interfaces/request-with-user.interface';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
+import { ServiceResultContainer } from '../../core/models/service-result-container.model';
 
 const STATE_COOKIE = 'gcal_state';
 const STATE_COOKIE_TTL_MS = 10 * 60 * 1000; // must match the service's STATE_TTL_MS
@@ -187,7 +188,12 @@ export class GoogleCalendarController {
         if (!req.user) {
             throw new UnauthorizedException();
         }
-        return this.calendarService.listEvents(req.user.sub, date, q);
+        const items = await this.calendarService.listEvents(req.user.sub, date, q);
+        return {
+            success: true,
+            message: `נטענו ${items.length} אירועים`,
+            result: items,
+        } satisfies ServiceResultContainer<unknown>;
     }
 
     /**
@@ -229,7 +235,7 @@ export class GoogleCalendarController {
         if (!req.user) {
             throw new UnauthorizedException();
         }
-        return this.calendarService.createEvent(
+        const created = await this.calendarService.createEvent(
             req.user.sub,
             dto.summary,
             dto.startTime,
@@ -237,6 +243,11 @@ export class GoogleCalendarController {
             dto.description,
             dto.location,
         );
+        return {
+            success: true,
+            message: 'האירוע נוצר בהצלחה',
+            result: created,
+        } satisfies ServiceResultContainer<unknown>;
     }
 
     /**
@@ -321,7 +332,7 @@ export class GoogleCalendarController {
         if (!req.user) {
             throw new UnauthorizedException();
         }
-        return this.calendarService.updateEvent(
+        const updated = await this.calendarService.updateEvent(
             req.user.sub,
             dto.eventId,
             dto.summary,
@@ -330,5 +341,10 @@ export class GoogleCalendarController {
             dto.description,
             dto.location,
         );
+        return {
+            success: true,
+            message: 'האירוע עודכן בהצלחה',
+            result: updated,
+        } satisfies ServiceResultContainer<unknown>;
     }
 }

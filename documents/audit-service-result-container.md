@@ -9,9 +9,9 @@ Legend: ✅ conform (typed container / container-shaped DTO / inline `{success,m
 
 | Verdict | Count | Notes |
 |---|---|---|
-| ✅ Conform (incl. 🔵 justified) | 63 | of which 6 are documented exceptions: 2×SSE (ideas stream, admin-agent query-stream), 3×HTTP-204 empty-body deletes, 1×OAuth redirect (calendar /auth) |
+| ✅ Conform (incl. 🔵 justified) | 66 | of which 6 are documented exceptions: 2×SSE (ideas stream, admin-agent query-stream), 3×HTTP-204 empty-body deletes, 1×OAuth redirect (calendar /auth) |
 | ⚠️ Partial | **0 — fixed 2026-08-17** | confirm-action now returns `{success, message, result}` in both branches; ideas favorite + mark-read are now HTTP-204 (matching their delete siblings); frontend chat.service type updated |
-| ❌ Non-conform | 13 | google-calendar×3 (events passthrough), ideas×3 (session reads + unread-count), llm×4 (image/video passthrough), strain-hunter×3 |
+| ❌ Non-conform | 10 | (events passthrough), ideas×3 (session reads + unread-count), llm×4 (image/video passthrough), strain-hunter×3 |
 
 **Total: 76 endpoints / 15 controllers.**
 
@@ -45,10 +45,10 @@ Legend: ✅ conform (typed container / container-shaped DTO / inline `{success,m
 | genetics | DELETE /:name | ✅ | inline `{success,message}` (no result — deletion) |
 | google-calendar | GET /auth | 🔵 | OAuth redirect flow — returns `{url, state}` raw by design |
 | google-calendar | GET /callback | ✅ | inline `{success,message}` |
-| google-calendar | GET /events | ❌ | raw Google Calendar event array |
-| google-calendar | POST /events | ❌ | raw `res.data` (Google event) |
+| google-calendar | GET /events | ✅ | container; Google Schema$Event array verbatim under result |
+| google-calendar | POST /events | ✅ | container; Google event under result |
 | google-calendar | DELETE /events | ✅ | inline `{success,message}` |
-| google-calendar | PATCH /events | ❌ | raw `res.data` (Google event) |
+| google-calendar | PATCH /events | ✅ | container; Google event under result |
 | ideas | POST /generate | ✅ | `GenerateIdeasResponse` = container superset (`success,message,partial,result`) |
 | ideas | GET /generate/stream | 🔵 | SSE progress events — documented |
 | ideas | GET /sessions | ❌ | raw `SavedIdeaSession[]` |
