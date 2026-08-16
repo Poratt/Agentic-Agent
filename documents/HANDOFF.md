@@ -1,4 +1,290 @@
 # Documentation Handoff
+## 2026-08-16 Session (u) — Hooks relocated to user home (both tools), all refs updated
+
+**What was done:** Per explicit user request (`Move-Item ... -Force` + "וגג ל claude's hooks"): `repo/.zcode/hooks` → `C:\Users\porat\.zcode\hooks` (7 guarded copies) and `repo/.claude/hooks` → `C:\Users\porat\.claude\hooks` (4 originals). Updated every path reference: `~/.zcode/cli/config.json` (8 refs) and `repo/.claude/settings.local.json` (4 refs — Claude settings touched under explicit user authorization, superseding the earlier no-touch constraint). Removed empty `repo/.zcode/`. `scripts/css-nesting-check.mjs` (committed repo file, referenced by Claude config) intentionally NOT moved.
+
+**Verification:** both configs JSON-parse OK; node checker confirms all 16 referenced script paths exist; guard test from new location (foreign workspace) → silent exit 0; E2E exact-spawn from `C:/Users/porat/.zcode/hooks/post-edit-format.sh` with jq on PATH → `[Hook] File edited` + Prettier 38ms + file reformatted. **Git footprint: zero** — `git ls-files .claude/` = empty (never tracked), `.zcode/` was untracked; working tree unchanged by the moves.
+
+**⚠️ Restart required again:** any ZCode/Claude session started before this relocation holds the OLD absolute paths (repo) → hooks would fail to spawn until app restart. Session (r)'s live verification ran against the pre-move paths.
+
+## 2026-08-16 Session (t) — IMPL: site: post-filter + PullPush removed from pipeline
+
+**What was done:** Implemented the fixes chosen from Session (s) investigation:
+
+1. **site: enforcement in `WebSearchService.search()`** (`backend/src/modules/web-search/web-search.service.ts`): new `parseSiteOperators()` extracts `site:X` (require) and `-site:X` (exclude) hosts from the ORIGINAL query — supports multiple operators, operators inside parens, strips trailing punctuation. `urlMatchesSite()` = exact hostname or subdomain match (www.reddit.com matches site:reddit.com); unparseable URLs fail positive filters. Filter applied to merged SearXNG results — neutralizes bing's operator-ignoring garbage while google cse/brave results pass through unchanged.
+2. **PullPush removed entirely**: deleted `searchRedditArchive()`, `enqueuePullPush()`, PULLPUSH_* constants, cooldown fields, `PullPushPost`/`PullPushResponse` types from `web-search.service.ts`; removed the channel from both pipelines in `ideas.service.ts` (`discoverTopics` + signal gathering → now 2 channels: SearXNG + HN Algolia); removed 5 PullPush spec tests.
+3. **New spec tests (5)** in `web-search.service.spec.ts` using the EXACT live-investigation cases: `site:reddit.com (shopify amazon etsy) "losing money"` (shopify.com/wikipedia dropped, reddit kept incl. bare-host + subdomain), `site:indiehackers.com "churn"` (chatgpt.com/openai.com dropped), no-operator = no filtering, `-site:reddit.com` exclusion, unparseable-URL drop.
+
+**Known issue (SEPARATE investigation, NOT fixed now):** SearXNG engine pool mostly suspended from residential IP: brave "Suspended: too many requests", duckduckgo "CAPTCHA", qwant "CAPTCHA", startpage "Suspended: CAPTCHA", mojeek "Suspended: access denied". Live engines ≈ bing (ignores site:) + google cse + intermittently brave. Options for later: rotating proxy for SearXNG outgoing, engine resets, or different engine set.
+
+**Verification:**
+- `npx tsc --noEmit` (backend) → exit 0, zero errors.
+- Targeted: `npx jest src/modules/web-search src/modules/ideas` → 4 suites / **44 tests, all pass** (was 39: −5 PullPush, +5 site-filter).
+- Full suite (`npx jest --runInBand`): **Test Suites: 3 failed, 40 passed, 43 total; Tests: 8 failed, 381 passed, 389 total.** NOTE: default-worker jest runs crash silently mid-run in this environment (no summary, exit 1, reproducible pre-changes) — `--runInBand` is the reliable mode.
+- **All 8 failures pre-existing at HEAD, NONE in touched scope** — each verified isolated with zero git diff on their files: `swagger-tools.parser.spec.ts` (1/11 — denylist tolerance 68 vs 73; also failed in the pre-edit baseline run), `llm-client.service.spec.ts` (4/12 — extendVideo/downloadBuffer mocks; `backend/src/modules/llm/` clean), `agent-session.service.spec.ts` (3/10; both spec+service clean).
+- `git diff .claude/ scripts/css-nesting-check.mjs` → empty (untouched).
+- Mojibake check (`rg "׳|ג€�|..."`) on all 3 edited files → clean.
+
+**Files touched:** `backend/src/modules/web-search/web-search.service.ts`, `backend/src/modules/web-search/web-search.service.spec.ts`, `backend/src/modules/ideas/ideas.service.ts`, `documents/HANDOFF.md`.
+
+**Next exact step:** none — task complete pending full-suite result. Architecture diagram: no update needed (no module boundary/flow change — SearXNG request path identical, one downstream channel removed).
+
+## 2026-08-16 Session (s) — INVESTIGATION: SearXNG `site:` not enforced + PullPush dead (root causes found, no code changes)
+
+**What was done:** User reported `site:reddit.com` / `site:indiehackers.com` queries returning unrelated domains (Adriatic Bank, TRT Spor). Investigation with raw curl evidence, bypassing our layer:
+
+1. **`site:` root cause = upstream Bing, not SearXNG, not our code.** Direct curl to bing.com (`site:reddit.com test`) returns speedtest.net/test.de/testmyspeed.com — Bing receives the operator (page title shows it) and ignores it for anonymous traffic. In SearXNG, per-result engine attribution: `bing` → junk (ignores `site:`), `google cse` + `brave` → correct domain-restricted results. SearXNG merges both, junk mixes in and dominates for long queries. Our `simplifyQuery` passes `site:` through untouched (only strips Hebrew/stopwords).
+2. **Engine pool crippled:** brave/ddg/qwant/startpage = "Suspended: too many requests"/CAPTCHA (nightly cron), mojeek = "Suspended: access denied". Live engines ≈ bing + google cse only → bing junk unavoidable in merged results.
+3. **PullPush (Reddit archive channel) = dead:** every request → HTTP 429 with body `{"error":"Rate limit exceeded. This website does not provide free scraping resources for agents. Please contact the administrator on Discord if you're interested in a paid scraping service."}` — free tier gone. Explains the 0-results streak; our retry/cooldown/serial-queue logic is working as designed but the API itself refuses agents.
+4. SearXNG version `2026.7.19+6da6eee26`, `formats: [html, json]` OK, `default_lang: "en"`, no `disabled_for_operators`-style flag exists.
+
+**Candidate fixes (NOT implemented — awaiting user decision):** post-filter SearXNG results in `WebSearchService` by `site:` domain when operator present; or drop/disable bing engine for site: queries; replace PullPush (e.g. Reddit OAuth API) or drop that channel.
+
+**Next exact step:** user picks fix direction → implement in `backend/src/modules/web-search/web-search.service.ts` + spec.
+
+**Files touched:** none in app code — only this doc. No architecture diagram change needed (behavioral, not structural).
+
+## 2026-08-16 Session (r) — ✅ HOOKS VERIFIED LIVE: user-scope hooks firing in real session
+
+**What was done:** First live session after ZCode app restart. All hook claims from Session (q) confirmed with in-session evidence:
+
+1. **PreToolUse graphify guards visible in tool results** — `Read` ×2 and `Bash` ×3 each returned `[Hook additional context] MANDATORY: graphify-out/graph.json exists...` attached to the tool output (5 occurrences). Hooks load from `~/.zcode/cli/config.json` user scope and fire.
+2. **PostToolUse `post-edit-format.sh` proven by side effect** — Edited `frontend/src/main.ts` (temp `// hook-test` comment). The Edit itself left 2 lines, but the file on disk after showed Prettier had collapsed the `bootstrapApplication(...).catch(...)` chain to one line → Prettier ran via the hook. (The `[Hook] File edited` echo itself was NOT surfaced in the Edit tool result — PostToolUse stdout isn't echoed back into the model's tool output; execution is proven by the reformat.)
+3. **Zero new policy rejections** — `project_hooks.ignored` count in `~/.zcode/cli/log/zcode-2026-08-16.jsonl`: 99 before edit → 99 after (last event still 20:00:42Z, pre-restart). No project-scope config remains to reject (`.zcode/config.json` deleted in Session (q)).
+4. **Test edit fully reverted** — `git checkout -- frontend/src/main.ts`; file clean.
+
+**Conclusion:** Hook system fully operational. Remaining cosmetic note: PostToolUse hook stdout (`[Hook] File edited: ...`) is not visible to the agent inside the Edit result — only side effects (formatting) prove it; the user may still see it in the app UI.
+
+**Next exact step:** none — hooks task closed. Optional: verify `[Hook] File edited` visibility in the app UI on the user's next manual edit.
+
+## 2026-08-16 Session (q) — Final verification suite: guards, cleanup, jq E2E (all ✅)
+
+**What was done:** User installed jq-1.8.2 (winget) and requested evidence-based final tests. (1) Copies switched from node-parsing back to **jq** (`command -v jq` with absolute winget-path fallback — my shell's PATH predates the install, post-restart shells get jq from PATH). (2) **Guard test, foreign workspace** (`C:\Users\porat\ZCodeProject`, cwd + `ZCODE_PROJECT_DIR` both foreign): all 7 hooks → zero stdout, exit 0 — including `rm -rf .git` (would block HERE) and a flat CSS violation. (3) **Deleted `.zcode/config.json`** (project-scope, dead vs security policy): before = 99 ignore-events, last at 20:00:42Z; after = file gone (`ls .zcode/` → `hooks/` only), count still 99, zero new events post-delete. (4) **E2E with the EXACT user-config spawn command** (`"C:/Program Files/Git/bin/bash.exe" ".../.zcode/hooks/post-edit-format.sh"`, jq on PATH): real temp `.ts` → `[Hook] File edited: ...` + Prettier 24ms + file reformatted. Fallback path (stale PATH, no jq) also extracts filename. (5) **Claude untouched re-verified**: `git diff .claude/` and `scripts/css-nesting-check.mjs` vs HEAD = empty; repo delta = untracked `.zcode/` only.
+
+**Honest limitation:** the live restart proof (hooks firing inside a real ZCode session, `[Hook]` in actual tool output) requires restarting the ZCode **app** — config loads at app startup (log evidence: no loadHooks after session start). Cannot be done from inside this session.
+
+**Next exact step (user):** restart ZCode app → open agentic-admin → edit any `.ts` → expect `[Hook] File edited` in tool output + Prettier formatting; `grep project_hooks.ignored` in today's log → 0 new events.
+
+## 2026-08-16 Session (p) — FIX: hooks moved to ZCode user scope, Claude untouched
+
+**What was done:** After Session (o) proved project-scope hooks are ignored by ZCode's security policy, migrated hooks to **user scope** with user approval, honoring the constraint "don't touch Claude's files". Created **copies** under `.zcode/hooks/` (7 files: `pre-write-warn.sh`, `bash-security-block.sh`, `post-edit-format.sh`, `stop-reminder.sh`, `css-nesting-check.mjs`, `graphify-guard-read.sh`, `graphify-guard-search.sh`). Each has a workspace guard (`ZCODE_PROJECT_DIR` contains `agentic-admin` → act; other workspace → exit 0; unset → act, preserving Claude parity). Registered all in `~/.zcode/cli/config.json` → `hooks.events` with `enabled: true`, absolute paths. Copies fixed 2 pre-existing bugs the originals have: jq-based filename extraction (jq not installed → always empty; copies parse via node, also reading `tool_input.file_path`) — originals' bugs left in place per the no-touch rule.
+
+**Claude safety verified:** `git diff` on `.claude/` + `scripts/css-nesting-check.mjs` vs HEAD = **empty (identical)**; `~/.claude/*` never edited; the one transient edit to `css-nesting-check.mjs` was fully reverted. Only new repo path: untracked `.zcode/`.
+
+**Verification (14 manual tests, all ✅):** guards — OTHER workspace silent-exit on every hook; THIS workspace + unset behave normally. Functional: pre-write-warn extracts filename; bash-security-block exit 1 on `rm -rf .git`, 0 on safe; css-check exit 2 + block JSON on flat selector, 0 nested; stop-reminder prints only HERE; graphify wrappers exec in THIS, silent elsewhere; post-edit-format ran real Prettier (npx) and reformatted a temp `.ts`, OTHER left file untouched.
+
+**Open items:** (1) restart ZCode session → hooks load from user config → confirm via log/tool output; (2) `.zcode/config.json` (project) is dead weight — ignored by policy, generated 81 warnings today; safe to delete, left in place; (3) Claude-side note: `post-edit-format.sh` never runs Prettier there because jq is missing — user's call, not fixed per no-touch rule.
+
+## 2026-08-16 Session (o) — Hooks re-verification: CONFIRMED dead, root cause pinned
+
+**What was done:** Second verify-only pass (per user request). Confirms Session (n) with harder evidence:
+
+1. **Config + scripts all valid** — `.zcode/config.json` (`hooks.enabled: true`, 3 events, 7 commands), all 6 script files exist (`pre-write-warn.sh`, `bash-security-block.sh`, `post-edit-format.sh`, `stop-reminder.sh`, `css-nesting-check.mjs`, `graphify.EXE`).
+2. **Live tests this session — zero hook output:** Read ×6 → no `graphify hook-guard`; Write temp `.ts` → no `[WARN] OVERWRITE entire file`; Edit → no `[Hook] File edited` / no Prettier; Bash `rm` → no trace. Temp file created + deleted cleanly.
+3. **Root cause pinned to the log:** `~/.zcode/cli/log/zcode-2026-08-16.jsonl` — **78 × `config.project_hooks.ignored`** warnings: `"Project hooks were ignored by the security policy"`, diagnosticCode `config_project_hooks_ignored`, configPath = project `.zcode/config.json`. Last burst 22:18 local = THIS session's start (22:17:48). ZCode discards project-scope hooks at every load.
+4. **User scope has NO hooks:** `~/.zcode/v2/setting.json` → `hooks: null`; `~/.zcode/config.json` doesn't exist. So `hooks.loadHooks OK` (17× in `~/.zcode/v2/logs/2026-08-16.log`, 2–34ms) loads an empty set — load-succeeds ≠ hooks-active.
+5. No per-hook execution records (fired/blocked/duration) anywhere — nothing registered, nothing ran.
+
+**Conclusion:** All 7 hooks dead. Not a config bug — **ZCode security policy refuses project-scope hooks by design**. The "hooks not in Settings UI is normal" assumption was wrong: they're not invisible, they're refused.
+
+**Next exact step (user decision):** move hooks to a scope the policy trusts (user-scope config / wherever ZCode permits), or find a policy override. Not done — task was verify-only.
+
+**Files touched:** none in app code — only this doc. No architecture diagram update needed.
+
+## 2026-08-16 Session (n) — ZCode hooks verification: NOT EXECUTING (security policy ignores project hooks)
+
+**What was done:** User asked to verify the `.zcode/config.json` hooks are loaded and firing in this session (verify-only, no fixes). Config is valid (`hooks.enabled: true`, all 3 events + 7 hook commands registered) and all 6 script files exist. But **live behavioral tests prove no hook executes**:
+
+1. **Write flat CSS** (`.parent .child`) → should be blocked by `css-nesting-check.mjs` (exit 2) → **passed unblocked**.
+2. **Edit a `.ts` file** → `post-edit-format.sh` should run Prettier (`npx prettier --write`) and echo `[Hook] File edited:` → **no echo, no reformat** (file unchanged).
+3. **Bash `echo "rm -rf backend/..."`** → should be blocked by `bash-security-block.sh` (regex `(rm|mv).*(\.git|backend|frontend|\.env)` → "SECURITY BLOCK" exit 1) → **executed normally**.
+4. **Write (overwrite)** → `pre-write-warn.sh` echoes `[WARN] OVERWRITE entire file` unconditionally → **never surfaced**.
+5. **Read** → `graphify hook-guard read` → no observable output (inconclusive alone, but consistent with 1–4).
+
+**Log evidence:** `~/.zcode/v2/logs/2026-08-16.log` shows `hooks.loadHooks OK` (RPC call succeeds — load ≠ execute) and no per-hook execution records anywhere. `~/.zcode/cli/log/zcode-2026-08-16.jsonl` contains **65 `config.project_hooks.ignored` warnings** — `"Project hooks were ignored by the security policy"` (diagnosticCode `config_project_hooks_ignored`) — all 19:04–19:11 today, zero on prior days. None after 21:00, but live tests are decisive: hooks still don't run. `.zcode/config.json` was (re)written at 22:03:09, session start.
+
+**Conclusion:** ZCode's security policy ignores project-scope (workspace) hooks defined in `.zcode/config.json`. The config parses and "loads" but is discarded. **All 7 hooks — `pre-write-warn.sh`, `css-nesting-check.mjs` (×2 events), `bash-security-block.sh`, `graphify hook-guard` (×2), `post-edit-format.sh`, `stop-reminder.sh` — are dead in this session.** Stop hook unverifiable from inside the turn, but same policy applies.
+
+**Next exact step (user decision):** find where ZCode allows approving project hooks (Settings UI security policy / user-scope config), or move the hooks to a scope the policy trusts. Not done here — task was verify-only.
+
+**Files touched:** none in app code — only this doc + `documents/STATUS.md`. Temp test files created and deleted under `.zcode/`. No architecture diagram update needed (no app change).
+
+## 2026-08-16 Session (m) — ZCode hooks migration (tooling, no app code)
+
+**What was done:** User asked to set up hooks in ZCode. Migrated the existing Claude Code hooks (`.claude/settings.local.json`) to ZCode workspace config — created `.zcode/config.json` with `hooks.enabled: true` and the same 3 events: PreToolUse (`pre-write-warn.sh` + `css-nesting-check.mjs` on Write; `bash-security-block.sh` + `graphify hook-guard search` on Bash; `graphify hook-guard read` on Read|Glob), PostToolUse (`post-edit-format.sh` = Prettier + `css-nesting-check.mjs` on Edit|Write), Stop (`stop-reminder.sh`). Scripts stay in `.claude/hooks/` (single source of truth); paths use `${ZCODE_PROJECT_DIR}`. Key difference from Claude: ZCode config hooks need explicit `enabled: true` and live under `hooks.events.<Event>`.
+
+**Verification:** JSON parse OK; manual hook tests — pre-write-warn exit 0, css-nesting-check flat selector → exit 2 + block JSON, nested selector → exit 0, stop-reminder exit 0. No frontend/backend code changed → no ng test/build needed.
+
+**Next exact step:** user restarts the ZCode session for hooks to load; optionally decide whether to commit `.zcode/config.json` to git (currently untracked).
+
+## 2026-08-16 Session (l) — Stuck "active" generate button: SSE complete-handler fix
+
+**What was done:** User reported the ideas-page generate button stuck in active state. Root cause: `generateStream`'s SSE observable calls `observer.complete()` when the server closes the stream, but the store subscribed with only `next`/`error` — **no `complete` handler**. Any stream termination without a `phase: 'done'` event (backend watch-mode restart mid-generation — happened ~5× today, network drop, mid-stream exception) left `loading=true` forever. **Fixed:** added a `complete` handler in `ideas.store.ts generate()` — clears loading, shows partial results with a Hebrew "connection ended early" message, or an error when nothing arrived. No-op on the normal path (`done` event already cleared loading).
+
+**Also fixed (pre-existing, blocking the suite):** (1) `strain-hunter.spec.ts` — 2 lines accessed protected `isAdmin` (commit 471d477 made it protected, spec not updated) → `as any` cast; (2) `llm-providers-management.spec.ts` — provider mock missing `createdAt`/`updatedAt` + `providers: vi.fn(() => [])` typed as `never[]` → added fields + `(): any[]` return type; (3) `ideas.service.spec.ts` — full rewrite to `provideHttpClientTesting`/`HttpTestingController` (commit 44f53ca refactored the service fetch→HttpClient but never updated the spec — 7 stale tests).
+
+**Verification:** `npx ng test --watch=false` → **469/485 pass**; the 16 remaining failures are the documented pre-existing set (app 2, auth.interceptor 2, with-credentials 4, auth.guard 1, strain-hunter-settings 7 — all unrelated to ideas). `npx ng build` ✅ (only pre-existing strain-hunter.css budget warning). No architecture diagram update needed (store-internal state handling).
+
+**Next exact step:** none — user reloads the frontend (ng serve picks up the change) and the button can no longer stick; existing stuck state clears on reload.
+
+## 2026-08-16 Session (k) — 🎉 SUCCESS: nightly pipeline fully working
+
+**FINAL RESULT (user's completion log, 17:42:04):** `Grounded cron: produced 2/5 grounded session(s) from 5 candidate(s)` → `Nightly ideas generation succeeded` ×2 (Shopify price-tag generator, WooCommerce net-profit calculator, 5 ideas each) → `Nightly ideas generation finished`. Full run ~7.5 min on `openrouter/google/gemma-4-31b-it:free` (user's env override — model ID has TWO slashes and the first-slash parsing handled it correctly). 2 candidates correctly rejected as ungrounded — hard gate working.
+
+**Full fix inventory across the session (10 rounds):** direct-API query sanitization (`site:`/`OR`/quotes) · discovery/gatherSignals 3-channel fan-out · PullPush serialize queue + 429 retry + circuit breaker (10-min cooldown, in-queue check) · HN 3-word query trim · discovery retry loop covering throw + truncated-JSON · snippet 280-char cap + 12-snippet prompt · thinking-model budget headroom (3072/4096-8192/4096/8192) · `IDEAS_NIGHTLY_MODEL` first-slash parsing · user config: model switched to a non-thinking model.
+
+**Known minor (non-blocking):** OpenRouter free-tier 429s during validation bursts — ll-client's built-in 4-attempt retry handles it (slower runs). Competitor-search SearXNG noise → "⚠️ לא רלוונטיות" validation reasons (cosmetic; grounding comes from the signal phase). PullPush external IP block — self-heals; circuit breaker probes every 10 min.
+
+**Next exact step:** none required — verify the sessions appear in the Ideas History UI (`/ideas/history`, nightly filter). Optional future polish: competitor-query operator stripping (same treatment as `buildSignalQueries`).
+
+## 2026-08-16 Session (j) — Round 9: thinking-model budget headroom across the ideas pipeline
+
+**What was done:** 11th log (17:29). Env override works (`cloude-flare` / `@cf/zai-org/glm-4.7-flash` active). New diagnosis: **glm-4.7-flash is ALSO a thinking model** — query-gen emitted only 303 content chars yet hit `finish_reason=length` at maxTokens 1024 (invisible reasoning tokens consumed ~950). Topic discovery attempt 1 @2048 → empty content (thinking ate the whole budget). Same pathology as OmniRoute `auto`, different provider. Conclusion: all ideas-pipeline budgets must leave thinking headroom, not just completion room.
+
+**Budget bumps (`ideas.service.ts`):** query-gen 1024→3072; topic-discovery attempts 2048/4096→4096/8192; gatherSignals 2048→4096; validation 4096→8192. Idea-gen was already 8192.
+
+**Files touched:** `backend/src/modules/ideas/ideas.service.ts` (4 maxTokens call sites + comment).
+
+**Verification:** ideas suite **33/33 ✅**, `npx tsc --noEmit` ✅, mojibake clean. **No architecture diagram update needed.**
+
+**Next exact step:** backend watch recompiles automatically → re-trigger `POST /ideas/nightly/trigger` (PullPush still externally blocked; cooldown probes self-heal). Expect: query-gen completes JSON @3072, discovery completes @4096 (or retry @8192), then per-topic signals (4096) + idea-gen (8192) + validation (8192) → `Grounded cron: accepted` → sessions saved.
+
+**Open questions:** if glm thinking still starves 8192 on discovery, next options: trim `TOPIC_DISCOVERY_PROMPT` (product decision), or a non-thinking model (e.g. a plain completion model on another provider).
+
+## 2026-08-16 Session (i) — Round 8: env typo diagnosis (user action correction)
+
+**What was done:** 10th log (17:27). User added the env line but misspelled the provider key: `cloudeflare` → `LLM Provider with key 'cloudeflare' was not found in the database.` The DB key is **`cloude-flare`** (label "Cloudeflare"). Corrected line communicated: `IDEAS_NIGHTLY_MODEL=cloude-flare/@cf/zai-org/glm-4.7-flash`. Note the first-slash parsing fix WORKED (model part `@cf/zai-org/glm-4.7-flash` arrived intact).
+
+**Run health:** kept **65 trusted snippets** (record) — query-gen failed on the bad provider key → static `FALLBACK_DISCOVERY_QUERIES` kicked in as designed and HN still delivered. Circuit breaker clean.
+
+**No code changes this round.** Tests unchanged (ideas 33/33, ideas-tasks 6/6, tsc ✅ from prior rounds).
+
+**Next exact step:** user fixes the hyphen → restart → re-trigger → expect discovery on glm-4.7-flash to return complete topics JSON → grounded sessions saved.
+
+## 2026-08-16 Session (h) — Round 7: nightly-model override fix + switch recommendation
+
+**What was done:** 9th log (17:17). Upstream fully healthy — **kept 61 trusted snippets** (HN 7+7+25+21), circuit breaker clean, retry loop live. Discovery LLM failed BOTH attempts with pure empty-content throws (38s @2048, 65s @4096). Decisive contrast in the same log: **admin chat on `cloude-flare` / `@cf/zai-org/glm-4.7-flash` worked flawlessly (5.1s)**. Root cause is now isolated: OmniRoute `auto` routing intermittently returns zero content at ANY budget — a provider problem, not a code problem. Also discovered WHY nightly uses it even though the user's chat default is glm: `IdeasTasksService.resolveModel()` passes `findFirstActiveTextModel()` (OmniRoute `auto`) as an explicit override, which beats the user-level default in `resolveEffectiveModel`.
+
+**Fix (code):** `resolveModel()` env parsing was `split('/', 2)` — truncates slash-containing model IDs (`cloude-flare/@cf/zai-org/glm-4.7-flash` → model=`@cf`). Now splits on the FIRST slash only, so `IDEAS_NIGHTLY_MODEL=cloude-flare/@cf/zai-org/glm-4.7-flash` resolves correctly. `.env.example` docs updated.
+
+**Action for the user (config, one line):** add to `backend/.env`:
+`IDEAS_NIGHTLY_MODEL=cloude-flare/@cf/zai-org/glm-4.7-flash`
+then restart backend + re-trigger. Scoped to the nightly pipeline only — chat/model defaults untouched.
+
+**Files touched:** `backend/src/modules/ideas/ideas-tasks.service.ts` (first-slash parsing), `backend/.env.example` (docs).
+
+**Verification:** ideas-tasks suite **6/6 ✅**, `npx tsc --noEmit` ✅, mojibake clean. **No architecture diagram update needed** (model-selection precedence unchanged).
+
+**Next exact step:** user adds the env line → restart → re-trigger. Expected: discovery on glm-4.7-flash returns complete JSON (non-reasoning model, no empty-content pathology), topics → grounded sessions saved.
+
+**Open questions:** none blocking.
+
+## 2026-08-16 Session (g) — Round 6: retry now covers truncated JSON (breakthrough run)
+
+**What was done:** 8th log (17:07) — **HN revival worked**: 3-word queries returned 12+12+25+1 results → **kept 50 trusted snippets** (record). Circuit breaker clean (1 probe 429 → open → 3 skips). Discovery LLM finally produced REAL topics JSON (`מחולל חשבוניות B2B תואמות-מע״מ...`) — but died on a new failure mode: `finish_reason=length` at 2048 → JSON cut mid-string → `parseLlmJson: Unterminated string at position 2346` → null → `empty topics`. The retry loop only fired when `generateResponse` THREW; a truncated-but-nonempty response bypassed it.
+
+**Fix:** restructured the retry loop in `discoverTopics` to cover BOTH failure modes — the LLM call AND the parse now happen inside the attempt loop. Unusable outcome (throw OR null/unparsed topics) → attempt 2 at 4096. Also logs `finish_reason` in the retry warning.
+
+**Files touched:** `backend/src/modules/ideas/ideas.service.ts` (retry loop covers parse; no API change).
+
+**Verification:** ideas suite **33/33 ✅**, `npx tsc --noEmit` ✅, mojibake clean. **No architecture diagram update needed.**
+
+**Next exact step:** restart backend → re-trigger. The pipeline is one retry away from full success: with 50 HN snippets + a 4096-budget second attempt, expect parsed topics → per-topic `gatherSignals` (HN provides grounding) → `Grounded cron: accepted` → session saved. Remaining known flakiness: PullPush external block (self-heals via 10-min probes), discovery latency (~60s per attempt, acceptable for nightly).
+
+**Open questions:** none blocking.
+
+## 2026-08-16 Session (f) — Round 5: HN query shortening (channel revived, live-verified)
+
+**What was done:** 7th log (16:57). Circuit breaker + in-queue check worked perfectly (first probe 429 → circuit open → 3 queued calls fail instantly). Remaining failure: all 3 channels starved simultaneously — SearXNG returned pure dictionary noise (only bing answers; brave/ddg/google/mojeek/qwant/startpage all suspended/CAPTCHA — verified live via `unresponsive_engines`), PullPush IP still externally blocked (429), HN returned 0 because its queries were 8-10 word AND-chains. `kept 0` → discovery LLM never reached.
+
+**Root fix:** HN Algolia ANDs words — long keyword chains return 0; 2-3 word queries return relevant stories. `searchHackerNews` now trims to the first 3 significant words (≥3 chars, alphanumeric) after operator-stripping. **Live-verified:** `"ecommerce abandoned cart"` / `"accessibility lawsuit ADA"` / `"spend waste facebook"` each return relevant HN stories (`The ADA lawsuit settlement involving an accessibility overlay`, etc.). Every HN result is `news.ycombinator.com` → passes the trusted-domain filter by construction. Both `discoverTopics` AND `gatherSignals` benefit automatically.
+
+**Dead ends probed (live):** SearXNG native `reddit` engine → `access denied`. arctic-shift.photon-reddit.com mirror → free-text `query`/`title`/`selftext` search requires `subreddit`/`author` param — unusable for keyword discovery.
+
+**Files touched:** `backend/src/modules/web-search/web-search.service.ts` (HN 3-word trim), `backend/src/modules/web-search/web-search.service.spec.ts` (HN test expectation updated).
+
+**Verification:** web-search + ideas suites **44/44 ✅**, `npx tsc --noEmit` ✅. **No architecture diagram update needed** (same providers).
+
+**Next exact step:** restart backend → re-trigger `POST /ideas/nightly/trigger`. HN should now yield 3-5 trusted snippets per query even with SearXNG noisy + PullPush blocked → discovery LLM runs (2048, retry 4096) → topics → `Grounded cron: accepted`. If discovery LLM still empty-content at 4096 → switch nightly model off OmniRoute `auto` (user DB change).
+
+**Open questions:** PullPush external block duration unknown (already >20 min). Circuit probes once per 10 min — self-healing when the block lifts.
+
+## 2026-08-16 Session (e) — Round 4: in-queue cooldown check + discovery 4096
+
+**What was done:** 6th log (16:43, fresh server with circuit breaker). Findings + fixes:
+1. **Circuit breaker fired but late for in-flight calls** — all 4 PullPush calls entered the queue before the first cooldown opened, so each still burned its own 3s retry (~30s total waste). **Fixed:** cooldown check added INSIDE `enqueuePullPush`'s queued task — calls queued before the circuit opened now fail fast instead of retrying against a dead channel.
+2. **Discovery empty-content is NOT input-size dependent** — failed BOTH attempts with a single 280-char snippet. Cross-run evidence: heavy `TOPIC_DISCOVERY_PROMPT` fails at 1024/2048/3072 regardless of input; the equally-heavy `IDEA_GENERATION_PROMPT` succeeds at 4096 (4706-char outputs). Reasoning burn scales with system-prompt complexity. **Fixed:** discovery retry budget 3072 → **4096** (the empirically working budget for heavy prompts on OmniRoute `auto`).
+3. Note: SearXNG yield is flaky run-to-run (30 trusted results one run, 1 the next — engine rotation); PullPush external IP block outlasts our 10-min cooldown → one probe per 10min while blocked, by design.
+
+**Files touched:** `backend/src/modules/web-search/web-search.service.ts` (in-queue cooldown check), `backend/src/modules/ideas/ideas.service.ts` (retry budget 4096 + comment).
+
+**Verification:** web-search + ideas suites **44/44 ✅**, `npx tsc --noEmit` ✅, mojibake clean. **No architecture diagram update needed.**
+
+**Next exact step:** restart backend (watch compile) → wait for PullPush cooldown if just opened → re-trigger `POST /ideas/nightly/trigger`. Success = topics JSON + `Grounded cron: accepted` ×≥1. **If discovery still empty at 4096 → switch the nightly model off OmniRoute `auto`** (DB: active text model row — same place the user fixed `openrouter/google` before). That is a user config decision; all code levers exhausted.
+
+**Open questions:** none blocking.
+
+## 2026-08-16 Session (d) — Round 3: PullPush circuit breaker + discovery prompt trim
+
+**What was done:** User re-triggered after server restart (fresh compile of Sessions b+c). Log showed: SearXNG **recovered** (30 results for the Etsy-suspension query, kept 26 trusted r/Etsy posts), queue stopped the 429 storm, discovery retry fired. Two defects remained, both fixed:
+1. **PullPush IP hard-blocked** — every call 429'd, and each retry (3s backoff) 429'd too; the serialized queue then burned ~30s per phase waiting on a dead channel. **Fixed:** circuit breaker — when the 429 retry ALSO fails, PullPush opens a 10-minute cooldown (`pullPushCooldownUntil`); calls during cooldown return failure instantly with no HTTP; any success clears it.
+2. **Discovery LLM empty-content correlates with input size** — evidence across runs: 4 snippets @2048 → success; 11 @2048 → fail; 26 snippets @2048 AND @3072 → both fail (reasoning model burns budget proportional to prompt). Bigger budget alone didn't help. **Fixed:** discovery snippets capped at 280 chars each and prompt trimmed from `slice(0, 30)` → `slice(0, 12)`.
+
+**Files touched:** `backend/src/modules/web-search/web-search.service.ts` (cooldown circuit + clear-on-success), `backend/src/modules/ideas/ideas.service.ts` (280-char snippet cap, 12-snippet prompt), `backend/src/modules/web-search/web-search.service.spec.ts` (+1 circuit test: double-429 opens cooldown, next call short-circuits with no HTTP).
+
+**Verification:** web-search + ideas suites **44/44 ✅**, `npx tsc --noEmit` ✅, mojibake clean. **No architecture diagram update needed** — same providers, no new module/boundary.
+
+**Next exact step:** re-trigger `POST /ideas/nightly/trigger` (ideally after ~10 min so PullPush cooldown from earlier runs expires). Expect: `[PullPush] In cooldown — skipping` OR real results, discovery LLM producing topics JSON on attempt 1-2, and ≥1 `Grounded cron: accepted` → session saved. If discovery STILL returns empty content with 12×280 snippets, the next lever is switching the nightly model off OmniRoute `auto` (reasoning) to a plain model — DB/config change for the user.
+
+**Open questions:** none blocking.
+
+## 2026-08-16 Session (c) — Round 2 fixes: PullPush 429 throttle/retry + double site: + discovery retry
+
+**What was done:** User re-triggered after Session (b). Big progress visible in logs — sanitized PullPush queries returned 5/3/2/1 results, discovery produced topics, signals extracted, ideas generated + validated. But 4 new defects surfaced, all fixed:
+1. **PullPush 429 rate-limit** — parallel fan-out fires 5+ PullPush calls in one burst → mid-run all calls 429 (`PullPush search failed: ... 429` ×5) → `kept 0` → ungrounded. **Fixed:** all PullPush calls now go through a serialized in-service queue (`enqueuePullPush`, 1500ms min interval) + one retry after 3000ms backoff on 429 only.
+2. **Double `site:` operator** — LLM `searchQuery` already contains `site:reddit.com`; `buildSignalQueries` prepends its own → `site:reddit.com site:reddit.com ...` confused SearXNG (verified in logs). **Fixed:** `buildSignalQueries` term cleanup now strips `site:`/`domain:`, `-exclusions`, `OR` before composing its own operators.
+3. **Discovery LLM still flaky empty-content** — run 1 failed `Returned no content or tool calls` at 2048; run 2 succeeded (intermittent reasoning-model behavior). **Fixed:** `discoverTopics` retries the LLM once (second attempt `maxTokens: 3072`).
+4. **Trailing `-` token** — `-site:reddit.com` strip left a bare `-` in direct-API queries. **Fixed:** exclusion regex `(^|\s)-[^\s"]*` consumes the dash too.
+
+**Files touched:** `backend/src/modules/web-search/web-search.service.ts` (PullPush queue + retry + regex fix), `backend/src/modules/ideas/ideas.service.ts` (`buildSignalQueries` operator strip, `discoverTopics` retry loop), `backend/src/modules/web-search/web-search.service.spec.ts` (+1 429-retry test).
+
+**Verification:** web-search + ideas suites **43/43 ✅** (incl. new 429-retry test), `npx tsc --noEmit` ✅. Jest prints a force-exited-worker warning (leaked timer from the retry test's real 3s sleep) — cosmetic, tests pass. **No architecture diagram update needed** — same providers, no new module/boundary.
+
+**Next exact step:** re-trigger `POST /ideas/nightly/trigger`. Expect: no 429 storms (calls serialized ~1.5s apart), single `site:` per query, and ≥1 `Grounded cron: accepted "..."` → session saved. Note run cadence: PullPush throttling makes gatherSignals slower (~7s extra per topic) — well within the 150s deadline. If topic-discovery LLM fails BOTH attempts, the fallback is static queries (already site:-scoped).
+
+**Open questions:** HN Algolia returns 0 for these long pain-point queries (keyword-stuffed queries don't match HN story titles) — channel kept as best-effort; PullPush is the workhorse. If 429s persist even throttled, consider raising `PULLPUSH_MIN_INTERVAL_MS` or caching identical queries per run.
+
+## 2026-08-16 Session (b) — Nightly ideas still 0: 3-layer fix (direct-API query sanitize + discovery budget + gatherSignals fan-out)
+
+**What was done:** User re-triggered `/ideas/nightly/trigger` twice after the previous session's HN/PullPush addition — still `0 grounded sessions`. Diagnosed from pasted logs, found 3 stacked causes:
+1. **Direct APIs got raw search syntax** — `searchHackerNews`/`searchRedditArchive` received queries like `site:reddit.com ecommerce "abandoned cart" OR "conversion"`. HN Algolia + PullPush do literal text search: `site:reddit.com` becomes a dead token → 0 results (and PullPush returned HTTP 400 on an unbalanced quote emitted by the LLM). **Fixed:** new private `toDirectApiQuery()` in `web-search.service.ts` strips `site:`/`domain:` operators, `-exclusions`, `OR`, quotes, parens before both direct-API calls.
+2. **Topic-discovery LLM returned empty content** — run 1 kept 1 trusted result but the `TOPIC_DISCOVERY_PROMPT` call at `maxTokens: 1024` threw `Returned no content or tool calls from AI model` (OmniRoute `auto` reasoning model burns budget on `reasoning_content` — same documented pattern as 2026-08-12). **Fixed:** `maxTokens: 1024 → 2048` in `discoverTopics` (same budget as `gatherSignals`).
+3. **`gatherSignals` was still SearXNG-only** — even with 1+2 fixed, per-topic grounding depended entirely on SearXNG (engines suspended → ~0 trusted results) → every candidate dropped as ungrounded → 0 sessions. **Fixed:** `gatherSignals` now fans each of its 5 queries to SearXNG + HN Algolia + PullPush in parallel (same pattern as `discoverTopics`).
+
+**Files touched:** `backend/src/modules/web-search/web-search.service.ts` (+`toDirectApiQuery`, both direct-API methods take `rawQuery`), `backend/src/modules/ideas/ideas.service.ts` (discovery `maxTokens`, `gatherSignals` fan-out), `backend/src/modules/web-search/web-search.service.spec.ts` (+2 sanitize tests).
+
+**Verification:** web-search suite **9/9 ✅** (7 baseline + 2 new), ideas suite **33/33 ✅**, `npx tsc --noEmit` ✅, mojibake scan clean. **No architecture diagram update needed** — no new provider/module; the fan-out reuses the already-documented HN Algolia + PullPush providers inside IdeasModule.
+
+**Next exact step:** re-trigger `POST /ideas/nightly/trigger` — expect `[HN Algolia]`/`[PullPush]` queries logged WITHOUT `site:`/quotes, non-zero results, and ≥1 grounded session (`Grounded cron: accepted "..."`). If the discovery LLM still returns empty content at 2048, next lever is a one-retry loop in `discoverTopics` or switching the nightly model off the reasoning `auto`.
+
+**Open questions:** none blocking.
+
+## 2026-08-16 Session — Nightly ideas run produced 0 sessions (log diagnosis + fallback fix)
+
+**What was done:** Diagnosed the user-pasted nightly-run logs (`/ideas/nightly/trigger` → `0 grounded sessions`, two runs). Chained root causes:
+1. **DB data (fixed by user):** `IdeasTasksService.resolveModel()` → `findFirstActiveTextModel()` returned `{provider: 'openrouter', key: 'google'}` — invalid OpenRouter model ID → `400` → discovery fell to static fallback. User switched the active model to OmniRoute `auto` — LLM query generation now works (verified in second log).
+2. **Code (fixed):** `FALLBACK_DISCOVERY_QUERIES` had no `site:` operators → SearXNG returned 40 generic blog results → `TRUSTED_SIGNAL_DOMAINS` dropped ALL 40 → 0 topics. Fixed: fallback queries now `site:`-scoped to trusted domains.
+3. **SearXNG engines (infrastructure):** even with `site:` queries, ALL self-hosted SearXNG general engines died under bot detection — `brave`/`google cse`: "Suspended: too many requests", `duckduckgo`/`startpage`: CAPTCHA (verified live via `localhost:8080/search?format=json`). Also enabled `bing`/`mojeek`/`qwant` in `docker/searxng/settings.yml` — bing answers but silently IGNORES `site:` (generic results), mojeek/qwant dead. Conclusion: SearXNG alone cannot serve trusted-domain discovery.
+4. **Multi-channel signal discovery (user-approved direction "APIs ישירים"):** `WebSearchService` gained two keyless direct-API methods — `searchHackerNews` (HN Algolia, live-verified ✅) and `searchRedditArchive` (PullPush pushshift successor, live-verified ✅; `reddit.com/search.json` returns 403 without OAuth, `old.reddit` soft-blocks with empty results). `discoverTopics` now fans each query to SearXNG + HN + PullPush in parallel; the two APIs return only trusted-domain URLs by construction. SearXNG stays as best-effort channel and for other consumers (genetics/terpenes enrichment).
+
+**Files touched:** `backend/src/modules/ideas/ideas.service.ts` (fallback constant + fan-out), `backend/src/modules/web-search/web-search.service.ts` (+2 methods), `backend/src/modules/web-search/web-search.service.spec.ts` (+4 tests), `docker/searxng/settings.yml` (enable bing/mojeek/qwant), `documents/architecture-diagram.md` (IdeasModule node + nightly cron flow).
+
+**Verification:** backend `web-search` + `ideas` suites **40/40 ✅**, `tsc --noEmit` ✅, mojibake scan clean. Architecture diagram updated (new external providers HN Algolia + PullPush).
+
+**Next exact step:** backend dev server auto-recompiles — re-trigger `POST /ideas/nightly/trigger` and confirm logs show `[HN Algolia]` / `[PullPush]` results and ≥1 grounded session. If the LLM-generated queries still use `site:`/quotes that SearXNG chokes on, that no longer matters — HN/PullPush receive the raw query text and handle it.
+
+**Open questions:** none blocking. PullPush archive freshness lags hours behind live Reddit (acceptable for nightly pain-point mining).
+
 ## 2026-08-14 Session — Ideas validation overhaul (riskPenalty + card UX + solo-dev fields)
 
 **What was done:** Implemented the 4-phase upgrade plan from the product review:

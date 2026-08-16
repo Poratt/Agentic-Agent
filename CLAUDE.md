@@ -1,14 +1,58 @@
 # Claude Code Project Guide — Porat Monorepo
 
-## שפת תגובה
-תגובות בשיחה יהיו בעברית או באנגלית — לפי השפה שבה המשתמש כתב את
-ההודעה האחרונה, או השפה שהייתה בשימוש בהקשר הקרוב. אסור בהחלט
-לענות בשפה שלישית כלשהי (כגון סינית) — אם קורה דבר כזה בטעות,
-יש לעצור מיד ולהתחיל מחדש בשפה הנכונה (עברית/אנגלית).
+## Response Language
+
+Conversation responses will be in Hebrew or English — according to the language the user wrote their last message in, or the language used in the recent context. It is strictly forbidden to respond in any third language (such as Chinese) — if this happens by mistake, stop immediately and restart in the correct language (Hebrew/English).
+
+## Project Overview
+
+Full-stack monorepo: Angular 22 frontend + NestJS backend.
+
+Frontend platform baseline:
+
+- Angular `22.0.1`
+- Angular CLI `22.0.1`
+- TypeScript `6.0.3`
+- Node.js `22.22.3+` or `24.15.0+`
+- PrimeNG is currently `21.1.8`; its Angular 22 peer dependency mismatch is a known open risk.
+
+## Directory Structure
+
+- `frontend/src/app/components/` — Reusable presentation components
+- `frontend/src/app/features/` — Feature modules and smart components
+- `frontend/src/app/core/services/` — API clients
+- `frontend/src/app/core/stores/` — Signal Stores
+- `frontend/src/app/assets/styles/` — Global styles and `_variables.css`
+- `backend/src/modules/` — Feature modules (Controller + Service + Entity)
+- `backend/src/core/` — Database and environment configurations
+
+## Build & Dev Commands
+
+Run frontend verification commands from `frontend/` unless a task explicitly says otherwise.
+Do not use `npx ng build frontend` unless the workspace command is known to support that project argument.
+
+| Action         | Command                        |
+| -------------- | ------------------------------ |
+| Frontend dev   | `npx ng serve`                 |
+| Backend dev    | `npm run start:dev -w backend` |
+| Frontend lint  | `npx ng lint`                  |
+| Backend lint   | `npm run lint -w backend`      |
+| Frontend test  | `npx ng test --watch=false`    |
+| Frontend build | `npx ng build`                 |
+| Backend test   | `npm run test -w backend`      |
+
+## Rules Index
+
+- Angular rules @`~/.CLAUDE/rules/angular-rules.md`
+- NestJS rules @`~/.CLAUDE/rules/nestjs-rules.md`
+- File editing: @`~/.CLAUDE/rules/str-replace.md`
+- CSS: @`~/.CLAUDE/rules/css-rules.md`
+
+## Core Principles
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
-## 1. Think Before Coding
+### 1. Think Before Coding
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
 
@@ -20,7 +64,7 @@ Before implementing:
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
 
-## 2. Simplicity First
+### 2. Simplicity First
 
 **Minimum code that solves the problem. Nothing speculative.**
 
@@ -32,7 +76,7 @@ Before implementing:
 
 Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
-## 3. Surgical Changes
+### 3. Surgical Changes
 
 **Touch only what you must. Clean up only your own mess.**
 
@@ -50,7 +94,7 @@ When your changes create orphans:
 
 The test: Every changed line should trace directly to the user's request.
 
-## 4. Goal-Driven Execution
+### 4. Goal-Driven Execution
 
 **Define success criteria. Loop until verified.**
 
@@ -93,17 +137,9 @@ Before editing any file, the agent MUST:
 6. Only then edit files.
 
 For Angular page components with async loading/error/empty/ready states, this is mandatory.
-Static placeholder pages do not need `PageStates`:
+Static placeholder pages do not need `PageStates`.
 
-- Use `PageStates`
-- Expose `readonly PageStates = PageStates`
-- Use `pageState = computed<PageStates>(...)`
-- Template must use:
-
-```html
-@switch (pageState()) { @case (PageStates.Loading) {} @case (PageStates.Error) {} @case
-(PageStates.Empty) {} @case (PageStates.Ready) {} }
-```
+For the full `PageStates` pattern, template snippet, CSS rules, and Angular Definition Of Done, see `~/.CLAUDE/rules/angular-rules.md`.
 
 If the agent cannot identify the applicable pattern, it must stop and ask before editing.
 
@@ -124,47 +160,6 @@ rg -n "׳|ג€�|ג†|ג€|�" path/to/file
 
 If actual mojibake is found, fix it before running build or returning the answer.
 
-## Angular Definition Of Done
-
-Before marking an Angular task complete:
-
-1. Confirm each user requirement was satisfied.
-2. Confirm all required routes, menu links, imports, and templates are connected.
-3. Confirm Hebrew text is readable in the edited file and has no actual mojibake.
-4. Run the corrupted-character scan on touched Hebrew files.
-5. Confirm CSS follows project rules, or no component CSS file was created because existing global classes were enough.
-6. Confirm the verification command completed successfully.
-7. Report files changed, verification result, and known limitations.
-
-For placeholder/static pages, prefer existing global classes such as `page-content`, `page-header`, `glass-effect`, `card`, `card-header`, and `subtitle`.
-Static pages do not need `PageStates`, but they still must use the standard page shell:
-For simple static placeholder pages, copy this structure exactly and only replace `PAGE_TITLE`, `SECTION_TITLE`, icon class, and `PLACEHOLDER_TEXT`:
-
-```html
-<div class="page-content">
-  <header class="page-header">
-    <h2>PAGE_TITLE</h2>
-  </header>
-
-  <section class="glass-effect card">
-    <div class="card-header">
-      <span class="ph ph-gear"></span>
-      <h3>SECTION_TITLE</h3>
-    </div>
-    <p class="subtitle">PLACEHOLDER_TEXT</p>
-  </section>
-</div>
-```
-
-Do not improvise the HTML structure for a simple static page.
-Do not move placeholder text into the header.
-Do not use `.page-state.empty-state` unless representing a real no-data state.
-Do not use loose standalone text blocks for static placeholder content.
-Do not create `settings-container`, `*-container`, or page-specific wrapper classes for a simple static page.
-Do not create a component CSS file unless existing classes are insufficient.
-If an unnecessary component CSS file exists, delete it and remove `styleUrl`/`styleUrls` from the component.
-Never style bare `h1`, `p`, `button`, `table`, `th`, or `td` in component CSS.
-
 ## File Editing Safety Rule
 
 Before using `str_replace` on any file:
@@ -179,85 +174,12 @@ Before using `str_replace` on any file:
 
 ## 🔴 Golden Rules
 
-1. Run tests BEFORE any refactoring: `npx ng test frontend --watch=false`
+1. Run tests BEFORE any refactoring: `npx ng test --watch=false` (from `frontend/`)
 2. Every API change touches both sides: frontend service AND backend controller
 3. No hardcoded CSS — only `var(--token)` from `_variables.css`, Generic global style High Priority - Came first.
 4. Enums always start from `1`, never `0`
 5. Prettier runs automatically via Hook — do not run manually
-6. If Popo lopo messages via Telegram, replay with `mcp__plugin_telegram_telegram__reply`.
-7. `tsconfig.app.json` include must be `src/**/*.ts` — never `src/**/*.d.ts`
-
-## Project Overview
-
-Full-stack monorepo: Angular 22 frontend + NestJS backend.
-
-Frontend platform baseline:
-
-- Angular `22.0.1`
-- Angular CLI `22.0.1`
-- TypeScript `6.0.3`
-- Node.js `22.22.3+` or `24.15.0+`
-- PrimeNG is currently `21.1.8`; its Angular 22 peer dependency mismatch is a known open risk.
-
-## Rules
-
-- Angular rules @`~/.CLAUDE/rules/angular-rules.md`
-- NestJS rules @`~/.CLAUDE/rules/nestjs-rules.md`
-- File editing: @`~/.CLAUDE/rules/str-replace.md`
-- CSS: @`~/.CLAUDE/rules/css-rules.md`
-
-## Directory Structure
-
-- `frontend/src/app/components/` — Reusable presentation components
-- `frontend/src/app/features/` — Feature modules and smart components
-- `frontend/src/app/core/services/` — API clients
-- `frontend/src/app/core/stores/` — Signal Stores
-- `frontend/src/app/assets/styles/` — Global styles and `_variables.css`
-- `backend/src/modules/` — Feature modules (Controller + Service + Entity)
-- `backend/src/core/` — Database and environment configurations
-
-## Build & Dev Commands
-
-Run frontend verification commands from `frontend/` unless a task explicitly says otherwise.
-Do not use `npx ng build frontend` unless the workspace command is known to support that project argument.
-
-| Action        | Command                              |
-| ------------- | ------------------------------------ |
-| Frontend dev  | `npx ng serve`                       |
-| Backend dev   | `npm run start:dev -w backend`       |
-| Frontend lint | `npx ng lint`                        |
-| Backend lint  | `npm run lint -w backend`            |
-| Frontend test | `npx ng test --watch=false`          |
-| Frontend build | `npx ng build`                      |
-| Backend test  | `npm run test -w backend`            |
-
-## Playwright Testing / Browser Rules
-
-- Always use `data-testid` attributes — never `[ref=...]`
-- Verify URL with `browser_snapshot` before every action
-- Call `browser_wait_for` after navigation for Angular stability
-- Use headless mode only
-- One browser action at a time, confirm before next
-- If session exceeds 15 tool calls, start fresh with /clear
-
-## Environment Notes
-
-- node --version may fail in sandbox — use `npx node --version` instead
-- Always verify environment via build output, not direct CLI checks
-
-## Documentation
-
-- Use context7 when writing code that involves third-party library APIs
-
-### Architecture Diagram Maintenance
-
-Before finishing any backend/frontend architectural change, check whether `documents/architecture-diagram.md` needs an update.
-
-Update `documents/architecture-diagram.md` whenever a change affects system architecture, module boundaries, request flow, tool execution flow, GenUI rendering, LLM/model selection, database entities, or external provider integrations.
-
-If the change does not affect the architecture diagram, mention that explicitly in the final response.
-
-- **Sub-Agents for Scale:** For multi-step or complex tasks, spawn specialized sub-agents to parallelize work (e.g., one for backend DTO/Controller, one for frontend UI). The primary agent must review and integrate their diffs.
+6. `tsconfig.app.json` include must be `src/**/*.ts` — never `src/**/*.d.ts`
 
 ## Session Management (MANDATORY)
 
@@ -294,6 +216,20 @@ Before responding with final answer, update:
    - Move its `.md` file to `documents/done/`
    - Update `STATUS.md` accordingly
 
+### Verification Gate (HARD RULE)
+
+Never mark a task as DONE and never close a session unless **all** of the following are true:
+
+1. The relevant verification command ran and exited with code `0`:
+   - Frontend change: `npx ng test --watch=false` (from `frontend/`) and/or `npx ng build`
+   - Backend change: `npm run test -w backend` and/or `npm run build -w backend`
+   - CSS-only change: `npx ng build` (from `frontend/`)
+2. The verification output (command + exit code + summary) is included in the final report.
+3. Pre-existing failures are explicitly distinguished from new ones.
+4. `documents/HANDOFF.md` and `documents/STATUS.md` were updated before the final answer.
+
+If verification fails or was skipped, the task **is NOT DONE**. Report the failure and the next step.
+
 ### Feature Work Flow
 
 ```
@@ -302,6 +238,34 @@ incomplete/<feature>.md  ← paused (add reason + resume point)
 done/<feature>.md        ← completed
 ```
 
+## Playwright Testing / Browser Rules
+
+- Always use `data-testid` attributes — never `[ref=...]`
+- Verify URL with `browser_snapshot` before every action
+- Call `browser_wait_for` after navigation for Angular stability
+- Use headless mode only
+- One browser action at a time, confirm before next
+- If session exceeds 15 tool calls, start fresh with /clear
+
+## Environment Notes
+
+- node --version may fail in sandbox — use `npx node --version` instead
+- Always verify environment via build output, not direct CLI checks
+
+## Documentation
+
+- Use context7 when writing code that involves third-party library APIs
+
+### Architecture Diagram Maintenance
+
+Before finishing any backend/frontend architectural change, check whether `documents/architecture-diagram.md` needs an update.
+
+Update `documents/architecture-diagram.md` whenever a change affects system architecture, module boundaries, request flow, tool execution flow, GenUI rendering, LLM/model selection, database entities, or external provider integrations.
+
+If the change does not affect the architecture diagram, mention that explicitly in the final response.
+
+- **Sub-Agents for Scale:** For multi-step or complex tasks, spawn specialized sub-agents to parallelize work (e.g., one for backend DTO/Controller, one for frontend UI). The primary agent must review and integrate their diffs.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
@@ -309,6 +273,7 @@ This project has a knowledge graph at graphify-out/ with god nodes, community st
 When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
 
 Rules:
+
 - For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
 - Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
