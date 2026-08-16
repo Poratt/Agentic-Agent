@@ -26,3 +26,16 @@ ui:
 outgoing:
   request_timeout: 5.0
   max_request_timeout: 15.0
+
+# Enable extra general engines that tolerate self-hosted scraping better than
+# google cse / duckduckgo / brave / startpage (which quickly hit "Suspended:
+# too many requests" / CAPTCHA when the nightly ideas cron fires parallel
+# queries from a single residential IP). Entries merge into the default
+# engine set by name via use_default_settings.
+engines:
+  - name: bing
+    disabled: false
+  - name: mojeek
+    disabled: false
+  - name: qwant
+    disabled: false

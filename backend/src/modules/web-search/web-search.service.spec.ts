@@ -36,11 +36,7 @@ describe('WebSearchService', () => {
     });
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        WebSearchService,
-        { provide: HttpService, useValue: httpService },
-        { provide: ConfigService, useValue: configService },
-      ],
+      providers: [WebSearchService, { provide: HttpService, useValue: httpService }, { provide: ConfigService, useValue: configService }],
     }).compile();
 
     service = module.get(WebSearchService);
@@ -76,11 +72,7 @@ describe('WebSearchService', () => {
       });
 
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          WebSearchService,
-          { provide: HttpService, useValue: httpService },
-          { provide: ConfigService, useValue: configService },
-        ],
+        providers: [WebSearchService, { provide: HttpService, useValue: httpService }, { provide: ConfigService, useValue: configService }],
       }).compile();
 
       const freshService = module.get(WebSearchService);
@@ -88,6 +80,168 @@ describe('WebSearchService', () => {
 
       expect(result.success).toBe(false);
       expect(result.message).toContain('SEARXNG_URL');
+    });
+  });
+
+  describe('searchHackerNews', () => {
+    it('maps HN Algolia hits to trusted-domain results', async () => {
+      httpService.get.mockReturnValueOnce(
+        of({
+          data: {
+            hits: [
+              { objectID: 'h1', title: 'Ask HN: SaaS pain', story_text: 'story body' },
+              { objectID: 'h2', story_title: 'Story from comment', comment_text: 'comment body' },
+              { objectID: 'h3' },
+            ],
+          },
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config: {} as any,
+        } as AxiosResponse),
+      );
+
+      const result = await service.searchHackerNews('saas pain');
+
+      expect(result.success).toBe(true);
+      expect(result.result?.results).toHaveLength(2);
+      expect(result.result?.results[0].url).toBe('https://news.ycombinator.com/item?id=h1');
+      expect(result.result?.results[0].content).toBe('story body');
+      expect(result.result?.results[1].title).toBe('Story from comment');
+    });
+
+    it('returns error when HN Algolia call fails', async () => {
+      httpService.get.mockReturnValueOnce(throwError(() => new Error('Network error')));
+
+      const result = await service.searchHackerNews('failing query');
+
+      expect(result.success).toBe(false);
+      expect(result.result).toBeNull();
+    });
+
+    it('strips site:/OR/quotes and shortens to 3 significant words for HN', async () => {
+      httpService.get.mockReturnValueOnce(
+        of({
+          data: { hits: [] },
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config: {} as any,
+        } as AxiosResponse),
+      );
+
+      await service.searchHackerNews('site:reddit.com ecommerce "abandoned cart" OR "conversion"');
+
+      const call = httpService.get.mock.calls[0];
+      expect(call[1].params.query).toBe('ecommerce abandoned cart');
+    });
+  });
+
+  describe('search site: operator enforcement', () => {
+    const siteResponse = (results: { title: string; url: string }[]): AxiosResponse =>
+      ({
+        data: {
+          query: 'q',
+          results: results.map((r, i) => ({ ...r, content: `content ${i}` })),
+        },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any,
+      }) as AxiosResponse;
+
+    it('drops bing garbage and keeps only reddit.com results (incl. subdomains) for site:reddit.com', async () => {
+      // מקרה מדויק מהחקירה החיה 2026-08-16: bing החזיר shopify/wikipedia
+      // עבור site:reddit.com (...) בזמן ש-google cse החזיר reddit תקין.
+      httpService.get.mockReturnValueOnce(
+        of(
+          siteResponse([
+            { title: 'Shopify', url: 'https://www.shopify.com/' }, // bing
+            { title: 'Reddit Etsy', url: 'https://www.reddit.com/r/Etsy/comments/1ov' }, // google cse
+            { title: 'Wikipedia Shopify', url: 'https://en.wikipedia.org/wiki/Shopify' }, // bing
+            { title: 'Reddit startups', url: 'https://www.reddit.com/r/startups/x' }, // google cse
+            { title: 'Bare host', url: 'https://reddit.com/r/all' }, // exact-host match
+          ]),
+        ),
+      );
+
+      const result = await service.search('site:reddit.com (shopify amazon etsy) "losing money"');
+
+      expect(result.success).toBe(true);
+      expect(result.result?.results).toHaveLength(3);
+      expect(result.result?.results.every((r) => new URL(r.url).hostname.endsWith('reddit.com'))).toBe(true);
+    });
+
+    it('keeps only indiehackers.com for site:indiehackers.com (chatgpt/openai dropped)', async () => {
+      // מקרה מדויק מהחקירה: site:indiehackers.com "churn" החזיר TRT Spor
+      // מ-bing בזמן ש-google cse החזיר indiehackers תקין.
+      httpService.get.mockReturnValueOnce(
+        of(
+          siteResponse([
+            { title: 'ChatGPT', url: 'https://chatgpt.com/' }, // bing
+            { title: 'OpenAI', url: 'https://openai.com/index/chatgpt/' }, // bing
+            { title: 'IH churn', url: 'https://www.indiehackers.com/post/churn-is-inevitable' }, // google cse
+          ]),
+        ),
+      );
+
+      const result = await service.search('site:indiehackers.com "churn"');
+
+      expect(result.success).toBe(true);
+      expect(result.result?.results).toHaveLength(1);
+      expect(result.result?.results[0].url).toContain('indiehackers.com');
+    });
+
+    it('does not filter when no site: operator is present', async () => {
+      httpService.get.mockReturnValueOnce(
+        of(
+          siteResponse([
+            { title: 'A', url: 'https://a.com/1' },
+            { title: 'B', url: 'https://b.com/2' },
+          ]),
+        ),
+      );
+
+      const result = await service.search('plain query');
+
+      expect(result.success).toBe(true);
+      expect(result.result?.results).toHaveLength(2);
+    });
+
+    it('excludes the -site: domain while keeping everything else', async () => {
+      // שאילתה 5 מ-buildSignalQueries: -site:reddit.com אמור להרחיק את
+      // reddit ולהשאיר את שאר הפורומים, לא להיחשב כמסנן חיובי.
+      httpService.get.mockReturnValueOnce(
+        of(
+          siteResponse([
+            { title: 'Reddit', url: 'https://www.reddit.com/r/x' },
+            { title: 'Forum', url: 'https://forum.example.com/t/1' },
+          ]),
+        ),
+      );
+
+      const result = await service.search('niche forum "wish there was" -site:reddit.com');
+
+      expect(result.success).toBe(true);
+      expect(result.result?.results).toHaveLength(1);
+      expect(result.result?.results[0].url).toContain('forum.example.com');
+    });
+
+    it('drops results with unparseable URLs when a site: filter is active', async () => {
+      httpService.get.mockReturnValueOnce(
+        of(
+          siteResponse([
+            { title: 'Junk', url: 'not-a-valid-url' },
+            { title: 'Reddit', url: 'https://www.reddit.com/r/ok' },
+          ]),
+        ),
+      );
+
+      const result = await service.search('site:reddit.com test');
+
+      expect(result.success).toBe(true);
+      expect(result.result?.results).toHaveLength(1);
+      expect(result.result?.results[0].url).toContain('reddit.com');
     });
   });
 });
