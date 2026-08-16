@@ -28,23 +28,58 @@ import { SavedIdea } from './entities/saved-idea.entity';
 const MAX_DOMAIN_LENGTH = 500;
 const MAX_PARALLEL_VALIDATION = 3;
 const OVERALL_TIMEOUT_MS = 150_000;
+// Search engines (incl. SearXNG) return noisy/empty results on long boolean
+// queries. Cap `searchQuery` to a short, focused phrase so buildSignalQueries
+// produces queries SearXNG can actually index.
+const MAX_SEARCH_QUERY_WORDS = 6;
 
 @Injectable()
 export class IdeasService {
   private readonly logger = new Logger(IdeasService.name);
 
   /**
+   * Deterministic blocklist enforced in code (not just in prompts) so that
+   * scraped-ad / trend-mapper ideas cannot slip through even when the LLM
+   * ignores the textual blacklist. Matched case-insensitively as substrings
+   * against the domain, idea title, and idea description.
+   */
+  private readonly BLACKLISTED_DOMAIN_KEYWORDS = [
+    'ad librar',
+    'meta ads',
+    'tiktok ads',
+    'google trends',
+    'pinterest',
+    'adspy',
+    'ad spy',
+    'competitor ad',
+    'trend mapper',
+    'creative auditor',
+  ];
+
+  /**
+   * Domains we trust as a source of real user pain points. Anything outside
+   * this list is treated as noise and dropped before reaching the LLM.
+   * Reason: SearXNG frequently returns off-topic results (random marketing
+   * pages, foreign-language menus, login screens) even when the query uses
+   * `site:reddit.com`. Without this filter the LLM happily hallucinates
+   * plausible "signals" out of the garbage and the `groundedInSignals` flag
+   * becomes a false positive.
+   */
+  private readonly TRUSTED_SIGNAL_DOMAINS = ['reddit.com', 'indiehackers.com', 'news.ycombinator.com', 'producthunt.com', 'quora.com'];
+
+  /**
    * Static search queries used as a fallback when the LLM fails to generate
    * current, date-aware discovery queries. Kept so the nightly cron still has
    * something to search even if the query-generation step fails.
+   * Each query targets a TRUSTED_SIGNAL_DOMAINS site via `site:` so the
+   * trusted-domain filter downstream does not drop everything as off-domain.
    */
   private readonly FALLBACK_DISCOVERY_QUERIES = [
-    'indie hacker pain points 2025 2026',
-    'underserved SaaS niches solo founder bootstrap',
-    'solo developer business ideas software only',
-    'prosumer tools underserved market 2025',
+    'site:reddit.com SaaS pain points losing money',
+    'site:reddit.com solo founder underserved niche',
+    'site:news.ycombinator.com Ask HN willing to pay tool',
+    'site:indiehackers.com validated micro saas pain point',
   ];
-
 
   constructor(
     private readonly llm: LlmClientService,
@@ -54,7 +89,7 @@ export class IdeasService {
     @InjectRepository(SavedIdea)
     private readonly ideaRepository: Repository<SavedIdea>,
     private readonly dataSource: DataSource,
-  ) { }
+  ) {}
 
   // ---------------------------------------------------------------------------
   // Persistence layer (Phase 1)
@@ -126,10 +161,7 @@ export class IdeasService {
    * only nightly cron sessions are returned. When `favorites` is true, only
    * sessions that contain at least one favorited idea are returned.
    */
-  async listSessions(
-    userId: number,
-    filters?: { nightly?: boolean; favorites?: boolean },
-  ): Promise<SavedIdeaSession[]> {
+  async listSessions(userId: number, filters?: { nightly?: boolean; favorites?: boolean }): Promise<SavedIdeaSession[]> {
     const qb = this.sessionRepository
       .createQueryBuilder('session')
       .loadRelationCountAndMap('session.ideasCount', 'session.ideas')
@@ -140,10 +172,9 @@ export class IdeasService {
     }
 
     if (filters?.favorites) {
-      qb.andWhere(
-        `session.id IN (SELECT DISTINCT idea.sessionId FROM saved_ideas idea WHERE idea.userId = :userId AND idea.isFavorite = :fav)`,
-        { fav: true },
-      );
+      qb.andWhere(`session.id IN (SELECT DISTINCT idea.sessionId FROM saved_ideas idea WHERE idea.userId = :userId AND idea.isFavorite = :fav)`, {
+        fav: true,
+      });
     }
 
     qb.orderBy('session.createdAt', 'DESC');
@@ -217,10 +248,7 @@ export class IdeasService {
    * Marks all of the user's unread nightly sessions as read.
    */
   async markNightlyRead(userId: number): Promise<void> {
-    await this.sessionRepository.update(
-      { userId, nightly: true, unread: true },
-      { unread: false },
-    );
+    await this.sessionRepository.update({ userId, nightly: true, unread: true }, { unread: false });
   }
 
   async generateIdeas(
@@ -239,7 +267,7 @@ export class IdeasService {
 
     const providerKey = providerOverride as LlmProvider | undefined;
     const deadline = Date.now() + OVERALL_TIMEOUT_MS;
-    const searchTerm = this.sanitizeDomain(searchQuery ?? '') || cleanDomain;
+    const searchTerm = this.sanitizeSearchQuery(searchQuery) ?? cleanDomain;
 
     const { signals, groundedInSignals } = await this.gatherSignals(
       cleanDomain,
@@ -255,16 +283,7 @@ export class IdeasService {
     const rawIdeas = await this.generateIdeasFromSignals(cleanDomain, signals, count, userId, providerKey, modelOverride);
 
     onProgress?.({ phase: 2, status: 'מאמת מול מתחרים...' });
-    const { ideas, failedCount } = await this.validateIdeas(
-      rawIdeas,
-      signals,
-      searchTerm,
-      onProgress,
-      deadline,
-      userId,
-      providerKey,
-      modelOverride,
-    );
+    const { ideas, failedCount } = await this.validateIdeas(rawIdeas, signals, searchTerm, onProgress, deadline, userId, providerKey, modelOverride);
 
     const partial = failedCount > 0 || !groundedInSignals;
     const result = this.sortByScore(ideas);
@@ -310,11 +329,7 @@ export class IdeasService {
    *   {@link FALLBACK_DISCOVERY_QUERIES} if the LLM call fails or returns no
    *   usable queries, so the nightly cron never loses its search step.
    */
-  private async generateDiscoveryQueries(
-    userId?: number,
-    providerOverride?: LlmProvider,
-    modelOverride?: string,
-  ): Promise<string[]> {
+  private async generateDiscoveryQueries(userId?: number, providerOverride?: LlmProvider, modelOverride?: string): Promise<string[]> {
     const today = new Date().toISOString().slice(0, 10);
     const prompt = `Today's date: ${today}\n\nSuggest 4 specific web-search queries in English to find recent software pain points and underserved niches for solo builders. Return ONLY a JSON array of strings.`;
 
@@ -322,89 +337,184 @@ export class IdeasService {
       const res = await this.llm.generateResponse({
         prompt,
         systemContext: DISCOVERY_QUERY_GENERATION_PROMPT,
-        // הגדלת maxTokens למניעת חיתוך במודלים חינמיים/thinking
-        maxTokens: 1024, // הוגדל מ-256
+        // מודלי thinking (OmniRoute auto, glm-4.7-flash) שורפים חלק ניכר
+        // מהתקציב על טוקנים בלתי-נראים של reasoning — 1024 חתך את ה-JSON
+        // באמצע (finish_reason=length אחרי ~300 תווי content בלבד)
+        maxTokens: 3072,
         userId,
         providerOverride,
         modelOverride,
       });
 
       const parsed = parseLlmJson<string[]>(res.content, 'discovery-query-generation');
-      const queries = Array.isArray(parsed)
-        ? parsed.filter((q) => typeof q === 'string' && q.trim().length > 0).slice(0, 6)
-        : [];
+      const queries = Array.isArray(parsed) ? parsed.filter((q) => typeof q === 'string' && q.trim().length > 0).slice(0, 6) : [];
 
       if (queries.length > 0) {
         return queries;
       }
     } catch (error) {
-      this.logger.warn(
-        `Discovery query generation failed, using fallback queries: ${error instanceof Error ? error.message : 'unknown'}`,
-      );
+      this.logger.warn(`Discovery query generation failed, using fallback queries: ${error instanceof Error ? error.message : 'unknown'}`);
     }
 
     return this.FALLBACK_DISCOVERY_QUERIES;
   }
 
-  async discoverTopics(
-    count: number,
-    userId?: number,
-    providerOverride?: LlmProvider,
-    modelOverride?: string,
-  ): Promise<DiscoveredTopic[]> {
+  async discoverTopics(count: number, userId?: number, providerOverride?: LlmProvider, modelOverride?: string): Promise<DiscoveredTopic[]> {
     const queries = await this.generateDiscoveryQueries(userId, providerOverride, modelOverride);
 
-    const settled = await Promise.allSettled(
-      queries.map((q) => this.webSearch.search(q)),
-    );
+    // שני ערוצים במקביל: SearXNG (best-effort — מנועיו נתפסים לעיתים
+    // קרובות כ-bots ומושעים) ו-HN Algolia (API ישיר, אמין, מחזיר רק
+    // דומיינים מהימנים). כך כשל של ערוץ אחד לא מייצר לילה של אפס נושאים.
+    // PullPush (ארכיון Reddit) הוסר — ה-API חוסם agents ב-429 קבוע.
+    const settled = await Promise.allSettled(queries.flatMap((q) => [this.webSearch.search(q), this.webSearch.searchHackerNews(q)]));
 
     const contents: string[] = [];
+    let trustedCount = 0;
+    let droppedCount = 0;
     for (const s of settled) {
       if (s.status === 'fulfilled' && s.value.success && s.value.result) {
         for (const r of s.value.result.results) {
-          contents.push(`${r.title}: ${r.content}`);
+          if (this.isTrustedSignalUrl(r.url)) {
+            // קיצור סניפט: מודלי reasoning שורפים תקציב ביחס לגודל הקלט —
+            // עם 26+ סניפטים מלאים שני הניסיונות (2048/3072) החזירו content
+            // ריק, ועם 4 סניפטים קצרים זה עבר. גוזרים ל-280 תווים.
+            contents.push(`${r.title}: ${r.content.slice(0, 280)}`);
+            trustedCount += 1;
+          } else {
+            droppedCount += 1;
+          }
         }
       }
     }
+    if (droppedCount > 0) {
+      this.logger.warn(`Signal discovery: dropped ${droppedCount} off-domain result(s) (kept ${trustedCount} from trusted signal sources)`);
+    }
 
     if (contents.length === 0) {
-      this.logger.warn('Topic discovery: web search returned no results');
+      this.logger.warn(
+        'Topic discovery: no trusted-domain results (SearXNG may be returning off-domain noise — check engine config and language setting)',
+      );
       return [];
     }
 
-    const prompt = `תוצאות חיפוש:\n${contents.slice(0, 30).join('\n\n')}\n\nכמה נושאים לגלות: ${count}`;
-    try {
-      const res = await this.llm.generateResponse({
-        prompt,
-        systemContext: TOPIC_DISCOVERY_PROMPT,
-        maxTokens: 1024,
-        userId,
-        providerOverride,
-        modelOverride,
-      });
+    const recentDomains = userId ? await this.getRecentDomains(userId) : [];
+    const avoidText = recentDomains.length
+      ? `נישות/פלטפורמות שנבדקו לאחרונה - אל תציע אותן שוב ואל תציע תת-נישה קרובה אליהן:\n${recentDomains.join('\n')}`
+      : '';
 
-      const parsed = parseLlmJson<{ topics: { domain: string; searchQuery?: string; rationale?: string }[] }>(
-        res.content,
-        'topic-discovery',
-      );
-      if (!parsed?.topics || !Array.isArray(parsed.topics) || parsed.topics.length === 0) {
+    const prompt = `תוצאות חיפוש:\n${contents.slice(0, 12).join('\n\n')}\n\n${avoidText}\n\nכמה נושאים לגלות: ${count}`;
+    try {
+      // שני אופני כשל של מודלי reasoning בתקציב נמוך: (א) content ריק לגמרי
+      // ("Returned no content or tool calls") — ההשקה זורקת שגיאה; (ב) חיתוך
+      // בסוף התקציב (finish_reason=length) — JSON קטוע שנכשל בפרסור. שניהם
+      // צריכים ניסיון חוזר: הלולאה כוללת גם את הקריאה וגם את הפרסור, והניסיון
+      // השני מקבל 4096 — התקציב שהוכח עובד לפרומפטים כבדים (יצירת רעיונות).
+      let topics: { domain: string; searchQuery?: string; rationale?: string }[] | null = null;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        let res;
+        try {
+          res = await this.llm.generateResponse({
+            prompt,
+            systemContext: TOPIC_DISCOVERY_PROMPT,
+            maxTokens: attempt === 1 ? 4096 : 8192,
+            userId,
+            providerOverride,
+            modelOverride,
+          });
+        } catch (error) {
+          if (attempt === 2) throw error;
+          this.logger.warn(
+            `Topic discovery LLM attempt 1 failed (${error instanceof Error ? error.message : 'unknown'}) — retrying with larger budget`,
+          );
+          continue;
+        }
+
+        const parsed = parseLlmJson<{ topics: { domain: string; searchQuery?: string; rationale?: string }[] }>(res.content, 'topic-discovery');
+        if (parsed?.topics && Array.isArray(parsed.topics) && parsed.topics.length > 0) {
+          topics = parsed.topics;
+          break;
+        }
+        if (attempt === 1) {
+          this.logger.warn(
+            `Topic discovery attempt 1 returned no usable topics (empty/truncated JSON, finish_reason=${res.finishReason ?? 'unknown'}) — retrying with larger budget`,
+          );
+        }
+      }
+
+      if (!topics) {
         throw new Error('empty topics');
       }
 
-      return parsed.topics
+      const sanitized = topics
         .slice(0, count)
         .map((t) => ({
           domain: this.sanitizeDomain(t.domain),
-          searchQuery: this.sanitizeDomain(t.searchQuery ?? '') || undefined,
+          searchQuery: this.sanitizeSearchQuery(t.searchQuery),
           rationale: typeof t.rationale === 'string' ? t.rationale : '',
         }))
-        .filter((t) => t.domain.length > 0);
+        .filter((t) => t.domain.length > 0 && !this.isBlacklistedDomain(t.domain));
+
+      if (sanitized.length < topics.slice(0, count).length) {
+        this.logger.warn(`Topic discovery: dropped ${topics.slice(0, count).length - sanitized.length} topic(s) by deterministic blacklist`);
+      }
+
+      return sanitized;
     } catch (error) {
-      this.logger.warn(
-        `Topic discovery failed: ${error instanceof Error ? error.message : 'unknown'}`,
-      );
+      this.logger.warn(`Topic discovery failed: ${error instanceof Error ? error.message : 'unknown'}`);
       return [];
     }
+  }
+
+  /**
+   * Cron-only hard-gate orchestrator. Discovers up to `targetCount * 3`
+   * candidate topics, then for each runs `generateIdeas` and keeps the
+   * candidate only if at least one of its ideas is `groundedInSignals`.
+   * Candidates that fail to gather real signals are dropped (logged) — we
+   * would rather skip a topic than persist a session full of LLM
+   * speculation that shows "⚠️ ללא עיגון מלא" in the UI.
+   *
+   * Per-candidate failures are isolated so a single timeout does not abort
+   * the whole batch. Returns up to `targetCount` grounded results in
+   * discovery order.
+   */
+  async generateGroundedIdeasForCron(
+    targetCount: number,
+    userId: number,
+    providerOverride?: LlmProvider,
+    modelOverride?: string,
+  ): Promise<{ topic: DiscoveredTopic; response: GenerateIdeasResponse }[]> {
+    const candidatePoolSize = targetCount * 3;
+    this.logger.log(`Grounded cron: discovering ${candidatePoolSize} candidate topics for target of ${targetCount} grounded sessions`);
+
+    const candidates = await this.discoverTopics(candidatePoolSize, userId, providerOverride, modelOverride);
+
+    if (candidates.length === 0) {
+      this.logger.warn('Grounded cron: no candidates from discoverTopics');
+      return [];
+    }
+
+    const results: { topic: DiscoveredTopic; response: GenerateIdeasResponse }[] = [];
+    for (const candidate of candidates) {
+      if (results.length >= targetCount) break;
+
+      try {
+        const response = await this.generateIdeas(candidate.domain, 5, undefined, userId, providerOverride, modelOverride, candidate.searchQuery);
+
+        const grounded = (response.result ?? []).some((idea) => idea.groundedInSignals);
+        if (grounded && (response.result ?? []).length > 0) {
+          results.push({ topic: candidate, response });
+          this.logger.log(`Grounded cron: accepted "${candidate.domain}" (${response.result?.length} ideas, grounded)`);
+        } else {
+          this.logger.warn(`Grounded cron: skipping ungrounded candidate domain: "${candidate.domain}"`);
+        }
+      } catch (error) {
+        this.logger.warn(`Grounded cron: candidate "${candidate.domain}" failed: ${error instanceof Error ? error.message : 'unknown'}`);
+        // Continue with the next candidate.
+      }
+    }
+
+    this.logger.log(`Grounded cron: produced ${results.length}/${targetCount} grounded session(s) from ${candidates.length} candidate(s)`);
+    return results;
   }
 
   private sanitizeDomain(domain: string): string {
@@ -420,15 +530,95 @@ export class IdeasService {
     return stripped;
   }
 
+  /**
+   * Trims an LLM-generated `searchQuery` to a short, search-engine-friendly
+   * phrase. Strips the same noise chars as `sanitizeDomain`, then hard-caps
+   * the word count so the queries that `buildSignalQueries` produces stay
+   * inside SearXNG's sweet spot. Returns `undefined` if nothing usable
+   * remains, so callers fall back to the cleaned domain.
+   */
+  private sanitizeSearchQuery(raw: string | undefined | null): string | undefined {
+    if (!raw) return undefined;
+    const cleaned = raw
+      .replace(/[`<>"']/g, '')
+      .replace(/[\r\n]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (cleaned.length === 0) return undefined;
+    const words = cleaned.split(' ').slice(0, MAX_SEARCH_QUERY_WORDS);
+    const trimmed = words.join(' ').trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  /**
+   * Returns true if `text` contains any of the hard-coded blocklisted
+   * keywords. Used as a deterministic guard against heavy-scraping / AdSpy
+   * ideas that the prompt-level blacklist does not always enforce.
+   */
+  private isBlacklistedDomain(text: string): boolean {
+    if (!text) return false;
+    const lower = text.toLowerCase();
+    return this.BLACKLISTED_DOMAIN_KEYWORDS.some((kw) => lower.includes(kw));
+  }
+
+  /**
+   * Returns true only when `url` belongs to one of the trusted signal
+   * domains (or a subdomain thereof). Used to drop off-topic / spam /
+   * foreign-language results that SearXNG returns when its `site:` operator
+   * silently fails (e.g. pizza menus, Arabic gaming sites, Facebook login
+   * pages) before they get fed to the LLM as "grounded signals".
+   */
+  private isTrustedSignalUrl(url: string | undefined): boolean {
+    if (!url) return false;
+    let hostname: string;
+    try {
+      hostname = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+    } catch {
+      return false;
+    }
+    return this.TRUSTED_SIGNAL_DOMAINS.some((d) => hostname === d || hostname.endsWith(`.${d}`));
+  }
+
+  /**
+   * Returns the domains the user explored in their most recent sessions,
+   * newest-first. Injected into the topic-discovery prompt so the LLM can
+   * avoid re-suggesting the same / nearby niches (anti-anchoring).
+   */
+  private async getRecentDomains(userId: number, limit = 15): Promise<string[]> {
+    const sessions = await this.sessionRepository.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+      take: limit,
+    });
+    return sessions.map((s) => s.domain).filter((d) => d && d.length > 0);
+  }
+
   private buildSignalQueries(searchTerm: string): string[] {
+    // Strip noise chars but keep the term short and natural. Search engines
+    // (incl. SearXNG) handle short, phrase-anchored queries much better than
+    // long boolean expressions with `OR`/`NOT` operators. The LLM's
+    // `searchQuery` often already carries `site:`/`OR` — strip them here so
+    // they don't double up with the operators this builder adds itself
+    // (`site:reddit.com site:reddit.com ...` confused SearXNG completely).
     const term = searchTerm
+      .replace(/\b(site|domain):[^\s"]+/gi, ' ')
+      .replace(/(^|\s)-[^\s"]*/g, '$1')
+      .replace(/\bOR\b/gi, ' ')
       .replace(/[\(\)\[\]"']/g, '')
+      .replace(/\s+/g, ' ')
       .trim();
 
+    // Mix: pain-vocabulary + subreddit target. Targets real user complaints on
+    // Reddit (small business / SMB communities) rather than marketing content.
+    // The 5th query intentionally drops the `site:reddit.com` filter so niche
+    // platforms (Webflow Forum, Etsy Seller communities, IndieHackers) are
+    // covered — Reddit has very little chatter for some of these.
     return [
-      `${term} pain points complaints 2025 2026`,
-      `site:reddit.com ${term} missing features OR problem`,
-      `best tools for ${term} alternative`,
+      `site:reddit.com ${term} spreadsheet headache`,
+      `site:reddit.com ${term} "hate" OR frustrating`,
+      `${term} small business "too expensive" alternative site:reddit.com`,
+      `site:reddit.com ${term} "wish there was a tool"`,
+      `${term} forum "wish there was" OR frustrated -site:reddit.com`,
     ];
   }
 
@@ -444,21 +634,35 @@ export class IdeasService {
     onProgress?.({ phase: 0, status: 'מחפש סיגנלים בשוק...' });
 
     const queries = this.buildSignalQueries(searchTerm);
-    const settled = await Promise.allSettled(
-      queries.map((q) => this.webSearch.search(q)),
-    );
+    // שני ערוצים במקביל (כמו ב-discoverTopics): SearXNG best-effort +
+    // HN Algolia שמחזיר רק דומיינים מהימנים. PullPush הוסר (429 קבוע
+    // ל-agents). אופרטורי site: בשאילתות נאכפים בסינון בצד שלנו, כך
+    // שזבל ה-bing לא מערער את עיגון הרעיונות.
+    const settled = await Promise.allSettled(queries.flatMap((q) => [this.webSearch.search(q), this.webSearch.searchHackerNews(q)]));
 
     const contents: string[] = [];
+    let trustedCount = 0;
+    let droppedCount = 0;
     for (const s of settled) {
       if (s.status === 'fulfilled' && s.value.success && s.value.result) {
         for (const r of s.value.result.results) {
-          contents.push(`${r.title}: ${r.content}`);
+          if (this.isTrustedSignalUrl(r.url)) {
+            contents.push(`${r.title}: ${r.content}`);
+            trustedCount += 1;
+          } else {
+            droppedCount += 1;
+          }
         }
       }
     }
+    if (droppedCount > 0) {
+      this.logger.warn(`Signal discovery: dropped ${droppedCount} off-domain result(s) (kept ${trustedCount} from trusted signal sources)`);
+    }
 
     if (contents.length === 0) {
-      this.logger.warn('Signal gathering returned no search results — fallback mode');
+      this.logger.warn(
+        'Signal gathering: no trusted-domain results (SearXNG may be returning off-domain noise — check engine config and language setting) — fallback mode',
+      );
       return { signals: [], groundedInSignals: false };
     }
 
@@ -467,7 +671,7 @@ export class IdeasService {
       const res = await this.llm.generateResponse({
         prompt,
         systemContext: SIGNAL_GATHERING_PROMPT,
-        maxTokens: 2048,
+        maxTokens: 4096,
         userId,
         providerOverride,
         modelOverride,
@@ -487,9 +691,7 @@ export class IdeasService {
       }
       return { signals, groundedInSignals: true };
     } catch (error) {
-      this.logger.warn(
-        `Signal extraction failed — fallback mode: ${error instanceof Error ? error.message : 'unknown'}`,
-      );
+      this.logger.warn(`Signal extraction failed — fallback mode: ${error instanceof Error ? error.message : 'unknown'}`);
       return { signals: [], groundedInSignals: false };
     }
   }
@@ -502,9 +704,7 @@ export class IdeasService {
     providerOverride?: LlmProvider,
     modelOverride?: string,
   ): Promise<RawIdea[]> {
-    const signalsText = signals.length
-      ? signals.map((s) => `- ${s.signal} (מקור: ${s.source})`).join('\n')
-      : '(ללא סיגנלים — השתמש בידע הכללי שלך)';
+    const signalsText = signals.length ? signals.map((s) => `- ${s.signal} (מקור: ${s.source})`).join('\n') : '(ללא סיגנלים — השתמש בידע הכללי שלך)';
 
     const prompt = `תחום: ${domain}\nמספר רעיונות נדרש: ${count}\n\nסיגנלים:\n${signalsText}`;
     try {
@@ -522,9 +722,7 @@ export class IdeasService {
       }
       return ideas.slice(0, count);
     } catch (error) {
-      this.logger.error(
-        `Idea generation failed: ${error instanceof Error ? error.message : 'unknown'}`,
-      );
+      this.logger.error(`Idea generation failed: ${error instanceof Error ? error.message : 'unknown'}`);
       return [];
     }
   }
@@ -589,23 +787,49 @@ export class IdeasService {
     providerOverride?: LlmProvider,
     modelOverride?: string,
   ): Promise<BusinessIdea | null> {
+    // Deterministic blacklist guard — skip LLM call entirely if the idea
+    // touches a banned category. Saves tokens and produces a clear score=0
+    // result instead of a misleading 5/10 with fuzzy competitor data.
+    if (this.isBlacklistedDomain(idea.title) || this.isBlacklistedDomain(idea.description)) {
+      this.logger.warn(`[BLACKLIST] rejected idea="${idea.title}" — matches deterministic blocklist`);
+      return {
+        title: idea.title,
+        description: idea.description,
+        targetMarket: idea.targetMarket,
+        validationScore: 0,
+        validationBreakdown: {
+          competition: 0,
+          signalFit: 0,
+          feasibility: 0,
+          marketSize: 0,
+          riskPenalty: 0,
+        },
+        validationReason: 'פסילה אוטומטית: רעיון בקטגוריה אסורה (Scraping כבד / Ad Libraries / מיפוי טרנדים). נחסם על ידי הבלקליסט הדטרמיניסטי.',
+        risks: [],
+        competitors: [],
+        nextSteps: [],
+        signalsReferenced: [],
+        groundedInSignals: false,
+        techStackSuggestion: undefined,
+        firstDistributionStep: undefined,
+        estimatedMvpDays: undefined,
+      };
+    }
+
     const competitorQuery = this.buildCompetitorQuery(idea, searchTerm);
     const searchResult = await this.webSearch.search(competitorQuery);
 
-    const searchResults = searchResult.success && searchResult.result
-      ? searchResult.result.results
-      : [];
+    const searchResults = searchResult.success && searchResult.result ? searchResult.result.results : [];
 
     const competitorCount = searchResults.length;
 
-    const searchText = searchResults
-      .map((r) => `${r.title}: ${r.content}`)
-      .slice(0, 10)
-      .join('\n\n') || '(ללא תוצאות חיפוש)';
+    const searchText =
+      searchResults
+        .map((r) => `${r.title}: ${r.content}`)
+        .slice(0, 10)
+        .join('\n\n') || '(ללא תוצאות חיפוש)';
 
-    const signalsText = signals.length
-      ? signals.map((s) => `- ${s.signal}`).join('\n')
-      : '(ללא סיגנלים)';
+    const signalsText = signals.length ? signals.map((s) => `- ${s.signal}`).join('\n') : '(ללא סיגנלים)';
 
     const prompt = `רעיון:\nכותרת: ${idea.title}\nתיאור: ${idea.description}\nקהל יעד: ${idea.targetMarket}\n\nתוצאות חיפוש מתחרים (${competitorCount} תוצאות):\n${searchText}\n\nסיגנלים:\n${signalsText}`;
 
@@ -613,7 +837,7 @@ export class IdeasService {
       const res = await this.llm.generateResponse({
         prompt,
         systemContext: VALIDATION_PROMPT,
-        maxTokens: 4096,
+        maxTokens: 8192,
         userId,
         providerOverride,
         modelOverride,
@@ -634,12 +858,12 @@ export class IdeasService {
 
       const breakdown: ValidationBreakdown | undefined = v.validationBreakdown
         ? {
-          competition: this.clampBreakdownScore(v.validationBreakdown.competition, 3),
-          signalFit: this.clampBreakdownScore(v.validationBreakdown.signalFit, 3),
-          feasibility: this.clampBreakdownScore(v.validationBreakdown.feasibility, 2),
-          marketSize: this.clampBreakdownScore(v.validationBreakdown.marketSize, 2),
-          riskPenalty: this.clampBreakdownScore(v.validationBreakdown.riskPenalty, 3),
-        }
+            competition: this.clampBreakdownScore(v.validationBreakdown.competition, 3),
+            signalFit: this.clampBreakdownScore(v.validationBreakdown.signalFit, 3),
+            feasibility: this.clampBreakdownScore(v.validationBreakdown.feasibility, 2),
+            marketSize: this.clampBreakdownScore(v.validationBreakdown.marketSize, 2),
+            riskPenalty: this.clampBreakdownScore(v.validationBreakdown.riskPenalty, 3),
+          }
         : undefined;
 
       // Sanity check: if competition=3 (no competitors) but competitors list is not empty → clamp down
@@ -653,27 +877,21 @@ export class IdeasService {
 
       // Sanity check #2: אם אין תוצאות חיפוש בכלל, אל תיתן ציון competition גבוה
       if (breakdown && competitorCount === 0 && breakdown.competition >= 3) {
-        this.logger.warn(
-          `[SANITY] "${idea.title}": competition=${breakdown.competition} but 0 search results → clamping to 2`,
-        );
+        this.logger.warn(`[SANITY] "${idea.title}": competition=${breakdown.competition} but 0 search results → clamping to 2`);
         breakdown.competition = 2;
       }
 
       // Sanity check #3: אם כל התוצאות הן רעש (זוהה ע"י LLM ב-validationReason),
       // ודא שהציון לא מנופח
       if (breakdown && v.validationReason?.includes('לא רלוונטיות') && breakdown.competition > 2) {
-        this.logger.warn(
-          `[SANITY] "${idea.title}": irrelevant search results detected → clamping competition to 2`,
-        );
+        this.logger.warn(`[SANITY] "${idea.title}": irrelevant search results detected → clamping competition to 2`);
         breakdown.competition = 2;
       }
 
       // Score = sum of criteria minus riskPenalty, clamped to 1-10 server-side
       // so the LLM cannot inflate it by omitting the penalty.
       const computedScore = breakdown
-        ? this.clampScore(
-          breakdown.competition + breakdown.signalFit + breakdown.feasibility + breakdown.marketSize - breakdown.riskPenalty,
-        )
+        ? this.clampScore(breakdown.competition + breakdown.signalFit + breakdown.feasibility + breakdown.marketSize - breakdown.riskPenalty)
         : this.clampScore(v.validationScore);
 
       return {
@@ -693,9 +911,7 @@ export class IdeasService {
         estimatedMvpDays: this.sanitizeMvpDays(v.estimatedMvpDays),
       };
     } catch (error) {
-      this.logger.warn(
-        `Validation failed for "${idea.title}": ${error instanceof Error ? error.message : 'unknown'}`,
-      );
+      this.logger.warn(`Validation failed for "${idea.title}": ${error instanceof Error ? error.message : 'unknown'}`);
       return null;
     }
   }

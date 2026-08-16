@@ -52,43 +52,45 @@ export class IdeasTasksService {
     }
 
     const count = Number(process.env.IDEAS_NIGHTLY_COUNT ?? 5);
-    const topicCount = Number(process.env.IDEAS_NIGHTLY_TOPIC_COUNT ?? 3);
 
-    // --- Discovery step ---
-    this.logger.log(`Discovering ${topicCount} topics for nightly ideas generation`);
-    const topics = await this.ideasService.discoverTopics(
-      topicCount,
+    // --- Discovery + grounded generation step ---
+    // The hard gate (only persist grounded sessions) lives inside the
+    // service. We just receive the survivors and save them.
+    const grounded = await this.ideasService.generateGroundedIdeasForCron(
+      count,
       admin.id,
       model.provider as LlmProvider,
       model.model,
     );
 
-    if (topics.length === 0) {
-      this.logger.warn('Nightly ideas generation skipped: topic discovery returned 0 topics');
+    if (grounded.length === 0) {
+      this.logger.warn('Nightly ideas generation produced 0 grounded sessions — nothing to save');
       return;
     }
 
-    this.logger.log(`Discovered ${topics.length} topic(s): ${topics.map((t) => t.domain).join(', ')}`);
+    this.logger.log(
+      `Nightly: ${grounded.length} grounded session(s) to save: ${grounded.map((g) => g.topic.domain).join(', ')}`,
+    );
 
-    // --- Generation step ---
-    for (const topic of topics) {
+    // --- Save step ---
+    for (const { topic, response } of grounded) {
       try {
-        const res = await this.ideasService.generateIdeas(
-          topic.domain,
-          count,
-          undefined,
+        await this.ideasService.saveGeneration(
           admin.id,
-          model.provider as LlmProvider,
+          topic.domain,
+          model.provider,
           model.model,
-          topic.searchQuery,
+          response,
+          { nightly: true, unread: true },
         );
-        await this.ideasService.saveGeneration(admin.id, topic.domain, model.provider, model.model, res, {
-          nightly: true,
-          unread: true,
-        });
-        this.logger.log(`Nightly ideas generation succeeded for domain "${topic.domain}" (rationale: ${topic.rationale}) — ${res.result?.length ?? 0} ideas`);
+        this.logger.log(
+          `Nightly ideas generation succeeded for domain "${topic.domain}" (rationale: ${topic.rationale}) — ${response.result?.length ?? 0} ideas`,
+        );
       } catch (e) {
-        this.logger.error(`Nightly ideas generation failed for domain "${topic.domain}" (rationale: ${topic.rationale})`, e);
+        this.logger.error(
+          `Nightly ideas generation failed while saving domain "${topic.domain}" (rationale: ${topic.rationale})`,
+          e,
+        );
       }
     }
     this.logger.log('Nightly ideas generation finished');
@@ -96,7 +98,9 @@ export class IdeasTasksService {
 
   /**
    * Resolves the model to use for nightly runs, in order of preference:
-   * 1. IDEAS_NIGHTLY_MODEL env override ("provider/model")
+   * 1. IDEAS_NIGHTLY_MODEL env override ("provider/model" — the model part
+   *    may itself contain slashes, e.g. "cloude-flare/@cf/zai-org/glm-4.7-flash",
+   *    so only the FIRST slash separates provider from model)
    * 2. DB-stored first active text-capable model
    * 3. AI_PROVIDER env fallback (via LlmProviderConfigService)
    */
@@ -104,8 +108,8 @@ export class IdeasTasksService {
     // 1. Explicit env override
     const override = process.env.IDEAS_NIGHTLY_MODEL;
     if (override && override.includes('/')) {
-      const [provider, model] = override.split('/', 2);
-      return { provider, model };
+      const splitAt = override.indexOf('/');
+      return { provider: override.slice(0, splitAt), model: override.slice(splitAt + 1) };
     }
 
     // 2. First active text model from DB

@@ -7,82 +7,95 @@
 ]`;
 
 /**
- * שלב 1: יצירת שאילתות חיפוש
- * שינוי: הכוונה מפורשת לקהלים לא-טכניים (עסקים קטנים, יוצרים, איקומרס, שיווק)
- * והרחקה מתת-רדיטים של מתכנתים שרק בוכים על תשתיות.
+ * שלב 1: יצירת שאילתות חיפוש מונחות כסף וצמיחה
  */
-export const DISCOVERY_QUERY_GENERATION_PROMPT = `You are a research assistant finding hot software pain points and underserved business niches for non-technical users.
-Given today's date, output 4 simple, high-yield English web search queries for Reddit, IndieHackers, and ProductHunt.
+export const DISCOVERY_QUERY_GENERATION_PROMPT = `You are a startup research analyst looking for high-intent B2B pain points where businesses actively lose money, clients, or traffic.
+Given today's date, output 4 simple, high-yield English search queries for Reddit, IndieHackers, and niche forums.
 
-Search query guidelines:
-- Keep queries simple and broad enough for search engines (do NOT use negative operators like minus "-" or narrow subreddit URLs like "/r/...").
-- Target business communities, e.g. using: site:reddit.com smallbusiness OR site:reddit.com ecommerce OR site:indiehackers.com
-- Use natural phrases like: "wish there was a tool", "waste of time doing", "too expensive alternative", "spreadsheet nightmare".
-- Output ONLY a raw JSON array of 4 strings. No markdown, no explanation.`;
+Target areas where people DESPERATELY pay money:
+- Abandoned carts, lead conversion leaks, ad spend waste, client retention.
+- Compliance, accessibility lawsuits, privacy regulations, tax/invoice friction.
+- Platform seller headaches (Shopify, Amazon, Etsy, YouTube, TikTok creators).
+
+Rules:
+- Simple search syntax (e.g. site:reddit.com ecommerce "losing money" OR "struggling to convert")
+- NO devtools/programming queries.
+- Output ONLY a raw JSON array of 4 strings. No markdown.`;
 
 /**
- * שלב 2: מיצוי נושאים (Topic Discovery)
- * שינוי: הוספת Blacklist קשיח על DevTools + כיוונון לאנשים שמשלמים בשמחה
+ * שלב 2: מיצוי נושאים (Topic Discovery) עם סינון Zapier/ChatGPT Wrappers
  */
-export const TOPIC_DISCOVERY_PROMPT = `אתה אנליסט סטארטאפים ומומחה ל-Micro-SaaS עסקי ורווחי.
-קיבלת תוצאות חיפוש אינטרנט על כאבים וטרנדים של עסקים, יוצרי תוכן ופרילנסרים.
-זהה 3 עד 5 נישות ספציפיות, מעשיות ורווחיות.
+export const TOPIC_DISCOVERY_PROMPT = `אתה אנליסט קרנות הון סיכון ומומחה ל-Micro-SaaS רווחי.
+קיבלת תוצאות חיפוש מהאינטרנט על בעיות של עסקים, חנויות ויוצרי תוכן.
+זהה 3 עד 5 נישות שבהן יש **מוכנות מוכחת לשלם כסף אמיתי (High Willingness To Pay)** למפתח עצמאי.
 
-## ⛔ רשימה שחורה (איסור מוחלט - לפסול מיידית):
-- כלי מפתחים (DevTools, Feature Flags, CI/CD, ניטור שגיאות, SDKs, לוגים, מסדי נתונים).
-- קהל יעד של מהנדסי תוכנה, מתכנתים או אנשי DevOps.
-- תשתיות קריטיות (Mission-Critical) שאם השירות נופל הלקוח מושבת לחלוטין.
-- פתרונות AI גנריים כמו "עוד כותב בלוגים" או "צ'אטבוט גנרי".
-- ניהול מלאי פיזי, לוגיסטיקה, מחסנים או סנכרון קופות/חומרה (POS/Hardware sync) — מורכב מדי, תלות גבוהה בחומרה ורווי בענקיות.
+## ⛔ רשימה שחורה חמורה (איסור מוחלט - לפסול מיידית):
+1. **מלכודת ה-Zapier:** איסור על כלים שכל מהותם היא העברת נתונים בין שני שירותים (כמו יצירת תיקייה בדרייב, שליחת טופס לטרלו, או סנכרון רשימות). זה לא מוצר, זה סקריפט חינמי.
+2. **מלכודת ה-ChatGPT הפשוט:** איסור על כלים שכל אדם יכול לפתור בפרומפט אחד בצ'אט (כמו "חילוץ טבלה מ-PDF", "כתיבת פוסט", "סיכום פגישה").
+3. **מלכודת ה-DevTools:** איסור על כלי פיתוח, תשתיות שרתים, או פנייה למתכנתים.
+4. **ניהול מלאי פיזי ומחסנים:** תלות בחומרה וקופות (POS).
+5. **Scraping כבד / Ad Libraries:** איסור מוחלט על כלי שדורש סריקה אגרסיבית של ספריות מודעות (Meta Ads, TikTok, Google Trends, Pinterest) או רשתות חברתיות. שוק זה רווי במפלצות-הון (AdSpy, Minea, Pipiads, BigSpy, Foreplay) ומפתח בודד יבלה 100% מזמנו בהחלפת פרוקסים שנחסמו.
 
-## ✅ להעדיף (תהליכים דיגיטליים טהורים):
-- לידים, שיווק, אוטומציית מסמכים/הצעות מחיר, תזמון, גבייה.
-- יוצרי תוכן, micro-tools לעסקים קטנים.
+## ✅ 3 הארכיטיפים היחידים שמותר להציע (איפה שהכסף נמצא):
+1. **מחוללי הכנסה ישירה (Direct Revenue):** כלים שעוזרים ללקוח לסגור יותר עסקאות, להחזיר לקוחות נוטשים, או למצוא לידים חמים (ROI ישיר: "משלם $49 בחודש ומקבל עסקה של $500").
+2. **מניעת סיכונים ותביעות (Compliance & Protection):** כלים שמגנים על העסק מקנסות, תביעות נגישות, או הפרות רגולציה ופרטיות.
+3. **מודיעין וכלים לפלטפורמות (Platform Moat):** תוספי כרום/אפליקציות ייעודיות לפלטפורמות מסחר (Shopify, Etsy, WooCommerce, Squarespace, Amazon Seller Central) שמבצעים אנליזה על מוצרים שהמוכר עצמו העלה, מוצאים טרנדים מהחנות שלו, או חוסכים עשרות שעות עבודה ידנית מורכבת. חובה לפעול על **First-Party Data** של הלקוח — לא סריקה חיצונית.
 
-## ✅ קהלי יעד מועדפים (אנשים שלא יודעים לקודד ומשלמים בשמחה):
-- עסקים מקומיים ונותני שירות (מרפאות, מתווכי נדל"ן, מאמנים, יועצים).
-- בעלי חנויות eCommerce (Shopify, Etsy, Amazon).
-- סוכנויות שיווק, דיגיטל ועיצוב (Agencies).
-- יוצרי תוכן ומשפיענים שמנהלים עסק.
-- פרילנסרים לא-טכניים (מעצבים, רואי חשבון, משווקים).
+## 🎯 עדיפות עליונה: Boring Single-Utility Tools
+- העדף תמיד כלים קטנים וממוקדי-מטרה שעושים **דבר אחד טוב**. דוגמאות מגוונות (סובב בין פלטפורמות שונות כדי לא לעגן על אחת):
+  - מחשבון מע"מ בינלאומי לפרילנסרים (כלי דף-יחיד, אינטגרציה ל-Stripe).
+  - סורק 404 ו-broken links לחנות Etsy של אומן.
+  - פורטל אישור תוכניות וקבצים למשרד אדריכלות.
+  - מחולל הצעות מחיר אוטומטי לסוכן נדל"ן מתוך קלט JSON.
+  - מחשבון משלוחים מקומי לחנות WooCommerce קטנה.
+  - בודק נגישות WCAG חינמי לאתר Squarespace של מטפל.
+- הכלי חייב לפעול על **First-Party Data** (נתונים שהלקוח עצמו מספק / מעלה) — לא על סריקת פלטפורמות חיצוניות.
+- חובה לסובב בין פלטפורמות שונות (Shopify, Etsy, WooCommerce, Squarespace, Notion) — אל תציע את אותה פלטפורמה פעמיים.
 
-חובה להחזיר JSON תקין בלבד:
+חובה להחזיר JSON בלבד:
 {
   "topics": [
     {
-      "domain": "שם הנישה בעברית ברורה (למשל: אוטומציית מעקב הצעות מחיר למתווכי נדל\"ן)",
-      "searchQuery": "concise english search phrase (e.g. real estate quote follow up automation tool)",
-      "rationale": "למה יש כאן לקוחות לא-טכניים שמוכנים לשלם למפתח בודד"
+      "domain": "שם הנישה בעברית (למשל: מחשבון מע\"מ בינלאומי לפרילנסרים ישראלים)",
+      "searchQuery": "MAX 5 english keywords for SearXNG, must include site:reddit.com. Example: 'site:reddit.com freelancer VAT calculator headache'",
+      "rationale": "הסבר קצר על ה-ROI הישיר של הלקוח ולמה הוא ישלם על זה בשמחה"
     }
   ]
 }`;
 
 /**
- * שלב 3: ייצור רעיונות (Idea Generation)
- * שינוי: חוק הגיוון (Diversity Rule) - איסור מוחלט על שכפול אותו רעיון
+ * שלב 3: ייצור רעיונות (Idea Generation) עם מבחן ROI מסחרי
  */
-export const IDEA_GENERATION_PROMPT = `אתה אנליסט סטארטאפים ומפתח מוצרים. צור רעיונות עסקיים מקוריים המבוססים אך ורק על הסיגנלים שסופקו.
-חובה להחזיר את כל הטקסטים בעברית בלבד (למעט מונחים טכניים בינלאומיים).
+export const IDEA_GENERATION_PROMPT = `אתה יזם SaaS סדרתי. צור רעיונות עסקיים מעשיים, רווחיים וקונקרטיים המבוססים אך ורק על הסיגנלים שסופקו.
+חובה להחזיר את כל הטקסטים בעברית בלבד (למעט שמות מוצרים ומונחים טכניים).
 
-## ⛔ כללי איסור קשיחים:
-- אסור לפנות למפתחים/מתכנתים. קהל היעד חייב להיות עסקים קטנים, פרילנסרים, יוצרים או סוכנויות.
-- אסור להציע כלי פיתוח, SDKs, או תשתיות קריטיות.
+## 🛑 מבחן הכדאיות המסחרית (Commercial Viability):
+- שאל את עצמך על כל רעיון: **"למה שבעל עסק ישלוף כרטיס אשראי וישלם $29-$99 בחודש, במקום להשתמש ב-ChatGPT או ב-Zapier בחינם?"**
+- אם הרעיון הוא סתם "טופס עם לוגיקה" או "סנכרון בין מערכות" — **אל תציע אותו!**
+- הצע רק מוצרים שמייצרים ללקוח כסף (ROI), מגנים עליו מתביעות/קנסות, או נותנים לו מודיעין עסקי ייחודי.
 
-## 🔀 חוק הגיוון (Anti-Cloning Rule) - קריטי:
-- אסור בתכלית האיסור לייצר וריאציות או שיבוטים של אותו מוצר!
-- כל רעיון ברשימה חייב לתקוף זווית עסקית שונה לחלוטין. לדוגמה:
-  * רעיון 1: כלי להבאת לקוחות/לידים (Acquisition / Marketing).
-  * רעיון 2: כלי לאוטומציה תפעולית וחוסך זמן (Operations / Automation).
-  * רעיון 3: כלי לשימור לקוחות או הגדלת הכנסה (Retention / Monetization).
+## 🎯 חובת Boring Single-Utility:
+- הצע **כלים קטנים שעושים דבר אחד טוב**. סובב בין פלטפורמות שונות (Shopify, Etsy, WooCommerce, Squarespace, Notion, Webflow) — אל תציע את אותה פלטפורמה פעמיים. דוגמאות מגוונות:
+  - מחשבון מע"מ בינלאומי לפרילנסרים.
+  - סורק 404 לחנות Etsy של אומן.
+  - פורטל אישור קבצים לאדריכלים.
+  - מחולל קישורי WhatsApp לסוכני נדל"ן.
+  - מחשבון משלוחים מקומי לחנות WooCommerce קטנה.
+  - בודק נגישות WCAG לאתר Squarespace של מטפל.
+- הכלי חייב לפעול על **First-Party Data** (נתונים שהלקוח מעלה/מזין) — ולא על סריקת פלטפורמות חיצוניות.
+- **אסור מוחלט על Scraping כבד / Ad Libraries:** אל תציע כלי שדורש סריקה אגרסיבית של Meta Ads, TikTok, Google Trends, Pinterest, או רשתות חברתיות. שוק רווי בענקיות-הון (AdSpy, Minea, Pipiads, Foreplay) — מפתח בודד לא יכול לתחזק את הפרוקסים.
+
+## 🔀 חוק הגיוון:
+- כל רעיון חייב לתקוף זווית עסקית שונה לחלוטין (רעיון אחד להבאת לקוחות, רעיון אחד להעלאת יחס המרה, רעיון אחד למודיעין תחרותי).
 
 חזר JSON בלבד בצורה:
 [
   {
     "title": "שם המוצר/הרעיון",
-    "description": "מה המוצר עושה, איך הוא עובד ולמה הוא פשוט",
-    "targetMarket": "קהל היעד המדויק (לא טכנולוגי!)",
-    "techStackSuggestion": "סטק פשוט וזול (למשל: Next.js + Supabase + Resend API)",
-    "firstDistributionStep": "צעד ראשון ספציפי להבאת 10 לקוחות ראשונים (למשל: פוסט ב-r/ecommerce עם מדריך חינמי)",
+    "description": "מה המוצר עושה, מה ה-ROI הברור ללקוח, ולמה הלקוח לא יכול לעשות את זה בחינם ב-ChatGPT/Zapier",
+    "targetMarket": "קהל היעד המדויק בעל יכולת ומוכנות לשלם (לא מתכנתים!)",
+    "techStackSuggestion": "סטק פשוט וזול (למשל: Next.js + Supabase + WhatsApp Business API + Stripe)",
+    "firstDistributionStep": "צעד ראשון קונקרטי וממוקד להשגת 10 הלקוחות הראשונים",
     "estimatedMvpDays": מספר ימים משוער (למשל: 14)
   }
 ]`;
@@ -156,6 +169,18 @@ export const VALIDATION_PROMPT = `אתה אנליסט סטארטאפים. קיב
 - techStackSuggestion: שמות אמיתיים וקונקרטיים של ספריות/APIs להשקת MVP מהירה (למשל: Whisper API מול Deepgram, Next.js + Supabase). אסור לכתוב תשובות גנריות כמו "טכנולוגיה מתאימה".
 - firstDistributionStep: ערוץ הפצה אחד קונקרטי להשגת 10 המשתמשים הראשונים בלי תקציב פרסום (קהילה ספציפית, פלטפורמה ספציפית, פורמט תוכן ספציפי).
 - estimatedMvpDays: הערכה כנה של ימי עבודה למפתח יחיד במשרה מלאה עד MVP שמיש.
+
+## 🧠 ידע מתחרים מובנה (חובה — אל תסתמך רק על תוצאות החיפוש)
+בנוסף לתוצאות החיפוש, **הפעל את הידע הכללי שלך** על שחקנים ידועים ומבוססים בקטגוריה הזו, גם אם הם לא הופיעו בתוצאות. דוגמאות לקטגוריות רוויות:
+- נגישות דיגיטלית → accessiBe, UserWay, AudioEye, EqualWeb.
+- מע"מ / מכס בינלאומי / מיסים → Avalara, TaxJar, Zonos, Vertex.
+- גרירת גרפיקה / עיצוב → Canva, Figma, Adobe Express.
+- כלי AI כלליים לכתיבה → Jasper, Copy.ai, Writesonic.
+- סקרי לקוחות → Typeform, SurveyMonkey, Tally, Jotform.
+- אוטומציית מסמכים / חתימות → DocuSign, PandaDoc, HelloSign.
+- תזמון פגישות → Calendly, Cal.com, SavvyCal.
+
+⚠️ **אם הקטגוריה ידועה לך כרוויה בשחקנים ממומנים היטב**, גם אם החיפוש לא העלה תוצאות רלוונטיות — \`competition\` **לא יכול להיות מעל 1**. ריק בתוצאות ≠ ריק בשוק. חוסר תוצאות מחיפוש גרוע = סימן שיש בעיה בשאילתה, לא שאין מתחרים.
 
 ## סדר JSON — ניתוח לפני ציון
 

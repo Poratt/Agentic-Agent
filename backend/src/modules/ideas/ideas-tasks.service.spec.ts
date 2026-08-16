@@ -10,9 +10,34 @@ function makeAdmin(): User {
   return { id: 1, role: 1 as any } as User;
 }
 
-describe('IdeasTasksService — nightly cron (Phase 3 + discovery)', () => {
+function makeGroundedResult(domain: string, score = 7) {
+  return {
+    topic: { domain, searchQuery: `${domain} search`, rationale: `pain point for ${domain}` },
+    response: {
+      success: true,
+      message: 'ok',
+      partial: false,
+      result: [{
+        title: `${domain} idea`,
+        description: 'd',
+        targetMarket: 'm',
+        validationScore: score,
+        validationReason: 'r',
+        risks: [],
+        competitors: [],
+        nextSteps: [],
+        signalsReferenced: [],
+        groundedInSignals: true,
+      }],
+    },
+  };
+}
+
+describe('IdeasTasksService — nightly cron (Phase 3 + discovery + hard gate)', () => {
   let service: IdeasTasksService;
-  let ideasService: jest.Mocked<Pick<IdeasService, 'generateIdeas' | 'saveGeneration' | 'discoverTopics'>>;
+  let ideasService: jest.Mocked<
+    Pick<IdeasService, 'generateIdeas' | 'saveGeneration' | 'discoverTopics' | 'generateGroundedIdeasForCron'>
+  >;
   let usersService: jest.Mocked<Pick<UsersService, 'findFirstAdmin'>>;
   let llmProviderService: jest.Mocked<Pick<LlmProviderService, 'findFirstActiveTextModel'>>;
 
@@ -29,6 +54,7 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery)', () => {
       generateIdeas: jest.fn(),
       saveGeneration: jest.fn(),
       discoverTopics: jest.fn(),
+      generateGroundedIdeasForCron: jest.fn(),
     };
     usersService = {
       findFirstAdmin: jest.fn(),
@@ -61,46 +87,41 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery)', () => {
 
     expect(usersService.findFirstAdmin).not.toHaveBeenCalled();
     expect(ideasService.discoverTopics).not.toHaveBeenCalled();
+    expect(ideasService.generateGroundedIdeasForCron).not.toHaveBeenCalled();
     expect(ideasService.generateIdeas).not.toHaveBeenCalled();
     expect(ideasService.saveGeneration).not.toHaveBeenCalled();
   });
 
-  it('skips when discovery returns 0 topics', async () => {
+  it('skips when grounded cron returns 0 results', async () => {
     process.env.IDEAS_NIGHTLY_ENABLED = 'true';
 
     usersService.findFirstAdmin.mockResolvedValue(makeAdmin());
     llmProviderService.findFirstActiveTextModel.mockResolvedValue({ provider: 'openrouter', model: 'gpt-4o' });
-    ideasService.discoverTopics.mockResolvedValue([]);
+    ideasService.generateGroundedIdeasForCron.mockResolvedValue([]);
 
     await service.runNightly();
 
-    expect(ideasService.generateIdeas).not.toHaveBeenCalled();
     expect(ideasService.saveGeneration).not.toHaveBeenCalled();
   });
 
-  it('calls discoverTopics then generates+saves for each discovered topic', async () => {
+  it('calls generateGroundedIdeasForCron then saves each grounded result', async () => {
     process.env.IDEAS_NIGHTLY_ENABLED = 'true';
     process.env.IDEAS_NIGHTLY_MODEL = '';
 
     usersService.findFirstAdmin.mockResolvedValue(makeAdmin());
     llmProviderService.findFirstActiveTextModel.mockResolvedValue({ provider: 'openrouter', model: 'gpt-4o' });
-    ideasService.discoverTopics.mockResolvedValue([
-      { domain: 'ניהול חשבוניות לפרילנסרים', searchQuery: 'freelancer invoicing tools', rationale: 'solo-friendly niche' },
-      { domain: 'אנליטיקה למפתחים', searchQuery: 'solo dev analytics', rationale: 'underserved market' },
+    ideasService.generateGroundedIdeasForCron.mockResolvedValue([
+      makeGroundedResult('ניהול חשבוניות לפרילנסרים', 7),
+      makeGroundedResult('אנליטיקה למפתחים', 5),
     ]);
-    ideasService.generateIdeas.mockResolvedValue({
-      success: true,
-      message: 'ok',
-      partial: false,
-      result: [{ title: 'A', description: 'd', targetMarket: 'm', validationScore: 7, validationReason: 'r', risks: [], competitors: [], nextSteps: [], signalsReferenced: [], groundedInSignals: true }],
-    });
     ideasService.saveGeneration.mockResolvedValue(1);
 
     await service.runNightly();
 
-    expect(ideasService.discoverTopics).toHaveBeenCalledTimes(1);
-    expect(ideasService.discoverTopics).toHaveBeenCalledWith(3, 1, 'openrouter', 'gpt-4o');
-    expect(ideasService.generateIdeas).toHaveBeenCalledTimes(2);
+    expect(ideasService.discoverTopics).not.toHaveBeenCalled();
+    expect(ideasService.generateIdeas).not.toHaveBeenCalled();
+    expect(ideasService.generateGroundedIdeasForCron).toHaveBeenCalledTimes(1);
+    expect(ideasService.generateGroundedIdeasForCron).toHaveBeenCalledWith(5, 1, 'openrouter', 'gpt-4o');
     expect(ideasService.saveGeneration).toHaveBeenCalledTimes(2);
 
     const calls = (ideasService.saveGeneration as jest.Mock).mock.calls;
@@ -117,83 +138,62 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery)', () => {
     process.env.IDEAS_NIGHTLY_MODEL = 'agnes-ai/agnes-text-2.0';
 
     usersService.findFirstAdmin.mockResolvedValue(makeAdmin());
-    ideasService.discoverTopics.mockResolvedValue([{ domain: 'כלי AI', searchQuery: 'ai tools', rationale: 'solo dev niche' }]);
-    ideasService.generateIdeas.mockResolvedValue({
-      success: true,
-      message: 'ok',
-      partial: false,
-      result: [],
-    });
+    ideasService.generateGroundedIdeasForCron.mockResolvedValue([
+      makeGroundedResult('כלי AI', 6),
+    ]);
     ideasService.saveGeneration.mockResolvedValue(1);
 
     await service.runNightly();
 
     expect(llmProviderService.findFirstActiveTextModel).not.toHaveBeenCalled();
-    expect(ideasService.discoverTopics).toHaveBeenCalledWith(3, 1, 'agnes-ai', 'agnes-text-2.0');
-    expect(ideasService.generateIdeas).toHaveBeenCalledWith(
-      'כלי AI',
-      5,
-      undefined,
+    expect(ideasService.generateGroundedIdeasForCron).toHaveBeenCalledWith(5, 1, 'agnes-ai', 'agnes-text-2.0');
+    expect(ideasService.saveGeneration).toHaveBeenCalledWith(
       1,
+      'כלי AI',
       'agnes-ai',
       'agnes-text-2.0',
-      'ai tools',
+      expect.objectContaining({ success: true }),
+      { nightly: true, unread: true },
     );
   });
 
-  it('uses IDEAS_NIGHTLY_TOPIC_COUNT env override', async () => {
+  it('uses IDEAS_NIGHTLY_COUNT env override as target grounded count', async () => {
     process.env.IDEAS_NIGHTLY_ENABLED = 'true';
-    process.env.IDEAS_NIGHTLY_TOPIC_COUNT = '5';
+    process.env.IDEAS_NIGHTLY_COUNT = '8';
     process.env.IDEAS_NIGHTLY_MODEL = '';
 
     usersService.findFirstAdmin.mockResolvedValue(makeAdmin());
     llmProviderService.findFirstActiveTextModel.mockResolvedValue({ provider: 'openrouter', model: 'gpt-4o' });
-    ideasService.discoverTopics.mockResolvedValue([]);
-    ideasService.generateIdeas.mockResolvedValue({
-      success: true,
-      message: 'ok',
-      partial: false,
-      result: [],
-    });
+    ideasService.generateGroundedIdeasForCron.mockResolvedValue([]);
 
     await service.runNightly();
 
-    expect(ideasService.discoverTopics).toHaveBeenCalledWith(5, 1, 'openrouter', 'gpt-4o');
+    expect(ideasService.generateGroundedIdeasForCron).toHaveBeenCalledWith(8, 1, 'openrouter', 'gpt-4o');
   });
 
-  it('isolates per-topic failures — one failing topic does not abort the rest', async () => {
+  it('isolates per-topic save failures — one failing save does not abort the rest', async () => {
     process.env.IDEAS_NIGHTLY_ENABLED = 'true';
     process.env.IDEAS_NIGHTLY_MODEL = '';
 
     usersService.findFirstAdmin.mockResolvedValue(makeAdmin());
     llmProviderService.findFirstActiveTextModel.mockResolvedValue({ provider: 'openrouter', model: 'gpt-4o' });
-    ideasService.discoverTopics.mockResolvedValue([
-      { domain: 'topic-a', rationale: 'pain point A' },
-      { domain: 'topic-b', rationale: 'pain point B' },
-      { domain: 'topic-c', rationale: 'pain point C' },
+    ideasService.generateGroundedIdeasForCron.mockResolvedValue([
+      makeGroundedResult('topic-a', 6),
+      makeGroundedResult('topic-b', 7),
+      makeGroundedResult('topic-c', 5),
     ]);
-    ideasService.generateIdeas
-      .mockRejectedValueOnce(new Error('LLM timeout'))
-      .mockResolvedValueOnce({
-        success: true,
-        message: 'ok',
-        partial: false,
-        result: [{ title: 'B', description: 'd', targetMarket: 'm', validationScore: 5, validationReason: 'r', risks: [], competitors: [], nextSteps: [], signalsReferenced: [], groundedInSignals: true }],
-      })
-      .mockResolvedValueOnce({
-        success: true,
-        message: 'ok',
-        partial: false,
-        result: [],
-      });
-    ideasService.saveGeneration.mockResolvedValue(1);
+    ideasService.saveGeneration
+      .mockRejectedValueOnce(new Error('DB write failed'))
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(2);
 
     await service.runNightly();
 
-    // topic-a failed (caught), topic-b and topic-c both reached saveGeneration
-    expect(ideasService.generateIdeas).toHaveBeenCalledTimes(3);
-    expect(ideasService.saveGeneration).toHaveBeenCalledTimes(2);
-    expect((ideasService.saveGeneration as jest.Mock).mock.calls[0][1]).toBe('topic-b');
-    expect((ideasService.saveGeneration as jest.Mock).mock.calls[1][1]).toBe('topic-c');
+    // All 3 grounded results reached saveGeneration; one failed (caught),
+    // the other two succeeded.
+    expect(ideasService.saveGeneration).toHaveBeenCalledTimes(3);
+    expect((ideasService.saveGeneration as jest.Mock).mock.calls[0][1]).toBe('topic-a');
+    expect((ideasService.saveGeneration as jest.Mock).mock.calls[1][1]).toBe('topic-b');
+    expect((ideasService.saveGeneration as jest.Mock).mock.calls[2][1]).toBe('topic-c');
   });
 });

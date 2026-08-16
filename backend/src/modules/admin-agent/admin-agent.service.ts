@@ -13,6 +13,7 @@ import type { LlmProvider, LlmToolCall } from '../llm/types/llm.types';
 
 const MAX_ITERATIONS = 10;
 const MAX_DUPLICATE_TOOL_CALLS = 2;
+const MAX_CALLS_PER_TOOL = 3;
 const PARALLEL_UNSAFE_TOOL_NAMES = new Set([
   'LlmController_testLlm',
   'LlmController_testAll',
@@ -55,6 +56,8 @@ type ToolCallResult = {
 export class AdminAgentService implements OnModuleInit {
   private readonly logger = new Logger(AdminAgentService.name);
   private readonly toolCallCounter: Map<string, number> = new Map<string, number>();
+  private readonly toolNameCounter: Map<string, number> = new Map<string, number>();
+  private readonly contentPolicyRetries: Map<string, number> = new Map<string, number>();
 
   constructor(
     private readonly llmService: LlmService,
@@ -221,6 +224,7 @@ export class AdminAgentService implements OnModuleInit {
         for (const group of groups) {
           for (const call of group) {
             this.recordToolCall(call);
+            this.recordToolNameIncrement(call);
           }
 
           const results = await this.executeToolCallGroup(group, userId, session.id);
@@ -233,6 +237,18 @@ export class AdminAgentService implements OnModuleInit {
               parsedResult = null;
             }
 
+            // Per-tool-name cap — check AFTER content policy has had its chance
+            const toolName = call.function.name;
+            const nameCount = this.toolNameCounter.get(toolName) ?? 0;
+            if (nameCount >= MAX_CALLS_PER_TOOL && !(parsedResult?.error && this.isContentPolicyViolation(parsedResult))) {
+              this.logger.warn(
+                `[AgentLoopBreaker] userId=${userId} sessionId=${session.id} toolName=${toolName} — tool called ${nameCount} times in one turn, breaking the loop.`,
+              );
+              const breakerMessage = `הסוכן ניסה להשתמש בכלי "${toolName}" יותר מ-${MAX_CALLS_PER_TOOL} פעמים באותו תור, ונעצר. כנראה שהמודל תקע בלולאה. אפשר לנסות שוב עם מודל אחר או לנסח את הבקשה מחדש.`;
+              await this.agentSessionService.saveMessage(userId, session.id, 'assistant', breakerMessage);
+              return breakerMessage;
+            }
+
             if (parsedResult?.error === 'CONFIRMATION_REQUIRED') {
               throw new Error('הפעולה דורשת אישור משתמש — יש להשתמש בשיחה הסטרימינגית לאישור פעולות רגישות.');
             }
@@ -241,7 +257,29 @@ export class AdminAgentService implements OnModuleInit {
             if (renderSpec) {
               collectedRenderBlocks.push({ component: renderSpec.type, data: renderSpec.data });
             }
-            const toolResultContent = this.truncateForStorage(resultData);
+
+            let storedResult = resultData;
+
+            // Content policy violation: give the LLM one chance to modify the prompt
+            if (parsedResult?.error && this.isContentPolicyViolation(parsedResult)) {
+              const toolName = call.function.name;
+              const cpCount = (this.contentPolicyRetries.get(toolName) ?? 0) + 1;
+              this.contentPolicyRetries.set(toolName, cpCount);
+
+              if (cpCount >= 2) {
+                const breakerMessage = `יצירת התמונה נכשלה שוב ושוב בגלל מגבלת תוכן (content_policy_violation). המודל לא מצליח לייצר תמונה תואמת לבקשה. אפשר לנסח את הבקשה מחדש או לנסות מודל אחר.`;
+                await this.agentSessionService.saveMessage(userId, session.id, 'assistant', breakerMessage);
+                return breakerMessage;
+              }
+
+              storedResult = JSON.stringify({
+                error: 'content_policy_violation',
+                message: 'יצירת התמונה נכשלה בגלל מגבלת תוכן. הprompt הנוכחי מפר את מדיניות התוכן של מודל יצירת התמונות.',
+                instruction: 'analiz the prompt that caused the violation, identify the problematic elements, and generate a NEW, modified prompt that complies with content policy. Call the same tool again with the modified prompt. If you cannot identify what to change, explain to the user in Hebrew what went wrong and suggest an alternative.',
+              });
+            }
+
+            const toolResultContent = this.truncateForStorage(storedResult);
             await this.agentSessionService.saveMessage(userId, session.id, 'tool', toolResultContent, {
               toolCallId: call.id,
               renderSpec: renderSpec ? JSON.stringify(renderSpec) : null,
@@ -366,6 +404,7 @@ export class AdminAgentService implements OnModuleInit {
             const toolIcon = endpoint?.toolIcon || STEP_ICONS.tool;
 
             this.recordToolCall(call);
+            this.recordToolNameIncrement(call);
 
             yield JSON.stringify({ type: 'step', icon: toolIcon, message: `${description}...` }) + '\n';
           }
@@ -378,6 +417,20 @@ export class AdminAgentService implements OnModuleInit {
               parsedResult = JSON.parse(resultData);
             } catch {
               parsedResult = null;
+            }
+
+            // Per-tool-name cap — check AFTER content policy has had its chance
+            const toolName = call.function.name;
+            const nameCount = this.toolNameCounter.get(toolName) ?? 0;
+            if (nameCount >= MAX_CALLS_PER_TOOL && !(parsedResult?.error && this.isContentPolicyViolation(parsedResult))) {
+              this.logger.warn(
+                `[AgentLoopBreaker] userId=${userId} sessionId=${session.id} toolName=${toolName} — tool called ${nameCount} times in one turn, breaking the loop.`,
+              );
+              const breakerMessage = `הסוכן ניסה להשתמש בכלי "${toolName}" יותר מ-${MAX_CALLS_PER_TOOL} פעמים באותו תור, ונעצר. כנראה שהמודל תקע בלולאה. אפשר לנסות שוב עם מודל אחר או לנסח את הבקשה מחדש.`;
+              yield JSON.stringify({ type: 'step', icon: STEP_ICONS.error, message: breakerMessage }) + '\n';
+              yield JSON.stringify({ type: 'token', content: breakerMessage }) + '\n';
+              await this.agentSessionService.saveMessage(userId, session.id, 'assistant', breakerMessage);
+              return;
             }
 
             if (parsedResult?.error === 'CONFIRMATION_REQUIRED') {
@@ -437,6 +490,36 @@ export class AdminAgentService implements OnModuleInit {
                   instruction: `${setup.he} כדי לחבר, הפעל את הכלי: ${setup.authTool}`,
                 });
               }
+            }
+
+            // Content policy violation: give the LLM one chance to modify the prompt
+            if (parsedResult?.error && this.isContentPolicyViolation(parsedResult)) {
+              const toolName = call.function.name;
+              const cpCount = (this.contentPolicyRetries.get(toolName) ?? 0) + 1;
+              this.contentPolicyRetries.set(toolName, cpCount);
+
+              if (cpCount >= 2) {
+                // Second violation — break the loop
+                this.logger.warn(`[AgentLoopBreaker] userId=${userId} sessionId=${session.id} toolName=${toolName} — content policy violation repeated ${cpCount} times, breaking.`);
+                const breakerMessage = `יצירת התמונה נכשלה שוב ושוב בגלל מגבלת תוכן (content_policy_violation). המודל לא מצליח לייצר תמונה תואמת לבקשה. אפשר לנסח את הבקשה מחדש או לנסות מודל אחר.`;
+                yield JSON.stringify({ type: 'step', icon: STEP_ICONS.error, message: breakerMessage }) + '\n';
+                yield JSON.stringify({ type: 'token', content: breakerMessage }) + '\n';
+                await this.agentSessionService.saveMessage(userId, session.id, 'assistant', breakerMessage);
+                return;
+              }
+
+              // First violation — inject guidance so the LLM modifies the prompt
+              this.logger.warn(`[ContentPolicyRetry] userId=${userId} sessionId=${session.id} toolName=${toolName} attempt=${cpCount} — injecting guidance for prompt modification.`);
+              storedResult = JSON.stringify({
+                error: 'content_policy_violation',
+                message: 'יצירת התמונה נכשלה בגלל מגבלת תוכן. הprompt הנוכחי מפר את מדיניות התוכן של מודל יצירת התמונות.',
+                instruction: 'content policy violation detected. You MUST do BOTH before retrying: (1) Re-read the user\'s original request and identify what might be problematic. (2) Review the EXACT prompt YOU constructed and sent to the image model — your own wording, additions, or stylistic choices may have triggered the violation even if the user\'s request was benign. (3) Generate a NEW, rewritten prompt that removes the problematic elements while preserving the user\'s core intent. (4) Call the same tool again with the modified prompt. If you cannot identify what to change, explain to the user in Hebrew what went wrong and suggest an alternative.',
+              });
+              yield JSON.stringify({
+                type: 'step',
+                icon: STEP_ICONS.error,
+                message: 'יצירת התמונה נכשלה בגלל מגבלת תוכן. הסוכן מנסה לנסח פרומפט חלופי...',
+              }) + '\n';
             }
 
             await this.agentSessionService.saveMessage(userId, session.id, 'tool', this.truncateForStorage(storedResult), {
@@ -593,6 +676,8 @@ export class AdminAgentService implements OnModuleInit {
 
   private resetToolCallCounter(): void {
     this.toolCallCounter.clear();
+    this.toolNameCounter.clear();
+    this.contentPolicyRetries.clear();
   }
 
   private toolCallKey(call: LlmToolCall): string {
@@ -639,9 +724,40 @@ export class AdminAgentService implements OnModuleInit {
     return null;
   }
 
+  private recordToolNameIncrement(call: LlmToolCall): number {
+    const name = call.function.name;
+    const next = (this.toolNameCounter.get(name) ?? 0) + 1;
+    this.toolNameCounter.set(name, next);
+    return next;
+  }
+
+  private findExcessToolCalls(calls: LlmToolCall[]): LlmToolCall | null {
+    for (const call of calls) {
+      const name = call.function.name;
+      const count = this.toolNameCounter.get(name) ?? 0;
+      if (count >= MAX_CALLS_PER_TOOL) {
+        return call;
+      }
+    }
+    return null;
+  }
+
   private breakerErrorMessage(toolName: string, args: Record<string, unknown>): string {
     const argsJson = Object.keys(args).length > 0 ? JSON.stringify(args) : '{}';
     return `הסוכן ניסה לקרוא שוב ושוב לכלי "${toolName}" עם אותם ארגומנטים (${argsJson}) ונעצר. כנראה שהמודל לא הצליח להפיק תשובה סופית. אפשר לנסות שוב עם מודל אחר או לנסח את הבקשה מחדש.`;
+  }
+
+  private isContentPolicyViolation(parsedResult: any): boolean {
+    const details = parsedResult?.details;
+    if (details && typeof details === 'object') {
+      const code = details.error?.code || details.code;
+      const type = details.error?.type || details.type;
+      if (code === 'content_policy_violation' || type === 'invalid_request_error') {
+        return true;
+      }
+    }
+    const raw = JSON.stringify(parsedResult).toLowerCase();
+    return raw.includes('content_policy_violation');
   }
 
   /**
