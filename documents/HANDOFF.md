@@ -1,11 +1,12 @@
 # Documentation Handoff
 ## 2026-08-17 — Found during audit, NOT fixed (backlog items)
 
-1. **Mojibake in user-facing Hebrew — `frontend/src/app/features/chat/chat/chat.ts:593`**: `errorMessage = 'הבקשה פגה hoặc כבר טופלה. נסה שוב.';` — Vietnamese word "hoặc" (= "or") embedded in the 404 branch of `confirmPendingAction()` error handling; should be Hebrew "או". Cosmetic but user-visible. Fix: one-string edit + verify UTF-8 (`rg "hoặc"` afterwards).
+1. ~~Mojibake in `chat.ts:593`~~ **FIXED 2026-08-17** ("hoặc" → "או"; full-codebase scan found no other real mojibake — see LOG A8).
 2. SearXNG engine pool — see Session (v) stage 4: google cse still suspended 08-17, ddg recovered; `outgoing.proxies` proposal awaiting decision.
-3. `frontend/tsconfig.spec.new.json` — dead vitest leftover, still tracked.
+3. ~~`frontend/tsconfig.spec.new.json` dead config~~ **RETRACTED** — frontend tests run on vitest v4.1.7 via `ng test`; this is the ACTIVE spec config (LOG A8).
 4. `RequiresConfirmation` decorator lives in admin-agent, consumed by llm-provider+users — relocate to `core/decorators/`.
-5. The 17 ❌ non-conform endpoints (audit-service-result-container.md) — breaking changes, need coordinated frontend sweep.
+5. The 17 ❌ non-conform endpoints (audit-service-result-container.md) — being fixed cluster-by-cluster (2026-08-17).
+6. Minor: `main-sidebar.html:101` — `צʼאט` uses U+02BC modifier apostrophe instead of Hebrew geresh ׳ (U+05F3). Display-identical, cosmetic.
 
 ## 2026-08-17 Session (v) — Full regression sweep + 3 audits (no code changes to app)
 

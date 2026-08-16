@@ -590,7 +590,7 @@ export class Chat implements OnInit, OnDestroy {
                 if (err?.status === 403) {
                     errorMessage = 'פעולה זו שייכת למשתמש אחר.';
                 } else if (err?.status === 404) {
-                    errorMessage = 'הבקשה פגה hoặc כבר טופלה. נסה שוב.';
+                    errorMessage = 'הבקשה פגה או כבר טופלה. נסה שוב.';
                 }
                 const assistantMsg: IChatMessage = {
                     role: 'assistant',

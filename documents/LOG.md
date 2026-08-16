@@ -495,3 +495,9 @@
 - Dead code removed: math.utils.ts (file), user-role enum backend mirror (getUserRoleData/UserRoleOptions/UserRoleDescription — frontend has its own used copy), 12 internal symbols un-exported. Net −50 lines. Deferred: tsconfig.spec.new.json, RequiresConfirmation relocation, seeds boundary.
 - SearXNG recheck: google cse STILL suspended (too many requests); duckduckgo RECOVERED and honors site: (reddit-only results). Live: bing + ddg.
 - Verified: backend tsc 0, frontend tsc 0×2, targeted jest 45/45 (admin-agent.controller 15 incl. 4 new, ideas ×3).
+
+## 2026-08-17 A8 — Mojibake fix + full-codebase foreign-char scan
+- chat.ts:593 fixed: 'hoặc' (Vietnamese) → 'או' in confirmPendingAction 404 message. chat.spec 23/23, tsc 0.
+- Scan (503 files, Hebrew-line + foreign-char detector): 104 hits, ALL legitimate (🚀 comments, ₪, →, ⚠️/≠ inside LLM prompts). ZERO additional mojibake. One borderline: main-sidebar.html:101 'צʼאט' uses U+02BC instead of Hebrew geresh ׳ (U+05F3) — identical display, not mojibake, left as-is.
+- No mojibake-scan spec exists in project (per instruction, not created).
+- CORRECTION to audit-dependency-map: frontend tests run on VITEST v4.1.7 via ng test — tsconfig.spec.new.json is ACTIVE config, NOT a dead leftover. Backlog item retracted.
