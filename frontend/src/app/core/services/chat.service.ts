@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { IChatSession } from '../models/chat-session.interface';
 import { IChatMessage, ChatModelSelection, ChatStreamEvent } from '../models/chat-message.interface';
+import { ServiceResultContainer } from '../models/service-result-container.model';
 import { AuthService } from './auth.service';
-
 
 @Injectable({
 	providedIn: 'root',
@@ -20,17 +20,21 @@ export class ChatService {
 
 	listSessions(limit?: number): Observable<IChatSession[]> {
 		const url = limit ? `${this.base}/sessions?limit=${limit}` : `${this.base}/sessions`;
-		return this.http.get<IChatSession[]>(url);
+		return this.http
+			.get<ServiceResultContainer<IChatSession[]>>(url)
+			.pipe(map((res) => res.result));
 	}
 
 	getSessionMessages(sessionId: number): Observable<{ messages: IChatMessage[]; hasMoreImages: boolean }> {
 		return new Observable((observer) => {
 			this.http
-				.get<IChatMessage[]>(`${this.base}/sessions/${sessionId}/messages`, { observe: 'response' })
+				.get<ServiceResultContainer<IChatMessage[]>>(`${this.base}/sessions/${sessionId}/messages`, {
+					observe: 'response',
+				})
 				.subscribe({
 					next: (response) => {
 						const hasMoreImages = response.headers.get('x-has-more-images') === 'true';
-						observer.next({ messages: response.body ?? [], hasMoreImages });
+						observer.next({ messages: response.body?.result ?? [], hasMoreImages });
 						observer.complete();
 					},
 					error: (err) => observer.error(err),
@@ -39,11 +43,17 @@ export class ChatService {
 	}
 
 	getMessageImages(messageIds: number[]): Observable<Record<number, string | null>> {
-		return this.http.post<Record<number, string | null>>(`${this.base}/messages/images`, { messageIds });
+		return this.http
+			.post<ServiceResultContainer<Record<number, string | null>>>(`${this.base}/messages/images`, {
+				messageIds,
+			})
+			.pipe(map((res) => res.result));
 	}
 
 	createSession(): Observable<IChatSession> {
-		return this.http.post<IChatSession>(`${this.base}/sessions`, {});
+		return this.http
+			.post<ServiceResultContainer<IChatSession>>(`${this.base}/sessions`, {})
+			.pipe(map((res) => res.result));
 	}
 
 	deleteSession(sessionId: number): Observable<void> {

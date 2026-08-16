@@ -34,6 +34,7 @@ import { Response } from 'express';
 import { AdminAgentService } from './admin-agent.service';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RequestWithUser } from '../../core/interfaces/request-with-user.interface';
+import { ServiceResultContainer } from '../../core/models/service-result-container.model';
 import { AgentRequestDto } from './dto/agent-request.dto';
 import { SessionResponseDto } from './dto/session-response.dto';
 import { ChatMessageResponseDto } from './dto/chat-message-response.dto';
@@ -82,7 +83,12 @@ export class AdminAgentController {
     if (!req.user) {
       throw new UnauthorizedException();
     }
-    return this.adminAgentService.getSessions(req.user.sub, query.limit);
+    const sessions = await this.adminAgentService.getSessions(req.user.sub, query.limit);
+    return {
+      success: true,
+      message: `נטענו ${sessions.length} שיחות`,
+      result: sessions,
+    } satisfies ServiceResultContainer<unknown>;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -108,7 +114,11 @@ export class AdminAgentController {
     }
     const result = await this.adminAgentService.getSessionMessages(id, req.user.sub);
     res.setHeader('x-has-more-images', String(result.hasMoreImages));
-    return result.messages;
+    return {
+      success: true,
+      message: `נטענו ${result.messages.length} הודעות`,
+      result: result.messages,
+    } satisfies ServiceResultContainer<unknown>;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -147,7 +157,12 @@ export class AdminAgentController {
     if (!Array.isArray(messageIds) || messageIds.length === 0 || messageIds.length > 50) {
       throw new BadRequestException('messageIds must be a non-empty array of at most 50 IDs.');
     }
-    return this.adminAgentService.getMessageImages(messageIds, req.user.sub);
+    const images = await this.adminAgentService.getMessageImages(messageIds, req.user.sub);
+    return {
+      success: true,
+      message: `נטענו ${Object.keys(images).length} תמונות`,
+      result: images,
+    } satisfies ServiceResultContainer<unknown>;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -163,7 +178,12 @@ export class AdminAgentController {
     if (!req.user) {
       throw new UnauthorizedException();
     }
-    return this.adminAgentService.createSession(req.user.sub);
+    const session = await this.adminAgentService.createSession(req.user.sub);
+    return {
+      success: true,
+      message: 'השיחה נוצרה בהצלחה',
+      result: session,
+    } satisfies ServiceResultContainer<unknown>;
   }
 
   @UseGuards(JwtAuthGuard)

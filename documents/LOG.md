@@ -501,3 +501,8 @@
 - Scan (503 files, Hebrew-line + foreign-char detector): 104 hits, ALL legitimate (🚀 comments, ₪, →, ⚠️/≠ inside LLM prompts). ZERO additional mojibake. One borderline: main-sidebar.html:101 'צʼאט' uses U+02BC instead of Hebrew geresh ׳ (U+05F3) — identical display, not mojibake, left as-is.
 - No mojibake-scan spec exists in project (per instruction, not created).
 - CORRECTION to audit-dependency-map: frontend tests run on VITEST v4.1.7 via ng test — tsconfig.spec.new.json is ACTIVE config, NOT a dead leftover. Backlog item retracted.
+
+## 2026-08-17 A9 — Cluster 1/5: admin-agent sessions wrapped (×4)
+- GET /sessions, GET /sessions/:id/messages, POST /messages/images, POST /sessions → ServiceResultContainer, wrapped in CONTROLLER (service signatures untouched — analytics/system callers unaffected; x-has-more-images header preserved).
+- Frontend: chat.service unwraps via shared core/models/service-result-container.model (first pass mistakenly invented local ApiResult — user caught, fixed to shared model). Public service API unchanged → chat.store + chat.ts untouched.
+- Tests: backend controller 14/14 (incl. new wrap asserts), frontend chat.service + chat 29/29, tsc 0 both sides.

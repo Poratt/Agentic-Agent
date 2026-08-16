@@ -9,9 +9,9 @@ Legend: ✅ conform (typed container / container-shaped DTO / inline `{success,m
 
 | Verdict | Count | Notes |
 |---|---|---|
-| ✅ Conform (incl. 🔵 justified) | 59 | of which 6 are documented exceptions: 2×SSE (ideas stream, admin-agent query-stream), 3×HTTP-204 empty-body deletes, 1×OAuth redirect (calendar /auth) |
+| ✅ Conform (incl. 🔵 justified) | 63 | of which 6 are documented exceptions: 2×SSE (ideas stream, admin-agent query-stream), 3×HTTP-204 empty-body deletes, 1×OAuth redirect (calendar /auth) |
 | ⚠️ Partial | **0 — fixed 2026-08-17** | confirm-action now returns `{success, message, result}` in both branches; ideas favorite + mark-read are now HTTP-204 (matching their delete siblings); frontend chat.service type updated |
-| ❌ Non-conform | 17 | admin-agent×4 (session/message reads), google-calendar×3 (events passthrough), ideas×3 (session reads + unread-count), llm×4 (image/video passthrough), strain-hunter×3 |
+| ❌ Non-conform | 13 | google-calendar×3 (events passthrough), ideas×3 (session reads + unread-count), llm×4 (image/video passthrough), strain-hunter×3 |
 
 **Total: 76 endpoints / 15 controllers.**
 
@@ -19,10 +19,10 @@ Legend: ✅ conform (typed container / container-shaped DTO / inline `{success,m
 
 | Module | Endpoint | Verdict | Note |
 |---|---|---|---|
-| admin-agent | GET /sessions | ❌ | raw `ChatSession[]` from service |
-| admin-agent | GET /sessions/:id/messages | ❌ | raw `ChatMessage[]` + custom header `x-has-more-images` |
-| admin-agent | POST /messages/images | ❌ | raw `Record<messageId, imageUrl>` map |
-| admin-agent | POST /sessions | ❌ | raw `ChatSession` |
+| admin-agent | GET /sessions | ✅ | wraps in ServiceResultContainer (controller-level) |
+| admin-agent | GET /sessions/:id/messages | ✅ | container + header preserved |
+| admin-agent | POST /messages/images | ✅ | wraps map in container |
+| admin-agent | POST /sessions | ✅ | wraps in container |
 | admin-agent | DELETE /sessions/:id | 🔵 | HTTP 204, empty body — documented |
 | admin-agent | DELETE /sessions/:sessionId/messages/:messageId | 🔵 | HTTP 204, empty body — documented |
 | admin-agent | POST /query-stream | 🔵 | SSE (text/event-stream, NDJSON events) — documented |

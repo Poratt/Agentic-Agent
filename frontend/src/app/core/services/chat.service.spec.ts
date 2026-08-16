@@ -31,12 +31,16 @@ describe('ChatService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('listSessions should call GET /admin-agent/sessions', () => {
-    service.listSessions().subscribe();
+  it('listSessions should unwrap ServiceResultContainer and emit the sessions array', () => {
+    const sessions = [{ id: 1, title: 'S' }];
+
+    service.listSessions().subscribe((result) => {
+      expect(result).toEqual(sessions as any);
+    });
 
     const req = httpMock.expectOne(`${base}/sessions`);
     expect(req.request.method).toBe('GET');
-    req.flush([]);
+    req.flush({ success: true, message: 'נטענו 1 שיחות', result: sessions });
   });
 
   it('listSessions with limit should pass query param', () => {
@@ -44,15 +48,19 @@ describe('ChatService', () => {
 
     const req = httpMock.expectOne(`${base}/sessions?limit=10`);
     expect(req.request.method).toBe('GET');
-    req.flush([]);
+    req.flush({ success: true, message: '', result: [] });
   });
 
-  it('createSession should call POST /admin-agent/sessions', () => {
-    service.createSession().subscribe();
+  it('createSession should unwrap ServiceResultContainer and emit the session', () => {
+    const session = { id: 1, title: 'New', userId: 1, createdAt: new Date(), updatedAt: new Date() };
+
+    service.createSession().subscribe((result) => {
+      expect(result).toEqual(session as any);
+    });
 
     const req = httpMock.expectOne(`${base}/sessions`);
     expect(req.request.method).toBe('POST');
-    req.flush({ id: 1, title: 'New', userId: 1, createdAt: new Date(), updatedAt: new Date() });
+    req.flush({ success: true, message: 'השיחה נוצרה בהצלחה', result: session });
   });
 
   it('deleteSession should call DELETE /admin-agent/sessions/:id', () => {
@@ -63,7 +71,7 @@ describe('ChatService', () => {
     req.flush(null);
   });
 
-  it('getSessionMessages should call GET and return messages with hasMoreImages', () => {
+  it('getSessionMessages should unwrap container body and keep header flag', () => {
     service.getSessionMessages(5).subscribe((result) => {
       expect(result.messages).toEqual([]);
       expect(result.hasMoreImages).toBe(false);
@@ -71,6 +79,6 @@ describe('ChatService', () => {
 
     const req = httpMock.expectOne(`${base}/sessions/5/messages`);
     expect(req.request.method).toBe('GET');
-    req.flush([], { headers: { 'x-has-more-images': 'false' } });
+    req.flush({ success: true, message: 'נטענו 0 הודעות', result: [] }, { headers: { 'x-has-more-images': 'false' } });
   });
 });

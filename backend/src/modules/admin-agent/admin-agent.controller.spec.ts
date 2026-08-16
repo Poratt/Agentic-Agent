@@ -69,7 +69,7 @@ describe('AdminAgentController — image endpoints', () => {
       expect(res.setHeader).toHaveBeenCalledWith('x-has-more-images', 'false');
     });
 
-    it('returns only the messages array (not the hasMoreImages flag in body)', async () => {
+    it('wraps messages array in ServiceResultContainer (hasMoreImages stays in header only)', async () => {
       const msgs = [{ id: 1, content: 'hi' }] as any;
       adminAgentService.getSessionMessages.mockResolvedValue({
         messages: msgs,
@@ -80,7 +80,33 @@ describe('AdminAgentController — image endpoints', () => {
 
       const result = await controller.getSessionMessages(1, req, res);
 
-      expect(result).toEqual(msgs);
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('נטענו');
+      expect(result.result).toEqual(msgs);
+      expect(result).not.toHaveProperty('hasMoreImages');
+    });
+  });
+
+  describe('getSessions / createSession — ServiceResultContainer shape', () => {
+    it('getSessions wraps the sessions array', async () => {
+      adminAgentService.getSessions.mockResolvedValue([{ id: 7 }] as any);
+      const req = { user: { sub: 1 } } as any;
+
+      const result = await controller.getSessions(req, { limit: undefined } as any);
+
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('נטענו');
+      expect(result.result).toEqual([{ id: 7 }]);
+    });
+
+    it('createSession wraps the created session', async () => {
+      adminAgentService.createSession.mockResolvedValue({ id: 9, title: 'x' } as any);
+      const req = { user: { sub: 1 } } as any;
+
+      const result = await controller.createSession(req);
+
+      expect(result.success).toBe(true);
+      expect(result.result).toEqual({ id: 9, title: 'x' });
     });
   });
 
@@ -113,7 +139,8 @@ describe('AdminAgentController — image endpoints', () => {
 
       const result = await controller.getMessageImages(exactly50, req);
 
-      expect(result).toEqual({});
+      expect(result.success).toBe(true);
+      expect(result.result).toEqual({});
       expect(adminAgentService.getMessageImages).toHaveBeenCalledWith(exactly50, 1);
     });
 
