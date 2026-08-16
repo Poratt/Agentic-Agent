@@ -377,7 +377,7 @@ export class AdminAgentController {
       };
 
       const result = await this.agentToolExecutorService.executeToolCall(call, req.user.sub);
-      return { success: true, result };
+      return { success: true, message: 'הפעולה אושרה ובוצעה.', result };
     } else {
       const cancelledAction = this.agentToolExecutorService.cancelPendingActionById(dto.actionId);
 
@@ -389,7 +389,11 @@ export class AdminAgentController {
         actionId: dto.actionId,
       });
 
-      return { success: true, cancelled: !!cancelledAction };
+      return {
+        success: true,
+        message: 'הפעולה בוטלה.',
+        result: { cancelled: !!cancelledAction },
+      };
     }
   }
 }

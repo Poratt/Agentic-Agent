@@ -10,13 +10,13 @@
 
 /* ── Theme background constants ─────────────────────────────────── */
 
-export const DARK_BG = '#080D1A';
-export const LIGHT_BG = '#F0F4F8';
-export const MIN_CONTRAST_RATIO = 4.5; // WCAG AA normal text
+const DARK_BG = '#080D1A';
+const LIGHT_BG = '#F0F4F8';
+const MIN_CONTRAST_RATIO = 4.5; // WCAG AA normal text
 
 /* ── Hex ↔ HSL conversions ─────────────────────────────────────── */
 
-export function hexToRgb(hex: string): { r: number; g: number; b: number } {
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
     const h = hex.replace('#', '');
     return {
         r: parseInt(h.substring(0, 2), 16),
@@ -25,12 +25,12 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } {
     };
 }
 
-export function rgbToHex(r: number, g: number, b: number): string {
+function rgbToHex(r: number, g: number, b: number): string {
     const toHex = (n: number) => Math.round(Math.max(0, Math.min(255, n))).toString(16).padStart(2, '0');
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
-export function hexToHsl(hex: string): { h: number; s: number; l: number } {
+function hexToHsl(hex: string): { h: number; s: number; l: number } {
     const { r, g, b } = hexToRgb(hex);
     const rn = r / 255;
     const gn = g / 255;
@@ -58,7 +58,7 @@ export function hexToHsl(hex: string): { h: number; s: number; l: number } {
     return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
 }
 
-export function hslToHex(h: number, s: number, l: number): string {
+function hslToHex(h: number, s: number, l: number): string {
     const sn = s / 100;
     const ln = l / 100;
     const c = (1 - Math.abs(2 * ln - 1)) * sn;
@@ -94,7 +94,7 @@ function relativeLuminance(hex: string): number {
     return 0.2126 * rn + 0.7152 * gn + 0.0722 * bn;
 }
 
-export function contrastRatio(hex1: string, hex2: string): number {
+function contrastRatio(hex1: string, hex2: string): number {
     const l1 = relativeLuminance(hex1);
     const l2 = relativeLuminance(hex2);
     const lighter = Math.max(l1, l2);
@@ -111,7 +111,7 @@ export function contrastRatio(hex1: string, hex2: string): number {
  * Uses binary search on the lightness channel (0–100).
  * If the color already passes, returns it unchanged.
  */
-export function adjustLightnessForContrast(
+function adjustLightnessForContrast(
     hex: string,
     bgHex: string,
     minRatio: number = MIN_CONTRAST_RATIO,

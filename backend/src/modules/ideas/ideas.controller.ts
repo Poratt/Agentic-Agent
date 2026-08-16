@@ -185,6 +185,7 @@ export class IdeasController {
 
   @UseGuards(JwtAuthGuard)
   @Patch('ideas/:id')
+  @HttpCode(204)
   @ApiOperation({
     summary: 'Set the favorite flag on a saved idea',
     summaryHe: 'מסמן או מסיר רעיון שמור כמועדף',
@@ -192,7 +193,7 @@ export class IdeasController {
     description: 'Toggles the isFavorite flag on a single saved idea owned by the authenticated user.',
   } as CustomApiOperationOptions)
   @ApiParam({ name: 'id', type: Number, description: 'Numeric saved-idea id.' })
-  @ApiOkResponse({ description: 'Favorite flag updated successfully.' })
+  @ApiResponse({ status: 204, description: 'Favorite flag updated successfully.' })
   @ApiForbiddenResponse({ description: 'The idea does not exist or does not belong to the authenticated user.' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
   async setFavorite(
@@ -221,13 +222,14 @@ export class IdeasController {
 
   @UseGuards(JwtAuthGuard)
   @Post('nightly/mark-read')
+  @HttpCode(204)
   @ApiOperation({
     summary: 'Mark all nightly sessions as read',
     summaryHe: 'מסמן את כל שמירות הלילה כנקראות',
     toolIcon: 'ph-check-circle',
     description: 'Clears the unread flag on all of the authenticated user\'s nightly sessions.',
   } as CustomApiOperationOptions)
-  @ApiResponse({ status: 201, description: 'Nightly sessions marked as read.' })
+  @ApiResponse({ status: 204, description: 'Nightly sessions marked as read.' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
   async markNightlyRead(@Req() req: RequestWithUser) {
     if (!req.user) throw new UnauthorizedException();

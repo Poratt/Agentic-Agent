@@ -3242,7 +3242,7 @@
           }
         },
         "responses": {
-          "200": {
+          "204": {
             "description": "Favorite flag updated successfully."
           },
           "401": {
@@ -3294,7 +3294,7 @@
         "operationId": "IdeasController_markNightlyRead",
         "parameters": [],
         "responses": {
-          "201": {
+          "204": {
             "description": "Nightly sessions marked as read."
           },
           "401": {

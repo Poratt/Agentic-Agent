@@ -10,7 +10,7 @@ export interface McpServerDef {
   toolIcons?: Record<string, string>;
 }
 
-export const MCP_SERVERS: McpServerDef[] = [
+const MCP_SERVERS: McpServerDef[] = [
   {
     id: 'weather',
     package: '@dangahagan/weather-mcp',

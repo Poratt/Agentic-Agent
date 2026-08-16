@@ -20,7 +20,7 @@ const LEGACY_DEFAULT_SESSION_TITLES = ['New chat...', 'New chat'];
  * long conversations. The DB keeps the full history; only the LLM context is
  * windowed.
  */
-export const MAX_LLM_HISTORY_MESSAGES = 50;
+const MAX_LLM_HISTORY_MESSAGES = 50;
 
 export function trimHistoryForLlm(history: LlmMessage[]): LlmMessage[] {
   if (history.length <= MAX_LLM_HISTORY_MESSAGES) return history;
