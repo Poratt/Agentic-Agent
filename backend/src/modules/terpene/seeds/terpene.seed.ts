@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { Terpene } from '../../modules/terpene/entities/terpene.entity';
+import { Terpene } from '../entities/terpene.entity';
 
 type TerpeneSeed = {
     name: string;

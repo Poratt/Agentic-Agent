@@ -2,6 +2,14 @@
 
 Last updated: 2026-08-17
 
+## 2026-08-17 Session (ac) — ✅ DONE: seeds relocated — core boundary inversion resolved
+
+- **DONE:** 4 seeds moved from `core/seeds/` to their feature modules (`modules/{users,terpene,genetics,llm-provider}/seeds/`), `core/seeds/` deleted, main.ts imports updated (+ removed 2 dead entity imports). 100% git renames — only relative import lines changed.
+- **Over-export sweep:** nothing left — audit's remaining items were decorator relocation (done, session y), seeds (done now), and `tsconfig.spec.new.json` (RETRACTED — active vitest config per LOG A8).
+- **Verified:** backend tsc 0 · **399/399** · build 0 · live boot C5 ✅ + seeds idempotent (no errors vs existing DB) · frontend tsc app 0 · mojibake clean.
+- **Next (backlog):** SearXNG proxies · tsconfig.spec.new.json *docs* reconciliation.
+
+
 ## 2026-08-17 Session (ab) — 🎉 DONE: frontend 492/492 — ALL tests green project-wide
 
 - **DONE:** 16 pre-existing frontend failures fixed across 5 spec files (app×2 — PrimeNG services; auth.guard×1 — user.set mock; auth.interceptor×2 — 401-then-ok handler + async refresh for single-flight; with-credentials×4 — vi.fn handlers; strain-hunter-settings×7 — real MessageService + ResizeObserver mock). Zero production code touched.

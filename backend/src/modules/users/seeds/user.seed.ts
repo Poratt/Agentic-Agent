@@ -1,8 +1,8 @@
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
-import { User } from '../../modules/users/entities/user.entity';
-import { UserRole } from '../enums/user-role.enum';
+import { User } from '../entities/user.entity';
+import { UserRole } from '../../../core/enums/user-role.enum';
 
 const ADMIN_EMAIL = 'admin@admin.com';
 

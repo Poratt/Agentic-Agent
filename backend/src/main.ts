@@ -4,14 +4,12 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { json } from 'body-parser';
 import { AppModule } from './app.module';
-import { seedAdmin } from './core/seeds/user.seed';
-import { seedLlmProviders } from './core/seeds/llm-providers.seed';
-import { seedTerpenes } from './core/seeds/terpene.seed';
-import { seedGenetics } from './core/seeds/genetics.seed';
+import { seedAdmin } from './modules/users/seeds/user.seed';
+import { seedLlmProviders } from './modules/llm-provider/seeds/llm-providers.seed';
+import { seedTerpenes } from './modules/terpene/seeds/terpene.seed';
+import { seedGenetics } from './modules/genetics/seeds/genetics.seed';
 import { DataSource } from 'typeorm';
 import * as fs from 'fs';
-import { LlmModelEntity } from './modules/llm-provider/entities/llm-model.entity';
-import { LlmProviderEntity } from './modules/llm-provider/entities/llm-provider.entity';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {

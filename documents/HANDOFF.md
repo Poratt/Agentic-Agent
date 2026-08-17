@@ -1,4 +1,17 @@
 # Documentation Handoff
+## 2026-08-17 Session (ac) — 🧹 seeds relocated: core boundary inversion resolved
+
+**What was done:**
+1. `git mv` all 4 seeds from `core/seeds/` next to their own modules (audit's own recommendation): `user.seed` → `modules/users/seeds/`, `terpene.seed` → `modules/terpene/seeds/`, `genetics.seed` → `modules/genetics/seeds/`, `llm-providers.seed` → `modules/llm-provider/seeds/`. `core/seeds/` deleted. 100% renames, only the relative import paths changed inside each file.
+2. `main.ts` seed imports updated; also removed dead `LlmModelEntity`/`LlmProviderEntity` imports (leftover from the commented-out `seedLlmProviders` call — unused in main.ts).
+3. **Over-export sweep: nothing left.** Audit's remaining "Not applied" items were exactly 3: decorator relocation (done, session y), seeds relocation (done now), and `tsconfig.spec.new.json` — RETRACTED per LOG A8 (it is the ACTIVE vitest config, not dead). 12 symbols + math.utils were already cleaned earlier.
+
+**Verification:** backend tsc 0 · `npx jest --runInBand` **399/399** · `npm run build` exit 0 · live restart with fresh dist → **C5 ✅, seeds ran idempotent against existing DB (boot clean, no errors), :3000 serving** · frontend tsc app exit 0 · mojibake clean · `.claude`/`css-nesting-check` untouched.
+
+**Files touched:** 4 seed renames + import lines, main.ts (seed imports −2 dead entity imports), 3 docs. No architecture-diagram change (pure internal relocation, no boundary/flow change).
+
+**Next exact step (backlog):** SearXNG `outgoing.proxies` decision · `tsconfig.spec.new.json` doc conflict reconciliation (still open as a *docs* item — config itself is live and stays).
+
 ## 2026-08-17 Session (ab) — 🎉 FRONTEND 492/492 GREEN — 16 pre-existing failures resolved
 
 **What was done (5 spec files, all stale-test fixes — zero production code touched):**

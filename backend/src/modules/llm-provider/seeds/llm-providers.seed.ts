@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
-import { LlmModelEntity } from '../../modules/llm-provider/entities/llm-model.entity';
-import { LlmProviderEntity } from '../../modules/llm-provider/entities/llm-provider.entity';
+import { LlmModelEntity } from '../entities/llm-model.entity';
+import { LlmProviderEntity } from '../entities/llm-provider.entity';
 
 const OMNIRoute_MODELS = [
     { value: 'auto/best-free', label: 'Default', capability: 'text' as const },

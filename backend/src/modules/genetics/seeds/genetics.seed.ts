@@ -1,5 +1,5 @@
 ﻿import { DataSource } from 'typeorm';
-import { Genetics } from '../../modules/genetics/entities/genetics.entity';
+import { Genetics } from '../entities/genetics.entity';
 
 type GeneticsSeed = {
     name: string;
