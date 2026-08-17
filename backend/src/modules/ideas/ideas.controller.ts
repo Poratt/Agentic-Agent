@@ -145,7 +145,15 @@ export class IdeasController {
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
   async listSessions(@Req() req: RequestWithUser, @Query() dto: ListSessionsQueryDto) {
     if (!req.user) throw new UnauthorizedException();
-    return this.ideasService.listSessions(req.user.sub, { nightly: dto.nightly, favorites: dto.favorites });
+    const sessions = await this.ideasService.listSessions(req.user.sub, {
+      nightly: dto.nightly,
+      favorites: dto.favorites,
+    });
+    return {
+      success: true,
+      message: `נטענו ${sessions.length} שמירות`,
+      result: sessions,
+    };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -162,7 +170,12 @@ export class IdeasController {
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
   async getSession(@Req() req: RequestWithUser, @Param('id', ParseIntPipe) id: number) {
     if (!req.user) throw new UnauthorizedException();
-    return this.ideasService.getSession(req.user.sub, id);
+    const session = await this.ideasService.getSession(req.user.sub, id);
+    return {
+      success: true,
+      message: 'השמירה נטענה בהצלחה',
+      result: session,
+    };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -217,7 +230,12 @@ export class IdeasController {
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token.' })
   async nightlyUnreadCount(@Req() req: RequestWithUser) {
     if (!req.user) throw new UnauthorizedException();
-    return this.ideasService.unreadNightlyCount(req.user.sub);
+    const count = await this.ideasService.unreadNightlyCount(req.user.sub);
+    return {
+      success: true,
+      message: `${count} שמירות ליליות שלא נקראו`,
+      result: count,
+    };
   }
 
   @UseGuards(JwtAuthGuard)

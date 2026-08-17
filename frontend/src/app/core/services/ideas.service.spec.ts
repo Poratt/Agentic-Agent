@@ -36,7 +36,7 @@ describe('IdeasService', () => {
 
       const req = httpMock.expectOne((r) => r.url.includes('/ideas/sessions'));
       expect(req.request.method).toBe('GET');
-      req.flush(mockSessions);
+      req.flush({ success: true, message: 'נטענו 1 שמירות', result: mockSessions });
 
       expect(await promise).toEqual(mockSessions);
     });
@@ -46,7 +46,7 @@ describe('IdeasService', () => {
 
       const req = httpMock.expectOne((r) => r.url.includes('/ideas/sessions'));
       expect(req.request.params.get('nightly')).toBe('true');
-      req.flush([]);
+      req.flush({ success: true, message: '', result: [] });
       await promise;
     });
   });
@@ -82,7 +82,7 @@ describe('IdeasService', () => {
 
       const req = httpMock.expectOne((r) => r.url.includes('/ideas/nightly/unread-count'));
       expect(req.request.method).toBe('GET');
-      req.flush(3);
+      req.flush({ success: true, message: '3 שמירות ליליות שלא נקראו', result: 3 });
 
       expect(await promise).toBe(3);
     });

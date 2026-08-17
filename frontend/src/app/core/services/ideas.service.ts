@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { IdeasProgressEvent } from '../models/idea.interface';
 import { SavedIdeaSession } from '../models/saved-idea-session.model';
+import { ServiceResultContainer } from '../models/service-result-container.model';
 import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
@@ -108,11 +109,15 @@ export class IdeasService {
     let httpParams = new HttpParams();
     if (params?.nightly !== undefined) httpParams = httpParams.set('nightly', String(params.nightly));
     if (params?.favorites !== undefined) httpParams = httpParams.set('favorites', String(params.favorites));
-    return this.http.get<SavedIdeaSession[]>(`${this.base}/sessions`, { params: httpParams });
+    return this.http
+      .get<ServiceResultContainer<SavedIdeaSession[]>>(`${this.base}/sessions`, { params: httpParams })
+      .pipe(map((res) => res.result));
   }
 
   getSession(id: number): Observable<SavedIdeaSession> {
-    return this.http.get<SavedIdeaSession>(`${this.base}/sessions/${id}`);
+    return this.http
+      .get<ServiceResultContainer<SavedIdeaSession>>(`${this.base}/sessions/${id}`)
+      .pipe(map((res) => res.result));
   }
 
   deleteSession(id: number): Observable<void> {
@@ -124,13 +129,9 @@ export class IdeasService {
   }
 
   nightlyUnreadCount(): Observable<number> {
-    return new Observable<number>((observer) => {
-      this.http.get(`${this.base}/nightly/unread-count`).subscribe({
-        next: (data: any) => observer.next(typeof data === 'number' ? data : data?.count ?? 0),
-        error: (err) => observer.error(err),
-        complete: () => observer.complete(),
-      });
-    });
+    return this.http
+      .get<ServiceResultContainer<number>>(`${this.base}/nightly/unread-count`)
+      .pipe(map((res) => (typeof res?.result === 'number' ? res.result : 0)));
   }
 
   markNightlyRead(): Observable<void> {

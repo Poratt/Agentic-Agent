@@ -91,7 +91,9 @@ describe('IdeasController', () => {
       const result = await controller.listSessions(mockReq, { nightly: true, favorites: false } as any);
 
       expect(ideasService.listSessions).toHaveBeenCalledWith(1, { nightly: true, favorites: false });
-      expect(result).toEqual(sessions);
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('נטענו');
+      expect(result.result).toEqual(sessions);
     });
 
     it('throws UnauthorizedException when user is missing', async () => {
@@ -107,7 +109,8 @@ describe('IdeasController', () => {
       const result = await controller.getSession(mockReq, 42);
 
       expect(ideasService.getSession).toHaveBeenCalledWith(1, 42);
-      expect(result).toEqual(session);
+      expect(result.success).toBe(true);
+      expect(result.result).toEqual(session);
     });
 
     it('throws UnauthorizedException when user is missing', async () => {
@@ -152,7 +155,8 @@ describe('IdeasController', () => {
       const result = await controller.nightlyUnreadCount(mockReq);
 
       expect(ideasService.unreadNightlyCount).toHaveBeenCalledWith(1);
-      expect(result).toBe(3);
+      expect(result.success).toBe(true);
+      expect(result.result).toBe(3);
     });
 
     it('throws UnauthorizedException when user is missing', async () => {
