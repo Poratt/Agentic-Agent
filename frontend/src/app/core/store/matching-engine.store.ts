@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { catchError, debounceTime, of, Subject, switchMap, tap } from 'rxjs';
 import { AuthStore } from './auth.store';
+import { ServiceResultContainer } from '../models/service-result-container.model';
 import { environment } from '../../environments/environment';
 
 export type PrefState = 'neutral' | 'like' | 'love' | 'avoid';
@@ -252,8 +253,11 @@ export class MatchingEngineStore {
   }
 
   private fetchRemotePreferences(userId: number, localShape: PersistedShape | null): void {
-    this.http.get<{ prefs: PrefMap; weights: Weights }>(`${environment.apiUrl}/strain-hunter/preferences`).pipe(
-      tap((remote) => {
+    this.http
+      .get<ServiceResultContainer<{ prefs: PrefMap; weights: Weights }>>(`${environment.apiUrl}/strain-hunter/preferences`)
+      .pipe(
+      tap((res) => {
+        const remote = res.result;
         const hasRemotePrefs = Object.keys(remote.prefs ?? {}).length > 0;
         const hasLocalPrefs = localShape !== null && Object.keys(localShape.prefs).length > 0;
 

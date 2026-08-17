@@ -34,7 +34,11 @@ describe('StrainHunterController', () => {
       const result = await controller.fetchData('true', req);
 
       expect(service.fetchData).toHaveBeenCalledWith(true);
-      expect(result).toEqual({ items: [], lastScrapedAt: null });
+      expect(result).toEqual({
+        success: true,
+        message: 'נטענו 0 זנים',
+        result: { items: [], lastScrapedAt: null },
+      });
     });
 
     it('calls fetchData with forceRefresh=false when param is absent', async () => {
@@ -46,10 +50,10 @@ describe('StrainHunterController', () => {
       expect(service.fetchData).toHaveBeenCalledWith(false);
     });
 
-    it('throws ForbiddenException when non-admin requests forceRefresh', () => {
+    it('throws ForbiddenException when non-admin requests forceRefresh', async () => {
       const req = { user: { sub: 2, role: UserRole.User } } as any;
 
-      expect(() => controller.fetchData('true', req)).toThrow(ForbiddenException);
+      await expect(controller.fetchData('true', req)).rejects.toThrow(ForbiddenException);
       expect(service.fetchData).not.toHaveBeenCalled();
     });
 
@@ -72,7 +76,11 @@ describe('StrainHunterController', () => {
       const result = await controller.getPreferences(req);
 
       expect(service.getPreferences).toHaveBeenCalledWith(42);
-      expect(result).toEqual(expected);
+      expect(result).toEqual({
+        success: true,
+        message: 'העדפות ההתאמה נטענו בהצלחה',
+        result: expected,
+      });
     });
   });
 
@@ -89,7 +97,11 @@ describe('StrainHunterController', () => {
       const result = await controller.upsertPreferences(req, dto);
 
       expect(service.upsertPreferences).toHaveBeenCalledWith(7, dto);
-      expect(result).toEqual(expected);
+      expect(result).toEqual({
+        success: true,
+        message: 'העדפות ההתאמה נשמרו בהצלחה',
+        result: expected,
+      });
     });
 
     it('works with empty dto', async () => {
@@ -100,7 +112,11 @@ describe('StrainHunterController', () => {
       const result = await controller.upsertPreferences(req, {});
 
       expect(service.upsertPreferences).toHaveBeenCalledWith(3, {});
-      expect(result).toEqual(expected);
+      expect(result).toEqual({
+        success: true,
+        message: 'העדפות ההתאמה נשמרו בהצלחה',
+        result: expected,
+      });
     });
   });
 });

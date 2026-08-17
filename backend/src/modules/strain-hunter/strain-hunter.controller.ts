@@ -18,6 +18,7 @@ import { UpdateMatchingPreferencesDto } from './dto/matching-preferences.dto';
 import { StrainHunterFetchResponseDto } from './dto/strain-hunter-fetch-response.dto';
 import { StrainHunterService } from './strain-hunter.service';
 import { UserRole } from '../../core/enums/user-role.enum';
+import { ServiceResultContainer } from '../../core/models/service-result-container.model';
 
 @ApiTags('strain-hunter')
 @ApiBearerAuth()
@@ -48,12 +49,17 @@ export class StrainHunterController {
   @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
   @ApiForbiddenResponse({ description: 'forceRefresh requires Admin role.' })
   @ApiInternalServerErrorResponse({ description: 'Unexpected server error.' })
-  fetchData(@Query('forceRefresh') forceRefresh: string | undefined, @Req() req: RequestWithUser) {
+  async fetchData(@Query('forceRefresh') forceRefresh: string | undefined, @Req() req: RequestWithUser) {
     const isForce = forceRefresh === 'true';
     if (isForce && req.user?.role !== UserRole.Admin) {
       throw new ForbiddenException('רענון נתונים כפוי מוגבל למנהלי מערכת');
     }
-    return this.strainHunterService.fetchData(isForce);
+    const result = await this.strainHunterService.fetchData(isForce);
+    return {
+      success: true,
+      message: `נטענו ${result.items.length} זנים`,
+      result,
+    } satisfies ServiceResultContainer<StrainHunterFetchResponseDto>;
   }
 
   @Get('preferences')
@@ -82,8 +88,13 @@ export class StrainHunterController {
   })
   @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
   @ApiInternalServerErrorResponse({ description: 'Unexpected server error.' })
-  getPreferences(@Req() req: RequestWithUser) {
-    return this.strainHunterService.getPreferences(req.user!.sub);
+  async getPreferences(@Req() req: RequestWithUser) {
+    const result = await this.strainHunterService.getPreferences(req.user!.sub);
+    return {
+      success: true,
+      message: 'העדפות ההתאמה נטענו בהצלחה',
+      result,
+    } satisfies ServiceResultContainer<unknown>;
   }
 
   @Put('preferences')
@@ -114,7 +125,12 @@ export class StrainHunterController {
   @ApiBadRequestResponse({ description: 'Invalid preferences data.' })
   @ApiUnauthorizedResponse({ description: 'Missing or expired JWT token.' })
   @ApiInternalServerErrorResponse({ description: 'Unexpected server error.' })
-  upsertPreferences(@Req() req: RequestWithUser, @Body() dto: UpdateMatchingPreferencesDto) {
-    return this.strainHunterService.upsertPreferences(req.user!.sub, dto);
+  async upsertPreferences(@Req() req: RequestWithUser, @Body() dto: UpdateMatchingPreferencesDto) {
+    const result = await this.strainHunterService.upsertPreferences(req.user!.sub, dto);
+    return {
+      success: true,
+      message: 'העדפות ההתאמה נשמרו בהצלחה',
+      result,
+    } satisfies ServiceResultContainer<unknown>;
   }
 }

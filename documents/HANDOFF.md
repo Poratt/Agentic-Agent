@@ -1,4 +1,20 @@
 # Documentation Handoff
+## 2026-08-17 Session (x) — ✅ strain-hunter cluster ×3 wrapped in ServiceResultContainer
+
+**What was done:** GET /fetch, GET /preferences, PUT /preferences now return `{success, message, result}` (controller-level wrap, service returns raw — internal callers unaffected; no streaming/binary anywhere in this cluster).
+
+**Consumers checked FIRST (golden rule):** (1) frontend `strain-hunter.ts` fetch parse → reads `response.result.items` / `result.lastScrapedAt`; (2) `matching-engine.store.ts` GET preferences → reads `res.result.prefs/weights` (PUT response unused — untouched); (3) LLM agent tools (swagger operationIds → internal loopback) get container JSON like every other tool — no executor change needed, same as calendar/llm precedent.
+
+**Verification:** backend strain-hunter 20/20 · full backend `--runInBand` **390/398** (8 fails = documented pre-existing trio: agent-session 3, llm-client 4, swagger-parser 1) · backend tsc exit 0 · frontend strain-hunter 51/51 + matching-engine 19/19 · full frontend **472/488** (16 = documented pre-existing) · tsc ×2 exit 0 · mojibake clean.
+
+**⚠️ Backend running instance does NOT hot-reload:** PID 10032 on :3000 serves the OLD raw shapes (no watch). The live curl check confirmed wrap NOT yet live — unit tests prove the shape; restart the backend to serve it.
+
+**⚠️ Data incident (self-inflicted, resolved):** a live curl PUT of test prefs overwrote the admin user's real matching preferences; restored byte-exact via UTF-8 file payload (verified GET matches original). Lesson: never write via inline Hebrew in git-bash curl `-d` — shell mangles UTF-8.
+
+**Files touched:** `strain-hunter.controller.ts` + `.spec.ts` (backend), `strain-hunter.ts` + `matching-engine.store.ts` (frontend), audit doc, HANDOFF/STATUS/LOG.
+
+**Next exact step:** ideas×3 (session reads + unread-count) is the last ❌ cluster — check frontend ideas store consumers first.
+
 ## 2026-08-17 Session (w) — ✅ FIXED: dashboard "משתמשים רשומים: 0" (httpResource `value()` throw)
 
 **Root cause (reproduced in tests):** `UsersStore.users = computed(() => usersResource.value()?.result ?? [])` — per documented Angular behavior, **reading `resource.value()` THROWS when the resource is in an error state**. Any failed GET /users (backend watch-mode restart, network blip) put the resource in error state → `users()` computed threw → every consumer broke (pageState, dashboard ticker) → dashboard stuck broken/empty — and httpResource never auto-retries, so it stayed broken until reload. Backend itself was verified working live (login + GET /users → 200, 8 users); the bug was purely frontend timing/failure-state.

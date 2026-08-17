@@ -9,6 +9,7 @@ import { SliderModule } from 'primeng/slider';
 import { Table, TableModule } from 'primeng/table';
 import { Subscription, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { ServiceResultContainer } from '../../core/models/service-result-container.model';
 import { PageStates } from '../../core/enums/page-states.enum';
 import { MatchingEngineStore, ScoredStrain, ScoreBreakdown } from '../../core/store/matching-engine.store';
 import { TerpeneStore } from '../../core/store/terpene.store';
@@ -331,13 +332,13 @@ export class StrainHunter implements OnInit {
         const url = forceRefresh ? `${this.base}/fetch?forceRefresh=true` : `${this.base}/fetch`;
 
         this.requestSubscription = this.http
-            .get<StrainHunterResponse>(url)
+            .get<ServiceResultContainer<StrainHunterResponse>>(url)
             .pipe(timeout(90000))
             .subscribe({
                 next: (response) => {
-                    const items = response.items ?? [];
+                    const items = response.result.items ?? [];
                     this.rawItems.set(items);
-                    this.lastUpdated.set(response.lastScrapedAt ? new Date(response.lastScrapedAt) : null);
+                    this.lastUpdated.set(response.result.lastScrapedAt ? new Date(response.result.lastScrapedAt) : null);
 
                     let min = Infinity;
                     let max = -Infinity;

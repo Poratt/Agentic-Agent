@@ -2,6 +2,14 @@
 
 Last updated: 2026-08-17
 
+## 2026-08-17 Session (x) — ✅ DONE: strain-hunter cluster ×3 wrapped in ServiceResultContainer
+
+- **DONE:** GET /fetch + GET/PUT /preferences → `{success, message, result}` (controller wrap, service raw). No streaming/binary. Consumers updated: frontend `strain-hunter.ts` (fetch parse) + `matching-engine.store.ts` (prefs GET); LLM tools unaffected by design (container JSON, calendar/llm precedent).
+- **Verified:** backend 20/20 + full 390/398 (8 pre-existing) · frontend 51/51 + 19/19 + full 472/488 (16 pre-existing) · tsc ×3 exit 0 · mojibake clean.
+- **⚠️ Running backend (:3000) is NOT watch-mode** — serves old raw shapes until restarted. Live curl: restore-preferences incident fixed, data verified byte-exact.
+- **Next:** ideas×3 — LAST ❌ cluster.
+
+
 ## 2026-08-17 Session (w) — ✅ DONE: dashboard "0 users" bug FIXED (frontend-only)
 
 - **Root cause:** `UsersStore.users()` read `usersResource.value()` unguarded — Angular THROWS on `value()` in resource error state (documented). Failed GET /users (backend watch restart / blip) → throw → dashboard broke + no auto-retry → stuck "0". Backend verified live: login + GET /users → 200 (8 users) — bug was store/timing as suspected.

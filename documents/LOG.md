@@ -1,5 +1,11 @@
 # Documentation Change Log
 
+## 2026-08-17 W2 — strain-hunter cluster wrapped in ServiceResultContainer
+- **Decision — wrap at the controller, keep the service raw:** the three strain-hunter endpoints (GET /fetch, GET/PUT /preferences) now return `{success, message, result}` with the original payload under `result`. Service methods stay raw so internal callers (none exist today) are unaffected; the wrap is a presentation concern. Same pattern as the calendar/llm clusters.
+- **Consumer check (golden rule):** frontend parse sites updated — `strain-hunter.ts` unwraps `result.items`/`result.lastScrapedAt`; `matching-engine.store.ts` unwraps `result.prefs/weights` (PUT response unused). LLM agent tools receive container JSON like every other tool — no executor change.
+- **Lesson — never write Hebrew via inline `curl -d` in git-bash:** the shell mangles UTF-8 on Windows, which corrupted a live PUT of matching preferences; restored byte-exact via `--data-binary @file` with a UTF-8 payload file.
+- **No architecture diagram change** — same endpoints, same request flow; only response shape.
+
 ## 2026-08-17 W1 — httpResource `value()` throw guard (dashboard "0 users" fix)
 - **Decision — never read `resource.value()` unguarded:** Angular throws when a resource is in error state (documented: "Reading the value signal on a resource that is in error state throws at runtime"). The `50e11c0` httpResource refactor introduced `computed(() => resource.value()?.result ?? [])` in 4 stores (users/terpene/genetics/llm-provider); any failed load (backend watch-mode restart) threw inside the computed, broke every consumer, and httpResource never retries → permanently stuck empty UI. All 4 now guard with `hasValue()`; stores with pageState (users, llm-provider) also surface the resource error instead of silently showing Empty.
 - **Lesson — HTTP-failure handling is part of the reactive contract:** httpResource's `.value()` is NOT a safe default read, and its failures don't self-heal. Guards + explicit error states are required wherever a resource backs a store computed.

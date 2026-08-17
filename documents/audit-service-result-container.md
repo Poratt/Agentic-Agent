@@ -11,7 +11,7 @@ Legend: ✅ conform (typed container / container-shaped DTO / inline `{success,m
 |---|---|---|
 | ✅ Conform (incl. 🔵 justified) | 70 | of which 6 are documented exceptions: 2×SSE (ideas stream, admin-agent query-stream), 3×HTTP-204 empty-body deletes, 1×OAuth redirect (calendar /auth) |
 | ⚠️ Partial | **0 — fixed 2026-08-17** | confirm-action now returns `{success, message, result}` in both branches; ideas favorite + mark-read are now HTTP-204 (matching their delete siblings); frontend chat.service type updated |
-| ❌ Non-conform | 6 | (events passthrough), ideas×3 (session reads + unread-count), llm×4 (image/video passthrough), strain-hunter×3 |
+| ❌ Non-conform | 3 | ideas×3 (session reads + unread-count) — admin-agent×4, calendar×3, llm×4, strain-hunter×3 all wrapped 2026-08-17 |
 
 **Total: 76 endpoints / 15 controllers.**
 
@@ -76,9 +76,9 @@ Legend: ✅ conform (typed container / container-shaped DTO / inline `{success,m
 | llm-provider | GET /:id/models | ✅ | typed container |
 | llm-provider | POST /cleanup-test-results | ✅ | inline `{success,message,result}` |
 | llm-provider | GET /test-results | ✅ | typed container |
-| strain-hunter | GET /fetch | ❌ | raw `{items, lastScrapedAt}` |
-| strain-hunter | GET /preferences | ❌ | raw `{prefs, weights}` |
-| strain-hunter | PUT /preferences | ❌ | raw `{prefs, weights}` |
+| strain-hunter | GET /fetch | ✅ | wrapped 2026-08-17: `{success, message, result: {items, lastScrapedAt}}` |
+| strain-hunter | GET /preferences | ✅ | wrapped 2026-08-17: `{success, message, result: {prefs, weights}}` |
+| strain-hunter | PUT /preferences | ✅ | wrapped 2026-08-17: `{success, message, result: {prefs, weights}}` |
 | system | GET /status | ✅ | `ServiceResultContainer<SystemStatusDto>` |
 | terpene | GET / | ✅ | `TerpeneListResultResponseDto implements ServiceResultContainer` |
 | terpene | GET /:name | ✅ | `TerpeneResultResponseDto implements ServiceResultContainer` |
@@ -98,7 +98,7 @@ Legend: ✅ conform (typed container / container-shaped DTO / inline `{success,m
 ## Findings
 
 1. **Core pattern is healthy** — 56/76 (74%) conform, and every module added recently (llm-provider, genetics, terpene, analytics, currency, system, database-monitor) conforms via typed DTOs that `implements ServiceResultContainer`.
-2. **17 non-conform endpoints cluster in 5 groups**, all returning upstream/domain payloads raw: admin-agent session CRUD (ChatSession/ChatMessage entities), google-calendar events passthrough (Google API objects), llm image/video passthrough, ideas session reads, strain-hunter preferences/fetch.
+2. **Remaining non-conform endpoints cluster in 4 groups** (was 5, strain-hunter wrapped 2026-08-17), all returning upstream/domain payloads raw: admin-agent session CRUD (ChatSession/ChatMessage entities), google-calendar events passthrough (Google API objects), llm image/video passthrough, ideas session reads.
 3. **3 partial endpoints** return success-shaped objects missing `message` or an empty body on a 200/201 (ideas favorite/mark-read could just be 204s like their delete siblings).
 4. Frontend impact unknown from this audit — changing ❌ endpoints to containers is a **breaking change** for every consumer; any migration needs a coordinated frontend sweep.
 
