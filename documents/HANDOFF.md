@@ -13,7 +13,11 @@
 
 **Files touched:** `strain-hunter.controller.ts` + `.spec.ts` (backend), `strain-hunter.ts` + `matching-engine.store.ts` (frontend), audit doc, HANDOFF/STATUS/LOG.
 
-**Next exact step:** ideas×3 (session reads + unread-count) is the last ❌ cluster — check frontend ideas store consumers first.
+**✅ Live verification done after backend restart:** GET /strain-hunter/preferences → container (prefs intact) · GET /strain-hunter/fetch → `{"success":true,"message":"נטענו 191 זנים","result":...}`. Backend now runs `node dist/main` rebuilt from current src (PID 34312) — NOTE: still NOT watch-mode (`npm run start:dev` fails: **no root package.json** — this is NOT an npm-workspace monorepo despite AGENTS.md saying `-w backend`; run backend commands from `backend/`).
+
+**✅ Audit complete — zero non-conform remaining:** the "ideas ×3" was a STALE audit-doc label. Verified in code: GET /sessions + /sessions/:id wrapped in 1aa5348, **GET /nightly/unread-count is already `{success,message,result:count}`** (live-verified: `{"success":true,"message":"6 שמירות ליליות שלא נקראו","result":6}`), favorite/mark-read already 204. All 76 endpoints conform (only documented exceptions remain: SSE×2, 204×4, OAuth×1). Audit doc corrected to match code.
+
+**Next exact step (backlog now):** `RequiresConfirmation` decorator → `core/decorators/` · SearXNG `outgoing.proxies` decision · dead code cleanup (`math.utils.ts`, 16 over-exports) — pick one, or commit current state.
 
 ## 2026-08-17 Session (w) — ✅ FIXED: dashboard "משתמשים רשומים: 0" (httpResource `value()` throw)
 

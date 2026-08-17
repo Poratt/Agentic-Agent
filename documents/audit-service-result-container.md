@@ -11,7 +11,7 @@ Legend: ✅ conform (typed container / container-shaped DTO / inline `{success,m
 |---|---|---|
 | ✅ Conform (incl. 🔵 justified) | 70 | of which 6 are documented exceptions: 2×SSE (ideas stream, admin-agent query-stream), 3×HTTP-204 empty-body deletes, 1×OAuth redirect (calendar /auth) |
 | ⚠️ Partial | **0 — fixed 2026-08-17** | confirm-action now returns `{success, message, result}` in both branches; ideas favorite + mark-read are now HTTP-204 (matching their delete siblings); frontend chat.service type updated |
-| ❌ Non-conform | 3 | ideas×3 (session reads + unread-count) — admin-agent×4, calendar×3, llm×4, strain-hunter×3 all wrapped 2026-08-17 |
+| ❌ Non-conform | **0 — all wrapped 2026-08-17** | admin-agent×4 (2b7eeda), calendar×3 (b805b42), llm×4 (3ebe770), ideas×3 (1aa5348 + unread-count), strain-hunter×3 (ee5938d) |
 
 **Total: 76 endpoints / 15 controllers.**
 
@@ -51,12 +51,12 @@ Legend: ✅ conform (typed container / container-shaped DTO / inline `{success,m
 | google-calendar | PATCH /events | ✅ | container; Google event under result |
 | ideas | POST /generate | ✅ | `GenerateIdeasResponse` = container superset (`success,message,partial,result`) |
 | ideas | GET /generate/stream | 🔵 | SSE progress events — documented |
-| ideas | GET /sessions | ❌ | raw `SavedIdeaSession[]` |
-| ideas | GET /sessions/:id | ❌ | raw `SavedIdeaSession` |
+| ideas | GET /sessions | ✅ | wrapped 2026-08-17 (1aa5348): `{success, message, result}` |
+| ideas | GET /sessions/:id | ✅ | wrapped 2026-08-17 (1aa5348) |
 | ideas | DELETE /sessions/:id | 🔵 | HTTP 204, empty body — documented |
-| ideas | PATCH /ideas/:id (favorite) | ⚠️ | `await` only — 200 with empty body (no container, not 204) |
-| ideas | GET /nightly/unread-count | ❌ | raw number |
-| ideas | POST /nightly/mark-read | ⚠️ | `await` only — 201 with empty body (no container) |
+| ideas | PATCH /ideas/:id (favorite) | ✅ | HTTP 204 (fixed 2026-08-17) |
+| ideas | GET /nightly/unread-count | ✅ | wrapped 2026-08-17: `{success, message, result: count}` |
+| ideas | POST /nightly/mark-read | ✅ | HTTP 204 (fixed 2026-08-17) |
 | ideas | POST /nightly/trigger | ✅ | inline `{success,message}` |
 | llm | POST /models/:id/test | ✅ | `ServiceResultContainer<…>` via healthService |
 | llm | DELETE /test-results/:id | ✅ | `ServiceResultContainer<void>` |
@@ -98,8 +98,8 @@ Legend: ✅ conform (typed container / container-shaped DTO / inline `{success,m
 ## Findings
 
 1. **Core pattern is healthy** — 56/76 (74%) conform, and every module added recently (llm-provider, genetics, terpene, analytics, currency, system, database-monitor) conforms via typed DTOs that `implements ServiceResultContainer`.
-2. **Remaining non-conform endpoints cluster in 4 groups** (was 5, strain-hunter wrapped 2026-08-17), all returning upstream/domain payloads raw: admin-agent session CRUD (ChatSession/ChatMessage entities), google-calendar events passthrough (Google API objects), llm image/video passthrough, ideas session reads.
-3. **3 partial endpoints** return success-shaped objects missing `message` or an empty body on a 200/201 (ideas favorite/mark-read could just be 204s like their delete siblings).
+2. **All 17 non-conform endpoints wrapped 2026-08-17** (5 clusters: admin-agent sessions, google-calendar events, llm image/video, ideas reads + unread-count, strain-hunter fetch/preferences). Zero non-conform remaining.
+3. **All 3 partial endpoints resolved 2026-08-17** — confirm-action returns full container; ideas favorite + mark-read are HTTP-204 matching their delete siblings.
 4. Frontend impact unknown from this audit — changing ❌ endpoints to containers is a **breaking change** for every consumer; any migration needs a coordinated frontend sweep.
 
 ### Recommendation (not applied)

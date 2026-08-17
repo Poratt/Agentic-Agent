@@ -1,5 +1,10 @@
 # Documentation Change Log
 
+## 2026-08-17 W3 — ServiceResultContainer audit is now fully green
+- **Finding — the audit doc drifted from the code:** the per-endpoint table still flagged ideas sessions ×2 + unread-count as ❌ after today's cluster commits. Verified against the controller: GET /sessions + /sessions/:id wrapped in 1aa5348, GET /nightly/unread-count already returns `{success, message, result: count}` (live-verified), favorite/mark-read already 204. Corrected the audit doc to match the code. Lesson: audit docs must be reconciled against code before quoting counts.
+- **Environment discovery — not an npm-workspace monorepo:** there is NO root package.json; `npm run -w backend` fails (AGENTS.md is wrong about this). Backend commands run from `backend/`. The running backend executes `node dist/main` — src edits need `npm run build` (in backend/) + restart; there is no live watch in the current setup.
+- **No architecture diagram change** — audits/docs only.
+
 ## 2026-08-17 W2 — strain-hunter cluster wrapped in ServiceResultContainer
 - **Decision — wrap at the controller, keep the service raw:** the three strain-hunter endpoints (GET /fetch, GET/PUT /preferences) now return `{success, message, result}` with the original payload under `result`. Service methods stay raw so internal callers (none exist today) are unaffected; the wrap is a presentation concern. Same pattern as the calendar/llm clusters.
 - **Consumer check (golden rule):** frontend parse sites updated — `strain-hunter.ts` unwraps `result.items`/`result.lastScrapedAt`; `matching-engine.store.ts` unwraps `result.prefs/weights` (PUT response unused). LLM agent tools receive container JSON like every other tool — no executor change.

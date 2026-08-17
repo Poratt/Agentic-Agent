@@ -6,8 +6,10 @@ Last updated: 2026-08-17
 
 - **DONE:** GET /fetch + GET/PUT /preferences → `{success, message, result}` (controller wrap, service raw). No streaming/binary. Consumers updated: frontend `strain-hunter.ts` (fetch parse) + `matching-engine.store.ts` (prefs GET); LLM tools unaffected by design (container JSON, calendar/llm precedent).
 - **Verified:** backend 20/20 + full 390/398 (8 pre-existing) · frontend 51/51 + 19/19 + full 472/488 (16 pre-existing) · tsc ×3 exit 0 · mojibake clean.
-- **⚠️ Running backend (:3000) is NOT watch-mode** — serves old raw shapes until restarted. Live curl: restore-preferences incident fixed, data verified byte-exact.
-- **Next:** ideas×3 — LAST ❌ cluster.
+- **✅ Live-verified after backend restart:** preferences + fetch serve container shape (`נטענו 191 זנים`), prefs data intact.
+- **✅ Audit FULLY green:** "ideas ×3" was a stale audit-doc label — unread-count already wrapped (live: `result:6`), sessions wrapped in 1aa5348, favorite/mark-read already 204. Zero ❌/⚠️ remain; audit doc corrected.
+- **⚠️ Note:** no root package.json → `npm run -w` fails; run backend commands from `backend/`. Running backend = `node dist/main` (not watch) — rebuild (`npm run build` in backend/) + restart after future src edits.
+- **Next (backlog):** RequiresConfirmation → core/decorators · SearXNG proxies decision · dead-code cleanup.
 
 
 ## 2026-08-17 Session (w) — ✅ DONE: dashboard "0 users" bug FIXED (frontend-only)
