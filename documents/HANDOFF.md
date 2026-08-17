@@ -1,4 +1,16 @@
 # Documentation Handoff
+## 2026-08-17 Session (z) — ✅ FIXED: login/register submit button hit-target (actionability)
+
+**Root cause (live DOM evidence, not hypothesis):** the earlier "PrimeNG overlay blocks login button" theory was WRONG. `elementFromPoint` at the button center with an empty form returned the FORM, not the button. Chain: `_buttons.css:48-51` sets `&:disabled { pointer-events: none }` + the submit button was bound `[disabled]="form.invalid || loading"` → empty form = disabled = `pointer-events:none` = automation hit-target intercepted (Playwright requires force-click). The p-dialog (ConfirmDialog) was measured 0×0 — not a blocker. Verified live: valid form → button enabled → hit = BUTTON.
+
+**Fix (surgical, no CSS/design-token change):** submit buttons are no longer disabled on form-invalid (only during `authStore.loading()` — double-submit protection kept); `onSubmit` now guards validity + `markAllAsTouched()` so clicking an empty form SHOWS the validation errors (better UX than silent disabled). Same fix applied to register (sibling, same pattern). Global `:disabled { pointer-events: none }` rule untouched.
+
+**Verification (live + gates):** live probe on empty form after fix → `disabled:false, pointerEvents:auto, elementFromPoint=BUTTON`; click on empty form → error texts `אימייל לא תקין` + `סיסמה נדרשת` render. login.spec +3 tests / register.spec +3 → 19/19. Full frontend **476/492** — 16 fails = documented pre-existing set, zero new. tsc app+spec exit 0 ×2. `ng build` exit 0 (only pre-existing strain-hunter.css budget warning). Mojibake clean.
+
+**Files touched:** login.html/login.ts/login.spec.ts, register.html/register.ts/register.spec.ts. No architecture-diagram change (component-level UX/behavior).
+
+**Next exact step (backlog):** SearXNG `outgoing.proxies` decision · seeds inverted boundary · `tsconfig.spec.new.json` doc conflict reconciliation.
+
 ## 2026-08-17 Session (y) — ✅ RequiresConfirmation decorator relocated to core/decorators
 
 **What was done:** `requires-confirmation.decorator.ts` + spec moved from `admin-agent/decorators/` → `core/decorators/` (git mv, zero content change). Import updated in `users.controller.ts` + `llm-provider.controller.ts` → `../../core/decorators/...`. `swagger-tools.parser.ts` had a **dead** import of `REQUIRES_CONFIRMATION_KEY` (never used — the runtime check reads the literal `'x-requires-confirmation'`) → removed while updating the path. No `core/decorators/index.ts` created — core has no index pattern.

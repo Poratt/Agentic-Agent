@@ -37,7 +37,7 @@
                 }
             </div>
 
-            <button type="submit" class="primary-btn filled" [disabled]="registerForm.invalid || authStore.loading()">
+            <button type="submit" class="primary-btn filled" [disabled]="authStore.loading()">
                 @if (authStore.loading()) {
                     <span class="shimmer-text">טוען...</span>
                 } @else {

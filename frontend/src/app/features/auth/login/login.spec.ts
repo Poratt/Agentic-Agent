@@ -83,4 +83,18 @@ describe('Login', () => {
     const btn = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
   });
+
+  it('should keep submit enabled when form is invalid (hit-target fix)', () => {
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(component.loginForm.valid).toBe(false);
+    expect(btn.disabled).toBe(false);
+  });
+
+  it('should mark controls touched on invalid submit', () => {
+    component.onSubmit();
+    expect(component.loginForm.get('email')?.touched).toBe(true);
+    expect(component.loginForm.get('password')?.touched).toBe(true);
+    expect(authStoreMock.login).not.toHaveBeenCalled();
+  });
 });

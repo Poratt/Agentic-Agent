@@ -81,4 +81,17 @@ describe('Register', () => {
     component.onSubmit();
     expect(authStoreMock.register).not.toHaveBeenCalled();
   });
+
+  it('should keep submit enabled when form is invalid (hit-target fix)', () => {
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(component.registerForm.valid).toBe(false);
+    expect(btn.disabled).toBe(false);
+  });
+
+  it('should mark controls touched on invalid submit', () => {
+    component.onSubmit();
+    expect(component.registerForm.get('email')?.touched).toBe(true);
+    expect(authStoreMock.register).not.toHaveBeenCalled();
+  });
 });

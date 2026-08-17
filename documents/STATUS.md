@@ -2,6 +2,14 @@
 
 Last updated: 2026-08-17
 
+## 2026-08-17 Session (z) — ✅ DONE: login/register submit hit-target FIXED
+
+- **Root cause (live):** `button:disabled { pointer-events:none }` + `[disabled]="form.invalid||loading"` → empty form = button not the hit target (elementFromPoint = FORM). Overlay theory disproven (p-dialog 0×0).
+- **Fix:** no disabled-on-invalid (only while loading); onSubmit guards + markAllAsTouched (click empty → validation errors shown). Register same fix. No CSS/token change.
+- **Verified:** live probe hit=BUTTON on empty form + errors render; login 10/10, register 9/9; full **476/492** (16 pre-existing, zero new); tsc ×2 exit 0; ng build exit 0.
+- **Next (backlog):** SearXNG proxies · seeds boundary · tsconfig.spec.new.json doc conflict.
+
+
 ## 2026-08-17 Session (y) — ✅ DONE: RequiresConfirmation → core/decorators
 
 - **DONE:** decorator + spec relocated (git mv, zero content change); imports fixed in users + llm-provider controllers; dead `REQUIRES_CONFIRMATION_KEY` import removed from swagger-tools.parser.

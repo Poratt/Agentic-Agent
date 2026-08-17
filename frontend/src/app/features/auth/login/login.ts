@@ -21,8 +21,13 @@ export class Login {
     });
 
     onSubmit() {
-        if (this.loginForm.valid) {
-            this.authStore.login(this.loginForm.value);
+        if (this.loginForm.invalid) {
+            // Keep the button clickable (no [disabled] on invalid) so the
+            // hit-target is never blocked — surface the validation errors
+            // on submit instead.
+            this.loginForm.markAllAsTouched();
+            return;
         }
+        this.authStore.login(this.loginForm.value);
     }
 }

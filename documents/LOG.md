@@ -1,5 +1,9 @@
 # Documentation Change Log
 
+## 2026-08-17 W5 — Login submit hit-target fix (disabled + pointer-events:none)
+- **Architectural decision — never disable form submit on invalid:** the earlier overlay theory for the login-button actionability failure was disproven live (`elementFromPoint` showed the FORM as hit target; the ConfirmDialog measured 0×0). Real chain: global `&:disabled { pointer-events: none }` (`_buttons.css:48`) + `[disabled]="form.invalid || loading"` → empty form → button not a hit target at all → automation needs force-click. Fix: drop invalid from the disabled binding (keep loading-disabled), guard in `onSubmit` with `markAllAsTouched()` so an empty-form click surfaces the validation errors. Register fixed identically (sibling). This also matches a11y best practice: disabled buttons give no feedback.
+- **No architecture diagram change** — component-level behavior only.
+
 ## 2026-08-17 W4 — RequiresConfirmation decorator relocated to core/decorators
 - **Architectural decision — cross-cutting decorators belong in core:** `@RequiresConfirmation()` lived under admin-agent but was consumed by llm-provider + users (cross-module pollution, audit-dependency-map finding #1). Moved to `core/decorators/` with git mv (zero content change) — the decorator writes both NestJS metadata and the `x-requires-confirmation` OpenAPI extension, untouched; the C5 boot assertion in main.ts (3 expected ops) passed live after restart.
 - **Hygiene:** swagger-tools.parser imported `REQUIRES_CONFIRMATION_KEY` but never used it (runtime check reads the literal string) — dead import removed while fixing the path.

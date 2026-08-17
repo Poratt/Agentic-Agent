@@ -22,8 +22,13 @@ export class Register {
     });
 
     onSubmit() {
-        if (this.registerForm.valid) {
-            this.authStore.register(this.registerForm.value);
+        if (this.registerForm.invalid) {
+            // Keep the button clickable (no [disabled] on invalid) so the
+            // hit-target is never blocked — surface the validation errors
+            // on submit instead.
+            this.registerForm.markAllAsTouched();
+            return;
         }
+        this.authStore.register(this.registerForm.value);
     }
 }
