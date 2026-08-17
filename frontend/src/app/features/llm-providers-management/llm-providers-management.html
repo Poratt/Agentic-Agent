@@ -58,9 +58,9 @@
                     <ng-template #header>
                         <tr>
                             <th class="col-expand"></th>
-                            <th pSortableColumn="key">Name <p-sort-icon field="key" /></th>
-                            <th pSortableColumn="baseUrl">baseUrl <p-sort-icon field="baseUrl" /></th>
-                            <th class="col-count" pSortableColumn="modelsCount">Models <p-sort-icon field="modelsCount" /></th>
+                            <th pSortableColumn="key"><div class="sortable-column-header">Name <p-sort-icon field="key" /></div></th>
+                            <th pSortableColumn="baseUrl"><div class="sortable-column-header">baseUrl <p-sort-icon field="baseUrl" /></div></th>
+                            <th class="col-count" pSortableColumn="modelsCount"><div class="sortable-column-header">Models <p-sort-icon field="modelsCount" /></div></th>
                             <th class="col-actions"></th>
                         </tr>
                     </ng-template>
@@ -81,7 +81,9 @@
                                 </button>
                             </td>
                             <td class="row-label clickable" (click)="toggleProvider(provider.id)">{{ provider.label }}</td>
-                            <td class="row-meta row-meta--mono col-base-url" appTooltip [text]="provider.baseUrl">{{ provider.baseUrl }}</td>
+                            <td class="row-meta row-meta--mono col-base-url" appTooltip [text]="provider.baseUrl">
+                                {{ provider.baseUrl }}
+                            </td>
                             <td class="col-count count-value">{{ provider.modelsCount }}</td>
                             <td class="col-actions">
                                 @if (isAdmin()) {
@@ -119,7 +121,11 @@
                                             <span class="ph ph-cube-simple"></span>
                                             <p>No models configured for this provider.</p>
                                             @if (isAdmin()) {
-                                                <button type="button" class="primary-btn filled sm" (click)="openAddModelDialog(provider.id)">
+                                                <button
+                                                    type="button"
+                                                    class="primary-btn filled sm"
+                                                    (click)="openAddModelDialog(provider.id)"
+                                                >
                                                     <i class="ph ph-plus"></i>
                                                     Add Model
                                                 </button>
@@ -155,13 +161,9 @@
                                             <ng-template #header>
                                                 <tr>
                                                     <th class="col-expand xs"></th>
-                                                    <th pSortableColumn="label">Model <p-sort-icon field="label" /></th>
-                                                    <th class="col-status" pSortableColumn="active">
-                                                        Active <p-sort-icon field="active" />
-                                                    </th>
-                                                    <th class="col-perf" pSortableColumn="performanceScore">
-                                                        Performance <p-sort-icon field="performanceScore" />
-                                                    </th>
+                                                    <th pSortableColumn="label"><div class="sortable-column-header">Model <p-sort-icon field="label" /></div></th>
+                                                    <th class="col-status" pSortableColumn="active"><div class="sortable-column-header">Active <p-sort-icon field="active" /></div></th>
+                                                    <th class="col-perf" pSortableColumn="performanceScore"><div class="sortable-column-header">Performance <p-sort-icon field="performanceScore" /></div></th>
                                                     <th class="col-test"></th>
                                                     <th class="col-actions-xs"></th>
                                                 </tr>
@@ -247,45 +249,45 @@
                                                     <td class="col-actions-xs">
                                                         @if (isAdmin()) {
                                                             <div class="row-actions">
-                                                            <button
-                                                                type="button"
-                                                                class="icon-only accent-btn sm"
-                                                                appTooltip
-                                                                [text]="
-                                                                    llmProviderStore.defaultModelId() === model.id
-                                                                        ? 'Default model'
-                                                                        : 'Set as default'
-                                                                "
-                                                                (click)="setDefaultModel(model)"
-                                                            >
-                                                                <i
-                                                                    [class]="
+                                                                <button
+                                                                    type="button"
+                                                                    class="icon-only accent-btn sm"
+                                                                    appTooltip
+                                                                    [text]="
                                                                         llmProviderStore.defaultModelId() === model.id
-                                                                            ? 'ph-fill ph-star'
-                                                                            : 'ph ph-star'
+                                                                            ? 'Default model'
+                                                                            : 'Set as default'
                                                                     "
-                                                                ></i>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                class="icon-only transparent-btn sm"
-                                                                aria-label="Edit model"
-                                                                appTooltip
-                                                                [text]="'Edit model'"
-                                                                (click)="openEditModelDialog(provider.id, model)"
-                                                            >
-                                                                <i class="ph ph-pencil-simple"></i>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                class="icon-only danger-btn sm"
-                                                                aria-label="Delete model"
-                                                                appTooltip
-                                                                [text]="'Deactivate model'"
-                                                                (click)="deleteModel(provider.id, model.id)"
-                                                            >
-                                                                <i class="ph ph-trash"></i>
-                                                            </button>
+                                                                    (click)="setDefaultModel(model)"
+                                                                >
+                                                                    <i
+                                                                        [class]="
+                                                                            llmProviderStore.defaultModelId() === model.id
+                                                                                ? 'ph-fill ph-star'
+                                                                                : 'ph ph-star'
+                                                                        "
+                                                                    ></i>
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    class="icon-only transparent-btn sm"
+                                                                    aria-label="Edit model"
+                                                                    appTooltip
+                                                                    [text]="'Edit model'"
+                                                                    (click)="openEditModelDialog(provider.id, model)"
+                                                                >
+                                                                    <i class="ph ph-pencil-simple"></i>
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    class="icon-only danger-btn sm"
+                                                                    aria-label="Delete model"
+                                                                    appTooltip
+                                                                    [text]="'Deactivate model'"
+                                                                    (click)="deleteModel(provider.id, model.id)"
+                                                                >
+                                                                    <i class="ph ph-trash"></i>
+                                                                </button>
                                                             </div>
                                                         }
                                                     </td>
@@ -356,7 +358,11 @@
                                                                                         appTooltip
                                                                                         [text]="'Delete test result'"
                                                                                         (click)="
-                                                                                            deleteTestResult(provider.id, model.id, result.id)
+                                                                                            deleteTestResult(
+                                                                                                provider.id,
+                                                                                                model.id,
+                                                                                                result.id
+                                                                                            )
                                                                                         "
                                                                                     >
                                                                                         <i class="ph ph-trash"></i>

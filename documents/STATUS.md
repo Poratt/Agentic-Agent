@@ -2,6 +2,27 @@
 
 Last updated: 2026-08-17
 
+## 2026-08-17 Session (ag) — ✅ DONE: llm-providers "Name" sort header — spacing + alignment fixed
+
+- **Root cause:** `.sortable-column-header` wrapper had no CSS rule anywhere in the project → plain block layout: no gap between "Name" and the sort icon, icon/text not centered — inconsistent vs `baseUrl`/`Models` headers (which get spacing from the global `p-sortIcon` margin override).
+- **Fix (follow-up per user):** rule moved to global `_primeng-overrides.css` (inside `.p-datatable-thead`, next to the `p-sortIcon` margin override) and the wrapper applied to **every sortableColumn th app-wide** — 12 headers across 4 files: `llm-providers-management` (6), `users-management` (dynamic loop), `strain-hunter` (dynamic loop), `strain-hunter-settings` (4, incl. Hebrew/RTL). Component-scoped rule removed; **line-62 TODO deleted** (request fulfilled app-wide).
+- **Verified:** `ng build` exit 0 + **`ng test` 492/492 (56 suites)**. Pre-existing strain-hunter.css budget warning unrelated. Visual check pending next live render.
+- **Next (backlog):** SearXNG proxy decision · tsconfig.spec.new.json doc reconciliation · push/PR prep.
+
+## 2026-08-17 Session (af) — ✅ DONE: price-slider transitions added (user already fixed LTR + restyle)
+
+- **User's fix (between sessions):** `direction: ltr` on `.filter-range-slider` was the real root cause of the curve; also restyled (rounded-square handles, hover range color + handle glow, active state).
+- **Added:** `transition` on `.p-slider-handle` (border-color/background/box-shadow/transform) + `.p-slider-range` (background) using `--transition-colors`/`--transition-fast` tokens; `transform: scale(0.94)` on `:active`; reduced-motion rule extended.
+- **Verified:** `ng build` exit 0 (11.0s, pre-existing strain-hunter.css budget warning unrelated).
+- **Next (backlog):** SearXNG proxy decision · tsconfig.spec.new.json doc reconciliation · push/PR prep.
+
+## 2026-08-17 Session (ae) — ✅ DONE: strain-hunter price-slider handles D-shape → full circle
+
+- **Root cause:** custom `.p-slider.p-slider-horizontal { height: 1px }` clipped the 14px handle (`position:absolute; top:50%; transform: translate(-50%,-50%)`) → bottom 7px cut off → handles rendered as D-shapes. PrimeNG 21 base style normally sets slider height = handle height and uses a separate `.p-slider-track` child for the thin line — we overrode the height but never explicitly thinned the track.
+- **Fix:** slider height `1px → 14px`; added `.p-slider-track { height: 1px }` to keep the thin line (default 3-4px); `overflow: visible` on `.filter-range-slider` defensively.
+- **Verified:** `ng build` exit 0 (8.6s, pre-existing strain-hunter.css budget warning unrelated). Visual check pending next live render.
+- **Next (backlog):** SearXNG proxy decision · tsconfig.spec.new.json doc reconciliation · push/PR prep.
+
 ## 2026-08-17 Session (ad) — ⏳ SearXNG: outgoing hardening DONE, proxy decision PENDING (user)
 
 - **DONE:** settings.yml hardened (useragent_suffix, retries:0 explicit, commented proxies structure, engine-level retry_on_http_error:false on bing/mojeek/qwant) + .env.example web-search section fixed/documented (stale .sh→.js reference corrected).

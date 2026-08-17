@@ -227,8 +227,7 @@
                         <tr>
                             @for (column of columns(); track column) {
                                 <th [pSortableColumn]="column">
-                                    <span>{{ columnLabel(column) }}</span>
-                                    <p-sort-icon [field]="column" />
+                                    <div class="sortable-column-header"><span>{{ columnLabel(column) }}</span> <p-sort-icon [field]="column" /></div>
                                 </th>
                             }
                         </tr>

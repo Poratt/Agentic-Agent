@@ -1,4 +1,55 @@
 # Documentation Handoff
+## 2026-08-17 Session (ag) — ✅ FIXED: llm-providers "Name" sort header — unstyled wrapper (no spacing/misaligned icon)
+
+**Root cause:** `.sortable-column-header` (the wrapper div around the "Name" `<th>` label + sort icon) had **no CSS rule anywhere in the project** (verified: not in the component CSS, `_primeng-overrides.css`, or globals) → it rendered as a plain block with label and icon flowing inline: no defined gap, icon not vertically centered — unlike `baseUrl`/`Models` headers, which get their spacing from the global `p-sortIcon { margin-inline-start: var(--space-4) }` override. User saw: no spacing between "Name" and the sort icon, icon/text misaligned, inconsistent vs `baseUrl`/`Models`.
+
+**Fix (per user follow-up: global + all sortable headers):**
+1. `_primeng-overrides.css` — `.sortable-column-header { display: inline-flex; align-items: center; gap: var(--space-4); p-sortIcon { margin-inline-start: 0; } }` added inside `.p-datatable .p-datatable-thead` (next to the existing `p-sortIcon` margin rule; the `(0,3,1)` specificity beats the global `(0,2,1)` icon-margin rule so spacing doesn't double).
+2. **Wrapper applied to ALL sortable headers app-wide** (12 th's across 4 files, each on one line): `llm-providers-management.html` (6: key/Name, baseUrl, modelsCount, label/Model, active, performanceScore), `users-management.html` (dynamic loop, 1), `strain-hunter.html` (dynamic loop, 1), `strain-hunter-settings.html` (4: שם ×2, סוג, מקור — RTL-safe, gap/margin-inline-start are logical properties).
+3. `llm-providers-management.css` — removed the temporary component-scoped rule (now global).
+4. **TODO at line 62 deleted** (the wrapper now covers every sortableColumn th in the app — TODO's request fulfilled).
+
+**Verification:** `ng build` exit 0 (9.8s) + `ng test --watch=false` **492/492 passed (56 suites)**. Pre-existing `strain-hunter.css` budget warning only (unrelated file; also pre-existing vitest "Could not parse CSS stylesheet" stderr noise). Visual confirmation pending next live render.
+
+**Files touched:** `frontend/src/app/assets/styles/_primeng-overrides.css`; `llm-providers-management.html` (TODO removed); `users-management.html`; `strain-hunter.html`; `strain-hunter-settings.html`; `llm-providers-management.css` (restored to pre-fix state). No TS change. No architecture-diagram change (CSS/template-only).
+
+**Next exact step (backlog):** SearXNG proxy endpoints decision (user) · `tsconfig.spec.new.json` doc reconciliation · final push/PR prep (branch `tests-files` still unpushed — needs user's go).
+
+## 2026-08-17 Session (af) — ✅ ADDED: transitions to price-slider (user fixed LTR + restyled)
+
+**User's manual fix between sessions:**
+- `direction: ltr` on `.filter-range-slider` — root cause of the curve was the RTL parent context, not just the 1px-height clip. With LTR on the slider container, the handle positions render correctly.
+- Also restyled: `border-radius: var(--radius-xs)` (rounded square handles, not circles), added hover state (range → `primary-400`, handle border + glow expand), added active state (border → `primary-600`).
+
+**What I added (this session):**
+- `transition: border-color, background, box-shadow, transform` on `.p-slider-handle` (durations via `--transition-colors` / `--transition-fast`).
+- `transition: background` on `.p-slider-range` (the colored part of the track).
+- `transform: scale(0.94)` on `:active` (drag) — tactile press feedback, transitioned.
+- Added the new transitions to the existing `prefers-reduced-motion: reduce` block.
+
+**Verification:** `ng build` exit 0 (11.0s). Pre-existing strain-hunter.css budget warning only.
+
+**Files touched:** `frontend/src/app/assets/styles/_filters.css` (2 blocks: transitions on slider handle/range, reduced-motion rule). No HTML/TS change. No architecture-diagram change (CSS-only).
+
+**Next exact step (backlog):** SearXNG proxy endpoints decision (user) · `tsconfig.spec.new.json` doc reconciliation · final push/PR prep (branch `tests-files` still unpushed — needs user's go).
+
+## 2026-08-17 Session (ae) — ✅ FIXED: strain-hunter price-slider handles were D-shaped (clipped)
+
+**Root cause:** PrimeNG 21 (via `@primeuix/styles/slider`) puts the slider height = handle height by default (so the full circle renders), with the thin track as a child `.p-slider-track` element. Our custom CSS in `_filters.css` overrode the slider height to `1px` to get a thin track — but didn't restore it for the 14px handle. Result: handle centered on a 1px-tall box → bottom 7px clipped → handles rendered as D-shapes ("curved at the bottom" in the user's words).
+
+**Fix (3 lines, surgical):**
+1. `.p-slider.p-slider-horizontal { height: 1px }` → `14px` — match the handle so the full circle has room.
+2. Added `.p-slider-track { height: 1px; }` — the thin track was actually a separate element all along (default 3-4px, which is what PrimeNG was rendering on top of the clipped handle, contributing to the "curved" illusion).
+3. `.filter-range-slider { overflow: visible; }` — defensive, in case any future ancestor clipping sneaks in.
+
+Base style still centers the track vertically in the slider (`.p-slider { display: flex; align-items: center }`), so the 1px track passes through the middle of the 14px handle — design intent preserved.
+
+**Verification:** `ng build` exit 0 (8.6s, pre-existing strain-hunter.css budget warning only — unrelated file). Visual verification pending the next live render.
+
+**Files touched:** `frontend/src/app/assets/styles/_filters.css` (one block, lines 284-310). No HTML/TS change. No architecture-diagram change (CSS-only fix to a single component pattern).
+
+**Next exact step (backlog):** SearXNG proxy endpoints decision (user) · `tsconfig.spec.new.json` doc reconciliation · final push/PR prep (branch `tests-files` still unpushed — needs user's go).
+
 ## 2026-08-17 Session (ad) — 🔎 SearXNG outgoing hardening + proxy scaffolding (decision pending)
 
 **What was done (infra-independent half of the CAPTCHA-storm backlog item):**

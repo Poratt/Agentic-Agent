@@ -52,6 +52,16 @@
       color: var(--color-text-secondary);
     }
 
+    .sortable-column-header {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-4);
+
+      p-sortIcon {
+        margin-inline-start: 0;
+      }
+    }
+
     &>tr {
       &>th {
         background-color: transparent;
