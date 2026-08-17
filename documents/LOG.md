@@ -549,3 +549,10 @@
 - main.ts: seed imports repointed; removed dead `LlmModelEntity`/`LlmProviderEntity` imports (leftover of commented-out seedLlmProviders — zero usages in main.ts).
 - Over-export sweep verdict: NOTHING left — audit's deferred list was exactly {decorator relocation ✓, seeds ✓, tsconfig.spec.new.json (RETRACTED — active vitest config per A8)}.
 - Verified: backend tsc 0, `--runInBand` 399/399, build 0, LIVE boot (fresh dist + restart): C5 ✅, seeds idempotent vs existing DB (clean boot, no throws), :3000 serving. Frontend tsc app 0. Mojibake clean; `.claude`/css-nesting-check untouched.
+
+## 2026-08-17 A11 — SearXNG outgoing hardening + proxy scaffolding
+- Root cause (from A1 + settings.yml's own comment): single static egress IP + nightly ideas cron parallel queries → engines rotate between available/CAPTCHA with no stable pattern. Fix requires rotating proxy pool (paid infra) — decision pending user.
+- Infra-independent half shipped: `outgoing` extended with doc-confirmed options only (docs.searxng.org settings_outgoing + settings_engines): `useragent_suffix`, `retries: 0` (explicit — each retry uses a DIFFERENT proxy/IP, useless+harmful with single IP), commented `proxies:` (round-robin httpx syntax) + `extra_proxy_timeout`; engine-level `retry_on_http_error: false` on bing/mojeek/qwant → blocked engines enter automatic cooldown instead of being re-hammered. No invented/undocumented keys (cooldown_time NOT set — could not confirm in docs).
+- .env.example: fixed stale `ensure-searxng.sh` → `.js` reference; documented settings.yml is source of truth (SearXNG settings not env-driven) + `docker restart searxng`.
+- Verified LIVE: pyyaml parse clean · container restart clean · / 200 · search e2e 20 results (bing+ddg). `.env.example` diff surgical (only web-search block; note: str_replace tool refuses dotfiles → python precision edit).
+- Observed unowned change (NOT mine, untouched, flagged): `frontend/src/app/assets/styles/_filters.css` — p-slider-handle margin/border-radius/translate tweak, hardcoded `50%` vs `var(--radius-xs)`.

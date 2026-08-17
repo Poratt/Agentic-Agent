@@ -1,4 +1,20 @@
 # Documentation Handoff
+## 2026-08-17 Session (ad) — 🔎 SearXNG outgoing hardening + proxy scaffolding (decision pending)
+
+**What was done (infra-independent half of the CAPTCHA-storm backlog item):**
+1. `docker/searxng/settings.yml` — `outgoing:` extended with doc-confirmed options (docs.searxng.org): `useragent_suffix` (contact info — engine operators less likely to hard-block), `retries: 0` explicit (each retry uses a DIFFERENT proxy/IP, so with a single egress IP retries only re-hammer a blocked engine), commented `proxies:` structure (round-robin, httpx syntax incl. socks5) + `extra_proxy_timeout` guidance. Engine-level `retry_on_http_error: false` set EXPLICITLY on bing/mojeek/qwant — on 429/403 the engine enters SearXNG's automatic cooldown instead of being retried from the same IP.
+2. `backend/.env.example` — web-search section: fixed stale `ensure-searxng.sh` → `ensure-searxng.js` reference (the actual file is .js), documented that SearXNG settings are NOT env-driven and point to `outgoing.proxies` in settings.yml + `docker restart searxng`.
+
+**Verified LIVE:** YAML parsed clean (pyyaml) · `docker restart searxng` → container Up, no boot errors · / = 200 · live search `?q=strain+cannabis&format=json` → 20 results (bing + duckduckgo) — pipeline intact.
+
+**⚠️ DECISION REQUIRED (user):** the structural fix for the CAPTCHA storm is a rotating proxy pool — needs paid/residential endpoints (or multiple egress IPs → `source_ips`). Without infra, cooldown discipline (above) is the mitigation, not the cure.
+
+**⚠️ Unowned change observed (NOT mine, untouched):** `frontend/src/app/assets/styles/_filters.css` modified (p-slider-handle: margin-block-start −8→−2px, border-radius 50% instead of var(--radius-xs) — hardcoded vs golden rule —, translate: 0 !important). Likely user/IDE edit.
+
+**Files touched:** docker/searxng/settings.yml, backend/.env.example, 3 docs. No code, no architecture-diagram change (infra config only).
+
+**Next exact step (backlog):** SearXNG proxy endpoints decision (user) · `tsconfig.spec.new.json` doc reconciliation · final push/PR prep (branch `tests-files` still unpushed — needs user's go).
+
 ## 2026-08-17 Session (ac) — 🧹 seeds relocated: core boundary inversion resolved
 
 **What was done:**

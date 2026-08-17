@@ -2,6 +2,15 @@
 
 Last updated: 2026-08-17
 
+## 2026-08-17 Session (ad) — ⏳ SearXNG: outgoing hardening DONE, proxy decision PENDING (user)
+
+- **DONE:** settings.yml hardened (useragent_suffix, retries:0 explicit, commented proxies structure, engine-level retry_on_http_error:false on bing/mojeek/qwant) + .env.example web-search section fixed/documented (stale .sh→.js reference corrected).
+- **Verified live:** YAML clean · container restarted clean · search e2e OK (20 results, bing+ddg).
+- **PENDING USER DECISION:** rotating proxy pool endpoints (paid infra) — the actual cure for the CAPTCHA storm; without it, cooldown discipline is mitigation only.
+- **⚠️ Unowned change (not mine):** `_filters.css` (slider handle tweak, 50% hardcoded vs token). Untouched.
+- **Next (backlog):** SearXNG proxy decision · tsconfig.spec.new.json doc reconciliation · push/PR prep.
+
+
 ## 2026-08-17 Session (ac) — ✅ DONE: seeds relocated — core boundary inversion resolved
 
 - **DONE:** 4 seeds moved from `core/seeds/` to their feature modules (`modules/{users,terpene,genetics,llm-provider}/seeds/`), `core/seeds/` deleted, main.ts imports updated (+ removed 2 dead entity imports). 100% git renames — only relative import lines changed.

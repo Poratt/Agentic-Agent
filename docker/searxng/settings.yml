@@ -26,16 +26,47 @@ ui:
 outgoing:
   request_timeout: 5.0
   max_request_timeout: 15.0
+  # Suffix appended to the engine user-agent. SearXNG docs recommend a contact
+  # address here — engine operators that can reach an admin are less likely to
+  # hard-block the egress IP. e.g. " (contact admin@example.com)".
+  useragent_suffix: ""
+  # Rotating proxy pool — THE structural fix for the CAPTCHA storm below.
+  # With a single static egress IP, rate-limited engines (429/CAPTCHA) just
+  # rotate between "available" and "blocked" with no stable pattern. A rotating
+  # pool (residential preferred) spreads requests across many IPs. httpx proxy
+  # syntax: http://user:pass@host:port or socks5://user:pass@host:1080.
+  # Uncomment + fill once you have endpoints (paid provider or your own):
+  # proxies:
+  #   all://:
+  #     - http://user:pass@proxy.example.com:8080
+  #   https://:
+  #     - socks5://user:pass@proxy.example.com:1080
+  #
+  # Extra seconds added to engine timeouts to absorb proxy latency. Only
+  # meaningful once `proxies` is configured.
+  # extra_proxy_timeout: 10.0
+  #
+  # HTTP-error retries. Each retry picks a DIFFERENT proxy (and source IP), so
+  # with no proxies configured a retry just reuses the same blocked IP and can
+  # re-hammer a rate-limited engine. Keep 0 until proxies are configured.
+  retries: 0
 
 # Enable extra general engines that tolerate self-hosted scraping better than
 # google cse / duckduckgo / brave / startpage (which quickly hit "Suspended:
 # too many requests" / CAPTCHA when the nightly ideas cron fires parallel
 # queries from a single residential IP). Entries merge into the default
 # engine set by name via use_default_settings.
+#
+# retry_on_http_error is explicitly FALSE: on 429/403 an engine should enter
+# SearXNG's automatic cooldown instead of being retried from the same IP —
+# retrying a blocked engine is what turns a blip into a suspension.
 engines:
   - name: bing
     disabled: false
+    retry_on_http_error: false
   - name: mojeek
     disabled: false
+    retry_on_http_error: false
   - name: qwant
     disabled: false
+    retry_on_http_error: false
