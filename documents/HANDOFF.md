@@ -1,4 +1,21 @@
 # Documentation Handoff
+## 2026-08-17 Session (ab) — 🎉 FRONTEND 492/492 GREEN — 16 pre-existing failures resolved
+
+**What was done (5 spec files, all stale-test fixes — zero production code touched):**
+1. `app.spec.ts` (2) — PrimeNG `<p-confirm-dialog>` subscribes to `confirmationService.requireConfirmation$`; the mock `{ confirm: vi.fn() }` crashed. Fixed: real `MessageService` + `ConfirmationService` classes in providers.
+2. `auth.guard.spec.ts` (1) — mock `user` was `vi.fn()` without `.set`; guard calls `authStore.user.set(user)`. Fixed: `Object.assign(vi.fn(), { set: vi.fn() })`.
+3. `auth.interceptor.spec.ts` (2) — the retry/single-flight tests mocked the handler as ALWAYS-success (`vi.fn(nextWith(ok))`) so the 401 path never fired (refresh 0 calls). Fixed: per-URL first-call-401-then-ok handler. Single-flight additionally needed an async refresh (`delay(10)`) — a synchronous `of()` completes + finalizes the shared in-flight observable before the second concurrent 401 lands, breaking the window (production refresh is an HTTP call).
+4. `with-credentials.interceptor.spec.ts` (4) — plain function passed as handler then asserted with `toHaveBeenCalledTimes` → not a spy. Fixed: `vi.fn()` handlers.
+5. `strain-hunter-settings.spec.ts` (7) — two issues: `messages: signal([])` (Toast needs an Observable — real `MessageService` fixes it) + missing `ResizeObserver` in jsdom (PrimeNG TabList). Both mocked/real-service'd.
+
+**Verification:** all 5 suites individually green · full `ng test --watch=false` **492/492 (56/56 suites, 0 failed)** · tsc app+spec exit 0 ×2 · `ng build` exit 0 (pre-existing strain-hunter.css budget warning only) · mojibake clean · `.claude`/`css-nesting-check` untouched.
+
+**Project-wide status: BACKEND 399/399 + FRONTEND 492/492 = the entire test suite is green for the first time.** Both "pre-existing failure" baselines are dead.
+
+**Files touched:** 5 spec files only. No production code, no architecture-diagram change.
+
+**Next exact step (backlog):** SearXNG `outgoing.proxies` decision · seeds inverted boundary · `tsconfig.spec.new.json` doc conflict reconciliation.
+
 ## 2026-08-17 Session (aa) — 🎉 BACKEND 399/399 GREEN — 8 pre-existing failures resolved
 
 **What was done (3 suites + 1 real security hardening):**

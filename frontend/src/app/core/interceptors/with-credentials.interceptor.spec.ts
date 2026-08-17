@@ -11,10 +11,10 @@ describe('withCredentialsInterceptor', () => {
 
   it('clones API request with withCredentials: true', () => {
     let calledRequest: HttpRequest<unknown> | undefined;
-    const handler: HttpHandlerFn = (req: HttpRequest<unknown>) => {
-      calledRequest = req;
+    const handler = vi.fn((r: HttpRequest<unknown>) => {
+      calledRequest = r;
       return of({} as HttpEvent<unknown>);
-    };
+    }) as unknown as HttpHandlerFn;
 
     withCredentialsInterceptor(req(`${environment.apiUrl}/users`), handler);
 
@@ -25,10 +25,10 @@ describe('withCredentialsInterceptor', () => {
 
   it('passes non-API requests through untouched', () => {
     let calledRequest: HttpRequest<unknown> | undefined;
-    const handler: HttpHandlerFn = (req: HttpRequest<unknown>) => {
-      calledRequest = req;
+    const handler = vi.fn((r: HttpRequest<unknown>) => {
+      calledRequest = r;
       return of({} as HttpEvent<unknown>);
-    };
+    }) as unknown as HttpHandlerFn;
 
     withCredentialsInterceptor(req('https://example.com/image.png'), handler);
 
@@ -39,10 +39,10 @@ describe('withCredentialsInterceptor', () => {
 
   it('does not double-set withCredentials if already set', () => {
     let calledRequest: HttpRequest<unknown> | undefined;
-    const handler: HttpHandlerFn = (req: HttpRequest<unknown>) => {
-      calledRequest = req;
+    const handler = vi.fn((r: HttpRequest<unknown>) => {
+      calledRequest = r;
       return of({} as HttpEvent<unknown>);
-    };
+    }) as unknown as HttpHandlerFn;
 
     withCredentialsInterceptor(req(`${environment.apiUrl}/users`, true), handler);
 
@@ -52,10 +52,10 @@ describe('withCredentialsInterceptor', () => {
 
   it('clones request and preserves other properties', () => {
     let calledRequest: HttpRequest<unknown> | undefined;
-    const handler: HttpHandlerFn = (req: HttpRequest<unknown>) => {
-      calledRequest = req;
+    const handler = vi.fn((r: HttpRequest<unknown>) => {
+      calledRequest = r;
       return of({} as HttpEvent<unknown>);
-    };
+    }) as unknown as HttpHandlerFn;
 
     withCredentialsInterceptor(new HttpRequest('POST', `${environment.apiUrl}/auth/login`, { email: 'a@b.com' }), handler);
 

@@ -37,6 +37,12 @@ describe('StrainHunterSettings', () => {
   };
 
   beforeEach(async () => {
+    (globalThis as any).ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       value: vi.fn().mockImplementation((query: string) => ({
@@ -72,7 +78,6 @@ describe('StrainHunterSettings', () => {
     const geneticsServiceMock = { enrichMissing: vi.fn(), list: vi.fn(), update: vi.fn(), enrich: vi.fn(), delete: vi.fn() };
     const terpeneServiceMock = { enrichMissing: vi.fn(), list: vi.fn(), update: vi.fn(), enrich: vi.fn(), delete: vi.fn() };
     const confirmServiceMock = { confirm: vi.fn() };
-    const messageServiceMock = { add: vi.fn(), messages: signal([]) };
     const authStoreMock = {
       userRole: vi.fn().mockReturnValue(1),
       user: vi.fn().mockReturnValue({ id: 1, role: 1 }),
@@ -87,7 +92,7 @@ describe('StrainHunterSettings', () => {
         { provide: GeneticsService, useValue: geneticsServiceMock },
         { provide: TerpeneService, useValue: terpeneServiceMock },
         { provide: ConfirmationService, useValue: confirmServiceMock },
-        { provide: MessageService, useValue: messageServiceMock },
+        MessageService,
         { provide: AuthStore, useValue: authStoreMock },
       ],
     }).compileComponents();

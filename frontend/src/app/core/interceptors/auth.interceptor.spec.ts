@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpRequest, HttpResponse, HttpErrorResponse, HttpHandlerFn } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { of, throwError, firstValueFrom } from 'rxjs';
+import { of, throwError, firstValueFrom, delay } from 'rxjs';
 import { authInterceptor } from './auth.interceptor';
 import { AuthStore } from '../store/auth.store';
 import { AuthService } from '../services/auth.service';
@@ -65,7 +65,15 @@ describe('authInterceptor', () => {
   it('refreshes once and retries the original request on 401', async () => {
     authService.refresh.mockReturnValue(of({ result: user } as any));
     const ok = new HttpResponse({ status: 200, body: { ok: true } });
-    const handler = vi.fn(nextWith(ok)) as unknown as HttpHandlerFn;
+    // First call for a given URL fails with 401; the retried call succeeds.
+    const seen = new Set<string>();
+    const handler = vi.fn((r: HttpRequest<unknown>) => {
+      if (!seen.has(r.url)) {
+        seen.add(r.url);
+        return throwError(() => new HttpErrorResponse({ status: 401, url: r.url }));
+      }
+      return of(ok);
+    }) as unknown as HttpHandlerFn;
 
     const res = await call('/api/secure', handler);
 
@@ -85,9 +93,20 @@ describe('authInterceptor', () => {
   });
 
   it('only refreshes a single time for concurrent 401s (single-flight)', async () => {
-    authService.refresh.mockReturnValue(of({ result: user } as any));
+    // Refresh is async in production (an HTTP call) — a synchronous `of`
+    // would complete + finalize the in-flight shareReplay before the second
+    // concurrent 401 lands, breaking the single-flight window.
+    authService.refresh.mockReturnValue(of({ result: user } as any).pipe(delay(10)));
     const ok = new HttpResponse({ status: 200, body: { ok: true } });
-    const handler = vi.fn(nextWith(ok)) as unknown as HttpHandlerFn;
+    // Each URL fails once with 401, then succeeds after the shared refresh.
+    const seen = new Set<string>();
+    const handler = vi.fn((r: HttpRequest<unknown>) => {
+      if (!seen.has(r.url)) {
+        seen.add(r.url);
+        return throwError(() => new HttpErrorResponse({ status: 401, url: r.url }));
+      }
+      return of(ok);
+    }) as unknown as HttpHandlerFn;
 
     const [a, b] = await Promise.all([
       call('/api/secure-a', handler),

@@ -1,5 +1,10 @@
 # Documentation Change Log
 
+## 2026-08-17 W7 — Frontend 492/492: 16 pre-existing failures resolved (spec-only)
+- **Decision — PrimeNG test setup needs real services, not shape mocks:** both `<p-confirm-dialog>` (subscribes to `confirmationService.requireConfirmation$`) and `<p-toast>` (subscribes to `messageService.messages`) crashed on partial mocks; real `MessageService`/`ConfirmationService` classes are safe in TestBed and are the fix.
+- **Test lesson — sync mocks defeat async-protected flows:** the interceptor single-flight test used a synchronous `of()` refresh, which completed + finalized the shared in-flight observable before the second concurrent 401 landed (2 refreshes). Real production refresh is an HTTP call — the test now uses `delay(10)` to preserve the window.
+- **No production code touched; no architecture diagram change.**
+
 ## 2026-08-17 W6 — Backend 399/399: pre-existing failures + SSRF dev-allow hardening
 - **Architectural decision — dev-localhost bypass is opt-in, not default:** `assertSafeUrl` had `if (isDev && isLocalhost) return` (fail-open in dev), introduced by 82d9baa, reverted by 021224b, re-added by 31eadd9 — which silently broke the C3 SSRF tests (dc1d909). The fix makes the bypass explicit: `assertSafeUrl(url, { allowDevLocalhost: true })` is passed ONLY by the provider-baseUrl TOCTOU call sites (OmniRoute runs on localhost in dev); `downloadBuffer` (user-supplied sourceVideoUrl) is strict in every environment — a dev machine often hosts sensitive local services, and a video-extension endpoint must never fetch them. Do not reintroduce a blanket dev-allow.
 - **Test-hygiene lesson:** stale tolerance bands (swagger-parser [66,68] vs real 75-tool spec) and missing mock methods (agent-session createQueryBuilder) were the other 4 failures — spec updates only, prod untouched.

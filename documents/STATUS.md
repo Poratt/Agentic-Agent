@@ -2,6 +2,14 @@
 
 Last updated: 2026-08-17
 
+## 2026-08-17 Session (ab) — 🎉 DONE: frontend 492/492 — ALL tests green project-wide
+
+- **DONE:** 16 pre-existing frontend failures fixed across 5 spec files (app×2 — PrimeNG services; auth.guard×1 — user.set mock; auth.interceptor×2 — 401-then-ok handler + async refresh for single-flight; with-credentials×4 — vi.fn handlers; strain-hunter-settings×7 — real MessageService + ResizeObserver mock). Zero production code touched.
+- **Verified:** full **492/492, 56/56 suites** · tsc ×2 exit 0 · ng build exit 0 · mojibake clean.
+- **🎉 PROJECT-WIDE: backend 399/399 + frontend 492/492 — first fully-green suite in project history.**
+- **Next (backlog):** SearXNG proxies · seeds boundary · tsconfig.spec.new.json doc conflict.
+
+
 ## 2026-08-17 Session (aa) — 🎉 DONE: backend 399/399 — historical debt CLOSED
 
 - **DONE:** 8 pre-existing failures fixed across swagger-parser (1, stale tolerance band), agent-session (3, missing createQueryBuilder mock), llm-client (4, **real SSRF hardening** — dev-localhost allow is now opt-in for provider baseUrls only; downloadBuffer strict everywhere; DNS mock fixed to resolve loopback like real dns.lookup).

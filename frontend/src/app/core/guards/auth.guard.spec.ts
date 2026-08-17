@@ -16,12 +16,15 @@ describe('authGuard', () => {
     updatedAt: new Date(),
   };
 
-  let authStore: { user: ReturnType<typeof vi.fn>; userRole: ReturnType<typeof vi.fn> };
+  let authStore: { user: ReturnType<typeof vi.fn> & { set: ReturnType<typeof vi.fn> }; userRole: ReturnType<typeof vi.fn> };
   let authService: { checkSession: ReturnType<typeof vi.fn> };
   let router: { navigate: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    authStore = { user: vi.fn().mockReturnValue(null), userRole: vi.fn().mockReturnValue(null) };
+    authStore = {
+      user: Object.assign(vi.fn().mockReturnValue(null), { set: vi.fn() }),
+      userRole: vi.fn().mockReturnValue(null),
+    };
     authService = { checkSession: vi.fn() };
     router = { navigate: vi.fn() };
 
