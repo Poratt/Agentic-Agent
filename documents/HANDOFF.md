@@ -1,4 +1,16 @@
 # Documentation Handoff
+## 2026-08-17 Session (y) — ✅ RequiresConfirmation decorator relocated to core/decorators
+
+**What was done:** `requires-confirmation.decorator.ts` + spec moved from `admin-agent/decorators/` → `core/decorators/` (git mv, zero content change). Import updated in `users.controller.ts` + `llm-provider.controller.ts` → `../../core/decorators/...`. `swagger-tools.parser.ts` had a **dead** import of `REQUIRES_CONFIRMATION_KEY` (never used — the runtime check reads the literal `'x-requires-confirmation'`) → removed while updating the path. No `core/decorators/index.ts` created — core has no index pattern.
+
+**Verification (manager gate):** tsc exit 0 · focused suites: core/decorators + admin-agent + users + llm-provider → **114 passed / 4 failed** (4 = documented pre-existing: agent-session 3, swagger-parser 1) · full `--runInBand` **390/398** (8 pre-existing only) · `npm run build` exit 0 · **live C5 boot assertion passed after restart: "✅ C5 assertion passed: 3 confirmation-required operations in swagger spec"** — parser detects metadata as before.
+
+**⚠️ Gate correction (flagged to user BEFORE execution):** the manager demanded "swagger-parser spec 11/11 ירוק" — false premise: that spec has a documented pre-existing failure (denylist tolerance 68 vs 73, since session t). The realistic gate (no NEW failures) passed.
+
+**Files touched:** 2 renames (zero content delta) + 3 import-line edits. No architecture-diagram change (decorator not represented in diagram; boundary cleanup internal).
+
+**Next exact step (backlog):** SearXNG `outgoing.proxies` decision · seeds inverted boundary · `tsconfig.spec.new.json` doc conflict reconciliation.
+
 ## 2026-08-17 Session (x) — ✅ strain-hunter cluster ×3 wrapped in ServiceResultContainer
 
 **What was done:** GET /fetch, GET /preferences, PUT /preferences now return `{success, message, result}` (controller-level wrap, service returns raw — internal callers unaffected; no streaming/binary anywhere in this cluster).

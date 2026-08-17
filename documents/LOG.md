@@ -1,5 +1,10 @@
 # Documentation Change Log
 
+## 2026-08-17 W4 — RequiresConfirmation decorator relocated to core/decorators
+- **Architectural decision — cross-cutting decorators belong in core:** `@RequiresConfirmation()` lived under admin-agent but was consumed by llm-provider + users (cross-module pollution, audit-dependency-map finding #1). Moved to `core/decorators/` with git mv (zero content change) — the decorator writes both NestJS metadata and the `x-requires-confirmation` OpenAPI extension, untouched; the C5 boot assertion in main.ts (3 expected ops) passed live after restart.
+- **Hygiene:** swagger-tools.parser imported `REQUIRES_CONFIRMATION_KEY` but never used it (runtime check reads the literal string) — dead import removed while fixing the path.
+- **No index.ts in core** — core has no index-file pattern; a new one would have been speculative. No architecture diagram change.
+
 ## 2026-08-17 W3 — ServiceResultContainer audit is now fully green
 - **Finding — the audit doc drifted from the code:** the per-endpoint table still flagged ideas sessions ×2 + unread-count as ❌ after today's cluster commits. Verified against the controller: GET /sessions + /sessions/:id wrapped in 1aa5348, GET /nightly/unread-count already returns `{success, message, result: count}` (live-verified), favorite/mark-read already 204. Corrected the audit doc to match the code. Lesson: audit docs must be reconciled against code before quoting counts.
 - **Environment discovery — not an npm-workspace monorepo:** there is NO root package.json; `npm run -w backend` fails (AGENTS.md is wrong about this). Backend commands run from `backend/`. The running backend executes `node dist/main` — src edits need `npm run build` (in backend/) + restart; there is no live watch in the current setup.

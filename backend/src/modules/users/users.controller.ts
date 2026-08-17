@@ -34,7 +34,7 @@ import { AdminGuard } from '../../core/guards/admin.guard';
 import { ServiceResultContainer } from '../../core/models/service-result-container.model';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { JwtPayload } from '../../core/interfaces/jwt-payload.interface';
-import { RequiresConfirmation } from '../admin-agent/decorators/requires-confirmation.decorator';
+import { RequiresConfirmation } from '../../core/decorators/requires-confirmation.decorator';
 import { JwtPayloadResultResponseDto } from '../../core/dto/jwt-payload-result-response.dto';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 

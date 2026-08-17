@@ -3,7 +3,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import * as fs from 'fs';
-import { REQUIRES_CONFIRMATION_KEY } from '../decorators/requires-confirmation.decorator';
 
 interface LlmToolFunctionSchema {
   name: string;

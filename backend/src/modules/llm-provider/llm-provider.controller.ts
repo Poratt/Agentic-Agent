@@ -10,7 +10,7 @@ import { AdminGuard } from '../../core/guards/admin.guard';
 import { ServiceResultContainer } from '../../core/models/service-result-container.model';
 import { LlmProviderEntity } from './entities/llm-provider.entity';
 import { LlmModelEntity } from './entities/llm-model.entity';
-import { RequiresConfirmation } from '../admin-agent/decorators/requires-confirmation.decorator';
+import { RequiresConfirmation } from '../../core/decorators/requires-confirmation.decorator';
 import { CustomApiOperationOptions } from '../../core/types/custom-api-operation-options.type';
 
 /**

@@ -2,6 +2,13 @@
 
 Last updated: 2026-08-17
 
+## 2026-08-17 Session (y) — ✅ DONE: RequiresConfirmation → core/decorators
+
+- **DONE:** decorator + spec relocated (git mv, zero content change); imports fixed in users + llm-provider controllers; dead `REQUIRES_CONFIRMATION_KEY` import removed from swagger-tools.parser.
+- **Verified:** tsc 0 · focused 114/118 (4 = pre-existing) · full **390/398** (8 pre-existing) · build 0 · live C5 boot assertion ✅ (3 ops detected after restart).
+- **Next (backlog):** SearXNG proxies · seeds boundary · tsconfig.spec.new.json doc conflict.
+
+
 ## 2026-08-17 Session (x) — ✅ DONE: strain-hunter cluster ×3 wrapped in ServiceResultContainer
 
 - **DONE:** GET /fetch + GET/PUT /preferences → `{success, message, result}` (controller wrap, service raw). No streaming/binary. Consumers updated: frontend `strain-hunter.ts` (fetch parse) + `matching-engine.store.ts` (prefs GET); LLM tools unaffected by design (container JSON, calendar/llm precedent).
