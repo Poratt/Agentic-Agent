@@ -81,7 +81,7 @@
                                 </button>
                             </td>
                             <td class="row-label clickable" (click)="toggleProvider(provider.id)">{{ provider.label }}</td>
-                            <td class="row-meta row-meta--mono">{{ provider.baseUrl }}</td>
+                            <td class="row-meta row-meta--mono col-base-url" appTooltip [text]="provider.baseUrl">{{ provider.baseUrl }}</td>
                             <td class="col-count count-value">{{ provider.modelsCount }}</td>
                             <td class="col-actions">
                                 @if (isAdmin()) {

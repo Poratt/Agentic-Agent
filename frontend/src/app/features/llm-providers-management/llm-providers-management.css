@@ -49,6 +49,13 @@
         text-align: center;
     }
 
+    .col-base-url {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
     .col-expand {
         padding: 0;
         padding-left: var(--space-4);
