@@ -2,6 +2,16 @@
 
 Last updated: 2026-08-17
 
+## 2026-08-17 Session (w) — ✅ DONE: dashboard "0 users" bug FIXED (frontend-only)
+
+- **Root cause:** `UsersStore.users()` read `usersResource.value()` unguarded — Angular THROWS on `value()` in resource error state (documented). Failed GET /users (backend watch restart / blip) → throw → dashboard broke + no auto-retry → stuck "0". Backend verified live: login + GET /users → 200 (8 users) — bug was store/timing as suspected.
+- **Fixed:** `hasValue()` guard + resource-error surfaced in pageState in `users.store.ts`; same unguarded pattern fixed in `terpene/genetics/llm-provider` stores (same `50e11c0` refactor).
+- **Verified:** +3 store tests (error → no-throw + Error state, reload recovery) · full suite **472/488** (16 = documented pre-existing, zero new) · tsc ×2 exit 0 · live dashboard shows 8.
+- **Next:** strain-hunter cluster (×3) — last ❌ from audit-service-result-container.md.
+
+
+
+
 ## Found during audit, NOT fixed
 - **Mojibake:** `frontend/src/app/features/chat/chat/chat.ts:593` — `'הבקשה פגה hoặc כבר טופלה. נסה שוב.'` ("hoặc" = Vietnamese, should be "או"). User-visible 404 error in confirmPendingAction.
 - SearXNG pool: google cse suspended 08-17 (ddg recovered) — proxy proposal pending user decision.

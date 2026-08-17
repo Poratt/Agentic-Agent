@@ -20,7 +20,14 @@ export class UsersStore {
     return `${environment.apiUrl}/users`;
   });
 
-  users = computed(() => this.usersResource.value()?.result ?? []);
+  users = computed(() => {
+    // `value()` THROWS when the resource is in an error state (documented
+    // Angular behavior), so it must be guarded with `hasValue()` — an
+    // unguarded read here used to break every consumer (pageState, dashboard
+    // ticker) whenever GET /users failed (e.g. backend watch-mode restart).
+    if (!this.usersResource.hasValue()) return [];
+    return this.usersResource.value()?.result ?? [];
+  });
   loading = computed(() => this.usersResource.isLoading());
   error = signal<string | null>(null);
   selectedUser = signal<User | null>(null);
@@ -35,7 +42,7 @@ export class UsersStore {
       return PageStates.Loading;
     }
 
-    if (this.error()) {
+    if (this.error() || this.usersResource.error()) {
       return PageStates.Error;
     }
 

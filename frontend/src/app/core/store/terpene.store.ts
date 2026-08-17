@@ -13,7 +13,9 @@ export class TerpeneStore {
         `${environment.apiUrl}/terpenes`
     );
 
-    terpenes = computed(() => this.terpenesResource.value()?.result ?? []);
+    terpenes = computed(() =>
+        this.terpenesResource.hasValue() ? this.terpenesResource.value()?.result ?? [] : []
+    );
     loading = computed(() => this.terpenesResource.isLoading());
     error = signal<string | null>(null);
 

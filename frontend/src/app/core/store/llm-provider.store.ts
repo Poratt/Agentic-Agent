@@ -25,7 +25,9 @@ export class LlmProviderStore {
 
     providersResource = httpResource<ServiceResultContainer<LlmProvider[]>>(() => `${environment.apiUrl}/llm-provider`);
 
-    providers = computed(() => this.providersResource.value()?.result ?? []);
+    providers = computed(() =>
+        this.providersResource.hasValue() ? this.providersResource.value()?.result ?? [] : []
+    );
     loading = computed(() => this.providersResource.isLoading());
     error = signal<string | null>(null);
 
@@ -121,7 +123,7 @@ export class LlmProviderStore {
             return PageStates.Loading;
         }
 
-        if (this.error()) {
+        if (this.error() || this.providersResource.error()) {
             return PageStates.Error;
         }
 

@@ -1,4 +1,18 @@
 # Documentation Handoff
+## 2026-08-17 Session (w) — ✅ FIXED: dashboard "משתמשים רשומים: 0" (httpResource `value()` throw)
+
+**Root cause (reproduced in tests):** `UsersStore.users = computed(() => usersResource.value()?.result ?? [])` — per documented Angular behavior, **reading `resource.value()` THROWS when the resource is in an error state**. Any failed GET /users (backend watch-mode restart, network blip) put the resource in error state → `users()` computed threw → every consumer broke (pageState, dashboard ticker) → dashboard stuck broken/empty — and httpResource never auto-retries, so it stayed broken until reload. Backend itself was verified working live (login + GET /users → 200, 8 users); the bug was purely frontend timing/failure-state.
+
+**Fix (5 files, all from the same `50e11c0` httpResource refactor):**
+- `users.store.ts` — `users` computed now guards `value()` with `hasValue()`; `pageState` also surfaces `usersResource.error()` → Error state instead of silently Empty.
+- Same unguarded pattern fixed in sibling stores from the same commit: `terpene.store.ts`, `genetics.store.ts`, `llm-provider.store.ts` (llm-provider pageState also gets resource-error check).
+
+**Tests:** `users.store.spec.ts` +3 (success → Ready; **error → does not throw** + Error state — was RED before fix: "Error: Resource is currently in an error state…"; reload recovers after failure). **13/13 green.** Sibling specs untouched and green (7/7, 7/7, 9/9).
+
+**Verification:** `tsc --noEmit` tsconfig.app + tsconfig.spec → exit 0 ×2 · full frontend suite **472/488** — the 16 failures = byte-identical documented pre-existing set (app 2, auth.interceptor 2, with-credentials 4, auth.guard 1, strain-hunter-settings 7) · live UI verified: dashboard shows **8** users, zero console errors. Mojibake scan clean. `git diff` on `.claude/`/`scripts/` untouched.
+
+**Next exact step:** strain-hunter cluster (×3 endpoints) — the last ❌ cluster from audit-service-result-container.md.
+
 ## 2026-08-17 — Found during audit, NOT fixed (backlog items)
 
 1. ~~Mojibake in `chat.ts:593`~~ **FIXED 2026-08-17** ("hoặc" → "או"; full-codebase scan found no other real mojibake — see LOG A8).

@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, ApplicationRef } from '@angular/core';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
+import { PageStates } from '../enums/page-states.enum';
+import { environment } from '../../environments/environment';
 import { UsersStore } from './users.store';
 import { UserService } from '../services/user.service';
 import { AuthStore } from './auth.store';
@@ -38,6 +41,7 @@ describe('UsersStore', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideHttpClientTesting(),
         UsersStore,
         { provide: UserService, useValue: userService },
         { provide: AuthStore, useValue: authStore },
@@ -48,6 +52,66 @@ describe('UsersStore', () => {
   function create(): UsersStore {
     return TestBed.inject(UsersStore);
   }
+
+  describe('usersResource', () => {
+    let httpTesting: HttpTestingController;
+
+    beforeEach(() => {
+      httpTesting = TestBed.inject(HttpTestingController);
+    });
+
+    it('fetches and exposes users when the request succeeds', async () => {
+      const store = create();
+      TestBed.tick();
+
+      const req = httpTesting.expectOne(`${environment.apiUrl}/users`);
+      req.flush({
+        success: true,
+        message: 'Users retrieved successfully',
+        result: [user, { ...user, id: 2 }],
+      });
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(store.users()).toHaveLength(2);
+      expect(store.loading()).toBe(false);
+      expect(store.pageState()).toBe(PageStates.Ready);
+    });
+
+    it('does not throw and reports an error when the request fails', async () => {
+      const store = create();
+      TestBed.tick();
+
+      const req = httpTesting.expectOne(`${environment.apiUrl}/users`);
+      req.error(new ProgressEvent('error'), { status: 0, statusText: 'Network Error' });
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(() => store.users()).not.toThrow();
+      expect(store.users()).toEqual([]);
+      expect(store.pageState()).toBe(PageStates.Error);
+    });
+
+    it('recovers after a failure once a reload succeeds', async () => {
+      const store = create();
+      TestBed.tick();
+
+      const failing = httpTesting.expectOne(`${environment.apiUrl}/users`);
+      failing.error(new ProgressEvent('error'), { status: 0, statusText: 'Network Error' });
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      store.reload();
+      TestBed.tick();
+      const retry = httpTesting.expectOne(`${environment.apiUrl}/users`);
+      retry.flush({
+        success: true,
+        message: 'Users retrieved successfully',
+        result: [user],
+      });
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(store.users()).toHaveLength(1);
+      expect(store.pageState()).toBe(PageStates.Ready);
+    });
+  });
 
   describe('updateUserRole', () => {
     it('calls service and reloads on success', () => {

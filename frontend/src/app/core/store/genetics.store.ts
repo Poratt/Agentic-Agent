@@ -13,7 +13,9 @@ export class GeneticsStore {
         `${environment.apiUrl}/genetics`
     );
 
-    genetics = computed(() => this.geneticsResource.value()?.result ?? []);
+    genetics = computed(() =>
+        this.geneticsResource.hasValue() ? this.geneticsResource.value()?.result ?? [] : []
+    );
     loading = computed(() => this.geneticsResource.isLoading());
     error = signal<string | null>(null);
 
