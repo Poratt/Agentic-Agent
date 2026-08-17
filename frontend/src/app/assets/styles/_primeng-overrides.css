@@ -431,6 +431,20 @@ li.p-select-option {
 }
 
 
+/* ── Tabs ────────────────────────────────────────────────────────────────── */
+/* RTL: the scroll nav chevrons inherit the page direction (rtl) — mirror them
+   so prev/next point the correct way. */
+.p-tabs {
+
+  .p-tablist-nav-button {
+
+    &.p-tablist-prev-button,
+    &.p-tablist-next-button {
+      transform: scale(-1);
+    }
+  }
+}
+
 /* Toggle Switch  */
 .toggle-switch {
   transform: scale(0.7);

@@ -282,7 +282,7 @@ describe('GeneticsService', () => {
     });
 
     describe('enrichSingle', () => {
-      it('enriches one genetics via LLM + web + Cannlytics and persists', async () => {
+      it('enriches one genetics via LLM + web + Cannlytics and returns without persisting', async () => {
         const existing = makeGenetics({ name: 'Gorilla Glue' });
         repo.findOne.mockResolvedValue(existing);
         repo.save.mockResolvedValue(existing);
@@ -330,7 +330,48 @@ describe('GeneticsService', () => {
         expect(llmClientService.generateResponse).toHaveBeenCalled();
         expect(webSearchService.search).toHaveBeenCalled();
         expect(cannlyticsService.getStrain).toHaveBeenCalled();
-        expect(repo.save).toHaveBeenCalled();
+        expect(repo.save).not.toHaveBeenCalled();
+      });
+
+      it('translates Hebrew names via LLM when missing from the hardcoded map', async () => {
+        const existing = makeGenetics({ name: 'אובמה ראנטז' });
+        repo.findOne.mockResolvedValue(existing);
+        repo.save.mockResolvedValue(existing);
+
+        // לא במפה הקשיחה — fallback לתרגום LLM
+        cannlyticsService.getEnglishName.mockReturnValue(null);
+        cannlyticsService.getStrain.mockResolvedValue(null);
+        httpService.get.mockReturnValue(of({ data: { data: [] } }) as any);
+        webSearchService.search.mockResolvedValue({
+          success: true,
+          result: { results: [], answer: undefined },
+        } as any);
+
+        // קריאה 1: תרגום → 'Obama Runtz'; קריאה 2: העשרה
+        llmClientService.generateResponse
+          .mockResolvedValueOnce({ content: 'Obama Runtz' } as any)
+          .mockResolvedValueOnce({
+            content: JSON.stringify({
+              genetics: [
+                {
+                  name: 'אובמה ראנטז',
+                  description: 'desc',
+                  parent1: 'x',
+                  parent2: 'y',
+                  origin: 'USA',
+                  type: 'היברידי',
+                  color: '#FF0000',
+                },
+              ],
+            }),
+          } as any);
+
+        const result = await service.enrichSingle('אובמה ראנטז');
+
+        expect(result).not.toBeNull();
+        expect(llmClientService.generateResponse).toHaveBeenCalledTimes(2);
+        expect(cannlyticsService.getStrain).toHaveBeenCalledWith('Obama Runtz');
+        expect(repo.save).not.toHaveBeenCalled();
       });
 
       it('returns null for unknown name', async () => {

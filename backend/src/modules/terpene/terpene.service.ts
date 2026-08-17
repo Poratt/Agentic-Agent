@@ -305,13 +305,13 @@ export class TerpeneService {
                 const searchQuery = englishName !== name
                     ? `${englishName} (${name}) cannabis terpene scent effects`
                     : `${name} cannabis terpene scent effects`;
-                const searchResult = await this.webSearchService.search(searchQuery);
+                const searchResult = await this.webSearchService.search(searchQuery, true);
                 if (searchResult.success && searchResult.result) {
                     const parts: string[] = [];
                     if (searchResult.result.answer) {
                         parts.push(`Answer: ${searchResult.result.answer}`);
                     }
-                    for (const r of searchResult.result.results.slice(0, 3)) {
+                    for (const r of searchResult.result.results.slice(0, 8)) {
                         parts.push(`${r.title}: ${r.content}`);
                     }
                     if (parts.length > 0) {
@@ -391,7 +391,7 @@ export class TerpeneService {
         const searchQuery = englishName !== name
             ? `${englishName} (${name}) cannabis terpene scent effects description`
             : `${name} cannabis terpene scent effects description`;
-        const searchResult = await this.webSearchService.search(searchQuery);
+        const searchResult = await this.webSearchService.search(searchQuery, true);
 
         let searchContext = '';
         if (searchResult.success && searchResult.result) {
@@ -399,7 +399,16 @@ export class TerpeneService {
             if (searchResult.result.answer) {
                 parts.push(`Answer: ${searchResult.result.answer}`);
             }
-            for (const r of searchResult.result.results.slice(0, 3)) {
+            // דירוג תוצאות לפי רלוונטיות: שם הטרפן (אנגלית/עברית) ראשון, אחר כך מילות קנאביס
+            const nameTokens = [englishName, name].filter(Boolean).map(t => t.toLowerCase());
+            const cannabisKeywords = ['cannabis', 'terpene', 'scent', 'aroma', 'strain', 'weed', 'kush', 'flavor'];
+            const relevance = (r: { title: string; content: string }): number => {
+                const text = `${r.title} ${r.content}`.toLowerCase();
+                if (nameTokens.some(tok => text.includes(tok))) return 2;
+                if (cannabisKeywords.some(kw => text.includes(kw))) return 1;
+                return 0;
+            };
+            for (const r of [...searchResult.result.results].sort((a, b) => relevance(b) - relevance(a)).slice(0, 8)) {
                 parts.push(`${r.title}: ${r.content}`);
             }
             searchContext = parts.join('\n');
@@ -449,6 +458,8 @@ Return JSON only:
             colorLight,
         });
 
-        return this.terpeneRepository.save(existing);
+        // תצוגה מקדימה בלבד — אין שמירה אוטומטית (הלקוח מחליט לשמור דרך Update),
+        // בהתאם לתיעוד ה-endpoint: "Does not persist — caller decides whether to save."
+        return existing;
     }
 }

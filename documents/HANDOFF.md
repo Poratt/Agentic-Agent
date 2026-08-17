@@ -1,4 +1,130 @@
 # Documentation Handoff
+## 2026-08-17 Session (ag) — ⏪ REVERTED: all enrichment/table animations in strain-hunter-settings (per user)
+
+**User:** "You didn't fix anything — the problem remains. Go back, cancel the animation, that's where everything started going wrong."
+
+**Action:** reverted ALL animation-related work on `strain-hunter-settings` to the last commit (`ac0691d`) state — verified via `git diff` that every change in these files was mine (animation/skeleton work), then `git checkout`:
+- `strain-hunter-settings.ts` — removed: `closingGenetics`/`closingTerpenes`/`closingGeneticsRows`/`closingTerpeneRows`/`flashGenetics`/`flashTerpenes` sets, `ENRICH_EXIT_MS`/`FLASH_MS`, `is*Closing`/`is*FieldFlashing` helpers, collapse helpers, `geneticsLoading`/`terpeneLoading`/`tableSkeletonRows`. `saveEnriched*`/`discardEnriched*` are back to instant map removal; `toggleGenetics`/`toggleTerpene` back to plain set toggle.
+- `strain-hunter-settings.html` — removed: `.expand-anim`/`.enrichment-anim` wrappers, `[class.closing]`, `[class.slide-out-right]`, field-flash bindings, save/discard spinner swaps, skeleton branches + `[value]` loading swap. (Sortable-column-header wrappers kept — they're in the commit.)
+- `strain-hunter-settings.css` — removed: `.expand-anim`/`.enrichment-anim`/`.closing`/inners, `.field-flash`, `.skeleton-row`, `.table-row-header` fade, min-height, reduced-motion block; `.has-enrichment` flex rule back to `.enrichment-panel`.
+- `strain-hunter-settings.spec.ts` — back to original 7 tests (animation tests removed).
+- `_animations.css` — removed `gridOpen`/`fieldFlash`/`fieldFlashFull`/`tableRowFadeIn` keyframes.
+
+**Kept (separate, user-requested/committed):** `_primeng-overrides.css` tablist `scale(-1)` + `.sortable-column-header`; backend enrichment fixes (still uncommitted).
+
+**Verification:** frontend `npx ng test --watch=false` **492/492 (56 suites)** · `ng build` exit 0 · live: `rowAnim: none`, no `.expand-anim`/`.enrichment-anim`/`.slide-out-right`/`.skeleton-row`/`.field-flash`, 38 rows render normally.
+
+**Note:** the original CLS on first load (empty table → rows burst in, no loading state) remains as it was before the animation work — the user attributed the pop-in to the animations and asked to revert; a skeleton-only approach (no animations) remains an option if wanted.
+
+## 2026-08-17 Session (ag) — ✅ FIXED: table CLS on first load — skeleton rows + min-height + row fade-in (strain-hunter-settings)
+
+**User report:** switching tabs (LLM→Strain Hunter, גנטיקה↔טרפנים) shows the table empty for a moment (0 rows, pagination right under the header), then all rows pop in abruptly — layout shift / CLS.
+
+**Root cause (verified live):** tab switches do NOT refetch — the singleton stores (`httpResource`) keep their cached value, so switching back shows rows instantly (measured: 38 rows at +225ms). The emptiness/pop-in happens only on the **first load** of each resource: `genetics()`/`terpenes()` return `[]` while `isLoading` (no `hasValue` yet) and the tables had **no loading state at all** — empty table → rows burst in.
+
+**Fix (frontend, strain-hunter-settings — genetics + terpene tables):**
+1. **Skeleton rows** — `[value]` becomes `loading() ? tableSkeletonRows : filtered*()` (20 placeholder rows = page size, so the height is identical when data arrives); the body template branches `@if (loading())` → `.skeleton-row` with global `.shimmer` bars matching the real column structure (sm/md/lg). New `geneticsLoading`/`terpeneLoading` computeds (store `loading()`).
+2. **Min-height** — `.glass-effect.card { min-height: 480px }` (component-scoped) keeps header+pagination stable.
+3. **Fade-in** — `.table-row-header { animation: tableRowFadeIn 0.2s ease-out }`; keyframe lives in global `_animations.css` (per css-deduplicate convention); `prefers-reduced-motion` disables it. PrimeNG reuses row elements for the same objects, so filter doesn't re-flash; pagination (new objects) gets a subtle fade.
+
+**Verification:** frontend `npx ng test --watch=false` **497/497 (56 suites, +1 new)** — new spec covers `tableSkeletonRows` length (20) + loading computeds; store mocks gained `loading`. `ng build` exit 0. Live: after reload rows carry `animationName: tableRowFadeIn` ✅; terpene tab renders 38 rows with fade ✅; tab switches stay cached (no emptiness) ✅. The transient skeleton window itself wasn't capturable live (2fps preview + instant local API) — covered by template logic + tests.
+
+**Files touched (uncommitted):** `frontend/src/app/features/settings/strain-hunter-settings/{ts,html,css,spec}`, `frontend/src/app/assets/styles/_animations.css`. No architecture-diagram change.
+
+## 2026-08-17 Session (ag) — ✅ DONE: css-conventions + css-deduplicate pass on session CSS
+
+**User:** rewrote the tablist rule in nested form (`.p-tabs { .p-tablist-nav-button { &.p-tablist-prev-button, &.p-tablist-next-button { transform: scale(-1); } } }`) and asked to process the session's CSS per the `css-conventions` + `css-deduplicate` skills.
+
+**Audit results:**
+- **css-conventions:** the user's nested `.p-tabs` form is the compliant pattern (mandatory nesting, variants first) — kept as-is; `_primeng-overrides.css` already follows nesting consistently (pre-existing flat top-level overrides untouched — surgical-changes rule).
+- **css-deduplicate (strain-hunter-settings.css vs globals):** the three `@keyframes` I'd added in the component (`gridOpen`, `fieldFlash`, `fieldFlashFull`) were moved to their canonical home `_animations.css` (new sections "Grid rows" + "Field change flash") — component rules still reference them by name. `KEEP`: `.detail-item` (global one in `_layout.css` is nested in `.metric-details`, typography-only — not a match), `.detail-value .badge` (intentional contextual sizing), `.expand-anim`/`.enrichment-anim`+`.closing` (component-structural wrappers), `.detail-item.field-flash` class rules (component-scoped bindings).
+- **Bonus finding:** PrimeNG base ships `.p-tablist-prev-button:dir(rtl), .p-tablist-next-button:dir(rtl) { transform: rotate(180deg) }` — but live DOM showed `transform: none` pre-fix (rule not matching in practice); our `.p-tabs` rule (0,3,0) also beats it (0,2,0) whenever it does match.
+
+**Verification:** `ng build` exit 0 (CSS-only). Live: `gridOpen`/`fieldFlash`/`fieldFlashFull` each exactly 1× in loaded stylesheets (global); scoped `.field-flash` rules still resolve; tablist button computed `matrix(-1,0,0,-1,0,0)`.
+
+**Files touched (uncommitted):** `frontend/src/app/assets/styles/_animations.css`, `_primeng-overrides.css`, `frontend/src/app/features/settings/strain-hunter-settings/strain-hunter-settings.css`. No architecture-diagram change.
+
+## 2026-08-17 Session (ag) — ✅ FIXED: tablist scroll nav chevrons (prev/next) wrong direction in RTL
+
+**User request:** the `p-tablist-prev-button` / `p-tablist-next-button` chevrons inherit the page `direction: rtl` and point the wrong way — mirror them with `transform: scale(-1)` in `_primeng-overrides.css`.
+
+**Fix:** added a `/* ── Tabs ── */` section in `frontend/src/app/assets/styles/_primeng-overrides.css`:
+```css
+.p-ripple.p-tablist-nav-button.p-tablist-prev-button,
+.p-ripple.p-tablist-nav-button.p-tablist-next-button {
+  transform: scale(-1);
+}
+```
+No `!important` needed — live check confirmed PrimeNG base leaves `transform: none` on these buttons.
+
+**Verification:** `ng build` exit 0 (CSS-only). Live (dev server hot-reload): next-button computed `transform: matrix(-1, 0, 0, -1, 0, 0)` = scale(-1) ✅.
+
+**Files touched (uncommitted):** `frontend/src/app/assets/styles/_primeng-overrides.css`. No architecture-diagram change.
+
+## 2026-08-17 Session (ag) — ✅ DONE: full UX pass on enrichment flow — height animations (enter/exit), field-flash on save, spinner states
+
+**User request (video-agent analysis of the live flow):** (1) opening/closing the LLM panel caused abrupt layout shifts; (2) on Save/Discard the panel vanished instantly (exit animation perceived as missing); (3) no visual feedback on which fields actually changed in the original card; (4) subtle spinner on save/regenerate without layout shifts.
+
+**Implemented (frontend, `strain-hunter-settings`):**
+1. **Smooth expand/collapse (rows + panel)** — new wrappers `.expand-anim`/`.enrichment-anim` (CSS grid, `grid-template-rows: 1fr`, `@keyframes gridOpen` 0fr→1fr 0.3s ease-in-out) around the expansion-row content and the LLM panel, with inner `.expand-anim-inner`/`.enrichment-anim-inner` (`overflow: hidden; min-height: 0`). Enter = fresh insertion plays the keyframe; exit = `.closing` class toggles `grid-template-rows: 0fr` with `transition: grid-template-rows 0.3s` — no more layout jump. `prefers-reduced-motion` disables both.
+2. **Row collapse is now animated** — `toggleGenetics`/`toggleTerpene` collapse via a new closing state (`closingGeneticsRows`/`closingTerpeneRows` sets): row stays in DOM 300ms with `.closing`, then removed. Guarded by `isCompact()` (compact layout keeps rows always-expanded, as before).
+3. **Field-change flash on Save** — `saveEnrichedGenetics`/`saveEnrichedTerpene` diff old vs. enriched values (type/origin/parent1/parent2/thcRange/terpenes/effects/description; terpene: scent/effects/description) → `flashGenetics`/`flashTerpenes` maps → `.field-flash` class (green `--color-success` background pulse, 0.6s, separate keyframe for `.detail-full`) on the changed fields only, then cleared.
+4. **Spinner feedback** — Save/Discard buttons show `ph-spinner ph-spin` while the card is closing (disabled state already existed); Regenerate spinner already existed.
+
+**Verification:** frontend `npx ng test --watch=false` **496/496 (56 suites, +3 new)** — new specs: row collapse with animation delay (genetics+terpene, fake timers) and field-flash changed-fields-only then clear. `ng build` exit 0 (pre-existing strain-hunter.css budget warning only).
+
+**Live verification notes (preview, ~2fps throttle — animations not visually measurable there, but logic verified):** panel enter class/`gridOpen` applied on insertion; on Save the panel stays in DOM with `.closing` for ~300ms then removed; flash showed exactly the 5 changed fields (הורה 2/THC/טרפנים/אפקטים/תיאור) for ~600ms then cleared; row-collapse live test inconclusive only because the preview viewport (686px) is compact mode (rows always expanded — by design).
+
+**Files touched (uncommitted):** `frontend/src/app/features/settings/strain-hunter-settings/strain-hunter-settings.ts` (+spec), `.html`, `.css`. No architecture-diagram change (component-level UX only).
+
+## 2026-08-17 Session (ag) — ✅ ADDED: animated exit for enrichment cards (Save/Discard) in strain-hunter-settings
+
+**User report:** when saving a card after Regenerate, the layout jumped and the card vanished instantly — wanted a smooth exit animation.
+
+**Fix (frontend, strain-hunter-settings):**
+- The "תוצאות LLM" panel already had an entry animation (`slide-right`); added the global `.slide-out-right` exit animation (0.3s, from `_animations.css`) via a new closing state: `closingGenetics`/`closingTerpenes` signal sets + `isGeneticsClosing`/`isTerpeneClosing` helpers.
+- `saveEnrichedGenetics`/`saveEnrichedTerpene`/`discardEnrichedGenetics`/`discardEnrichedTerpene` now mark the card as closing (animation plays, buttons disabled) and remove it from the preview map only after `ENRICH_EXIT_MS = 300` — no more instant vanish/layout jump.
+- Save still fires the store update immediately (async PUT + reload happens during the exit animation).
+- Applied to both genetics and terpene panels (identical pattern).
+- New spec: card stays visible during the animation (closing=true, still in map) and is removed after 300ms (fake timers).
+
+**Verification:** frontend `npx ng test --watch=false` **493/493 (56 suites)** · `ng build` exit 0 (pre-existing strain-hunter.css budget warning only). No architecture-diagram change (component-level UX).
+
+**Files touched:** `frontend/src/app/features/settings/strain-hunter-settings/strain-hunter-settings.ts` (+ spec), `.html`. Uncommitted.
+
+## 2026-08-17 Session (ag) — ✅ FIXED: genetics/terpene enrichment — web search stripped the Hebrew strain name
+
+**User report:** Regenerate on strains with missing data (origin "לא ידוע", parents "לא ידוע") returned the same data as the DB — no enrichment, no change.
+
+**Root cause (proven by live logs):**
+1. `WebSearchService.simplifyQuery` removes ALL Hebrew from queries → `"33 ספליטר cannabis..."` became `"33 cannabis..."` and `"אובמה ראנטז cannabis..."` became just `"cannabis strain genetics..."` — the strain name vanished.
+2. `getEnglishName` (hardcoded map, genetics) returned `null` for these strains → no English fallback name; terpene has LLM-based `translateToEnglish`, genetics doesn't.
+3. SearXNG then returned garbage (Wikipedia "33 (number)", The 33 movie); the relevant hit ("33 Splitter — Parents: atom splitter x gelato 33") was result #6.
+4. Only the first 3 results were passed to the LLM (`results.slice(0, 3)`) — relevant ones never made it into the context.
+5. Suspicious: Cannlytics returned IDENTICAL lab data for two different strains — likely the loose partial match in `findInCache` (`normalizedName.includes(key)`, e.g. a strain literally named "33" matching "33 ספליטר"). Not fixed — flagged.
+
+**Fix (uncommitted):**
+- `WebSearchService.search(query, preserveHebrew = false)` — new optional flag; `simplifyQuery` skips Hebrew removal when set. Default unchanged → zero impact on other callers (controller, ideas cron, etc.).
+- Genetics `searchChunk` + `enrichSingle` and Terpene `searchChunk` + `enrichSingle` now call `search(searchQuery, true)` and pass `slice(0, 8)` results (was 3).
+- New spec: Hebrew stripped by default, preserved with the flag.
+
+**Live re-test (user, 23:05):** "33 ספליטר" — Hebrew name kept in query, relevant results (Cannapedia, StrainWeaver), LLM identified parents (Gelato #33 × Atom Splitter) ✅. "אובמה ראנטז" — search still garbage (Polish Gmail pages) because `enName` null.
+
+**Follow-up fix (per user, same session):**
+1. **`enName` resolution** — added `GeneticsService.translateToEnglish(name)`: hardcoded map first, then LLM translation fallback (mirrors Terpene). Used in `enrichSingle`.
+2. **Auto-save removed** — `enrichSingle` (genetics AND terpene) no longer calls `repository.save()`; returns the enriched entity as a preview only, matching the controller docs "Does not persist — caller decides whether to save". Save/Discard in the "תוצאות LLM" panel now actually control persistence.
+- Specs updated: no-save assertions + new genetics test for LLM translation fallback.
+
+**Follow-up 2 (live logs 23:11-23:15):** translation works (אוז קוש→Oz Kush ✅, אורנג' ולווט→Orange Velvet ✅) BUT: (a) free model mistransliterated אוראוז→"Aurous" (real: Oreoz); (b) SearXNG returned multilingual garbage (Chinese pizza, Polish Gmail, French Orange telecom) for unrecognized queries; (c) even real strain results (Oreoz ×2) were drowned by the noise since only order-based slicing was used. Fixed:
+- `web-search.service.ts` — SearXNG query now sends `language: 'en'` (kills the multilingual junk app-wide).
+- `enrichSingle` (genetics + terpene) — search results ranked by relevance before slicing: strain-name tokens (EN/HE) score 2, cannabis keywords score 1, noise score 0 → top 8 are real strain pages.
+
+**Verification:** backend `npx jest --runInBand` **401/401 (43 suites)** · `nest build` exit 0.
+
+**Files touched:** `backend/src/modules/web-search/web-search.service.ts` (+ spec), `backend/src/modules/genetics/genetics.service.ts` (+ spec), `backend/src/modules/terpene/terpene.service.ts` (+ spec). No architecture-diagram change (internal service behavior only).
+
+**Open items (flagged, not fixed):** (1) Cannlytics `findInCache` loose partial matching → identical lab data for different strains; (2) batch flows (`searchChunk`/`fetchCannlyticsChunk`/`fetchDemarilyChunk`) still use the map-only English name + no relevance ranking; (3) translation model quality — gemma-4-31b-it:free mistransliterates (אוראוז→Aurous); consider a stronger model or map additions.
+
 ## 2026-08-17 Session (ag) — ✅ FIXED: llm-providers "Name" sort header — unstyled wrapper (no spacing/misaligned icon)
 
 **Root cause:** `.sortable-column-header` (the wrapper div around the "Name" `<th>` label + sort icon) had **no CSS rule anywhere in the project** (verified: not in the component CSS, `_primeng-overrides.css`, or globals) → it rendered as a plain block with label and icon flowing inline: no defined gap, icon not vertically centered — unlike `baseUrl`/`Models` headers, which get their spacing from the global `p-sortIcon { margin-inline-start: var(--space-4) }` override. User saw: no spacing between "Name" and the sort icon, icon/text misaligned, inconsistent vs `baseUrl`/`Models`.

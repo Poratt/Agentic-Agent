@@ -22,6 +22,7 @@ const DEFAULT_COLOR = '#808080';
 const UNKNOWN_LABEL = 'לא ידוע';
 const MIN_NAME_LENGTH = 2;
 const CHUNK_SIZE = 15;
+const HEBREW_REGEX = /[א-ת]/;
 
 @Injectable()
 export class GeneticsService {
@@ -288,13 +289,13 @@ export class GeneticsService {
                 const searchQuery = englishName !== name
                     ? `${englishName} (${name}) cannabis strain genetics parents origin`
                     : `${name} cannabis strain genetics parents origin`;
-                const searchResult = await this.webSearchService.search(searchQuery);
+                const searchResult = await this.webSearchService.search(searchQuery, true);
                 if (searchResult.success && searchResult.result) {
                     const parts: string[] = [];
                     if (searchResult.result.answer) {
                         parts.push(`Answer: ${searchResult.result.answer}`);
                     }
-                    for (const r of searchResult.result.results.slice(0, 3)) {
+                    for (const r of searchResult.result.results.slice(0, 8)) {
                         parts.push(`${r.title}: ${r.content}`);
                     }
                     if (parts.length > 0) {
@@ -452,10 +453,36 @@ export class GeneticsService {
         return this.geneticsRepository.save(genetics);
     }
 
+    private async translateToEnglish(name: string): Promise<string> {
+        if (!HEBREW_REGEX.test(name)) {
+            return name;
+        }
+        // קודם המפה הקשיחה (חינם), ואם אין — תרגום LLM כמו בטרפנים
+        const mapped = this.cannlyticsService.getEnglishName(name);
+        if (mapped) return mapped;
+        try {
+            const response = await this.llmClientService.generateResponse({
+                prompt: `Return ONLY the English name for this Hebrew cannabis strain name: "${name}". No explanation, just the English name.`,
+                systemContext: 'You translate Hebrew cannabis strain names to English. Return only the English name.',
+                providerOverride: 'openrouter',
+                modelOverride: 'google/gemma-4-31b-it:free',
+                maxTokens: 50,
+            });
+            const translated = response.content?.trim();
+            if (translated && !HEBREW_REGEX.test(translated)) {
+                return translated;
+            }
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.warn(`Translation failed for "${name}": ${msg}`);
+        }
+        return name;
+    }
+
     async enrichSingle(name: string): Promise<Genetics | null> {
 
         // we mush translate the name to english before searching for it. 
-        const enName = this.cannlyticsService.getEnglishName(name);
+        const enName = await this.translateToEnglish(name);
         this.logger.debug(`enName: ${enName}, name: ${name}`);
         // Try Cannlytics API first for lab data
         const cannlyticsData = await this.cannlyticsService.getStrain(enName || name);
@@ -477,7 +504,7 @@ export class GeneticsService {
         const searchQuery = enName
             ? `${enName} (${name}) cannabis strain genetics description parents origin`
             : `${name} cannabis strain genetics description parents origin`;
-        const searchResult = await this.webSearchService.search(searchQuery);
+        const searchResult = await this.webSearchService.search(searchQuery, true);
 
         let searchContext = '';
         if (searchResult.success && searchResult.result) {
@@ -485,7 +512,17 @@ export class GeneticsService {
             if (searchResult.result.answer) {
                 parts.push(`Answer: ${searchResult.result.answer}`);
             }
-            for (const r of searchResult.result.results.slice(0, 3)) {
+            // דירוג תוצאות לפי רלוונטיות: שם הזן (אנגלית/עברית) ראשון, אחר כך מילות קנאביס —
+            // כך רעש (עמודי ג'ימייל/לינקדאין וכו') לא מדלל את ההקשר שמועבר ל-LLM
+            const nameTokens = [enName, name].filter(Boolean).map(t => t.toLowerCase());
+            const cannabisKeywords = ['cannabis', 'strain', 'genetics', 'lineage', 'thc', 'terpene', 'parent', 'weed', 'kush', 'hybrid', 'indica', 'sativa'];
+            const relevance = (r: { title: string; content: string }): number => {
+                const text = `${r.title} ${r.content}`.toLowerCase();
+                if (nameTokens.some(tok => text.includes(tok))) return 2;
+                if (cannabisKeywords.some(kw => text.includes(kw))) return 1;
+                return 0;
+            };
+            for (const r of [...searchResult.result.results].sort((a, b) => relevance(b) - relevance(a)).slice(0, 8)) {
                 parts.push(`${r.title}: ${r.content}`);
             }
             searchContext = parts.join('\n');
@@ -549,7 +586,9 @@ Return JSON only:
             colorLight,
         });
 
-        return this.geneticsRepository.save(existing);
+        // תצוגה מקדימה בלבד — אין שמירה אוטומטית (הלקוח מחליט לשמור דרך Update),
+        // בהתאם לתיעוד ה-endpoint: "Does not persist — caller decides whether to save."
+        return existing;
     }
 }
 ``

@@ -246,7 +246,7 @@ describe('TerpeneService', () => {
     });
 
     describe('enrichSingle', () => {
-      it('enriches one terpene via LLM + web search and persists', async () => {
+      it('enriches one terpene via LLM + web search and returns without persisting', async () => {
         const existing = makeTerpene({ name: 'Myrcene' });
         repo.findOne.mockResolvedValue(existing);
         repo.save.mockResolvedValue(existing);
@@ -276,7 +276,7 @@ describe('TerpeneService', () => {
         expect(result).not.toBeNull();
         expect(llmClientService.generateResponse).toHaveBeenCalled();
         expect(webSearchService.search).toHaveBeenCalled();
-        expect(repo.save).toHaveBeenCalled();
+        expect(repo.save).not.toHaveBeenCalled();
       });
 
       it('returns null for unknown name', async () => {

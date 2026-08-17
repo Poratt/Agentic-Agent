@@ -54,6 +54,7 @@ describe('WebSearchService', () => {
       expect(result.result?.results).toHaveLength(2);
       expect(result.result?.results[0].title).toBe('Result 1');
       expect(result.result?.answer).toBe('Sample answer');
+      expect(httpService.get.mock.calls[0][1].params.language).toBe('en');
     });
 
     it('returns error when API call fails', async () => {
@@ -80,6 +81,19 @@ describe('WebSearchService', () => {
 
       expect(result.success).toBe(false);
       expect(result.message).toContain('SEARXNG_URL');
+    });
+
+    it('strips Hebrew by default but preserves it when preserveHebrew is set', async () => {
+      httpService.get.mockReturnValueOnce(of(mockSearchResponse));
+
+      await service.search('אובמה ראנטז cannabis strain genetics parents origin');
+      let call = httpService.get.mock.calls[0];
+      expect(call[1].params.q).not.toContain('ראנטז');
+
+      httpService.get.mockReturnValueOnce(of(mockSearchResponse));
+      await service.search('אובמה ראנטז cannabis strain genetics parents origin', true);
+      call = httpService.get.mock.calls[1];
+      expect(call[1].params.q).toContain('אובמה ראנטז');
     });
   });
 
