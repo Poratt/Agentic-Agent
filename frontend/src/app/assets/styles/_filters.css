@@ -167,6 +167,7 @@
   }
 
   .chip-text {
+    min-width: var(--space-34);
     max-width: 160px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -286,23 +287,57 @@
     min-width: 200px;
     max-width: 400px;
     padding: 0 var(--space-8) 0 var(--space-4);
+    overflow: visible;
+    direction: ltr;
 
     .p-slider.p-slider-horizontal {
-      height: 1px;
-      margin-block-start: 2px;
+      /* Tall enough to contain the 14px handle so the full circle renders
+         (base style would use dt('slider.handle.height') here). */
+      height: 14px;
+
+      .p-slider-track {
+        /* Thin track; flex centers it vertically inside the 14px slider. */
+        height: 1px;
+      }
 
       .p-slider-handle {
         height: 14px;
         width: 14px;
-        margin-block-start: -7px;
         border: 1px solid var(--color-primary);
         background: var(--color-input-bg);
-        border-radius: 50%;
+        border-radius: var(--radius-xs);
         box-shadow: 0 0 6px var(--color-primary-glow);
         cursor: grab;
+        transition:
+          border-color var(--transition-colors),
+          background var(--transition-colors),
+          box-shadow var(--transition-colors),
+          transform var(--transition-fast);
 
         &::before {
           display: none;
+        }
+      }
+
+      .p-slider-range {
+        transition: background var(--transition-colors);
+      }
+    }
+
+    &:hover {
+      .p-slider-range {
+        background: var(--primary-400) !important;
+      }
+
+      .p-slider-handle {
+        border: 1px solid var(--primary-400) !important;
+        background: var(--color-input-bg);
+        border-radius: var(--radius-xs);
+        box-shadow: 0 0 8px var(--color-primary-glow);
+
+        &:active {
+          border-color: var(--primary-600) !important;
+          transform: scale(0.94);
         }
       }
     }
@@ -334,6 +369,11 @@
 
   .chip {
     animation: none;
+  }
+
+  .p-slider-handle,
+  .p-slider-range {
+    transition: none;
   }
 }
 

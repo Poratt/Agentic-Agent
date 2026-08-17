@@ -83,6 +83,7 @@
   --space-25: 50px;
   --space-26: 52px;
   --space-32: 64px;
+  --space-34: 68px;
 
   /* Border opacity for panel cells (audit 1.6) */
   --expand-opacity: 2%;
@@ -162,8 +163,10 @@
   --color-primary: #22D3EE;
   --color-primary-hover: #67E8F9;
   --color-primary-glow: rgba(34, 211, 238, 0.20);
-  --primary-30: var(--color-primary-glow-bg); /* deprecated alias — use --color-primary-glow-bg */
-  --primary-300: var(--color-primary-glow); /* deprecated alias — use --color-primary-glow */
+  --primary-30: var(--color-primary-glow-bg);
+  /* deprecated alias — use --color-primary-glow-bg */
+  --primary-300: var(--color-primary-glow);
+  /* deprecated alias — use --color-primary-glow */
   --primary-400: #67E8F9;
   --primary-600: #0891B2;
 
@@ -238,8 +241,10 @@
   --color-primary: #0369A1;
   --color-primary-hover: #075985;
   --color-primary-glow: rgba(3, 105, 161, 0.14);
-  --primary-30: var(--color-primary-glow-bg); /* deprecated alias — use --color-primary-glow-bg */
-  --primary-300: var(--color-primary-glow); /* deprecated alias — use --color-primary-glow */
+  --primary-30: var(--color-primary-glow-bg);
+  /* deprecated alias — use --color-primary-glow-bg */
+  --primary-300: var(--color-primary-glow);
+  /* deprecated alias — use --color-primary-glow */
   --primary-400: #0EA5E9;
   --primary-600: #075985;
 
