@@ -80,18 +80,23 @@ describe('assertSafeUrl', () => {
     });
 
     await expect(assertSafeUrl('https://example.com')).resolves.toBeUndefined();
+  });  it('should bypass all checks for localhost in dev mode when allowDevLocalhost is set (provider URLs)', async () => {
+    process.env.NODE_ENV = 'development';
+    await expect(assertSafeUrl('http://localhost:3000/api', { allowDevLocalhost: true })).resolves.toBeUndefined();
+    await expect(assertSafeUrl('http://127.0.0.1:3000/api', { allowDevLocalhost: true })).resolves.toBeUndefined();
   });
 
-  it('should bypass all checks for localhost in dev mode', async () => {
+  it('should bypass all checks for 127.0.0.1 in dev mode when allowDevLocalhost is set (provider URLs)', async () => {
     process.env.NODE_ENV = 'development';
-
-    await expect(assertSafeUrl('http://localhost:3000/api')).resolves.toBeUndefined();
-    await expect(assertSafeUrl('http://127.0.0.1:3000/api')).resolves.toBeUndefined();
+    await expect(assertSafeUrl('http://127.0.0.1:8080', { allowDevLocalhost: true })).resolves.toBeUndefined();
   });
 
-  it('should bypass all checks for 127.0.0.1 in dev mode', async () => {
+  it('should NOT allow localhost in dev mode by default (user-supplied URLs stay strict)', async () => {
     process.env.NODE_ENV = 'development';
-
-    await expect(assertSafeUrl('http://127.0.0.1:8080')).resolves.toBeUndefined();
+    dns.lookup.mockImplementation((_hostname: string, cb: (err: Error | null, ip: string) => void) => {
+      cb(null, '127.0.0.1');
+    });
+    await expect(assertSafeUrl('http://localhost:3000/api')).rejects.toThrow(SsrfError);
+    await expect(assertSafeUrl('https://127.0.0.1/api')).rejects.toThrow(SsrfError);
   });
 });

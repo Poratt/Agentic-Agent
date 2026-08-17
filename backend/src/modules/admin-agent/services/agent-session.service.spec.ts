@@ -13,6 +13,12 @@ function mockRepo(overrides: Record<string, any> = {}) {
     create: jest.fn((args) => args),
     save: jest.fn((args) => Promise.resolve({ id: 1, ...args })),
     delete: jest.fn().mockResolvedValue(undefined),
+    createQueryBuilder: jest.fn(() => ({
+      update: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      execute: jest.fn().mockResolvedValue(undefined),
+    })),
     ...overrides,
   };
 }

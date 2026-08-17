@@ -1,4 +1,19 @@
 # Documentation Handoff
+## 2026-08-17 Session (aa) — 🎉 BACKEND 399/399 GREEN — 8 pre-existing failures resolved
+
+**What was done (3 suites + 1 real security hardening):**
+1. `swagger-tools.parser.spec` (1) — stale tool-count tolerance [66,68] vs real spec (75 tools → 73 after denylist) → band updated to [71,75] with comment. **11/11 now genuinely green** (the manager's gate from the decorator task).
+2. `agent-session.service.spec` (3) — `saveMessage` gained a `createQueryBuilder().update(ChatSession)...execute()` updatedAt touch; the mockRepo lacked `createQueryBuilder` → added chained mock. Mock-only, prod code untouched.
+3. `llm-client.service.spec` (4) — **REAL BUG found & fixed (SSRF hardening):** `assertSafeUrl` had `if (isDev && isLocalhost) return` — fail-open for localhost/127.0.0.1/0.0.0.0 in dev (NODE_ENV≠production), which the C3 tests (dc1d909) assert must be blocked. History: 82d9baa added dev-allow → 021224b reverted → 31eadd9 re-added (breaking C3). Fix: dev-allow is now OPT-IN (`opts.allowDevLocalhost`), passed only by the two provider-baseUrl TOCTOU call sites (OmniRoute at localhost in dev); `downloadBuffer` (user-supplied sourceVideoUrl) stays strict in ALL environments. The DNS mock in the spec also fixed: loopback hostnames/literals resolve to 127.0.0.1 like real dns.lookup.
+
+**Verification:** targeted 44/44 (swagger-parser, agent-session, llm-client, ssrf-guard) · full `--runInBand` **399/399 (43/43 suites, 0 failed)** · tsc exit 0 · build exit 0 · backend restarted with hardened guard — C5 boot assertion ✅ live · mojibake clean · `.claude`/`css-nesting-check` untouched.
+
+**Files touched:** 2 prod (`ssrf-guard.util.ts`, `llm-client.service.ts`) + 4 specs. No architecture-diagram change (behavioral hardening of an existing guard).
+
+**Note for future sessions:** the 8-failure baseline is now ZERO — full backend suite is the acceptance bar. The revert-dance history (82d9baa → 021224b → 31eadd9) on the dev-localhost allow is resolved by the opt-in flag; do NOT reintroduce a blanket dev-allow.
+
+**Next exact step (backlog):** SearXNG `outgoing.proxies` decision · seeds inverted boundary · `tsconfig.spec.new.json` doc conflict reconciliation.
+
 ## 2026-08-17 Session (z) — ✅ FIXED: login/register submit button hit-target (actionability)
 
 **Root cause (live DOM evidence, not hypothesis):** the earlier "PrimeNG overlay blocks login button" theory was WRONG. `elementFromPoint` at the button center with an empty form returned the FORM, not the button. Chain: `_buttons.css:48-51` sets `&:disabled { pointer-events: none }` + the submit button was bound `[disabled]="form.invalid || loading"` → empty form = disabled = `pointer-events:none` = automation hit-target intercepted (Playwright requires force-click). The p-dialog (ConfirmDialog) was measured 0×0 — not a blocker. Verified live: valid form → button enabled → hit = BUTTON.

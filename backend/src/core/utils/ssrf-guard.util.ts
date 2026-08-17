@@ -24,7 +24,10 @@ const BLOCKED_RANGES = new Set(['private', 'linkLocal', 'loopback', 'unspecified
  * 1. DTO validation (class-validator decorator) — at record-creation time
  * 2. Runtime validation (llm-client.service.ts) — at fetch time (TOCTOU defense)
  */
-export async function assertSafeUrl(url: string): Promise<void> {
+export async function assertSafeUrl(
+  url: string,
+  opts: { allowDevLocalhost?: boolean } = {},
+): Promise<void> {
   // 1. Parse URL
   let parsed: URL;
   try {
@@ -38,9 +41,12 @@ export async function assertSafeUrl(url: string): Promise<void> {
   const isDev = process.env.NODE_ENV !== 'production';
   const isLocalhost = LOCALHOST_HOSTNAMES.has(hostname);
 
-  // Allow HTTP + localhost in development for local services (OmniRoute, etc.)
-  if (isDev && isLocalhost) {
-    return; // Skip all checks for localhost in dev
+  // Allow HTTP + localhost in development ONLY for internal provider baseUrls
+  // (OmniRoute etc.) — callers must opt in explicitly. User-supplied download
+  // URLs (downloadBuffer) stay strict even in dev: a dev machine often hosts
+  // sensitive local services, and blocking loopback there is still required.
+  if (opts.allowDevLocalhost && isDev && isLocalhost) {
+    return; // Skip all checks for localhost in dev (provider URLs only)
   }
 
   if (scheme !== 'https') {

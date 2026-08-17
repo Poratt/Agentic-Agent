@@ -217,7 +217,7 @@ export class LlmClientService {
 
     // TOCTOU defense: validate baseUrl at call time (DNS may have changed since record creation)
     try {
-      await assertSafeUrl(dbProvider.baseUrl);
+      await assertSafeUrl(dbProvider.baseUrl, { allowDevLocalhost: true });
     } catch (e) {
       if (e instanceof SsrfError) {
         this.logger.warn(`SSRF blocked for provider ${dbProvider.key}: ${e.message}`);
@@ -301,7 +301,7 @@ export class LlmClientService {
 
     // TOCTOU defense: validate baseUrl at call time
     try {
-      await assertSafeUrl(dbProvider.baseUrl);
+      await assertSafeUrl(dbProvider.baseUrl, { allowDevLocalhost: true });
     } catch (e) {
       if (e instanceof SsrfError) {
         this.logger.warn(`SSRF blocked for provider ${dbProvider.key}: ${e.message}`);

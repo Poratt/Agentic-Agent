@@ -11,6 +11,13 @@ jest.mock('dns', () => ({
       cb(null, hostname);
       return;
     }
+    // Loopback hostnames/literals resolve to the loopback address, mirroring
+    // real dns.lookup behavior (dns.lookup('127.0.0.1') -> '127.0.0.1',
+    // dns.lookup('localhost') -> '127.0.0.1').
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' || hostname === '::1') {
+      cb(null, '127.0.0.1');
+      return;
+    }
     cb(null, '93.184.216.34'); // public IP
   }),
 }));

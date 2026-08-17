@@ -2,6 +2,14 @@
 
 Last updated: 2026-08-17
 
+## 2026-08-17 Session (aa) — 🎉 DONE: backend 399/399 — historical debt CLOSED
+
+- **DONE:** 8 pre-existing failures fixed across swagger-parser (1, stale tolerance band), agent-session (3, missing createQueryBuilder mock), llm-client (4, **real SSRF hardening** — dev-localhost allow is now opt-in for provider baseUrls only; downloadBuffer strict everywhere; DNS mock fixed to resolve loopback like real dns.lookup).
+- **Verified:** full `--runInBand` **399/399, 43/43 suites** · tsc 0 · build 0 · backend restarted, C5 ✅ live · mojibake clean.
+- **Baseline note:** the "8 pre-existing" framing is GONE — full suite is now the bar.
+- **Next (backlog):** SearXNG proxies · seeds boundary · tsconfig.spec.new.json doc conflict.
+
+
 ## 2026-08-17 Session (z) — ✅ DONE: login/register submit hit-target FIXED
 
 - **Root cause (live):** `button:disabled { pointer-events:none }` + `[disabled]="form.invalid||loading"` → empty form = button not the hit target (elementFromPoint = FORM). Overlay theory disproven (p-dialog 0×0).

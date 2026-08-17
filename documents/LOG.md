@@ -1,5 +1,10 @@
 # Documentation Change Log
 
+## 2026-08-17 W6 — Backend 399/399: pre-existing failures + SSRF dev-allow hardening
+- **Architectural decision — dev-localhost bypass is opt-in, not default:** `assertSafeUrl` had `if (isDev && isLocalhost) return` (fail-open in dev), introduced by 82d9baa, reverted by 021224b, re-added by 31eadd9 — which silently broke the C3 SSRF tests (dc1d909). The fix makes the bypass explicit: `assertSafeUrl(url, { allowDevLocalhost: true })` is passed ONLY by the provider-baseUrl TOCTOU call sites (OmniRoute runs on localhost in dev); `downloadBuffer` (user-supplied sourceVideoUrl) is strict in every environment — a dev machine often hosts sensitive local services, and a video-extension endpoint must never fetch them. Do not reintroduce a blanket dev-allow.
+- **Test-hygiene lesson:** stale tolerance bands (swagger-parser [66,68] vs real 75-tool spec) and missing mock methods (agent-session createQueryBuilder) were the other 4 failures — spec updates only, prod untouched.
+- **No architecture diagram change** — behavioral hardening of an existing guard; same module boundaries.
+
 ## 2026-08-17 W5 — Login submit hit-target fix (disabled + pointer-events:none)
 - **Architectural decision — never disable form submit on invalid:** the earlier overlay theory for the login-button actionability failure was disproven live (`elementFromPoint` showed the FORM as hit target; the ConfirmDialog measured 0×0). Real chain: global `&:disabled { pointer-events: none }` (`_buttons.css:48`) + `[disabled]="form.invalid || loading"` → empty form → button not a hit target at all → automation needs force-click. Fix: drop invalid from the disabled binding (keep loading-disabled), guard in `onSubmit` with `markAllAsTouched()` so an empty-form click surfaces the validation errors. Register fixed identically (sibling). This also matches a11y best practice: disabled buttons give no feedback.
 - **No architecture diagram change** — component-level behavior only.
