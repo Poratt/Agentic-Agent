@@ -89,7 +89,7 @@ Last updated: 2026-08-17
 ## 2026-08-17 Session (ac) — ✅ DONE: seeds relocated — core boundary inversion resolved
 
 - **DONE:** 4 seeds moved from `core/seeds/` to their feature modules (`modules/{users,terpene,genetics,llm-provider}/seeds/`), `core/seeds/` deleted, main.ts imports updated (+ removed 2 dead entity imports). 100% git renames — only relative import lines changed.
-- **Over-export sweep:** nothing left — audit's remaining items were decorator relocation (done, session y), seeds (done now), and `tsconfig.spec.new.json` (RETRACTED — active vitest config per LOG A8).
+- **Over-export sweep:** nothing left — audit's remaining items were decorator relocation (done, session y), seeds (done now), and `tsconfig.spec.new.json` (the A8 "RETRACTED — active vitest config" claim was a misdiagnosis: vitest runs via `vitest.config.ts` + `tsconfig.spec.json`; the `spec.new` file was dead and was removed 2026-08-18).
 - **Verified:** backend tsc 0 · **399/399** · build 0 · live boot C5 ✅ + seeds idempotent (no errors vs existing DB) · frontend tsc app 0 · mojibake clean.
 - **Next (backlog):** SearXNG proxies · tsconfig.spec.new.json *docs* reconciliation.
 
@@ -146,9 +146,8 @@ Last updated: 2026-08-17
 
 
 ## Found during audit, NOT fixed
-- **Mojibake:** `frontend/src/app/features/chat/chat/chat.ts:593` — `'הבקשה פגה hoặc כבר טופלה. נסה שוב.'` ("hoặc" = Vietnamese, should be "או"). User-visible 404 error in confirmPendingAction.
+- **RESOLVED (2026-08-18):** Mojibake in `chat.ts:593` — fixed in `f886906` ("hoặc" → "או"). `frontend/tsconfig.spec.new.json` — confirmed dead against builder source (`@angular/build:unit-test` defaults to `tsconfig.spec.json`, zero references to `spec.new` anywhere) and **removed**. `RequiresConfirmation` decorator — relocated to `core/decorators/` (session y). 17 ❌ non-conform endpoints — all wrapped in ServiceResultContainer (sessions w-x, audit fully green).
 - SearXNG pool: google cse suspended 08-17 (ddg recovered) — proxy proposal pending user decision.
-- `frontend/tsconfig.spec.new.json` dead config; `RequiresConfirmation` decorator misplaced (admin-agent); 17 ❌ non-conform endpoints (see audit-service-result-container.md).
 
 
 ## 2026-08-17 Session (v) — Regression sweep + audits — DONE (findings only, no fixes)

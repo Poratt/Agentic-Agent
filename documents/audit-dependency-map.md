@@ -59,10 +59,10 @@ Every detected cycle dissolves into type-level imports (entities, DTOs, decorato
 
 ## 5. Cross-repo finding (from stage 1)
 
-- `frontend/tsconfig.spec.new.json` — tracked in git, `vitest/globals` types, excludes ~10 spec dirs. Project runs jest (via `ng test`), not vitest. **Dead config candidate** — likely leftover from an abandoned vitest experiment.
+- `frontend/tsconfig.spec.new.json` — tracked in git, `vitest/globals` types, excludes ~10 spec dirs. **CONFIRMED DEAD (2026-08-18)** — tests run on vitest via `@angular/build:unit-test` (`frontend/angular.json` → builder, no explicit `tsConfig` → builder defaults to `tsconfig.spec.json` per `node_modules/@angular/build/src/builders/unit-test/options.js`; external `vitest.config.ts` is loaded as base config). Zero references to `spec.new` anywhere in the repo. **Removed 2026-08-18.**
 
 ## 6. Summary
 
 - Runtime health: clean — no DI cycles, no orphan modules, no orphan services.
 - Hygiene debt: 1 dead file, ~16 over-exported/dead symbols, 1 dead tsconfig, 1 misplaced decorator, seeds reaching out of core.
-- **Cleanup applied 2026-08-17 (user-approved):** `math.utils.ts` deleted; `getUserRoleData`/`UserRoleOptions`/`UserRoleDescription` removed from backend enum; 12 internal symbols un-exported (color-contrast×9, MCP_SERVERS, SYSTEM_CONTEXT_BASE, MAX_LLM_HISTORY_MESSAGES). **Not applied** (left for later): `tsconfig.spec.new.json` removal, decorator relocation to core/decorators/, seeds relocation.
+- **Cleanup applied 2026-08-17 (user-approved):** `math.utils.ts` deleted; `getUserRoleData`/`UserRoleOptions`/`UserRoleDescription` removed from backend enum; 12 internal symbols un-exported (color-contrast×9, MCP_SERVERS, SYSTEM_CONTEXT_BASE, MAX_LLM_HISTORY_MESSAGES). **Also done since:** decorator relocated to `core/decorators/` (session y), seeds relocated to feature modules (session ac), `tsconfig.spec.new.json` removed 2026-08-18 (verified dead — see §5). **Nothing left.**
