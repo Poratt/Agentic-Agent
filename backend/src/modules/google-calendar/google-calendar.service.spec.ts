@@ -88,6 +88,44 @@ describe('GoogleCalendarService — C4 security', () => {
 
       expect(a.state).not.toBe(b.state);
     });
+
+    it('regression: repeated auth calls reuse the fresh state — the first flow still completes', async () => {
+      const { service, repo } = makeService();
+      // auth call #1: user has no row yet → a new state is issued.
+      repo.findOneBy.mockResolvedValue(null);
+      const first = await service.getAuthUrl(7);
+      expect(first.state).toMatch(/^[0-9a-f]{64}$/);
+
+      // auth call #2 while the state is still fresh: same state, nothing written.
+      // (Before the fix this overwrote the row and killed the first flow.)
+      repo.findOneBy.mockResolvedValue({
+        userId: 7,
+        state: first.state,
+        stateExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        refreshToken: null,
+      });
+      const second = await service.getAuthUrl(7);
+      expect(second.state).toBe(first.state);
+      expect(repo.save).toHaveBeenCalledTimes(1); // only the initial creation
+
+      // The callback for the FIRST flow must still validate and complete.
+      const result = await service.handleCallback('google-code', first.state, first.state);
+      expect(result).toEqual({ success: true, message: expect.any(String) });
+    });
+
+    it('regenerates the state when the stored one has expired', async () => {
+      const { service, repo } = makeService();
+      repo.findOneBy.mockResolvedValue({
+        userId: 7,
+        state: 'expired-state',
+        stateExpiresAt: new Date(Date.now() - 1000),
+      });
+
+      const result = await service.getAuthUrl(7);
+
+      expect(result.state).not.toBe('expired-state');
+      expect(repo.save).toHaveBeenCalled();
+    });
   });
 
   describe('handleCallback — CSRF state validation', () => {

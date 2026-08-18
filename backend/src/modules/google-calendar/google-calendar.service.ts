@@ -39,10 +39,25 @@ export class GoogleCalendarService {
    * httpOnly cookie so /calendar/callback can validate it (CSRF protection).
    */
   async getAuthUrl(userId: number): Promise<{ url: string; state: string }> {
-    const state = randomBytes(32).toString('hex');
-    const stateExpiresAt = new Date(Date.now() + STATE_TTL_MS);
-
     let row = await this.tokenRepo.findOneBy({ userId });
+    const now = Date.now();
+
+    // Idempotent: reuse a still-valid state instead of overwriting it. With the
+    // old overwrite behavior, a second /calendar/auth call (e.g. an agent retry
+    // loop) destroyed the state of the flow the user already started, so the
+    // callback failed with "OAuth state is invalid or expired". Repeated calls
+    // now return the same consent URL until the state is used or expires.
+    // ponytail: check-then-write — two truly simultaneous auth calls for the
+    // same user could both observe the stale state and both write. Single-user
+    // tool with ~zero concurrency; revisit with a per-user row lock or
+    // per-flow states if it ever matters.
+    if (row?.state && row.stateExpiresAt && row.stateExpiresAt.getTime() > now) {
+      return { url: this.buildAuthUrl(row.state), state: row.state };
+    }
+
+    const state = randomBytes(32).toString('hex');
+    const stateExpiresAt = new Date(now + STATE_TTL_MS);
+
     if (!row) {
       row = this.tokenRepo.create({ userId, state, stateExpiresAt });
     } else {
@@ -52,14 +67,16 @@ export class GoogleCalendarService {
     }
     await this.tokenRepo.save(row);
 
-    const url = this.createOAuthClient().generateAuthUrl({
+    return { url: this.buildAuthUrl(state), state };
+  }
+
+  private buildAuthUrl(state: string): string {
+    return this.createOAuthClient().generateAuthUrl({
       access_type: 'offline',
       prompt: 'consent',
       scope: ['https://www.googleapis.com/auth/calendar'],
       state,
     });
-
-    return { url, state };
   }
 
   /**
