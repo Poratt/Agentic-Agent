@@ -7,6 +7,12 @@
 - **Not committed yet (previous sessions):** backend enrichment + CLS skeleton.
 - **No architecture diagram change** — component-level request behavior only; no boundary/flow change.
 
+## 2026-08-19 AK — Google Calendar OAuth state overwrite: idempotent auth + controlled 400
+- **Decision — OAuth state must be idempotent per flow, not overwritten per call:** the state is a single per-user DB column (CSRF binding). Overwriting it on every `/calendar/auth` made agent retry loops kill the flow the user already started (empirically reproduced and then regression-tested: auth→auth→callback(first state) completes after the fix). Reuse a still-valid state until used or expired. Race noted (check-then-write) — single-user tool, revisit with row lock only if concurrency ever matters.
+- **Decision — external-call failures at trust boundaries return controlled 4xx, never 500:** the Google token exchange throwing produced an unhandled 500, contradicting the swagger contract (400). Wrap and map to BadRequestException.
+- **Debugging protocol that worked (repeat it):** reproduce live with the exact failing sequence (curl, cookie jar), add a CONTROL call to prove the failure is specific (S2 valid vs S1 killed — rules out TTL/global causes), and only then touch code. Two-commit split (fix + separate fix) kept the diff reviewable.
+- **No architecture diagram change** — service-level behavior.
+
 ## 2026-08-18 AJ2 — Inner genetics/terpenes tabs lazy: lazy store resolution via injector.get()
 - **Architectural decision — when a lazy tab lives INSIDE an eagerly-created component, the store injection must also be lazy:** deferring the terpene panel's TEMPLATE did not defer `/terpenes` — the parent component's field `inject(TerpeneStore)` creates the root singleton at construction, and Angular's `httpResource` issues its GET at resource creation. Solution: resolve TerpeneStore through a memoized `injector.get(TerpeneStore)` getter; the first read happens from the deferred template on tab activation, so the store (and its fetch) is created exactly then. `injector.get()` outside injection context is fine (explicit lookup). Pattern: `private getX() { return this.x ??= this.injector.get(X); }`.
 - **General rule:** lazy template ≠ lazy fetch when the data source is a root-injected eager resource. Defer the injection chain, not just the view.

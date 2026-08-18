@@ -1,4 +1,12 @@
 # Documentation Handoff
+## 2026-08-19 — ✅ FIXED: Google Calendar OAuth state overwrite (session 227) + 500-on-bad-code
+
+**Root cause (empirically proven, same protocol as the lazy-tabs debug):** state = single per-user column in Postgres (`google_calendar_token`, TTL 10 min in code). `getAuthUrl` overwrote `row.state` on every `/calendar/auth` — the agent's 3× retry loop killed the state of the consent URL the user already opened → callback: `findOneBy({state:S1})` = null → "OAuth state is invalid or expired". Reproduced with curl: auth→S1, auth→S2, callback(S1)→400 exact error; control callback(S2)→not-state-error (500 at token exchange). Backend uptime 23:36→23:58 excluded restart; DB persistence made restart structurally impossible anyway.
+
+**Fixes (2 commits, separate):** `dfc5777` — auth idempotent (reuse fresh state; `ponytail:` race note for check-then-write); `2d31c2e` — getToken failure → controlled 400 "Google rejected the authorization code" (was 500, matching swagger). **Live-verified on :3001 second instance (new dist):** auth→auth → S2==S1; callback(S1, fake code) → 400 new message. Tests **414/414**, tsc 0.
+
+**⚠️ NEXT STEP:** restart the :3000 backend (`node dist/main` from backend/, or however it's supervised) — it still serves the OLD dist; the fixes are built but not live. **Open follow-up (recorded, not blocking):** investigate why the agent called the auth tool 3× in one turn (orchestration symptom — maybe it didn't wait for the tool result; separate investigation).
+
 ## 2026-08-18 Session (aj) — follow-up ✅ FIXED: inner genetics/terpenes tabs also lazy (strain-hunter-settings)
 
 Applied the same pattern INSIDE strain-hunter-settings (per user): inner `<p-tabs value="0" lazy>` + terpenes panel wrapped in `<ng-template #content>`. **Critical extra step:** the template deferral alone did NOT stop `/terpenes` — the component injects `TerpeneStore` eagerly and `httpResource` fires the GET at store creation (same #17351 mechanism one level deeper). Fixed by resolving TerpeneStore **lazily** via `injector.get(TerpeneStore)` (getter + memoized instance, all 6 usages + 2 computeds routed through it) — the store is created only when the terpene tab's template first reads it.
