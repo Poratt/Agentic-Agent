@@ -82,7 +82,8 @@ export class GoogleCalendarController {
         summary: 'Get Google OAuth URL',
         summaryHe: 'מקבלים את קישור האישור של Google כדי לחבר את היומן',
         description:
-            'Returns a URL that the authenticated user must visit to grant the application access to their Google Calendar. After granting consent, Google redirects to /calendar/callback with an authorization code and state.',
+            'Returns a URL that the authenticated user must visit to grant the application access to their Google Calendar. After granting consent, Google redirects to /calendar/callback with an authorization code and state.\n\n' +
+            'Agent instructions: call this tool EXACTLY ONCE. Present the returned `url` to the user as a clickable link and then STOP — do not call this tool again, do not visit or modify the URL yourself. The user must click the link and complete the Google consent screen; the flow finishes when Google redirects back to /calendar/callback.',
     } as CustomApiOperationOptions)
     @ApiOkResponse({
         description: 'OAuth consent URL returned successfully.',

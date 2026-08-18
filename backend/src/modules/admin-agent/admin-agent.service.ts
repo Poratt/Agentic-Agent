@@ -29,6 +29,10 @@ const STEP_ICONS = {
  * when the tool fails because the underlying service isn't connected.
  */
 const SETUP_INSTRUCTIONS: Record<string, { he: string; authTool?: string }> = {
+  GoogleCalendarController_auth: {
+    he: 'הנה הקישור לחיבור Google Calendar:',
+    authTool: 'GoogleCalendarController_auth',
+  },
   GoogleCalendarController_events: {
     he: 'היומן שלך עדיין לא מחובר.',
     authTool: 'GoogleCalendarController_auth',
@@ -178,33 +182,20 @@ export class AdminAgentService implements OnModuleInit {
             `[AgentLoopBreaker] userId=${userId} sessionId=${session.id} toolName=${duplicateCall.function.name} args=${JSON.stringify(args)} — model called the same tool+args ${MAX_DUPLICATE_TOOL_CALLS + 1}+ times in one turn, breaking the loop.`,
           );
 
-          // Check if there's an auth URL from a previous tool call that can help
-          const setupInstruction = SETUP_INSTRUCTIONS[duplicateCall.function.name];
-          if (setupInstruction?.authTool) {
-            const authUrl = this.findAuthUrlInHistory(history, setupInstruction.authTool);
-            if (authUrl) {
-              // Inject context and give one more turn
-              const contextMsg = `${setupInstruction.he}\n${authUrl}\n\nאל ת尝试 שוב את הכלי שנכשל. הצג את הקישור למשתמש בלבד.`;
-              await this.agentSessionService.saveMessage(userId, session.id, 'tool', contextMsg);
-
-              const finalResponse = await this.llmService.generateResponse({
-                prompt: '',
-                systemContext: dynamicSystemContext,
-                messageHistory: trimHistoryForLlm([
-                  ...history,
-                  { role: 'user', content: contextMsg },
-                ]),
-                tools: [],
-                providerOverride: provider,
-                modelOverride: model,
-                maxTokens: 1024,
-              });
-
-              if (finalResponse.content) {
-                await this.agentSessionService.saveMessage(userId, session.id, 'assistant', finalResponse.content);
-                return finalResponse.content;
-              }
-            }
+          // Auth/setup tools: rescue the flow — inject the already-obtained URL
+          // and let the model present it to the user in one final no-tools turn.
+          const rescued = await this.tryAuthUrlRescue({
+            toolName: duplicateCall.function.name,
+            history,
+            userId,
+            sessionId: session.id,
+            systemContext: dynamicSystemContext,
+            provider,
+            model,
+          });
+          if (rescued) {
+            await this.agentSessionService.saveMessage(userId, session.id, 'assistant', rescued);
+            return rescued;
           }
 
           // Fallback: generic breaker message
@@ -241,6 +232,21 @@ export class AdminAgentService implements OnModuleInit {
             const toolName = call.function.name;
             const nameCount = this.toolNameCounter.get(toolName) ?? 0;
             if (nameCount >= MAX_CALLS_PER_TOOL && !(parsedResult?.error && this.isContentPolicyViolation(parsedResult))) {
+              // Auth/setup tools: rescue the flow before giving up.
+              const rescued = await this.tryAuthUrlRescue({
+                toolName,
+                history,
+                userId,
+                sessionId: session.id,
+                systemContext: dynamicSystemContext,
+                provider,
+                model,
+              });
+              if (rescued) {
+                await this.agentSessionService.saveMessage(userId, session.id, 'assistant', rescued);
+                return rescued;
+              }
+
               this.logger.warn(
                 `[AgentLoopBreaker] userId=${userId} sessionId=${session.id} toolName=${toolName} — tool called ${nameCount} times in one turn, breaking the loop.`,
               );
@@ -348,34 +354,23 @@ export class AdminAgentService implements OnModuleInit {
             `[AgentLoopBreaker] userId=${userId} sessionId=${session.id} toolName=${duplicateCall.function.name} args=${JSON.stringify(args)} — model called the same tool+args ${MAX_DUPLICATE_TOOL_CALLS + 1}+ times in one turn, breaking the loop.`,
           );
 
-          // Check if there's an auth URL from a previous tool call that can help
-          const setupInstruction = SETUP_INSTRUCTIONS[duplicateCall.function.name];
-          if (setupInstruction?.authTool) {
-            const authUrl = this.findAuthUrlInHistory(history, setupInstruction.authTool);
-            if (authUrl) {
-              // Inject context and give one more turn
-              const contextMsg = `${setupInstruction.he}\n${authUrl}\n\nאל ת尝试 שוב את הכלי שנכשל. הצג את הקישור למשתמש בלבד.`;
-              await this.agentSessionService.saveMessage(userId, session.id, 'tool', contextMsg);
-
-              const finalResponse = await this.llmService.generateResponse({
-                prompt: '',
-                systemContext: dynamicSystemContext,
-                messageHistory: trimHistoryForLlm([
-                  ...history,
-                  { role: 'user', content: contextMsg },
-                ]),
-                tools: [],
-                providerOverride: provider,
-                modelOverride: model,
-                maxTokens: 1024,
-              });
-
-              if (finalResponse.content) {
-                await this.agentSessionService.saveMessage(userId, session.id, 'assistant', finalResponse.content);
-                yield JSON.stringify({ type: 'token', content: finalResponse.content }) + '\n';
-                return;
-              }
-            }
+          // Auth/setup tools: rescue the flow — inject the already-obtained URL
+          // and let the model present it to the user in one final no-tools turn.
+          const rescued = await this.tryAuthUrlRescue({
+            toolName: duplicateCall.function.name,
+            history,
+            userId,
+            sessionId: session.id,
+            systemContext: dynamicSystemContext,
+            provider,
+            model,
+          });
+          if (rescued) {
+            yield JSON.stringify({ type: 'token', content: rescued }) + '\n';
+            await this.agentSessionService.saveMessage(userId, session.id, 'assistant', rescued, {
+              renderSpec: collectedRenderBlocks.length > 0 ? JSON.stringify(collectedRenderBlocks) : null,
+            });
+            return;
           }
 
           // Fallback: generic breaker message
@@ -423,6 +418,24 @@ export class AdminAgentService implements OnModuleInit {
             const toolName = call.function.name;
             const nameCount = this.toolNameCounter.get(toolName) ?? 0;
             if (nameCount >= MAX_CALLS_PER_TOOL && !(parsedResult?.error && this.isContentPolicyViolation(parsedResult))) {
+              // Auth/setup tools: rescue the flow before giving up.
+              const rescued = await this.tryAuthUrlRescue({
+                toolName,
+                history,
+                userId,
+                sessionId: session.id,
+                systemContext: dynamicSystemContext,
+                provider,
+                model,
+              });
+              if (rescued) {
+                yield JSON.stringify({ type: 'token', content: rescued }) + '\n';
+                await this.agentSessionService.saveMessage(userId, session.id, 'assistant', rescued, {
+                  renderSpec: collectedRenderBlocks.length > 0 ? JSON.stringify(collectedRenderBlocks) : null,
+                });
+                return;
+              }
+
               this.logger.warn(
                 `[AgentLoopBreaker] userId=${userId} sessionId=${session.id} toolName=${toolName} — tool called ${nameCount} times in one turn, breaking the loop.`,
               );
@@ -758,6 +771,53 @@ export class AdminAgentService implements OnModuleInit {
     }
     const raw = JSON.stringify(parsedResult).toLowerCase();
     return raw.includes('content_policy_violation');
+  }
+
+  /**
+   * Loop-breaker rescue for connection/setup tools (e.g. Google Calendar auth):
+   * when the model keeps calling the same tool in one turn, inject the
+   * already-obtained URL with an explicit instruction to present it to the
+   * user, and give the model ONE final turn without tools. Returns the final
+   * message content, or null when no rescue applies.
+   */
+  private async tryAuthUrlRescue(options: {
+    toolName: string;
+    history: any[];
+    userId: number;
+    sessionId?: number;
+    systemContext: string;
+    provider?: LlmProvider;
+    model?: string;
+  }): Promise<string | null> {
+    const { toolName, history, userId, sessionId, systemContext, provider, model } = options;
+
+    const setupInstruction = SETUP_INSTRUCTIONS[toolName];
+    if (!setupInstruction?.authTool) {
+      return null;
+    }
+
+    const authUrl = this.findAuthUrlInHistory(history, setupInstruction.authTool);
+    if (!authUrl) {
+      return null;
+    }
+
+    const contextMsg = `${setupInstruction.he}\n${authUrl}\n\nאל תקרא שוב לכלי. הצג את הקישור למשתמש בלבד והמתן עד שיסיים את האישור מול Google.`;
+    await this.agentSessionService.saveMessage(userId, sessionId, 'tool', contextMsg);
+
+    const finalResponse = await this.llmService.generateResponse({
+      prompt: '',
+      systemContext,
+      messageHistory: trimHistoryForLlm([
+        ...history,
+        { role: 'user', content: contextMsg },
+      ]),
+      tools: [],
+      providerOverride: provider,
+      modelOverride: model,
+      maxTokens: 1024,
+    });
+
+    return finalResponse.content ?? null;
   }
 
   /**

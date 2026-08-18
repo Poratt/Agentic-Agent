@@ -249,4 +249,105 @@ describe('AdminAgentService.toolCallLoopBreaker', () => {
     const hebrewRange = /[֐-׿]/;
     expect(msg).toMatch(hebrewRange);
   });
+
+  it('rescues the Google Calendar auth loop — presents the URL instead of the raw breaker error', async () => {
+    const saveMessage = jest.fn().mockResolvedValue(undefined);
+    const generateResponse = jest.fn().mockResolvedValue({
+      content: 'הנה הקישור לחיבור היומן: https://accounts.google.com/o/oauth2/auth?state=abc',
+    });
+    const svc = new AdminAgentService(
+      { generateResponse } as unknown as LlmService,
+      {} as SwaggerToolsParser,
+      { saveMessage } as unknown as AgentSessionService,
+      {} as AgentToolExecutorService,
+      new RenderSpecService(),
+      { getTools: () => [], hasTool: () => false } as unknown as McpBridgeService,
+      {} as GoogleCalendarService,
+    );
+
+    const history = [
+      {
+        role: 'tool',
+        content: JSON.stringify({ url: 'https://accounts.google.com/o/oauth2/auth?state=abc' }),
+      },
+    ];
+
+    const rescued = await (svc as any).tryAuthUrlRescue({
+      toolName: 'GoogleCalendarController_auth',
+      history,
+      userId: 1,
+      sessionId: 2,
+      systemContext: 'ctx',
+    });
+
+    expect(rescued).toContain('https://accounts.google.com/o/oauth2/auth?state=abc');
+
+    // The injected context names the URL and instructs the model to present it —
+    // no CJK characters (regression: the old message contained Chinese 尝试).
+    const toolSave = saveMessage.mock.calls.find((c: any[]) => c[2] === 'tool');
+    expect(toolSave).toBeDefined();
+    const contextMsg = toolSave[3];
+    expect(contextMsg).toContain('https://accounts.google.com/o/oauth2/auth?state=abc');
+    expect(contextMsg).toMatch(/[֐-׿]/);
+    expect(contextMsg).not.toMatch(/[\u4E00-\u9FFF]/);
+
+    // Final turn: no tools, model only writes the link for the user.
+    const finalCall = generateResponse.mock.calls[0][0];
+    expect(finalCall.tools).toEqual([]);
+    expect(finalCall.messageHistory).toEqual(
+      expect.arrayContaining([expect.objectContaining({ role: 'user', content: contextMsg })]),
+    );
+  });
+
+  it('does not rescue when the looped tool has no setup instruction', async () => {
+    const saveMessage = jest.fn().mockResolvedValue(undefined);
+    const generateResponse = jest.fn().mockResolvedValue({ content: 'x' });
+    const svc = new AdminAgentService(
+      { generateResponse } as unknown as LlmService,
+      {} as SwaggerToolsParser,
+      { saveMessage } as unknown as AgentSessionService,
+      {} as AgentToolExecutorService,
+      new RenderSpecService(),
+      { getTools: () => [], hasTool: () => false } as unknown as McpBridgeService,
+      {} as GoogleCalendarService,
+    );
+
+    const rescued = await (svc as any).tryAuthUrlRescue({
+      toolName: 'WeatherController_getWeather',
+      history: [{ role: 'tool', content: JSON.stringify({ url: 'https://example.com' }) }],
+      userId: 1,
+      sessionId: 2,
+      systemContext: 'ctx',
+    });
+
+    expect(rescued).toBeNull();
+    expect(saveMessage).not.toHaveBeenCalled();
+    expect(generateResponse).not.toHaveBeenCalled();
+  });
+
+  it('does not rescue when no auth URL exists in the conversation history', async () => {
+    const saveMessage = jest.fn().mockResolvedValue(undefined);
+    const generateResponse = jest.fn().mockResolvedValue({ content: 'x' });
+    const svc = new AdminAgentService(
+      { generateResponse } as unknown as LlmService,
+      {} as SwaggerToolsParser,
+      { saveMessage } as unknown as AgentSessionService,
+      {} as AgentToolExecutorService,
+      new RenderSpecService(),
+      { getTools: () => [], hasTool: () => false } as unknown as McpBridgeService,
+      {} as GoogleCalendarService,
+    );
+
+    const rescued = await (svc as any).tryAuthUrlRescue({
+      toolName: 'GoogleCalendarController_auth',
+      history: [{ role: 'assistant', content: 'no url here' }],
+      userId: 1,
+      sessionId: 2,
+      systemContext: 'ctx',
+    });
+
+    expect(rescued).toBeNull();
+    expect(saveMessage).not.toHaveBeenCalled();
+    expect(generateResponse).not.toHaveBeenCalled();
+  });
 });

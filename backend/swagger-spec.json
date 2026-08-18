@@ -1607,7 +1607,7 @@
     },
     "/calendar/auth": {
       "get": {
-        "description": "Returns a URL that the authenticated user must visit to grant the application access to their Google Calendar. After granting consent, Google redirects to /calendar/callback with an authorization code and state.",
+        "description": "Returns a URL that the authenticated user must visit to grant the application access to their Google Calendar. After granting consent, Google redirects to /calendar/callback with an authorization code and state.\n\nAgent instructions: call this tool EXACTLY ONCE. Present the returned `url` to the user as a clickable link and then STOP — do not call this tool again, do not visit or modify the URL yourself. The user must click the link and complete the Google consent screen; the flow finishes when Google redirects back to /calendar/callback.",
         "operationId": "GoogleCalendarController_auth",
         "parameters": [],
         "responses": {
