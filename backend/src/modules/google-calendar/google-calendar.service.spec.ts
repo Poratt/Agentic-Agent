@@ -201,6 +201,20 @@ describe('GoogleCalendarService — C4 security', () => {
 
       await expect(service.handleCallback('code', 'valid-state', 'valid-state')).rejects.toThrow(BadRequestException);
     });
+
+    it('rejects with a controlled 400 when Google rejects the code (no 500)', async () => {
+      const { service, repo } = makeService();
+      repo.findOneBy.mockResolvedValue({
+        userId: 7,
+        state: 'valid-state',
+        stateExpiresAt: new Date(Date.now() + 60000),
+      });
+      mockOAuth2Instance.getToken.mockRejectedValue(new Error('invalid_grant'));
+
+      await expect(service.handleCallback('bad-code', 'valid-state', 'valid-state')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
   });
 
   describe('event operations — ownership via server-side token lookup', () => {

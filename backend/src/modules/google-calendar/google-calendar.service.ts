@@ -115,9 +115,18 @@ export class GoogleCalendarService {
     }
 
     const oauth2Client = this.createOAuthClient();
-    const { tokens } = await oauth2Client.getToken({ code });
+    let tokens: { refresh_token?: string | null } | undefined;
+    try {
+      tokens = (await oauth2Client.getToken({ code })).tokens;
+    } catch {
+      // Google rejected the code (invalid_grant, expired, replayed, ...) —
+      // surface it as a controlled 400, not a 500 (matches the swagger docs).
+      throw new BadRequestException(
+        'Google rejected the authorization code. Start the flow again via /calendar/auth',
+      );
+    }
 
-    if (!tokens.refresh_token) {
+    if (!tokens?.refresh_token) {
       throw new BadRequestException('Google did not return a refresh token. Reconnect with consent.');
     }
 
