@@ -83,10 +83,11 @@ export class GeneticsService {
 
             this.logger.log(`Searching web for genetics chunk ${chunkNumber}/${totalChunks} (${chunk.length} items)...`);
 
-            const searchResults = await this.searchChunk(chunk);
+            const englishNames = await this.resolveEnglishNames(chunk);
+            const searchResults = await this.searchChunk(chunk, englishNames);
 
             this.logger.log(`Fetching Demarily data for genetics chunk ${chunkNumber}/${totalChunks}...`);
-            const demarilyResults = await this.fetchDemarilyChunk(chunk);
+            const demarilyResults = await this.fetchDemarilyChunk(chunk, englishNames);
 
             // Merge Demarily data into search results for LLM prompt
             const enrichedSearchResults = new Map(searchResults);
@@ -170,14 +171,16 @@ export class GeneticsService {
             const chunkNumber = Math.floor(i / CHUNK_SIZE) + 1;
             const totalChunks = Math.ceil(rows.length / CHUNK_SIZE);
 
+            const englishNames = await this.resolveEnglishNames(names);
+
             this.logger.log(`[enrichMissing] Fetching Cannlytics data for chunk ${chunkNumber}/${totalChunks}...`);
-            const cannlyticsResults = await this.fetchCannlyticsChunk(names);
+            const cannlyticsResults = await this.fetchCannlyticsChunk(names, englishNames);
 
             this.logger.log(`[enrichMissing] Fetching Demarily data for chunk ${chunkNumber}/${totalChunks}...`);
-            const demarilyResults = await this.fetchDemarilyChunk(names);
+            const demarilyResults = await this.fetchDemarilyChunk(names, englishNames);
 
             this.logger.log(`[enrichMissing] Searching web for chunk ${chunkNumber}/${totalChunks} (${chunk.length} items)...`);
-            const searchResults = await this.searchChunk(names);
+            const searchResults = await this.searchChunk(names, englishNames);
 
             // Combine Cannlytics, Demarily, and web search results
             const combinedResults = new Map<string, string>();
@@ -281,11 +284,45 @@ export class GeneticsService {
         return result;
     }
 
-    private async searchChunk(names: string[]): Promise<Map<string, string>> {
+    /**
+     * מתרגם רשימת שמות לאנגלית פעם אחת לכל chunk — כך batch flows
+     * (searchChunk/fetchCannlyticsChunk/fetchDemarilyChunk) לא קוראים ל-LLM
+     * שלוש פעמים על אותו שם.
+     */
+    private async resolveEnglishNames(names: string[]): Promise<Map<string, string>> {
+        const map = new Map<string, string>();
+        for (const name of names) {
+            map.set(name, await this.translateToEnglish(name));
+        }
+        return map;
+    }
+
+    /**
+     * מדרג תוצאות חיפוש לפי רלוונטיות: שם הזן (אנגלית/עברית) קודם, אחר כך
+     * מילות קנאביס — כך רעש (עמודי ג'ימייל/לינקדאין וכו') לא מדלל את ההקשר
+     * שמועבר ל-LLM.
+     */
+    private rankSearchResults(
+        enName: string,
+        name: string,
+        results: { title: string; content: string }[],
+    ): { title: string; content: string }[] {
+        const nameTokens = [enName, name].filter(Boolean).map(t => t.toLowerCase());
+        const cannabisKeywords = ['cannabis', 'strain', 'genetics', 'lineage', 'thc', 'terpene', 'parent', 'weed', 'kush', 'hybrid', 'indica', 'sativa'];
+        const relevance = (r: { title: string; content: string }): number => {
+            const text = `${r.title} ${r.content}`.toLowerCase();
+            if (nameTokens.some(tok => text.includes(tok))) return 2;
+            if (cannabisKeywords.some(kw => text.includes(kw))) return 1;
+            return 0;
+        };
+        return [...results].sort((a, b) => relevance(b) - relevance(a)).slice(0, 8);
+    }
+
+    private async searchChunk(names: string[], englishNames?: Map<string, string>): Promise<Map<string, string>> {
         const results = new Map<string, string>();
         for (const name of names) {
             try {
-                const englishName = this.cannlyticsService.getEnglishName(name) || name;
+                const englishName = englishNames?.get(name) ?? await this.translateToEnglish(name);
                 const searchQuery = englishName !== name
                     ? `${englishName} (${name}) cannabis strain genetics parents origin`
                     : `${name} cannabis strain genetics parents origin`;
@@ -295,7 +332,7 @@ export class GeneticsService {
                     if (searchResult.result.answer) {
                         parts.push(`Answer: ${searchResult.result.answer}`);
                     }
-                    for (const r of searchResult.result.results.slice(0, 8)) {
+                    for (const r of this.rankSearchResults(englishName, name, searchResult.result.results)) {
                         parts.push(`${r.title}: ${r.content}`);
                     }
                     if (parts.length > 0) {
@@ -310,11 +347,11 @@ export class GeneticsService {
         return results;
     }
 
-    private async fetchCannlyticsChunk(names: string[]): Promise<Map<string, string>> {
+    private async fetchCannlyticsChunk(names: string[], englishNames?: Map<string, string>): Promise<Map<string, string>> {
         const results = new Map<string, string>();
         for (const name of names) {
             try {
-                const englishName = this.cannlyticsService.getEnglishName(name) || name;
+                const englishName = englishNames?.get(name) ?? await this.translateToEnglish(name);
                 const data = await this.cannlyticsService.getStrain(englishName);
                 if (data) {
                     const formatted = this.cannlyticsService.formatForEnrichment(data);
@@ -328,12 +365,12 @@ export class GeneticsService {
         return results;
     }
 
-    private async fetchDemarilyChunk(names: string[]): Promise<Map<string, string>> {
+    private async fetchDemarilyChunk(names: string[], englishNames?: Map<string, string>): Promise<Map<string, string>> {
         const results = new Map<string, string>();
         for (const name of names) {
             try {
                 // Translate Hebrew name to English for API search
-                const englishName = this.cannlyticsService.getEnglishName(name) || name;
+                const englishName = englishNames?.get(name) ?? await this.translateToEnglish(name);
                 const response = await firstValueFrom(
                     this.httpService.get(`https://budprofiles.com/api/v1/strains`, {
                         params: { q: englishName, limit: 1 },
@@ -512,17 +549,7 @@ export class GeneticsService {
             if (searchResult.result.answer) {
                 parts.push(`Answer: ${searchResult.result.answer}`);
             }
-            // דירוג תוצאות לפי רלוונטיות: שם הזן (אנגלית/עברית) ראשון, אחר כך מילות קנאביס —
-            // כך רעש (עמודי ג'ימייל/לינקדאין וכו') לא מדלל את ההקשר שמועבר ל-LLM
-            const nameTokens = [enName, name].filter(Boolean).map(t => t.toLowerCase());
-            const cannabisKeywords = ['cannabis', 'strain', 'genetics', 'lineage', 'thc', 'terpene', 'parent', 'weed', 'kush', 'hybrid', 'indica', 'sativa'];
-            const relevance = (r: { title: string; content: string }): number => {
-                const text = `${r.title} ${r.content}`.toLowerCase();
-                if (nameTokens.some(tok => text.includes(tok))) return 2;
-                if (cannabisKeywords.some(kw => text.includes(kw))) return 1;
-                return 0;
-            };
-            for (const r of [...searchResult.result.results].sort((a, b) => relevance(b) - relevance(a)).slice(0, 8)) {
+            for (const r of this.rankSearchResults(enName, name, searchResult.result.results)) {
                 parts.push(`${r.title}: ${r.content}`);
             }
             searchContext = parts.join('\n');

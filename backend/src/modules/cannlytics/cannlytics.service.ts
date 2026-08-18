@@ -26,6 +26,147 @@ interface CannlyticsListResponse {
     data: CannlyticsStrainData[];
 }
 
+const HEBREW_STRAIN_NAMES: Record<string, string> = {
+    'אורנג\' סקאנק': 'Orange Skunk',
+    'אורנג\' סקיטלז': 'Orange Skittlez',
+    'גורילה גלו': 'Gorilla Glue',
+    'בננה דדי': 'Banana Daddy',
+    'מנגו מינט': 'Mango Mint',
+    'מנדו ברת\'': 'Mendo Breath',
+    'פיור קוש': 'Pure Kush',
+    'פינק קוש': 'Pink Kush',
+    'צ\'רי קוש': 'Cherry Kush',
+    'קוש מינטס': 'Kush Mints',
+    'קוש קוקיז': 'Kush Cookies',
+    'סקיטלז': 'Zkittlez',
+    'ג\'לאטו': 'Gelato',
+    'ג\'לאטו 41': 'Gelato 41',
+    'לוגברי': 'Blueberry',
+    'בלו דרים': 'Blue Dream',
+    'סאוור דיזל': 'Sour Diesel',
+    'אינסייד ג\'וק': 'Inside Joke',
+    'אל.איי קוש קייק': 'LA Kush Cake',
+    'אליאן קוקיז': 'Alien Cookies',
+    'אמנזיה באבל': 'Amnesia Bubble',
+    'אנימל מינטס': 'Animal Mints',
+    'אנימל פייס': 'Animal Face',
+    'אנימל צונאמי': 'Animal Tsunami',
+    'אנימל קוקיז': 'Animal Cookies',
+    'אפגן סקאנك': 'Afghan Skunk',
+    'אפגן קוש': 'Afghan Kush',
+    'אפגני': 'Afghani',
+    'פלאפ ג\'קס': 'Flip Jacks',
+    'פנקייקס': 'Pancakes',
+    'פרפל אלפנט': 'Purple Elephant',
+    'פרפל פאנץ\'': 'Purple Punch',
+    'פרפל תאי': 'Purple Thai',
+    'צ\'רי ג\'אם': 'Cherry Jam',
+    'צ\'רי קוקיז': 'Cherry Cookies',
+    'קאדילק ריינבו': 'Cadillac Rainbow',
+    'קאפ ג\'אנקי': 'Cup Junkie',
+    'קוקיז אנד קרים': 'Cookies and Cream',
+    'קושר קוש': 'Kosher Kush',
+    'קליפורניה אורנג\'': 'California Orange',
+    'קנדי קוש': 'Candy Kush',
+    'קנדי ריין': 'Candy Rain',
+    'קריביאן קוקיז': 'Caribbean Cookies',
+    'קריטיקל ג\'ק': 'Critical Jack',
+    'קרים': 'Cream',
+    'קרים קייק': 'Cream Cake',
+    'קרמל צונאמי': 'Caramel Tsunami',
+    'אנאלאי': 'Amnesia Haze',
+    'סאנסט שרבט': 'Sunset Sherbet',
+    'סופר בוף': 'Super Boof',
+    'סורבה': 'Sorbet',
+    'סטארדוג גויאבה': 'Stardog Guava',
+    'סטיקי באנז': 'Sticky Buns',
+    'סטרוברי בננה': 'Strawberry Banana',
+    'סליפרי סוזן': 'Slippery Susan',
+    'סן פרננדו ואלי אוג\'י': 'San Fernando Valley OG',
+    'סנואו לוטוס': 'Snow Lotus',
+    'ספאייר אוג\'י': 'Sapphire OG',
+    'ספייס קייק': 'Space Cake',
+    'סקאנק #1': 'Skunk #1',
+    'פאסד': 'Phazed',
+    'פיור מישיגן': 'Pure Michigan',
+    'פייס אוף אוג\'י': 'Face Off OG',
+    'פייר אוג\'י': 'Fire OG',
+    'פייר קוקיז': 'Fire Cookies',
+    'פיץ\' אוז': 'Peach Oz',
+    'פיץ\' קרשנדו': 'Peach Crescendo',
+    'פלורידה אוג\'י': 'Florida OG',
+    'קוארפ': 'Cough',
+    'ריינבו שרבט': 'Rainbow Sherbet',
+    'רמו כמו': 'Runtz Mints',
+    'שוקולד דיזל': 'Chocolate Diesel',
+    'שוקולד מינט אוג\'י': 'Chocolate Mint OG',
+    'שרבאנגר': 'Sherbanger',
+    'שרבזוקה': 'Sherebuzka',
+    'ת\'ין מינט קוקיז': 'Thin Mint Cookies',
+    'טנג\'י': 'Tangie',
+    'טריאנגל קווין': 'Triangle Kush',
+    'טריאנגל קוש': 'Triangle Kush',
+    'טריפל אוג\'י': 'Triple OG',
+    'כמדוג': 'Chemdawg',
+    'ליט אוג\'י': 'Lit OG',
+    'מוטור ברת\'': 'Motor Breath',
+    'מימוזה': 'Mimosa',
+    'מקפלרי': 'Mac Flurry',
+    'מרינג': 'Meringue',
+    'סאב זירו': 'Sub Zero',
+    'סאוור דאב': 'Sour Dubb',
+    'סאוור קוש': 'Sour Kush',
+    'סוויט וואלי קוש': 'Sweet Valley Kush',
+    'ג\'וקרז': 'Jokers',
+    'ג\'ורג\'יה פאי': 'Georgia Pie',
+    'ג\'י אם או': 'GMO',
+    'ג\'לאטי': 'Gelati',
+    'ג\'לי ראנצ\'ר': 'Jelly Rancher',
+    'גויאבה': 'Guava',
+    'גויאבה ג\'לאטו': 'Guava Gelato',
+    'גורילה ברת\'': 'Gorilla Breath',
+    'גוש מינטס': 'Gush Mints',
+    'גושרס': 'Gushers',
+    'גז פרוט': 'Gas Froot',
+    'גירל סקאוט קוקיז': 'Girl Scout Cookies',
+    'גלוברי': 'Gluberry',
+    'גלוברי או ג\'י': 'Gluberry OG',
+    'גלייזד גרליק': 'Glazed Garlic',
+    'גריז מאנקי': 'Grease Monkey',
+    'גרליק ברת\'': 'Garlic Breath',
+    'גרליק ברת\' 2.0': 'Garlic Breath 2.0',
+    'גרליק סקיטלז': 'Garlic Zkittlez',
+    'גרנדדי פרפל': 'Granddaddy Purple',
+    'דה ווייט': 'The White',
+    'דו סי דוס': 'Do-Si-Dos',
+    'דו סי דוס קוקיז': 'Do-Si-Dos Cookies',
+    'דוויל דרייבר': 'Devil Driver',
+    'דולצ\'ה דה אווה': 'Dolce de Eva',
+    'דונקי באטר': 'Donkey Butter',
+    'דיזיינר ראנטז': 'Designer Runtz',
+    'הארדקור אוג\'י': 'Hardcore OG',
+    'הארדקור גושרס': 'Hardcore Gushers',
+    'הינדו קוש': 'Hindu Kush',
+    'וודינג קייק': 'Wedding Cake',
+    'וודינג קראשר': 'Wedding Crasher',
+    'וטרמלון': 'Watermelon',
+    'וטרמלון סקיטלז': 'Watermelon Zkittlez',
+    'ווייט ראנטז': 'White Runtz',
+    'ווייט ריינו': 'White Rhino',
+    'זואפ': 'Zoap',
+    'זואפינייטור': 'Zoapinator',
+    'טינה': 'Tina',
+    'אפגן סקאנק': 'Afghan Skunk',
+    '33 ספליטר': '33 Splitter',
+    'אובמה ראנטז': 'Obama Runtz',
+    'אוז קוש': 'Oz Kush',
+    'אוראוז': 'Oreoz',
+    'אורנג\' ולווט': 'Orange Velvet',
+    'אזול ראנטז': 'Azul Runtz',
+    'אטום ספליטר': 'Atom Splitter',
+    'בלוברי': 'Blueberry',
+};
+
 @Injectable()
 export class CannlyticsService implements OnModuleInit {
     private readonly logger = new Logger(CannlyticsService.name);
@@ -99,33 +240,72 @@ export class CannlyticsService implements OnModuleInit {
         }
     }
 
-    private findInCache(name: string): CannlyticsStrainData | null {
+        private findInCache(name: string): CannlyticsStrainData | null {
         const normalizedName = name.toLowerCase().trim();
-        
-        // Exact match
+        if (!normalizedName) {
+            return null;
+        }
+
+        // התאמה מדויקת קודם
         const exact = this.strainCache.get(normalizedName);
         if (exact) return exact;
 
-        // Partial match
+        // התאמה חלקית לפי טוקנים — all-or-nothing:
+        // כל טוקן של השאילתה חייב למצוא התאמה במפתח, וטוקן קצר מ-3 תווים
+        // (למשל "33") יכול להתאים רק כמילה מלאה, לא כתת-מחרוזת.
+        // כך "33 ספליטר" לא מתאמת יותר לזן שנקרא פשוט "33" — שהיה מחזיר
+        // את אותם נתוני מעבדה לזנים שונים.
+        const queryTokens = normalizedName.split(/[^a-z0-9]+/).filter(Boolean);
+        if (queryTokens.length === 0) {
+            return null;
+        }
+        // שאילתה חד-טוקנית: רק מילה מלאה, ורק לטוקן משמעותי (>= 3 תווים)
+        if (queryTokens.length === 1 && queryTokens[0].length < 3) {
+            return null;
+        }
+
+        let best: { score: number; data: CannlyticsStrainData } | null = null;
+
         for (const [key, value] of this.strainCache) {
-            if (key.includes(normalizedName) || normalizedName.includes(key)) {
-                return value;
+            const keyTokens = key.split(/[^a-z0-9]+/).filter(Boolean);
+            if (keyTokens.length === 0) continue;
+
+            let score = 0;
+            let allMatched = true;
+
+            for (const token of queryTokens) {
+                let tokenMatched = false;
+                for (const keyToken of keyTokens) {
+                    if (keyToken === token) {
+                        score += 2; // התאמת מילה מלאה
+                        tokenMatched = true;
+                        break;
+                    }
+                    if (
+                        (token.length >= 3 && keyToken.includes(token)) ||
+                        (keyToken.length >= 3 && token.includes(keyToken))
+                    ) {
+                        score += 1; // התאמת תת-מחרוזת (רק כשצד אחד משמעותי)
+                        tokenMatched = true;
+                        break;
+                    }
+                }
+                if (!tokenMatched) {
+                    allMatched = false;
+                    break;
+                }
+            }
+
+            if (!allMatched) continue;
+            // מפתח עם פחות טוקנים מיותרים = התאמה הדוקה יותר
+            score -= keyTokens.length - queryTokens.length;
+            if (!best || score > best.score) {
+                best = { score, data: value };
             }
         }
 
-        // Word match
-        const words = normalizedName.split(/\s+/);
-        for (const [key, value] of this.strainCache) {
-            const keyWords = key.split(/\s+/);
-            const matchingWords = words.filter(w => keyWords.some(kw => kw.includes(w) || w.includes(kw)));
-            if (matchingWords.length >= 2 || (words.length === 1 && matchingWords.length === 1)) {
-                return value;
-            }
-        }
-
-        return null;
+        return best?.data ?? null;
     }
-
     private async fetchByName(name: string): Promise<CannlyticsStrainData | null> {
         try {
             const encodedName = encodeURIComponent(name);
@@ -152,140 +332,7 @@ export class CannlyticsService implements OnModuleInit {
         const variations: string[] = [];
 
         // Hebrew to English mappings (comprehensive)
-        const hebrewMap: Record<string, string> = {
-            'אורנג\' סקאנק': 'Orange Skunk',
-            'אורנג\' סקיטלז': 'Orange Skittlez',
-            'גורילה גלו': 'Gorilla Glue',
-            'בננה דדי': 'Banana Daddy',
-            'מנגו מינט': 'Mango Mint',
-            'מנדו ברת\'': 'Mendo Breath',
-            'פיור קוש': 'Pure Kush',
-            'פינק קוש': 'Pink Kush',
-            'צ\'רי קוש': 'Cherry Kush',
-            'קוש מינטס': 'Kush Mints',
-            'קוש קוקיז': 'Kush Cookies',
-            'סקיטלז': 'Zkittlez',
-            'ג\'לאטו': 'Gelato',
-            'ג\'לאטו 41': 'Gelato 41',
-            'לוגברי': 'Blueberry',
-            'בלו דרים': 'Blue Dream',
-            'סאוור דיזל': 'Sour Diesel',
-            'אורANGE SKITTLEZ': 'Orange Skittlez',
-            'אינסייד ג\'וק': 'Inside Joke',
-            'אל.איי קוש קייק': 'LA Kush Cake',
-            'אליאן קוקיז': 'Alien Cookies',
-            'אמנזיה באבל': 'Amnesia Bubble',
-            'אנימל מינטס': 'Animal Mints',
-            'אנימל פייס': 'Animal Face',
-            'אנימל צונאמי': 'Animal Tsunami',
-            'אנימל קוקיז': 'Animal Cookies',
-            'אפגן סקאנك': 'Afghan Skunk',
-            'אפגן קוש': 'Afghan Kush',
-            'אפגני': 'Afghani',
-            'פלאפ ג\'קס': 'Flip Jacks',
-            'פנקייקס': 'Pancakes',
-            'פרפל אלפנט': 'Purple Elephant',
-            'פרפל פאנץ\'': 'Purple Punch',
-            'פרפל תאי': 'Purple Thai',
-            'צ\'רי ג\'אם': 'Cherry Jam',
-            'צ\'רי קוקיז': 'Cherry Cookies',
-            'קאדילק ריינבו': 'Cadillac Rainbow',
-            'קאפ ג\'אנקי': 'Cup Junkie',
-            'קוקיז אנד קרים': 'Cookies and Cream',
-            'קושר קוש': 'Kosher Kush',
-            'קליפורניה אורנג\'': 'California Orange',
-            'קנדי קוש': 'Candy Kush',
-            'קנדי ריין': 'Candy Rain',
-            'קריביאן קוקיז': 'Caribbean Cookies',
-            'קריטיקל ג\'ק': 'Critical Jack',
-            'קרים': 'Cream',
-            'קרים קייק': 'Cream Cake',
-            'קרמל צונאמי': 'Caramel Tsunami',
-            'אנאלאי': 'Amnesia Haze',
-            'סאנסט שרבט': 'Sunset Sherbet',
-            'סופר בוף': 'Super Boof',
-            'סורבה': 'Sorbet',
-            'סטארדוג גויאבה': 'Stardog Guava',
-            'סטיקי באנז': 'Sticky Buns',
-            'סטרוברי בננה': 'Strawberry Banana',
-            'סליפרי סוזן': 'Slippery Susan',
-            'סן פרננדו ואלי אוג\'י': 'San Fernando Valley OG',
-            'סנואו לוטוס': 'Snow Lotus',
-            'ספאייר אוג\'י': 'Sapphire OG',
-            'ספייס קייק': 'Space Cake',
-            'סקאנק #1': 'Skunk #1',
-            'פאסד': 'Phazed',
-            'פיור מישיגן': 'Pure Michigan',
-            'פייס אוף אוג\'י': 'Face Off OG',
-            'פייר אוג\'י': 'Fire OG',
-            'פייר קוקיז': 'Fire Cookies',
-            'פיץ\' אוז': 'Peach Oz',
-            'פיץ\' קרשנדו': 'Peach Crescendo',
-            'פלורידה אוג\'י': 'Florida OG',
-            'קוארפ': 'Cough',
-            'ריינבו שרבט': 'Rainbow Sherbet',
-            'רמו כמו': 'Runtz Mints',
-            'שוקולד דיזל': 'Chocolate Diesel',
-            'שוקולד מינט אוג\'י': 'Chocolate Mint OG',
-            'שרבאנגר': 'Sherbanger',
-            'שרבזוקה': 'Sherebuzka',
-            'ת\'ין מינט קוקizo': 'Thin Mint Cookies',
-            'ת\'ין מינט קוקיז': 'Thin Mint Cookies',
-            'טנג\'י': 'Tangie',
-            'טריאנגל קווין': 'Triangle Kush',
-            'טריאנגל קוש': 'Triangle Kush',
-            'טריפל אוג\'י': 'Triple OG',
-            'כמדוג': 'Chemdawg',
-            'ליט אוג\'י': 'Lit OG',
-            'מוטור ברת\'': 'Motor Breath',
-            'מימוזה': 'Mimosa',
-            'מקפלרי': 'Mac플러리',
-            'מרינג': 'Meringue',
-            'סאב זירו': 'Sub Zero',
-            'סאוור דאב': 'Sour Dubb',
-            'סאוור קוש': 'Sour Kush',
-            'סוויט וואלי קוש': 'Sweet Valley Kush',
-            'ג\'וקרז': 'Jokers',
-            'ג\'ורג\'יה פאי': 'Georgia Pie',
-            'ג\'י אם או': 'GMO',
-            'ג\'לאטי': 'Gelati',
-            'ג\'לי ראנצ\'ר': 'Jelly Rancher',
-            'גויאבה': 'Guava',
-            'גויאבה ג\'לאטו': 'Guava Gelato',
-            'גורילה ברת\'': 'Gorilla Breath',
-            'גוש מינטס': 'Gush Mints',
-            'גושרס': 'Gushers',
-            'גז פרוט': 'Gas Froot',
-            'גירל סקאוט קוקיז': 'Girl Scout Cookies',
-            'גלוברי': 'Gluberry',
-            'גלוברי או ג\'י': 'Gluberry OG',
-            'גלייזד גרליק': 'Glazed Garlic',
-            'גריז מאנקי': 'Grease Monkey',
-            'גרליק ברת\'': 'Garlic Breath',
-            'גרליק ברת\' 2.0': 'Garlic Breath 2.0',
-            'גרליק סקיטלז': 'Garlic Zkittlez',
-            'גרנדדי פרפל': 'Granddaddy Purple',
-            'דאנט\'ז אינפרנו': "Dante's Inferno",
-            'דה ווייט': 'The White',
-            'דו סי דוס': 'Do-Si-Dos',
-            'דו סי דוס קוקיז': 'Do-Si-Dos Cookies',
-            'דוויל דרייבר': 'Devil Driver',
-            'דולצ\'ה דה אווה': 'Dolce de Eva',
-            'דונקי באטר': 'Donkey Butter',
-            'דיזיינר ראנטז': 'Designer Runtz',
-            'הארדקור אוג\'י': 'Hardcore OG',
-            'הארדקור גושרס': 'Hardcore Gushers',
-            'הינדו קוש': 'Hindu Kush',
-            'וודינג קייק': 'Wedding Cake',
-            'וודינג קראשר': 'Wedding Crasher',
-            'וטרמלון': 'Watermelon',
-            'וטרמלון סקיטלז': 'Watermelon Zkittlez',
-            'ווייט ראנטז': 'White Runtz',
-            'ווייט ריינו': 'White Rhino',
-            'זואפ': 'Zoap',
-            'זואפינייטור': 'Zoapinator',
-            'טינה': 'Tina',
-        };
+        const hebrewMap = HEBREW_STRAIN_NAMES;
 
         if (hebrewMap[name]) {
             variations.push(hebrewMap[name]);
@@ -357,136 +404,7 @@ export class CannlyticsService implements OnModuleInit {
     }
 
     getEnglishName(hebrewName: string): string | null {
-        const hebrewMap: Record<string, string> = {
-            'אורנג\' סקאנק': 'Orange Skunk',
-            'אורנג\' סקיטלז': 'Orange Skittlez',
-            'גורילה גלו': 'Gorilla Glue',
-            'בננה דדי': 'Banana Daddy',
-            'מנגו מינט': 'Mango Mint',
-            'מנדו ברת\'': 'Mendo Breath',
-            'פיור קוש': 'Pure Kush',
-            'פינק קוש': 'Pink Kush',
-            'צ\'רי קוש': 'Cherry Kush',
-            'קוש מינטס': 'Kush Mints',
-            'קוש קוקיז': 'Kush Cookies',
-            'סקיטלז': 'Zkittlez',
-            'ג\'לאטו': 'Gelato',
-            'ג\'לאטו 41': 'Gelato 41',
-            'לוגברי': 'Blueberry',
-            'בלו דרים': 'Blue Dream',
-            'סאוור דיזל': 'Sour Diesel',
-            'אינסייד ג\'וק': 'Inside Joke',
-            'אל.איי קוש קייק': 'LA Kush Cake',
-            'אליאן קוקיז': 'Alien Cookies',
-            'אמנזיה באבל': 'Amnesia Bubble',
-            'אנימל מינטס': 'Animal Mints',
-            'אנימל פייס': 'Animal Face',
-            'אנימל צונאמי': 'Animal Tsunami',
-            'אנימל קוקיז': 'Animal Cookies',
-            'אפגן סקאנק': 'Afghan Skunk',
-            'אפגן קוש': 'Afghan Kush',
-            'אפגני': 'Afghani',
-            'פלאפ ג\'קס': 'Flip Jacks',
-            'פנקייקס': 'Pancakes',
-            'פרפל אלפנט': 'Purple Elephant',
-            'פרפל פאנץ\'': 'Purple Punch',
-            'פרפל תאי': 'Purple Thai',
-            'צ\'רי ג\'אם': 'Cherry Jam',
-            'צ\'רי קוקיז': 'Cherry Cookies',
-            'קאדילק ריינבו': 'Cadillac Rainbow',
-            'קאפ ג\'אנקי': 'Cup Junkie',
-            'קוקיז אנד קרים': 'Cookies and Cream',
-            'קושר קוש': 'Kosher Kush',
-            'קליפורניה אורנג\'': 'California Orange',
-            'קנדי קוש': 'Candy Kush',
-            'קנדי ריין': 'Candy Rain',
-            'קריביאן קוקיז': 'Caribbean Cookies',
-            'קריטיקל ג\'ק': 'Critical Jack',
-            'קרים': 'Cream',
-            'קרים קייק': 'Cream Cake',
-            'קרמל צונאמי': 'Caramel Tsunami',
-            'סאנסט שרבט': 'Sunset Sherbet',
-            'סופר בוף': 'Super Boof',
-            'סורבה': 'Sorbet',
-            'סטארדוג גויאבה': 'Stardog Guava',
-            'סטיקי באנז': 'Sticky Buns',
-            'סטרוברי בננה': 'Strawberry Banana',
-            'סליפרי סוזן': 'Slippery Susan',
-            'סן פרננדו ואלי אוג\'י': 'San Fernando Valley OG',
-            'סנואו לוטוס': 'Snow Lotus',
-            'ספאייר אוג\'י': 'Sapphire OG',
-            'ספייס קייק': 'Space Cake',
-            'סקאנק #1': 'Skunk #1',
-            'פאסד': 'Phazed',
-            'פיור מישיגן': 'Pure Michigan',
-            'פייס אוף אוג\'י': 'Face Off OG',
-            'פייר אוג\'י': 'Fire OG',
-            'פייר קוקיז': 'Fire Cookies',
-            'פיץ\' אוז': 'Peach Oz',
-            'פיץ\' קרשנדו': 'Peach Crescendo',
-            'פלורידה אוג\'י': 'Florida OG',
-            'ריינבו שרבט': 'Rainbow Sherbet',
-            'רמו כמו': 'Runtz Mints',
-            'שוקולד דיזל': 'Chocolate Diesel',
-            'שוקולד מינט אוג\'י': 'Chocolate Mint OG',
-            'שרבאנגר': 'Sherbanger',
-            'שרבזוקה': 'Sherebuzka',
-            'ת\'ין מינט קוקיז': 'Thin Mint Cookies',
-            'טנג\'י': 'Tangie',
-            'טריאנגל קווין': 'Triangle Kush',
-            'טריאנגל קוש': 'Triangle Kush',
-            'טריפל אוג\'י': 'Triple OG',
-            'כמדוג': 'Chemdawg',
-            'ליט אוג\'י': 'Lit OG',
-            'מוטור ברת\'': 'Motor Breath',
-            'מימוזה': 'Mimosa',
-            'מקפלרי': 'Mac플러리',
-            'מרינג': 'Meringue',
-            'סאב זירו': 'Sub Zero',
-            'סאוור דאב': 'Sour Dubb',
-            'סאוור קוש': 'Sour Kush',
-            'סוויט וואלי קוש': 'Sweet Valley Kush',
-            'ג\'וקרז': 'Jokers',
-            'ג\'ורג\'יה פאי': 'Georgia Pie',
-            'ג\'י אם או': 'GMO',
-            'ג\'לאטי': 'Gelati',
-            'ג\'לי ראנצ\'ר': 'Jelly Rancher',
-            'גויאבה': 'Guava',
-            'גויאבה ג\'לאטו': 'Guava Gelato',
-            'גורילה ברת\'': 'Gorilla Breath',
-            'גוש מינטס': 'Gush Mints',
-            'גושרס': 'Gushers',
-            'גז פרוט': 'Gas Froot',
-            'גירל סקאוט קוקיז': 'Girl Scout Cookies',
-            'גלוברי': 'Gluberry',
-            'גלוברי או ג\'י': 'Gluberry OG',
-            'גלייזד גרליק': 'Glazed Garlic',
-            'גריז מאנקי': 'Grease Monkey',
-            'גרליק ברת\'': 'Garlic Breath',
-            'גרליק ברת\' 2.0': 'Garlic Breath 2.0',
-            'גרליק סקיטלז': 'Garlic Zkittlez',
-            'גרנדדי פרפל': 'Granddaddy Purple',
-            'דאנט\'ז אינפרנו': "Dante's Inferno",
-            'דה ווייט': 'The White',
-            'דו סי דוס': 'Do-Si-Dos',
-            'דו סי דוס קוקיז': 'Do-Si-Dos Cookies',
-            'דוויל דרייבר': 'Devil Driver',
-            'דולצ\'ה דה אווה': 'Dolce de Eva',
-            'דונקי באטר': 'Donkey Butter',
-            'דיזיינר ראנטז': 'Designer Runtz',
-            'הארדקור אוג\'י': 'Hardcore OG',
-            'הארדקור גושרס': 'Hardcore Gushers',
-            'הינדו קוש': 'Hindu Kush',
-            'וודינג קייק': 'Wedding Cake',
-            'וודינג קראשר': 'Wedding Crasher',
-            'וטרמלון': 'Watermelon',
-            'וטרמלון סקיטלז': 'Watermelon Zkittlez',
-            'ווייט ראנטז': 'White Runtz',
-            'ווייט ריינו': 'White Rhino',
-            'זואפ': 'Zoap',
-            'זואפינייטור': 'Zoapinator',
-            'טינה': 'Tina',
-        };
+        const hebrewMap = HEBREW_STRAIN_NAMES;
         return hebrewMap[hebrewName] || null;
     }
 }

@@ -396,5 +396,70 @@ describe('GeneticsService', () => {
         expect(result).toBeNull();
       });
     });
+
+    describe('batch flow fixes (2026-08-18)', () => {
+      it('ranks web results by relevance before passing them to the LLM', async () => {
+        const existingRows = [makeGenetics({ name: 'Gorilla Glue', id: 1 })];
+        repo.find.mockResolvedValue(existingRows);
+        cannlyticsService.getEnglishName.mockReturnValue('Gorilla Glue');
+        cannlyticsService.getStrain.mockResolvedValue(null);
+        httpService.get.mockReturnValue(of({ data: { data: [] } }) as any);
+        webSearchService.search.mockResolvedValue({
+          success: true,
+          result: {
+            results: [
+              { title: 'Gmail login page', url: 'http://gmail', content: 'sign in to your inbox' },
+              { title: 'Gorilla Glue strain guide', url: 'http://x', content: 'Gorilla Glue genetics parents lineage THC' },
+              { title: 'Cannabis strains overview', url: 'http://y', content: 'a cannabis strain guide for growers' },
+            ],
+            answer: undefined,
+          },
+        } as any);
+        llmClientService.generateResponse.mockResolvedValue({
+          content: JSON.stringify({
+            genetics: [{ name: 'Gorilla Glue', description: 'desc', type: 'hybrid', color: '#FF0000', parent1: 'P1', parent2: 'P2', origin: 'USA', thcRange: '18-22%', terpenes: 'Myrcene', effects: 'calm' }],
+          }),
+        } as any);
+        repo.findOne.mockResolvedValue(makeGenetics({ name: 'Gorilla Glue', id: 1 }));
+        repo.update.mockResolvedValue({ affected: 1 } as any);
+
+        await service.enrichMissing();
+
+        const prompt = llmClientService.generateResponse.mock.calls[0][0].prompt;
+        expect(prompt.indexOf('Gorilla Glue strain guide')).toBeGreaterThan(-1);
+        expect(prompt.indexOf('Gorilla Glue strain guide')).toBeLessThan(prompt.indexOf('Gmail login page'));
+        expect(webSearchService.search).toHaveBeenCalledWith(expect.stringContaining('Gorilla Glue'), true);
+      });
+
+      it('translates Hebrew names once via LLM when the map misses', async () => {
+        const existingRows = [makeGenetics({ name: 'אובמה ראנטז', id: 1 })];
+        repo.find.mockResolvedValue(existingRows);
+        cannlyticsService.getEnglishName.mockReturnValue(null); // map miss → LLM translation
+        cannlyticsService.getStrain.mockResolvedValue(null);
+        httpService.get.mockReturnValue(of({ data: { data: [] } }) as any);
+        webSearchService.search.mockResolvedValue({
+          success: true,
+          result: { results: [], answer: undefined },
+        } as any);
+        // תרגום (בדיוק פעם אחת) + העשרה
+        llmClientService.generateResponse
+          .mockResolvedValueOnce({ content: 'Obama Runtz' } as any)
+          .mockResolvedValueOnce({
+            content: JSON.stringify({
+              genetics: [{ name: 'אובמה ראנטז', description: 'desc', type: 'hybrid', color: '#FF0000' }],
+            }),
+          } as any);
+        repo.findOne.mockResolvedValue(makeGenetics({ name: 'אובמה ראנטז', id: 1 }));
+        repo.update.mockResolvedValue({ affected: 1 } as any);
+
+        const result = await service.enrichMissing();
+
+        expect(result.total).toBe(1);
+        // תרגום + העשרה = 2 — לא תרגום נפרד לכל chunk-method (searchChunk/Cannlytics/Demarily)
+        expect(llmClientService.generateResponse).toHaveBeenCalledTimes(2);
+        expect(cannlyticsService.getStrain).toHaveBeenCalledWith('Obama Runtz');
+        expect(webSearchService.search).toHaveBeenCalledWith(expect.stringContaining('Obama Runtz'), true);
+      });
+    });
   });
 });

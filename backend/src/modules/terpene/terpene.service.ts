@@ -108,7 +108,8 @@ export class TerpeneService {
 
             this.logger.log(`Searching web for terpenes chunk ${chunkNumber}/${totalChunks} (${chunk.length} items)...`);
 
-            const searchResults = await this.searchChunk(chunk);
+            const englishNames = await this.resolveEnglishNames(chunk);
+            const searchResults = await this.searchChunk(chunk, englishNames);
 
             this.logger.log(`Sending terpenes chunk ${chunkNumber}/${totalChunks} to LLM...`);
 
@@ -191,7 +192,7 @@ export class TerpeneService {
             }
 
             this.logger.log(`[enrichMissing] Searching web for chunk ${chunkNumber}/${totalChunks} (${chunk.length} items)...`);
-            const searchResults = await this.searchChunk(names);
+            const searchResults = await this.searchChunk(names, englishNames);
 
             this.logger.log(`[enrichMissing] Sending chunk ${chunkNumber}/${totalChunks} to LLM...`);
             try {
@@ -297,11 +298,43 @@ export class TerpeneService {
         return name;
     }
 
-    private async searchChunk(names: string[]): Promise<Map<string, string>> {
+    /**
+     * מתרגם רשימת שמות לאנגלית פעם אחת לכל chunk — כך searchChunk לא
+     * קורא ל-LLM שוב על שמות שכבר תורגמו ב-enrichMissing/enrichBatch.
+     */
+    private async resolveEnglishNames(names: string[]): Promise<Map<string, string>> {
+        const map = new Map<string, string>();
+        for (const name of names) {
+            map.set(name, await this.translateToEnglish(name));
+        }
+        return map;
+    }
+
+    /**
+     * מדרג תוצאות חיפוש לפי רלוונטיות: שם הטרפן (אנגלית/עברית) קודם, אחר כך
+     * מילות קנאביס — כך רעש לא מדלל את ההקשר שמועבר ל-LLM.
+     */
+    private rankSearchResults(
+        enName: string,
+        name: string,
+        results: { title: string; content: string }[],
+    ): { title: string; content: string }[] {
+        const nameTokens = [enName, name].filter(Boolean).map(t => t.toLowerCase());
+        const cannabisKeywords = ['cannabis', 'terpene', 'scent', 'aroma', 'strain', 'weed', 'kush', 'flavor'];
+        const relevance = (r: { title: string; content: string }): number => {
+            const text = `${r.title} ${r.content}`.toLowerCase();
+            if (nameTokens.some(tok => text.includes(tok))) return 2;
+            if (cannabisKeywords.some(kw => text.includes(kw))) return 1;
+            return 0;
+        };
+        return [...results].sort((a, b) => relevance(b) - relevance(a)).slice(0, 8);
+    }
+
+    private async searchChunk(names: string[], englishNames?: Map<string, string>): Promise<Map<string, string>> {
         const results = new Map<string, string>();
         for (const name of names) {
             try {
-                const englishName = await this.translateToEnglish(name);
+                const englishName = englishNames?.get(name) ?? await this.translateToEnglish(name);
                 const searchQuery = englishName !== name
                     ? `${englishName} (${name}) cannabis terpene scent effects`
                     : `${name} cannabis terpene scent effects`;
@@ -311,7 +344,7 @@ export class TerpeneService {
                     if (searchResult.result.answer) {
                         parts.push(`Answer: ${searchResult.result.answer}`);
                     }
-                    for (const r of searchResult.result.results.slice(0, 8)) {
+                    for (const r of this.rankSearchResults(englishName, name, searchResult.result.results)) {
                         parts.push(`${r.title}: ${r.content}`);
                     }
                     if (parts.length > 0) {
@@ -399,16 +432,7 @@ export class TerpeneService {
             if (searchResult.result.answer) {
                 parts.push(`Answer: ${searchResult.result.answer}`);
             }
-            // דירוג תוצאות לפי רלוונטיות: שם הטרפן (אנגלית/עברית) ראשון, אחר כך מילות קנאביס
-            const nameTokens = [englishName, name].filter(Boolean).map(t => t.toLowerCase());
-            const cannabisKeywords = ['cannabis', 'terpene', 'scent', 'aroma', 'strain', 'weed', 'kush', 'flavor'];
-            const relevance = (r: { title: string; content: string }): number => {
-                const text = `${r.title} ${r.content}`.toLowerCase();
-                if (nameTokens.some(tok => text.includes(tok))) return 2;
-                if (cannabisKeywords.some(kw => text.includes(kw))) return 1;
-                return 0;
-            };
-            for (const r of [...searchResult.result.results].sort((a, b) => relevance(b) - relevance(a)).slice(0, 8)) {
+            for (const r of this.rankSearchResults(englishName, name, searchResult.result.results)) {
                 parts.push(`${r.title}: ${r.content}`);
             }
             searchContext = parts.join('\n');

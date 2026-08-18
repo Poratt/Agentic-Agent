@@ -298,5 +298,43 @@ describe('TerpeneService', () => {
         expect(result).toBeNull();
       });
     });
+
+    describe('batch flow fixes (2026-08-18)', () => {
+      it('ranks web results by relevance and reuses the pre-translated names', async () => {
+        const existingRows = [makeTerpene({ name: 'אובמה ראנטז', id: 1 })];
+        repo.find.mockResolvedValue(existingRows);
+        webSearchService.search.mockResolvedValue({
+          success: true,
+          result: {
+            results: [
+              { title: 'Gmail login page', url: 'http://gmail', content: 'sign in to your inbox' },
+              { title: 'Obama Runtz terpene profile', url: 'http://x', content: 'Obama Runtz terpene scent effects strain' },
+              { title: 'Cannabis aroma guide', url: 'http://y', content: 'cannabis terpene scent aroma overview' },
+            ],
+            answer: undefined,
+          },
+        } as any);
+        // תרגום (פעם אחת בלבד) + העשרה
+        llmClientService.generateResponse
+          .mockResolvedValueOnce({ content: 'Obama Runtz' } as any)
+          .mockResolvedValueOnce({
+            content: JSON.stringify({
+              terpenes: [{ name: 'אובמה ראנטז', description: 'desc', scent: 'scent', effects: 'calm', color: '#FF0000' }],
+            }),
+          } as any);
+        repo.findOne.mockResolvedValue(makeTerpene({ name: 'אובמה ראנטז', id: 1 }));
+        repo.update.mockResolvedValue({ affected: 1 } as any);
+
+        const result = await service.enrichMissing();
+
+        expect(result.total).toBe(1);
+        // קודם: תרגום upfront + שוב בתוך searchChunk + העשרה = 3. עכשיו: 2.
+        expect(llmClientService.generateResponse).toHaveBeenCalledTimes(2);
+        const prompt = llmClientService.generateResponse.mock.calls[1][0].prompt;
+        expect(prompt.indexOf('Obama Runtz terpene profile')).toBeGreaterThan(-1);
+        expect(prompt.indexOf('Obama Runtz terpene profile')).toBeLessThan(prompt.indexOf('Gmail login page'));
+        expect(webSearchService.search).toHaveBeenCalledWith(expect.stringContaining('Obama Runtz'), true);
+      });
+    });
   });
 });
