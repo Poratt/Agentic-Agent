@@ -14,7 +14,7 @@ Frontend platform baseline:
 - Angular CLI `22.0.1`
 - TypeScript `6.0.3`
 - Node.js `22.22.3+` or `24.15.0+`
-- PrimeNG is currently `21.1.8`; its Angular 22 peer dependency mismatch is a known open risk.
+- PrimeNG `22.0.0` (verified with `npm ls primeng`; matches Angular 22 — the old 21.x peer-dependency mismatch risk is gone)
 
 ## Directory Structure
 

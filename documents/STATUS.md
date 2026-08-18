@@ -1,6 +1,37 @@
 # Project Documentation Status
 
-Last updated: 2026-08-17
+Last updated: 2026-08-18
+
+## 2026-08-18 Session (aj) — ✅ FIXED: settings tabs eager-loading (lazy + #content, empirically verified)
+
+- **Problem:** entering /settings fired all tabs' requests at once (genetics/terpenes/storage/llm-provider/default-model) because settings.html rendered all 4 tab panels eagerly. (sessions×2 = sidebar by design; me = one-time boot call.)
+- **Empirical:** `lazy` alone does NOT prevent component instantiation (panels rendered empty, but ctor/ngOnInit ran and requests fired — primeng #17351 behavior). **Fix: `lazy` + `<ng-template #content>` wrapper per non-first tab** — components created only on first activation.
+- **Live-verified:** no /genetics//terpenes//storage on load; exactly 1 request each on first tab click; no refetch on switch-away/back; components stay alive (state preserved).
+- **Verified:** frontend **495/495** · `ng build` exit 0.
+- **Committed:** settings.html, AGENTS.md (PrimeNG 22.0.0), documents. **Uncommitted (prev. sessions):** backend enrichment + CLS skeleton.
+- **Next (backlog):** SearXNG proxy · translation model quality · optionally same lazy pattern for inner genetics/terpenes tabs · optionally defer sidebar sessions.
+
+## 2026-08-18 — ✅ Live UI verification (user): CLS skeleton
+
+- User checked Strain Hunter genetics/terpene tables manually: rows appear immediately — **no skeleton visible, no empty state, no layout jump**.
+- Interpretation: local API resolves within ~1 frame → `loading()` window imperceptible; skeleton rows (20 = page size) guarantee identical height so nothing shifts — exactly the intended end state.
+- Code in place (uncommitted); no code changes this session.
+
+## 2026-08-18 Session (ai) — ✅ enrichment open items 1-3 + CLS skeleton
+
+- **Cannlytics:** `findInCache` → token all-or-nothing matcher (no short-token substring matches; "33 splitter" ≠ "33"); duplicated Hebrew maps merged into `HEBREW_STRAIN_NAMES` const (138 entries, both maps had diverged); junk keys removed; `מקפלרי` Korean garbage → Mac Flurry.
+- **Batch flows (genetics+terpene):** translate once per chunk (`resolveEnglishNames`), thread through `searchChunk`/`fetchCannlyticsChunk`/`fetchDemarilyChunk`; `rankSearchResults` helper (ex-enrichSingle inline) applied to batch search — LLM context no longer diluted by junk. Terpene enrichMissing LLM calls 3→2.
+- **Map:** +8 entries (אוראוז→Oreoz, אוז קוש→Oz Kush, אובמה ראנטז→Obama Runtz, 33 ספליטר, אזול ראנטז, אטום ספליטר, אורנג' ולווט, בלוברי→Blueberry).
+- **CLS:** skeleton rows (20 = page size) + `geneticsLoading`/`terpeneLoading` in strain-hunter-settings — no animations, global shimmer only.
+- **Verified:** backend **411/411** (tsc 0, build 0) · frontend **495/495** (tsc ×2 0, build 0) · mojibake clean.
+- **Open:** SearXNG proxy decision (user + infra) · translation model quality beyond map · low-prio coverage gaps.
+
+## 2026-08-18 Session (ah) — ponytail installed · tests-files merged → main & pushed
+
+- **Ponytail skill:** installed for Freebuff (`~/.agents/skills/ponytail*` ×6) + Claude Code (plugin marketplace `DietrichGebert/ponytail`, `ponytail@ponytail` v4.9.0, user scope, 3 hooks). New Claude Code session needed for hooks.
+- **Merge:** `tests-files` → `main` fast-forward (48 commits, zero conflicts) → `8f35140`. `.gitignore` `.freebuff/` entry came from existing `2a62f47` (my local duplicate edit discarded). User pushed; `origin/tests-files` remote branch remains; local `tests-files` deleted.
+- **State:** main synced, clean tree.
+- **Next (backlog, unchanged):** SearXNG proxy decision · Cannlytics findInCache · batch flows · translation model quality · CLS first-load (skeleton option) · low-prio coverage gaps.
 
 ## 2026-08-17 Session (ag) — ⏪ REVERTED: enrichment/table animations in strain-hunter-settings
 

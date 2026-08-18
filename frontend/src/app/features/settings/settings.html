@@ -3,7 +3,7 @@
         <h2>הגדרות</h2>
     </header>
 
-    <p-tabs value="0">
+    <p-tabs value="0" lazy>
         <p-tablist>
             <p-tab value="0">ספקי LLM</p-tab>
             <p-tab value="1">Strain Hunter</p-tab>
@@ -15,13 +15,19 @@
                 <app-llm-providers-management></app-llm-providers-management>
             </p-tabpanel>
             <p-tabpanel value="1">
-                <app-strain-hunter-settings></app-strain-hunter-settings>
+                <ng-template #content>
+                    <app-strain-hunter-settings></app-strain-hunter-settings>
+                </ng-template>
             </p-tabpanel>
             <p-tabpanel value="2">
-                <app-database-monitor-settings></app-database-monitor-settings>
+                <ng-template #content>
+                    <app-database-monitor-settings></app-database-monitor-settings>
+                </ng-template>
             </p-tabpanel>
             <p-tabpanel value="3">
-                <app-design-system></app-design-system>
+                <ng-template #content>
+                    <app-design-system></app-design-system>
+                </ng-template>
             </p-tabpanel>
         </p-tabpanels>
     </p-tabs>
