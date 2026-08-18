@@ -1,11 +1,23 @@
 # Documentation Handoff
+## 2026-08-19 — ✅ FIXED: agent loops on /calendar/auth — user never got the consent link (sessions 227+228)
+
+**Symptom:** asking "מה יש לי מחר ביומן?" → agent calls `GoogleCalendarController_auth` 3× in one turn → loop breaker fires → user never sees the Google consent URL (live repro in session 228, even AFTER the idempotency fix).
+
+**Root causes (3, compounding):** (1) the tool description never told the model to call auth ONCE and present the URL → it re-called it every iteration; (2) the loop-breaker cap (`MAX_CALLS_PER_TOOL=3`) discarded the already-collected `AuthUrl` render card and the URL itself — it emitted only the raw breaker error; (3) the existing auth-URL rescue (`SETUP_INSTRUCTIONS` + `findAuthUrlInHistory`) only covered the events/createEvent/updateEvent/deleteEvent tools, NOT `auth` itself. Bonus bug: the rescue message contained Chinese characters (`אל ת尝试 שוב` — mojibake).
+
+**Fixes (3 files):** `google-calendar.controller.ts` — `@ApiOperation.description` for GET /calendar/auth now explicitly instructs the model: call EXACTLY ONCE, present `url` to the user, stop (do not re-call/visit/modify). `admin-agent.service.ts` — `GoogleCalendarController_auth` added to `SETUP_INSTRUCTIONS` (authTool: itself); new `tryAuthUrlRescue()` helper (injects the found URL + Hebrew instruction, one final no-tools turn; mojibake fixed); wired into ALL 4 breaker paths (duplicate + per-tool-cap, both `queryDatabase` and `queryDatabaseStream`); streaming rescue now attaches the collected render blocks (AuthUrl card survives).
+
+**Verification:** tsc 0 · admin-agent.service.spec **17/17 (+3 new**: auth-loop rescue presents URL, no rescue for non-setup tools, no rescue without URL in history — incl. CJK-char regression assertion) · full backend **417/417 (44 suites)** · build exit 0 · **live on :3000 (new dist)**: swagger description contains the new "Agent instructions" text, auth idempotency still S2==S1. LLM-loop repro itself is nondeterministic — covered by unit tests.
+
+**Open follow-up (still):** why the agent loops at all on a tool whose result it already has (weak free model? no explicit stop signal in tool results?) — mitigated now (description + rescue), not root-cured. Also: backend was handed back to the user on :3000 — they run their own instance; this fix needs a rebuild+restart to be live there.
+
 ## 2026-08-19 — ✅ FIXED: Google Calendar OAuth state overwrite (session 227) + 500-on-bad-code
 
 **Root cause (empirically proven, same protocol as the lazy-tabs debug):** state = single per-user column in Postgres (`google_calendar_token`, TTL 10 min in code). `getAuthUrl` overwrote `row.state` on every `/calendar/auth` — the agent's 3× retry loop killed the state of the consent URL the user already opened → callback: `findOneBy({state:S1})` = null → "OAuth state is invalid or expired". Reproduced with curl: auth→S1, auth→S2, callback(S1)→400 exact error; control callback(S2)→not-state-error (500 at token exchange). Backend uptime 23:36→23:58 excluded restart; DB persistence made restart structurally impossible anyway.
 
 **Fixes (2 commits, separate):** `dfc5777` — auth idempotent (reuse fresh state; `ponytail:` race note for check-then-write); `2d31c2e` — getToken failure → controlled 400 "Google rejected the authorization code" (was 500, matching swagger). **Live-verified on :3001 second instance (new dist):** auth→auth → S2==S1; callback(S1, fake code) → 400 new message. Tests **414/414**, tsc 0.
 
-**⚠️ NEXT STEP:** restart the :3000 backend (`node dist/main` from backend/, or however it's supervised) — it still serves the OLD dist; the fixes are built but not live. **Open follow-up (recorded, not blocking):** investigate why the agent called the auth tool 3× in one turn (orchestration symptom — maybe it didn't wait for the tool result; separate investigation).
+**✅ DONE (later same session):** backend restarted — the fixes are now LIVE on :3000 (the instance the user actually uses). Note: the user had restarted their own instance at 00:13 (took the port; my first instance got EADDRINUSE and crashed harmlessly), then pressed Ctrl+C to free it, and I brought up a fresh instance (PID 11772, `node dist/main`, 00:20). Live-verified on :3000 with the same protocol: auth→auth → S2==S1 (IDEMPOTENT:YES), callback(S1, fake code) → **400 "Google rejected the authorization code"** (not state-invalid, not 500). Both fixes (dfc5777 + 2d31c2e) are live. **Open follow-up (recorded, not blocking):** investigate why the agent called the auth tool 3× in one turn (orchestration symptom — maybe it didn't wait for the tool result; separate investigation).
 
 ## 2026-08-18 Session (aj) — follow-up ✅ FIXED: inner genetics/terpenes tabs also lazy (strain-hunter-settings)
 

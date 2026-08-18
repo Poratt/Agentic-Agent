@@ -2,12 +2,20 @@
 
 Last updated: 2026-08-19
 
+## 2026-08-19 — ✅ FIXED: agent auth loop — consent URL never reached the user (sessions 227+228)
+
+- **Symptom:** "מה יש לי מחר ביומן?" → agent calls `GoogleCalendarController_auth` 3× in one turn → breaker → user never sees the consent link (reproduced live in 228, even post-idempotency).
+- **Causes:** tool description didn't tell the model to call auth once & present the URL; the per-tool cap discarded the collected AuthUrl render card + URL (raw breaker only); the auth-URL rescue covered the events tools but NOT auth itself; rescue message had CJK mojibake (`אל ת尝试`).
+- **Fixes:** controller description — "call EXACTLY ONCE, present url, stop"; `GoogleCalendarController_auth` in SETUP_INSTRUCTIONS; new `tryAuthUrlRescue` helper (mojibake fixed) wired into all 4 breaker paths; streaming rescue keeps the AuthUrl card (renderSpec attached).
+- **Verified:** tsc 0 · admin-agent spec 17/17 (+3) · full backend **417/417** · build 0 · live: new description in swagger, idempotency intact.
+- ⚠️ Handed :3000 back to the user — their instance must be rebuilt/restarted to serve this fix. **Still open:** why the model loops on a tool whose result it already has (mitigated, not root-cured).
+
 ## 2026-08-19 — ✅ FIXED: Google Calendar OAuth state overwrite + 500-on-bad-code
 
 - **Bug (session 227):** "OAuth state is invalid or expired" — agent retry loop called /calendar/auth 3×; state = single per-user DB slot (Postgres, 10-min TTL) → each call overwrote the previous → first consent URL's state died at callback. **Empirically reproduced**: auth→S1, auth→S2, callback(S1) → exact 400. Control: callback(S2) → passed state check (500 at Google exchange). Restart hypothesis excluded (backend up 23:36→23:58, state in DB).
 - **Fix (a) `dfc5777`:** auth idempotent — fresh state reused, not overwritten (race note: check-then-write, ponytail comment). **Fix (c) `2d31c2e`:** getToken failure → controlled 400 "Google rejected the authorization code" (was 500).
 - **Live-verified on second instance :3001 with new dist:** auth→auth → S2==S1 ✅; callback(S1, fake) → 400 new message ✅. Tests **414/414**, tsc 0.
-- ⚠️ Running :3000 backend still serves OLD dist — restart to activate. **Open follow-up (not blocking):** why did the agent loop 3× on the auth tool — orchestration symptom, record separately.
+- ✅ **DONE: fixes now LIVE on :3000** (restarted same session — user freed the port, fresh instance PID 11772): auth→auth → S2==S1 ✅, callback(S1, fake) → **400 "Google rejected the authorization code"** ✅ — both fixes (dfc5777 + 2d31c2e) verified on the production instance itself. **Open follow-up (not blocking):** why did the agent loop 3× on the auth tool — orchestration symptom, record separately.
 
 ## 2026-08-18 Session (aj) — follow-up ✅ inner genetics/terpenes tabs lazy (strain-hunter-settings)
 
