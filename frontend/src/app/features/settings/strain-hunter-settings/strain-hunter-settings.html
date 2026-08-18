@@ -1,4 +1,4 @@
-<p-tabs value="0">
+<p-tabs value="0" lazy>
     <p-tablist>
         <p-tab value="0">גנטיקה</p-tab>
         <p-tab value="1">טרפנים</p-tab>
@@ -58,7 +58,7 @@
 
             <div class="glass-effect card">
                 <p-table
-                    [value]="filteredGenetics()"
+                    [value]="geneticsLoading() ? tableSkeletonRows : filteredGenetics()"
                     [rowHover]="true"
                     [paginator]="true"
                     [rows]="20"
@@ -81,6 +81,19 @@
                         </tr>
                     </ng-template>
                     <ng-template #body let-g>
+                        @if (geneticsLoading()) {
+                            <tr class="table-row-header skeleton-row">
+                                <td class="col-expand"><span class="shimmer skeleton-chevron"></span></td>
+                                <td><span class="shimmer skeleton-name"></span></td>
+                                <td><span class="shimmer skeleton-badge"></span></td>
+                                <td><span class="shimmer skeleton-meta"></span></td>
+                                <td><span class="shimmer skeleton-meta"></span></td>
+                                <td><span class="shimmer skeleton-meta"></span></td>
+                                <td class="col-desc"><span class="shimmer skeleton-desc"></span></td>
+                                <td class="col-color"><span class="shimmer skeleton-dot"></span></td>
+                                <td class="col-regen"><span class="shimmer skeleton-icon"></span></td>
+                            </tr>
+                        } @else {
                         <tr class="table-row-header">
                             <td class="col-expand">
                                 <button
@@ -280,6 +293,7 @@
                                 </td>
                             </tr>
                         }
+                        }
                     </ng-template>
                     <ng-template #emptymessage>
                         <tr>
@@ -298,6 +312,7 @@
 
         <!-- ── Terpenes Tab ─────────────────────────────────────────────────── -->
         <p-tabpanel value="1">
+            <ng-template #content>
             <div class="catalog-toolbar">
                 <div class="toolbar-search">
                     <div class="form-field-has-icon sm">
@@ -350,7 +365,7 @@
 
             <div class="glass-effect card">
                 <p-table
-                    [value]="filteredTerpenes()"
+                    [value]="terpeneLoading() ? tableSkeletonRows : filteredTerpenes()"
                     [rowHover]="true"
                     [paginator]="true"
                     [rows]="20"
@@ -371,6 +386,17 @@
                         </tr>
                     </ng-template>
                     <ng-template #body let-t>
+                        @if (terpeneLoading()) {
+                            <tr class="table-row-header skeleton-row">
+                                <td class="col-expand"><span class="shimmer skeleton-chevron"></span></td>
+                                <td><span class="shimmer skeleton-name"></span></td>
+                                <td><span class="shimmer skeleton-meta"></span></td>
+                                <td><span class="shimmer skeleton-badge"></span></td>
+                                <td class="col-desc"><span class="shimmer skeleton-desc"></span></td>
+                                <td class="col-color"><span class="shimmer skeleton-dot"></span></td>
+                                <td class="col-regen"><span class="shimmer skeleton-icon"></span></td>
+                            </tr>
+                        } @else {
                         <tr class="table-row-header">
                             <td class="col-expand">
                                 <button
@@ -547,6 +573,7 @@
                                 </td>
                             </tr>
                         }
+                        }
                     </ng-template>
                     <ng-template #emptymessage>
                         <tr>
@@ -561,6 +588,7 @@
                     </ng-template>
                 </p-table>
             </div>
+            </ng-template>
         </p-tabpanel>
     </p-tabpanels>
 </p-tabs>

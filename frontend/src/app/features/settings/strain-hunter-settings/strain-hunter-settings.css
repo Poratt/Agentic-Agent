@@ -173,4 +173,46 @@
             width: 100%;
         }
     }
+
+    /* ── Skeleton loading rows (first-load CLS guard) ─────────────────────── */
+    .skeleton-row {
+        td {
+            padding-block: var(--space-3);
+        }
+    }
+
+    .skeleton-chevron {
+        width: 14px;
+        height: 14px;
+    }
+
+    .skeleton-name {
+        width: 120px;
+        height: 10px;
+    }
+
+    .skeleton-badge {
+        width: 56px;
+        height: 14px;
+    }
+
+    .skeleton-meta {
+        width: 90px;
+        height: 8px;
+    }
+
+    .skeleton-desc {
+        width: 200px;
+        height: 8px;
+    }
+
+    .skeleton-dot {
+        width: 8px;
+        height: 8px;
+    }
+
+    .skeleton-icon {
+        width: 14px;
+        height: 14px;
+    }
 }

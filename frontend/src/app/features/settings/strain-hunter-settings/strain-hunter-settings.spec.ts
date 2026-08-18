@@ -23,6 +23,7 @@ describe('StrainHunterSettings', () => {
   let fixture: ComponentFixture<StrainHunterSettings>;
   let geneticsStoreMock: {
     genetics: ReturnType<typeof vi.fn>;
+    loading: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
     enrich: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
@@ -30,11 +31,14 @@ describe('StrainHunterSettings', () => {
   };
   let terpeneStoreMock: {
     terpenes: ReturnType<typeof vi.fn>;
+    loading: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
     enrich: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
     reload: ReturnType<typeof vi.fn>;
   };
+  let geneticsLoadingSignal: ReturnType<typeof signal<boolean>>;
+  let terpeneLoadingSignal: ReturnType<typeof signal<boolean>>;
 
   beforeEach(async () => {
     (globalThis as any).ResizeObserver = class {
@@ -53,11 +57,15 @@ describe('StrainHunterSettings', () => {
       })),
     });
 
+    geneticsLoadingSignal = signal(false);
+    terpeneLoadingSignal = signal(false);
+
     geneticsStoreMock = {
       genetics: vi.fn().mockReturnValue([
         makeGenetics({ id: 1, name: 'OG Kush' }),
         makeGenetics({ id: 2, name: 'Blue Dream' }),
       ]),
+      loading: vi.fn().mockImplementation(() => geneticsLoadingSignal()),
       update: vi.fn(),
       enrich: vi.fn().mockResolvedValue(null),
       delete: vi.fn().mockResolvedValue(undefined),
@@ -69,6 +77,7 @@ describe('StrainHunterSettings', () => {
         makeTerpene({ id: 1, name: 'Myrcene' }),
         makeTerpene({ id: 2, name: 'Limonene' }),
       ]),
+      loading: vi.fn().mockImplementation(() => terpeneLoadingSignal()),
       update: vi.fn(),
       enrich: vi.fn().mockResolvedValue(null),
       delete: vi.fn().mockResolvedValue(undefined),
@@ -140,5 +149,25 @@ describe('StrainHunterSettings', () => {
     const t = makeTerpene({ id: 1, name: 'Myrcene' });
     component.deleteTerpene(t);
     expect(confirmSpy).toHaveBeenCalled();
+  });
+
+  it('tableSkeletonRows has exactly page-size (20) placeholder rows', () => {
+    expect(component.tableSkeletonRows.length).toBe(20);
+  });
+
+  it('geneticsLoading reflects the store loading signal', () => {
+    expect(component.geneticsLoading()).toBe(false);
+    geneticsLoadingSignal.set(true);
+    expect(component.geneticsLoading()).toBe(true);
+    geneticsLoadingSignal.set(false);
+    expect(component.geneticsLoading()).toBe(false);
+  });
+
+  it('terpeneLoading reflects the store loading signal', () => {
+    expect(component.terpeneLoading()).toBe(false);
+    terpeneLoadingSignal.set(true);
+    expect(component.terpeneLoading()).toBe(true);
+    terpeneLoadingSignal.set(false);
+    expect(component.terpeneLoading()).toBe(false);
   });
 });

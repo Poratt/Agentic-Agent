@@ -1,4 +1,12 @@
 # Documentation Handoff
+## 2026-08-18 Session (aj) — follow-up ✅ FIXED: inner genetics/terpenes tabs also lazy (strain-hunter-settings)
+
+Applied the same pattern INSIDE strain-hunter-settings (per user): inner `<p-tabs value="0" lazy>` + terpenes panel wrapped in `<ng-template #content>`. **Critical extra step:** the template deferral alone did NOT stop `/terpenes` — the component injects `TerpeneStore` eagerly and `httpResource` fires the GET at store creation (same #17351 mechanism one level deeper). Fixed by resolving TerpeneStore **lazily** via `injector.get(TerpeneStore)` (getter + memoized instance, all 6 usages + 2 computeds routed through it) — the store is created only when the terpene tab's template first reads it.
+
+**Live-verified (fresh dev server):** open Strain Hunter → ONLY `/genetics` (t=5713), terpene panel empty, `terpeneFetches: []`; click טרפנים → `/terpenes` fires exactly once (t=16980), table renders; switch גנטיקה↔טרפנים → no refetch (still 1 each).
+
+**Verification:** frontend `npx ng test --watch=false` **495/495 (56 suites)** · `ng build` exit 0. **UNCOMMITTED** (awaiting user's go): `strain-hunter-settings.html` (lazy + #content) + `strain-hunter-settings.ts` (lazy TerpeneStore). Uncommitted from prev. sessions still: backend enrichment + CLS skeleton files.
+
 ## 2026-08-18 Session (aj) — ✅ FIXED: settings tabs eager-loading — lazy + #content template wrappers (empirically verified)
 
 **User report:** entering /settings fired calls for ALL tabs at once (me, sessions×2, default-model, storage, llm-provider, genetics, terpenes) — suspected non-best-practice. Root causes found: (a) sidebar loads sessions×2 on every page (MainSidebar.ngOnInit — for the dropdowns, by design); (b) `me` = APP_INITIALIZER boot call (once, fine); (c) **settings.ts rendered all 4 tab panels eagerly** — each child component created its store/requests on mount.

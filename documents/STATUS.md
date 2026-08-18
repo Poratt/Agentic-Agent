@@ -2,6 +2,13 @@
 
 Last updated: 2026-08-18
 
+## 2026-08-18 Session (aj) — follow-up ✅ inner genetics/terpenes tabs lazy (strain-hunter-settings)
+
+- **Same pattern one level deeper:** inner `p-tabs lazy` + terpenes panel in `<ng-template #content>` — but template deferral alone still fired `/terpenes` because the component's eager `inject(TerpeneStore)` creates the store (httpResource fires at creation). **Fix: lazy TerpeneStore resolution via `injector.get()`** (memoized getter; computeds + all methods go through it) → store created only when the terpene tab first reads it.
+- **Live-verified:** Strain Hunter open → only `/genetics`; click טרפנים → `/terpenes` once; switch back/forth → no refetch (1 each).
+- **Verified:** frontend **495/495** · `ng build` exit 0. Uncommitted (awaiting user): `strain-hunter-settings.{html,ts}`.
+- **Next (backlog):** SearXNG proxy · translation model quality · optionally defer sidebar sessions.
+
 ## 2026-08-18 Session (aj) — ✅ FIXED: settings tabs eager-loading (lazy + #content, empirically verified)
 
 - **Problem:** entering /settings fired all tabs' requests at once (genetics/terpenes/storage/llm-provider/default-model) because settings.html rendered all 4 tab panels eagerly. (sessions×2 = sidebar by design; me = one-time boot call.)

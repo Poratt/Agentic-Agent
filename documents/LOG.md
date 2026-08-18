@@ -7,6 +7,11 @@
 - **Not committed yet (previous sessions):** backend enrichment + CLS skeleton.
 - **No architecture diagram change** — component-level request behavior only; no boundary/flow change.
 
+## 2026-08-18 AJ2 — Inner genetics/terpenes tabs lazy: lazy store resolution via injector.get()
+- **Architectural decision — when a lazy tab lives INSIDE an eagerly-created component, the store injection must also be lazy:** deferring the terpene panel's TEMPLATE did not defer `/terpenes` — the parent component's field `inject(TerpeneStore)` creates the root singleton at construction, and Angular's `httpResource` issues its GET at resource creation. Solution: resolve TerpeneStore through a memoized `injector.get(TerpeneStore)` getter; the first read happens from the deferred template on tab activation, so the store (and its fetch) is created exactly then. `injector.get()` outside injection context is fine (explicit lookup). Pattern: `private getX() { return this.x ??= this.injector.get(X); }`.
+- **General rule:** lazy template ≠ lazy fetch when the data source is a root-injected eager resource. Defer the injection chain, not just the view.
+- **No architecture diagram change** — component-level behavior.
+
 ## 2026-08-17 W7 — Frontend 492/492: 16 pre-existing failures resolved (spec-only)
 - **Decision — PrimeNG test setup needs real services, not shape mocks:** both `<p-confirm-dialog>` (subscribes to `confirmationService.requireConfirmation$`) and `<p-toast>` (subscribes to `messageService.messages`) crashed on partial mocks; real `MessageService`/`ConfirmationService` classes are safe in TestBed and are the fix.
 - **Test lesson — sync mocks defeat async-protected flows:** the interceptor single-flight test used a synchronous `of()` refresh, which completed + finalized the shared in-flight observable before the second concurrent 401 landed (2 refreshes). Real production refresh is an HTTP call — the test now uses `delay(10)` to preserve the window.

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Injector, inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -27,7 +27,7 @@ import { UserRole } from '../../../core/enums/user-role.enum';
 })
 export class StrainHunterSettings implements OnInit, OnDestroy {
     private readonly geneticsStore = inject(GeneticsStore);
-    private readonly terpeneStore = inject(TerpeneStore);
+    private readonly injector = inject(Injector);
     private readonly geneticsService = inject(GeneticsService);
     private readonly terpeneService = inject(TerpeneService);
     private readonly confirmService = inject(ConfirmationService);
@@ -36,6 +36,14 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
     protected isAdmin = computed(() => this.authStore.userRole() === UserRole.Admin);
     private readonly mql = window.matchMedia('(max-width: 1599px)');
     private readonly mqlHandler = () => this.isCompact.set(this.mql.matches);
+
+    /** TerpeneStore נפתר lazily: httpResource שולח את ה-GET ברגע שהסטור נוצר,
+     *  לכן הזרקה רגילה הייתה טוענת /terpenes כבר בפתיחת טאב הגנטיקה.
+     *  הסטור נוצר רק בקריאה הראשונה — כלומר כשטאב הטרפנים נפתח לראשונה. */
+    private terpeneStoreInstance: TerpeneStore | null = null;
+    private getTerpeneStore(): TerpeneStore {
+        return (this.terpeneStoreInstance ??= this.injector.get(TerpeneStore));
+    }
 
     geneticsFilter = signal('');
     terpeneFilter = signal('');
@@ -47,6 +55,11 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
     bulkEnriching = signal<'genetics' | 'terpenes' | null>(null);
     bulkResult = signal<{ total: number; enriched: number; errors: number } | null>(null);
     isCompact = signal(false);
+    /** שורות placeholder (כגודל עמוד = 20) — שומרות על גובה הטבלה במהלך טעינה ראשונה כדי למנוע CLS.
+     *  never[] assignable לכל טיפוס שורה (genetics/terpene) — התוכן לא נקרא כשהטבלה בטעינה. */
+    tableSkeletonRows: never[] = Array.from({ length: 20 }, () => null as never);
+    geneticsLoading = computed(() => this.geneticsStore.loading());
+    terpeneLoading = computed(() => this.getTerpeneStore().loading());
 
     filteredGenetics = computed<IGenetics[]>(() => {
         const q = this.geneticsFilter().toLowerCase();
@@ -63,7 +76,7 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
 
     filteredTerpenes = computed<ITerpene[]>(() => {
         const q = this.terpeneFilter().toLowerCase();
-        const items = this.terpeneStore.terpenes();
+        const items = this.getTerpeneStore().terpenes();
         if (!q) return items;
         return items.filter(t =>
             t.name.toLowerCase().includes(q) ||
@@ -179,7 +192,7 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
     saveEnrichedTerpene(t: ITerpene): void {
         const enriched = this.getEnrichedTerpene(t.id);
         if (!enriched) return;
-        this.terpeneStore.update(t.name, {
+        this.getTerpeneStore().update(t.name, {
             description: enriched.description,
             scent: enriched.scent,
             effects: enriched.effects,
@@ -241,7 +254,7 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
 
         this.enrichingIds.update(set => new Set(set).add(key));
         try {
-            const result = await this.terpeneStore.enrich(t.name);
+            const result = await this.getTerpeneStore().enrich(t.name);
             if (result) {
                 this.enrichedTerpenes.update(map => {
                     const next = new Map(map);
@@ -299,7 +312,7 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
             const result = await firstValueFrom(this.terpeneService.enrichMissing());
             if (result.success && result.result) {
                 this.bulkResult.set(result.result);
-                this.terpeneStore.reload();
+                this.getTerpeneStore().reload();
             }
         } catch {
             // Error handled by store
@@ -340,7 +353,7 @@ export class StrainHunterSettings implements OnInit, OnDestroy {
             header: 'מחיקת טרפן',
             accept: async () => {
                 try {
-                    await this.terpeneStore.delete(t.name);
+                    await this.getTerpeneStore().delete(t.name);
                     this.expandedTerpenes.update(set => {
                         const next = new Set(set);
                         next.delete(t.id);
