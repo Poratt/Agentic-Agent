@@ -15,6 +15,7 @@ Frontend platform baseline:
 - TypeScript `6.0.3`
 - Node.js `22.22.3+` or `24.15.0+`
 - PrimeNG `22.0.0` (verified with `npm ls primeng`; matches Angular 22 — the old 21.x peer-dependency mismatch risk is gone)
+- **PrimeNG tabs `lazy` convention (empirically verified 2026-08-18):** `lazy` on `p-tabs` alone only defers RENDERING — the projected content is still instantiated eagerly (components' constructors/ngOnInit run and their stores fetch). To truly defer initialization, wrap each non-default tab's content in `<ng-template #content>...</ng-template>` inside the `p-tabpanel`. And if the deferred tab lives inside an eagerly-created component, its store must ALSO be resolved lazily (memoized `injector.get(Store)`) — `httpResource` issues its GET the moment the store is created.
 
 ## Directory Structure
 
@@ -259,6 +260,7 @@ done/<feature>.md        ← completed
 
 - node --version may fail in sandbox — use `npx node --version` instead
 - Always verify environment via build output, not direct CLI checks
+- A global `PORT` env var overrides `ng serve --port` (Angular CLI logs "Using port 0" and binds a random port). If the dev server isn't on the requested port, check `echo $PORT` and unset it — e.g. `PORT= npx ng serve --port 4200`
 
 ## Documentation
 
