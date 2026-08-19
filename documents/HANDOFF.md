@@ -1,4 +1,12 @@
 # Documentation Handoff
+## 2026-08-19 — ✅ TOKEN ROTATED + single source of truth: bridge reads backend/.env
+
+**User revoked the exposed token in BotFather and provided a new one.** Verified: new token `getMe` OK, old token `401 Unauthorized` — exposure closed.
+- **3 local copies updated:** `backend/.env` (`TELEGRAM_BOT_TOKEN`), `C:\Users\porat\.agents\mcp.json`, and the bridge script.
+- **Refactor (user-approved):** `tg-bridge.mjs` no longer hard-codes the token (was line 22). New `loadBotToken()`: `process.env.TELEGRAM_BOT_TOKEN` wins, else reads `backend/.env` — ONE edit per rotation going forward. Bridge restarted (PID 46848), polling clean, no 401/409.
+- **Remaining copy:** `C:\Users\porat\.agents\mcp.json` still holds the literal token — unused by Freebuff (v0.0.65 never reads MCP config), kept as reference per AGENTS.md. Optional cleanup later.
+- **Open (optional):** git-history purge of the old token (`git filter-repo` + force push) — hygiene only, rotation already closed it.
+
 ## 2026-08-19 — 🔴 SECURITY: @freebuzbot token exposed in public repo — rotation REQUIRED
 
 **GitHub secret-scanning alert:** the relay bot token was committed in `3667b2a` (AGENTS.md#L250) to a **PUBLIC** repo. Anyone can read it and control @freebuzbot.
