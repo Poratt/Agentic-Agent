@@ -3,8 +3,8 @@
         @if (store.nightlyUnread() > 0 && !nightlyBannerDismissed()) {
             <div class="glass-effect banner">
                 <div class="banner-content">
-                    <span>{{ store.nightlyUnread() }}</span>
                     <span class="ph ph-lightbulb-filament"></span>
+                    <span>{{ store.nightlyUnread() }}</span>
                     <span> רעיונות חדשים נוצרו הלילה — <a href="/ideas/history?nightly=true">צפה בהם</a></span>
                 </div>
                 <button class="transparent-btn sm" type="button" (click)="dismissNightlyBanner()">סמן כנקרא</button>

@@ -35,7 +35,10 @@
   }
 
   .page-content {
-    flex: 1;
+    /* flex-grow fills the shell on short pages; flex-basis auto lets the box
+       grow WITH its content on long pages, so padding-bottom sits at the real
+       bottom instead of being swallowed by overflowing children. */
+    flex: 1 0 auto;
     padding: var(--space-8);
     min-height: 0;
     position: relative;

@@ -70,6 +70,15 @@
         </div>
     </div>
 
+    @if (triggerSuccess()) {
+        <div class="glass-effect banner animated-banner" [class.closing]="bannerClosing()">
+            <div class="banner-content">
+                <span class="ph ph-check-circle"></span>
+                <span>{{ triggerSuccess() }}</span>
+            </div>
+        </div>
+    }
+
     @switch (pageState()) {
         @case (PageStates.Loading) {
             <div class="page-state loading-state">

@@ -26,6 +26,7 @@ export class IdeasHistory implements OnInit {
     protected readonly UserRole = UserRole;
 
     triggerSuccess = signal<string | null>(null);
+    bannerClosing = signal(false);
 
     filterMode = signal<FilterMode>('all');
     expandedSessionId = signal<number | null>(null);
@@ -137,7 +138,10 @@ export class IdeasHistory implements OnInit {
         const message = await this.ideasStore.triggerNightly();
         if (message) {
             this.triggerSuccess.set(message);
-            setTimeout(() => this.triggerSuccess.set(null), 5000);
+            this.bannerClosing.set(false);
+            // Play the exit animation (~300ms), then remove the banner.
+            setTimeout(() => this.bannerClosing.set(true), 5000);
+            setTimeout(() => this.triggerSuccess.set(null), 5300);
         }
         // A manual run may have created new sessions — refresh the whole list
         // first, then refresh the details of the session that was expanded

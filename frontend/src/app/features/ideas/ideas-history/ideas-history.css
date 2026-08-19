@@ -1,4 +1,13 @@
 :host {
+
+    /* The toast anchors to the content area (not the viewport): centering
+       in the page's width ignores the sidebar, and top is relative to the
+       content start — one header height + a gap, so it clears the app
+       header and the page title. Out of the flow, so it never pushes. */
+    .page-content {
+        position: relative;
+    }
+
     .sessions-list {
         display: flex;
         flex-direction: column;
@@ -220,6 +229,11 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+
+        .banner,
+        .banner.closing {
+            animation: none;
+        }
 
         .ideas-list,
         .ideas-list-inner {

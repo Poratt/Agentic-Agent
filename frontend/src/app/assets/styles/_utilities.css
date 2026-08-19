@@ -110,18 +110,25 @@
   }
 }
 
-/* --- Notice Banner (accent variant of the glass surface) --- */
+/* --- Notice Banner (accent variant of the glass surface) ---
+   Shared by the auto-dismiss toast (ideas-history) and the persistent
+   nightly banner (ideas-page): content-sized, centered, capped, and it
+   slides down on enter. `.animated-banner` adds the toast mechanics
+   (absolute overlay within a positioned .page-content + closing state). */
 .banner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-8);
   padding: var(--space-3);
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
   background: var(--color-primary-glow-bg);
   border-radius: var(--radius-lg);
   box-shadow: var(--glass-shadow);
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  animation: slideDown var(--transition-standard);
 
   .banner-content {
     display: flex;
@@ -142,7 +149,22 @@
       text-decoration: none;
     }
   }
+
+  &.animated-banner {
+    /* Look (fit-content, centering, slideDown) comes from the global
+         .banner in _utilities.css — this keeps only the toast mechanics. */
+    position: absolute;
+    top: calc(var(--space-20) + var(--space-4));
+    inset-inline: 0;
+    max-width: calc(100% - 2 * var(--space-8));
+    z-index: 50;
+
+    &.closing {
+      animation: fadeOut var(--transition-standard) forwards;
+    }
+  }
 }
+
 
 /* --- Icon Tile Badge --- */
 .icon-tile {
@@ -283,6 +305,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .pulse-dot {
+    animation: none;
+  }
+
+  .banner {
     animation: none;
   }
 
