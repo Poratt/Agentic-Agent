@@ -1,4 +1,24 @@
 # Documentation Handoff
+## 2026-08-19 — ✅ FIXED: triggerSuccess message now rendered (ideas-history cosmetic)
+
+**Bug:** `triggerSuccess` signal was set in `triggerNightly()` (backend message "יצירת רעיונות לילית הופעלה. התוצאות יופיעו בהיסטוריה לאחר סיום.") but never rendered in `ideas-history.html` — invisible feedback after clicking the manual trigger.
+
+**Fix:** `ideas-history.html` — `@if (triggerSuccess())` banner under the page header, reusing the global `.glass-effect.banner` / `.banner-content` pattern (same as ideas-page) with a `ph-check-circle` icon. Auto-clears via the existing 5s `setTimeout`.
+
+**Verification:** frontend `npx ng test --watch=false` **498/498 (56 suites, +1 new)** — new test asserts the message renders into `.banner-content` · `ng build` exit 0 (only pre-existing strain-hunter.css budget warning). Uncommitted.
+
+**Decisions:** poll-until-completion (item 2) skipped per YAGNI — run finishes ~5 min, next page visit already refetches (empirically proven). git remote URL update (item 3) left for the user (one-liner, needs their go).
+
+**Files touched:** `frontend/src/app/features/ideas/ideas-history/ideas-history.html`, `ideas-history.spec.ts`, `documents/{HANDOFF,STATUS}.md`.
+
+**Follow-up (same session, user feedback):** banner appeared/disappeared with no animation and pushed the layout down. Fixed in `ideas-history.{ts,html,css,spec}`: banner is now a `position: fixed` top-center toast (out of flow — ZERO layout shift, verified live: first row stayed at 164.7px through the whole lifecycle, delta 0.03px = sub-pixel); enter = existing `slideDown` keyframe, exit = new `bannerClosing` signal (5s → `.closing` class → `fadeOut` 200ms → removed at 5.3s); `prefers-reduced-motion` disables the animations. **Gotcha:** `--transition-standard` is a full `duration + timing` token — putting it in the `animation` shorthand AND adding `ease-out` created two timing functions → invalid → animation silently dropped (computed `animation-name: none`). Pass the token alone. **Verification:** 499/499 (+1 lifecycle test with fake timers) · build exit 0 · live: `slideDown` → `fadeOut` + `.closing` → removed, list never moved. Uncommitted (together with the agent's banner fix).
+
+**Positioning polish (user feedback ×2):** (1) the toast was centered in the VIEWPORT, but the user sees the page = content area (sidebar takes the right 180px) — measured: banner center 318 vs content center 233.7. (2) move ~50px lower. Fix: switched `position: fixed` → `position: absolute` anchored to `.page-content` (`position: relative` scoped) — `inset-inline: 0; margin-inline: auto` then centers in the CONTENT area, and the same `top: calc(space-20 + space-4)` now lands ~50px lower (48 → 99.3px viewport, since content starts at 51.3). Live-verified: bannerCenter 233.7 == contentCenter 233.7 (delta 0.0), top 99.3. Trade-off: absolute scrolls with content (fixed stayed visible) — fine for a 5s flash.
+
+**Bottom-spacing fix (user report: last card flush with the bottom — GLOBAL fix in `_layout.css`):** root cause — `.page-content { flex: 1; min-height: 0 }` sizes the box to the flex free space, so long content overflowed the box and `padding-bottom` was swallowed (measured: box bottom 216.7 vs list 1100). Changed to `flex: 1 0 auto` — box grows with content, padding lands at the real bottom. Live: ideas-history gap 0 → 16px; short pages unchanged; flush pages (media/ideas composer) unaffected.
+
+**Shared banner class (user: "the ideas-page banner has no max-width — make it look like the toast"):** `_utilities.css` `.banner` is now the shared look — `width: fit-content; max-width: 100%; margin-inline: auto; animation: slideDown; gap: space-8` + `prefers-reduced-motion` — used by BOTH the ideas-history toast and the ideas-page persistent nightly banner (now a centered ~340px pill instead of a full-width bar; stays until "סמן כנקרא"). **User then consolidated further:** the toast mechanics moved INTO the global class as `.banner.animated-banner` (absolute/top/inset/z-index/closing) — `ideas-history.html` now uses `banner animated-banner`, `ideas-history.css` kept only `.page-content { position: relative }` + reduced-motion. Live-verified after the consolidation: slideDown → closing+fadeOut → removed, centered (288.7==288.7), top 99.3, pill 395.6. Dropped: the `.banner--spread` variant (fit-content makes justify-content a no-op anyway).
+
 ## 2026-08-19 — ✅ FIXED: manual nightly trigger doesn't refresh the sessions list (ideas-history)
 
 **User-reported inconsistency:** `IdeasHistory.triggerNightly()` refreshed only the EXPANDED session (`loadSession(expandedId)`) — never the list. The normal `generate()` flow calls `loadSessions()` on `phase:'done'`. So a session created by a manual nightly run didn't appear until a manual "רענן" click.
@@ -11,7 +31,7 @@
 
 **⚠️ Honest limitation surfaced during verification:** `POST /ideas/nightly/trigger` is fire-and-forget (returns immediately; the run takes ~7.5 min). The refresh therefore fires at TRIGGER time — it does NOT wait for the run to finish. The new session appears only after the run completes AND the next natural refetch (page visit / manual refresh / filter switch). To fully close "session appears without any refresh" you'd need a poll-until-completion (refetch every ~20-30s while the run is active, stop when a new nightly session appears) or a backend completion signal. **Decision pending — not implemented (out of the requested scope).**
 
-**Cosmetic bug found while in there (NOT fixed, separate):** `triggerSuccess` signal is set in the component but NEVER rendered in `ideas-history.html` — the "התוצאות יופיעו בהיסטוריה לאחר סיום" message is invisible. Candidate for a tiny follow-up fix.
+**Cosmetic bug found while in there (fixed in the next session, see above):** `triggerSuccess` signal is set in the component but was never rendered in `ideas-history.html` — the "התוצאות יופיעו בהיסטוריה לאחר סיום" message was invisible.
 
 ## 2026-08-19 — ✅ FIXED: agent loops on /calendar/auth — user never got the consent link (sessions 227+228)
 

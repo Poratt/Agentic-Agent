@@ -2,6 +2,19 @@
 
 Last updated: 2026-08-19
 
+## 2026-08-19 — ✅ FIXED: triggerSuccess message now rendered (ideas-history cosmetic)
+
+- **Bug:** `triggerSuccess` set in `triggerNightly()` but never rendered in the template — the trigger confirmation was invisible.
+- **Fix:** `@if (triggerSuccess())` banner in `ideas-history.html` (global `.glass-effect.banner` pattern, `ph-check-circle` icon); auto-clears via existing 5s timeout.
+- **Verified:** frontend **498/498 (56 suites, +1)** · `ng build` exit 0. Uncommitted.
+- **Decision:** poll-until-completion skipped (YAGNI — next visit refetches; run ~5 min). git remote URL update left for user.
+
+## 2026-08-19 — ✅ FIXED: banner UX (toast + persistent) + global bottom spacing
+
+- **triggerSuccess banner (ideas-history):** rendered (was invisible) — second agent's fix; then polished per user: animated enter/exit (`slideDown`/`fadeOut` + `closing` state), **zero layout shift** (absolute overlay — measured: list stayed at 164.7px), centered in the CONTENT area (not viewport — sidebar offset) at top ~99px. Global shared class `.banner` in `_utilities.css` + `.animated-banner` variant (toast mechanics) — the ideas-page persistent nightly banner now uses the same pill look (centered, max-width'd) and stays until "סמן כנקרא".
+- **Global layout fix:** `.page-content { flex: 1 0 auto }` (was `flex: 1`) — the box grows with content so `padding-bottom` lands at the real bottom (was swallowed by overflowing lists → last card flush). Verified on 4 pages incl. flush pages (composer still docked).
+- **Verified:** frontend **499/499** (56 suites, +2 lifecycle tests) · `ng build` exit 0 · live measurements on all changes.
+
 ## 2026-08-19 — ✅ FIXED: manual nightly trigger doesn't refresh the sessions list
 
 - **Bug:** `triggerNightly()` refreshed only the expanded session, never the list (inconsistent with `generate()` which calls `loadSessions()` on done). New nightly session invisible until manual "רענן".
