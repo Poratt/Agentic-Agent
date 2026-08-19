@@ -146,4 +146,19 @@ describe('IdeasHistory', () => {
     component.toggleFavorite({ ideaId: 10, isFavorite: true });
     expect(storeMock['toggleFavorite']).toHaveBeenCalledWith(10, true);
   });
+
+  it('triggerNightly should reload the session list after triggering', async () => {
+    await component.triggerNightly();
+    expect(storeMock['triggerNightly']).toHaveBeenCalled();
+    expect(storeMock['loadSessions']).toHaveBeenCalledWith({});
+    expect(storeMock['loadSession']).not.toHaveBeenCalled();
+  });
+
+  it('triggerNightly should reload with the current filter and refresh an expanded session', async () => {
+    component.setFilter('nightly');
+    component.expandedSessionId.set(5);
+    await component.triggerNightly();
+    expect(storeMock['loadSessions']).toHaveBeenCalledWith({ nightly: true });
+    expect(storeMock['loadSession']).toHaveBeenCalledWith(5);
+  });
 });

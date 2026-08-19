@@ -119,12 +119,16 @@ export class IdeasHistory implements OnInit {
         return session.ideas?.length ?? 0;
     }
 
-    refresh() {
+    private currentFilterParams(): { nightly?: boolean; favorites?: boolean } {
         const mode = this.filterMode();
         const params: { nightly?: boolean; favorites?: boolean } = {};
         if (mode === 'nightly') params.nightly = true;
         if (mode === 'favorites') params.favorites = true;
-        this.ideasStore.loadSessions(params);
+        return params;
+    }
+
+    refresh() {
+        this.ideasStore.loadSessions(this.currentFilterParams());
     }
 
     async triggerNightly() {
@@ -135,6 +139,10 @@ export class IdeasHistory implements OnInit {
             this.triggerSuccess.set(message);
             setTimeout(() => this.triggerSuccess.set(null), 5000);
         }
+        // A manual run may have created new sessions — refresh the whole list
+        // first, then refresh the details of the session that was expanded
+        // before the click (it may have changed during the run).
+        await this.ideasStore.loadSessions(this.currentFilterParams());
         if (expandedId) {
             await this.ideasStore.loadSession(expandedId);
         }
