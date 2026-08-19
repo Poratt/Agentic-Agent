@@ -32,6 +32,9 @@ type TooltipPos = {
     category: TooltipCategory;
     top: number;
     left: number;
+    /** false until the post-render measurement re-positions; keeps the
+     *  tooltip invisible during the estimate→correct gap (no jump). */
+    ready: boolean;
 };
 
 type StrainRow = ScoredStrain<Record<string, unknown>>;
@@ -104,6 +107,9 @@ type TerpeneTooltipPos = {
     top: number;
     left: number;
     openUp: boolean;
+    /** false until the post-render measurement re-positions; keeps the
+     *  tooltip invisible during the estimate→correct gap (no jump). */
+    ready: boolean;
 };
 
 @Component({
@@ -512,32 +518,59 @@ export class StrainHunter implements OnInit {
         this.selectedImageUrl.set(null);
     }
 
-    onTerpeneEnter(name: string, event: MouseEvent) {
+    onGeneticsEnter(name: string, event: MouseEvent) {
         const el = event.currentTarget as HTMLElement;
         const rect = el.getBoundingClientRect();
-        const top = rect.bottom + TOOLTIP_GAP;
+        // Same dynamic positioning as the terpene tooltip: open ABOVE when
+        // there is room, otherwise BELOW — consistent behavior across both.
+        const openUp = rect.top >= this.tooltipHeight + this.tooltipGap;
+        const top = openUp
+            ? rect.top - this.tooltipHeight - this.tooltipGap
+            : rect.bottom + TOOLTIP_GAP;
         const chipCenter = rect.left + rect.width / 2;
         const left = Math.max(TOOLTIP_GAP, Math.min(chipCenter - TOOLTIP_W / 2, window.innerWidth - TOOLTIP_W - TOOLTIP_GAP));
 
         const timeout = setTimeout(() => {
-            this.tooltip.set({ name, category: 'terpene', top, left });
+            this.tooltip.set({ name, category: 'genetics', top, left, ready: false });
             this.tooltipTimeout.set(null);
+            this.correctTooltipOverlap(rect, 'tooltip');
         }, TOOLTIP_DELAY_MS);
         this.tooltipTimeout.set(timeout);
     }
 
-    onGeneticsEnter(name: string, event: MouseEvent) {
-        const el = event.currentTarget as HTMLElement;
-        const rect = el.getBoundingClientRect();
-        const top = rect.bottom + TOOLTIP_GAP;
-        const chipCenter = rect.left + rect.width / 2;
-        const left = Math.max(TOOLTIP_GAP, Math.min(chipCenter - TOOLTIP_W / 2, window.innerWidth - TOOLTIP_W - TOOLTIP_GAP));
-
-        const timeout = setTimeout(() => {
-            this.tooltip.set({ name, category: 'genetics', top, left });
-            this.tooltipTimeout.set(null);
-        }, TOOLTIP_DELAY_MS);
-        this.tooltipTimeout.set(timeout);
+    /**
+     * The tooltip height is estimated (tooltipHeight) but real content can be
+     * taller — an "open above" tooltip would then cover its own source button.
+     * After render, measure the actual height and re-position with the real
+     * height: ABOVE the button when there is room, otherwise BELOW. Runs one
+     * frame after the signal is set (imperceptible — same frame as the open).
+     */
+    private correctTooltipOverlap(btnRect: DOMRect, which: 'tooltip' | 'terpeneTooltip') {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                // Only one tooltip is rendered at a time — the genetics one (plain
+                // app-tooltip inside @if (tooltip())) or the terpene one (class
+                // tooltip-fixed at the page root). Measure whichever is visible.
+                const candidates = Array.from(document.querySelectorAll<HTMLElement>('app-tooltip'));
+                const el =
+                    which === 'tooltip'
+                        ? candidates.find((e) => !e.classList.contains('tooltip-fixed'))
+                        : candidates.find((e) => e.classList.contains('tooltip-fixed'));
+                if (!el) return;
+                const tipHeight = el.getBoundingClientRect().height;
+                const gap = which === 'tooltip' ? TOOLTIP_GAP : this.tooltipGap;
+                const top = btnRect.top >= tipHeight + gap
+                    ? btnRect.top - tipHeight - gap // real room above — open there
+                    : btnRect.bottom + gap; // otherwise below
+                if (which === 'tooltip') {
+                    const cur = this.tooltip();
+                    if (cur) this.tooltip.set({ ...cur, top, ready: true });
+                } else {
+                    const cur = this.terpeneTooltip();
+                    if (cur) this.terpeneTooltip.set({ ...cur, top, ready: true });
+                }
+            });
+        });
     }
 
     onTooltipLeave() {
@@ -710,7 +743,8 @@ export class StrainHunter implements OnInit {
             Math.min(chipCenter - this.tooltipWidth / 2, window.innerWidth - this.tooltipWidth - this.tooltipGap),
         );
 
-        this.terpeneTooltip.set({ name, top, left, openUp });
+        this.terpeneTooltip.set({ name, top, left, openUp, ready: false });
+        this.correctTooltipOverlap(rect, 'terpeneTooltip');
     }
 
     /** Hide the terpene-tooltip popover. */

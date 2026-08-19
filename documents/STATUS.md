@@ -2,6 +2,15 @@
 
 Last updated: 2026-08-19
 
+## 2026-08-19 — ✅ FIXED: genetics tooltip flash — zero frames at wrong pos (real fix, not the 60ms delay)
+
+- **First attempt (rejected):** `fadeIn 60ms` delay only hides opacity — tooltip still painted at estimate for ~32ms (2× rAF). Jump unchanged.
+- **Real fix:** added `ready: boolean` to `TooltipPos` + `TerpeneTooltipPos`. Initial `ready: false` → template `[style.visibility]="ready ? 'visible' : 'hidden'"` → `correctTooltipOverlap` flips `ready: true` in the SAME signal write as the final `top` → ONE paint at final position. Applies to both genetics + terpene tooltips (same component, same correction).
+- **Reverted:** 60ms animation-delay hack in `tooltip.css` (no longer needed — tooltip hidden during render).
+- **Files:** `strain-hunter.ts` (2 types + 3 setters), `strain-hunter.html` (2 visibility bindings), `tooltip.css` (revert).
+- **Verified:** frontend **502/502 (56 suites)**, `ng build` exit 0.
+- **Next:** user hovers genetics + terpene; commit.
+
 ## 2026-08-19 — ✅ DONE: gemma is the nightly default (user approved) — live-verified
 
 - **Switch:** `IDEAS_NIGHTLY_MODEL=openrouter/google/gemma-4-31b-it:free` active in `.env` (glm = commented fallback), :3000 restarted (PID 43868).

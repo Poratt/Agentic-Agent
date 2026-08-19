@@ -1,4 +1,25 @@
 # Documentation Handoff
+## 2026-08-19 — ✅ FIXED: genetics tooltip flash — "appears on button, then jumps up" (zero frames at wrong pos)
+
+**Symptom (user):** genetics tooltip rendered briefly on/near the source button, then jumped to the correct position above. User explicitly required: **not even 1ms at the wrong position** — tooltip must render in place on the very first frame.
+
+**Two-attempt fix:**
+
+1. **First attempt (rejected):** delay `fadeIn` by 60ms (`tooltip.css:30`). This only hides opacity — the element is still painted at the estimate (`rect.top - 140 - 8`) for the 2× rAF correction window (~32ms), so the jump is unchanged. Just less visible.
+
+2. **Real fix:** keep the tooltip **invisible during the entire estimate→correct window**. Added `ready: boolean` to both `TooltipPos` and `TerpeneTooltipPos`. Tooltip starts `ready: false` → template binds `[style.visibility]="ready ? 'visible' : 'hidden'"`. `correctTooltipOverlap` flips it to `true` in the SAME signal write that sets the real `top` → only one paint at the final position. Zero frames at wrong pos.
+
+**Files touched:**
+- `strain-hunter.ts` — `TooltipPos`/`TerpeneTooltipPos` + `ready` field (×2), `onGeneticsEnter`/`onTerpeneHover` set `ready: false`, `correctTooltipOverlap` sets `ready: true` alongside `top`.
+- `strain-hunter.html` — `[style.visibility]` binding on both `<app-tooltip>` instances (genetics + terpene).
+- `tooltip.css` — reverted the 60ms animation-delay hack (no longer needed; tooltip is hidden during render anyway).
+
+**Why not "compute the real height before render":** would need an offscreen measurement render (clone the card, measure, position) — more code, more cases, and still has its own race. The hidden-during-correction pattern is the standard fix and is small.
+
+**Verified:** frontend `npx ng test --watch=false` **502/502 (56 suites)**, `npx ng build` exit 0 (CSS-budget warning pre-existing, not from this change).
+
+**Next exact step:** user verifies no jump (hover a genetics + a terpene button); then commit.
+
 ## 2026-08-19 — ✅ css-nesting-check.mjs moved to ~/.claude/hooks/ (user-approved)
 
 **User asked who runs it — found: Claude Code hooks (PreToolUse/Write + PostToolUse/Edit|Write), 2 configs × 2 refs each; ZCode refs are dead (policy ignores hooks, proven earlier).** Moved:

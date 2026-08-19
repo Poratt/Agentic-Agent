@@ -177,6 +177,7 @@
             [name]="tooltip()!.name"
             [style.top.px]="tooltip()!.top"
             [style.left.px]="tooltip()!.left"
+            [style.visibility]="tooltip()!.ready ? 'visible' : 'hidden'"
         />
     }
 
@@ -455,8 +456,6 @@
                                                             <button
                                                                 [class]="terpeneClass(terpene.name)"
                                                                 type="button"
-                                                                (mouseenter)="onTerpeneEnter(terpene.name, $event)"
-                                                                (mouseleave)="onTooltipLeave()"
                                                                 (click)="applyDataFilter('terpenes', terpene.name, terpene.label)"
                                                                 (mouseenter)="onTerpeneHover(terpene.name, $event)"
                                                                 (mouseleave)="onTerpeneLeave()"
@@ -575,5 +574,6 @@
         [name]="t.name"
         [style.top.px]="t.top"
         [style.left.px]="t.left"
+        [style.visibility]="t.ready ? 'visible' : 'hidden'"
     />
 }
