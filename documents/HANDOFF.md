@@ -1,4 +1,14 @@
 # Documentation Handoff
+## 2026-08-19 — ✅ DONE: sidebar sessions load lazily on first dropdown open (branch: sidebar-lazy-loading, merged ff-only)
+
+**Problem:** `MainSidebar.ngOnInit` called `chatStore.loadSessions()` + `ideasStore.loadSessions()` on every page load — baseline measured: `/admin-agent/sessions` + `/ideas/sessions` @343ms with zero interaction. **Goal (user):** defer to first dropdown open, like the lazy settings tabs.
+
+**Implementation (5 files):** `Dropdown` gained an `opened` output (mirrors `closed`, emitted when the trigger opens after the 200ms hover delay). `MainSidebar`: removed `ngOnInit` loads; added `loadChatSessionsOnce()`/`loadIdeaSessionsOnce()` guarded by per-dropdown `loaded` flags (first open only, no refetch on reopen). Template restructure — BOTH dropdowns were wrapped in `@if (recentSessions().length > 0)` (chicken-and-egg with lazy loading), so the trigger button is now always visible and the content branches `loading (spinner) → list → empty state ("אין שיחות עדיין"/"אין רעיונות שמורים עדיין")`. CSS: `.nav-sub-loading`/`.nav-sub-empty`.
+
+**Live verification (timestamps):** page load → ONLY `/auth/me` (was +2 sessions calls); hover chat dropdown → `/admin-agent/sessions` @13303, 5 items render; close+reopen → no refetch; hover ideas dropdown → `/ideas/sessions` @33684; close+reopen → no refetch; navigation /settings→/ideas → ZERO sessions calls, sidebar intact.
+
+**Verification:** frontend **502/502 (56 suites, +3)** — new tests: no load on init, each load-once method fires exactly once · `ng build` exit 0.
+
 ## 2026-08-19 — ✅ FIXED: triggerSuccess message now rendered (ideas-history cosmetic)
 
 **Bug:** `triggerSuccess` signal was set in `triggerNightly()` (backend message "יצירת רעיונות לילית הופעלה. התוצאות יופיעו בהיסטוריה לאחר סיום.") but never rendered in `ideas-history.html` — invisible feedback after clicking the manual trigger.
