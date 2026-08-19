@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { GoogleCalendarService } from './google-calendar.service';
 
 jest.mock('googleapis', () => ({
@@ -41,6 +41,10 @@ function makeService(overrides: { repo?: any; encryption?: any } = {}) {
 describe('GoogleCalendarService — C4 security', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Silence the service logger — the OAuth flow logs are asserted via the
+    // Logger.prototype spies in the dedicated describe below.
+    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     (google.auth.OAuth2 as unknown as jest.Mock).mockImplementation(() => mockOAuth2Instance);
     (google.calendar as unknown as jest.Mock).mockReturnValue(mockCalendarInstance);
     mockOAuth2Instance.generateAuthUrl.mockReturnValue('https://accounts.google.com/o/oauth2/auth?state=abc');
@@ -213,6 +217,59 @@ describe('GoogleCalendarService — C4 security', () => {
 
       await expect(service.handleCallback('bad-code', 'valid-state', 'valid-state')).rejects.toThrow(
         BadRequestException,
+      );
+    });
+  });
+
+  describe('OAuth flow logging — incidents diagnosable from logs, no DB digging', () => {
+    it('logs the state lifecycle: new issue → reuse → callback success', async () => {
+      const { service, repo } = makeService();
+      // First call: no row → new state issued.
+      repo.findOneBy.mockResolvedValue(null);
+      await service.getAuthUrl(7);
+      expect(Logger.prototype.log).toHaveBeenCalledWith(expect.stringContaining('[OAuthAuth] userId=7 — issued new state'));
+
+      // Repeat call while fresh → state reused, not overwritten.
+      repo.findOneBy.mockResolvedValue({
+        userId: 7,
+        state: 'fresh-state',
+        stateExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      });
+      await service.getAuthUrl(7);
+      expect(Logger.prototype.log).toHaveBeenCalledWith(
+        expect.stringContaining('[OAuthAuth] userId=7 — reusing fresh state'),
+      );
+
+      // Callback completes → tokens stored.
+      repo.findOneBy.mockResolvedValue({
+        userId: 7,
+        state: 'fresh-state',
+        stateExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      });
+      await service.handleCallback('code', 'fresh-state', 'fresh-state');
+      expect(Logger.prototype.log).toHaveBeenCalledWith(
+        expect.stringContaining('[OAuthCallback] userId=7 — tokens stored'),
+      );
+    });
+
+    it('logs a warning when the callback state is invalid or expired', async () => {
+      const { service, repo } = makeService();
+      // Unknown state.
+      repo.findOneBy.mockResolvedValue(null);
+      await expect(service.handleCallback('code', 'bogus', 'bogus')).rejects.toThrow(BadRequestException);
+      expect(Logger.prototype.warn).toHaveBeenCalledWith(
+        expect.stringContaining('[OAuthCallback] state rejected (unknown)'),
+      );
+
+      // Expired state.
+      repo.findOneBy.mockResolvedValue({
+        userId: 7,
+        state: 'old-state',
+        stateExpiresAt: new Date(Date.now() - 1000),
+      });
+      await expect(service.handleCallback('code', 'old-state', 'old-state')).rejects.toThrow(BadRequestException);
+      expect(Logger.prototype.warn).toHaveBeenCalledWith(
+        expect.stringContaining('[OAuthCallback] state rejected (expired)'),
       );
     });
   });

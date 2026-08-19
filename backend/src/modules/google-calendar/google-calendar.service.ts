@@ -52,6 +52,9 @@ export class GoogleCalendarService {
     // tool with ~zero concurrency; revisit with a per-user row lock or
     // per-flow states if it ever matters.
     if (row?.state && row.stateExpiresAt && row.stateExpiresAt.getTime() > now) {
+      this.logger.log(
+        `[OAuthAuth] userId=${userId} — reusing fresh state (valid until ${row.stateExpiresAt.toISOString()})`,
+      );
       return { url: this.buildAuthUrl(row.state), state: row.state };
     }
 
@@ -67,6 +70,7 @@ export class GoogleCalendarService {
     }
     await this.tokenRepo.save(row);
 
+    this.logger.log(`[OAuthAuth] userId=${userId} — issued new state (valid until ${stateExpiresAt.toISOString()})`);
     return { url: this.buildAuthUrl(state), state };
   }
 
@@ -111,6 +115,9 @@ export class GoogleCalendarService {
         row.stateExpiresAt = null;
         await this.tokenRepo.save(row);
       }
+      this.logger.warn(
+        `[OAuthCallback] state rejected (${row ? 'expired' : 'unknown'}) — userId=${row?.userId ?? 'n/a'}`,
+      );
       throw new BadRequestException('OAuth state is invalid or expired. Start the flow again via /calendar/auth');
     }
 
@@ -135,6 +142,7 @@ export class GoogleCalendarService {
     row.stateExpiresAt = null;
     await this.tokenRepo.save(row);
 
+    this.logger.log(`[OAuthCallback] userId=${row.userId} — tokens stored, state cleared`);
     return { success: true, message: 'Google Calendar connected' };
   }
 
