@@ -5,6 +5,7 @@ import { UsersService } from '../users/users.service';
 import { LlmProviderService } from '../llm-provider/llm-provider.service';
 import { LlmProviderConfigService } from '../llm/services/llm-provider-config.service';
 import { LlmProvider } from '../llm/types/llm.types';
+import { TelegramNotifyService, buildNightlyIdeasMessage } from './telegram-notify.service';
 
 /**
  * Nightly ideas generation cron.
@@ -16,9 +17,11 @@ import { LlmProvider } from '../llm/types/llm.types';
  * ideas and persists them as a `nightly + unread` session so they surface in
  * the ideas history / "new ideas this morning" banner on the next visit.
  *
- * No external notification channel is used — delivery is in-app (the UI pulls
- * the unread nightly sessions). Each topic is isolated in its own try/catch so
- * a single failure does not abort the rest of the batch.
+ * Delivery is in-app (the UI pulls the unread nightly sessions); when
+ * TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID are configured, a summary of the
+ * generated ideas is also pushed to Telegram when the run finishes.
+ * Each topic is isolated in its own try/catch so a single failure does not
+ * abort the rest of the batch.
  */
 @Injectable()
 export class IdeasTasksService {
@@ -29,6 +32,7 @@ export class IdeasTasksService {
     private readonly usersService: UsersService,
     private readonly llmProviderService: LlmProviderService,
     private readonly llmProviderConfigService: LlmProviderConfigService,
+    private readonly telegramNotifyService: TelegramNotifyService,
   ) {}
 
   @Cron('0 0 4 * * *')
@@ -64,7 +68,15 @@ export class IdeasTasksService {
     );
 
     if (grounded.length === 0) {
+      // Empty run is NOT silent when Telegram is on — every trigger answers,
+      // even with "nothing to report", so a dead pipeline is never mistaken
+      // for a working one that just hasn't finished.
       this.logger.warn('Nightly ideas generation produced 0 grounded sessions — nothing to save');
+      if (this.telegramNotifyService.isEnabled()) {
+        await this.telegramNotifyService.sendMessage(
+          '🌙 ריצת הלילה הסתיימה בלי רעיונות grounded — לא נוצרו שמירות חדשות. אפשר לנסות שוב מאוחר יותר.',
+        );
+      }
       return;
     }
 
@@ -93,6 +105,16 @@ export class IdeasTasksService {
         );
       }
     }
+    // Push a Telegram summary of the generated ideas (no-op when the bot is
+    // not configured — TelegramNotifyService never throws). When the bot IS
+    // configured but the push fails, say so explicitly: the run itself
+    // succeeded, and that distinction must survive in the log.
+    const telegramEnabled = this.telegramNotifyService.isEnabled();
+    const notified = await this.telegramNotifyService.sendMessage(buildNightlyIdeasMessage(grounded));
+    if (telegramEnabled && !notified) {
+      this.logger.warn('Nightly ideas generation succeeded, but the Telegram notification failed — see TelegramNotifyService logs above');
+    }
+
     this.logger.log('Nightly ideas generation finished');
   }
 

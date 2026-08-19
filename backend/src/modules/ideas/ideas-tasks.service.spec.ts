@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Logger } from '@nestjs/common';
 import { IdeasTasksService } from './ideas-tasks.service';
 import { IdeasService } from './ideas.service';
 import { UsersService } from '../users/users.service';
 import { LlmProviderService } from '../llm-provider/llm-provider.service';
 import { LlmProviderConfigService } from '../llm/services/llm-provider-config.service';
+import { TelegramNotifyService } from './telegram-notify.service';
 import { User } from '../users/entities/user.entity';
 
 function makeAdmin(): User {
@@ -40,6 +42,7 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery + hard gate)',
   >;
   let usersService: jest.Mocked<Pick<UsersService, 'findFirstAdmin'>>;
   let llmProviderService: jest.Mocked<Pick<LlmProviderService, 'findFirstActiveTextModel'>>;
+  let telegramNotifyService: jest.Mocked<Pick<TelegramNotifyService, 'sendMessage' | 'isEnabled'>>;
 
   const originalEnv = { ...process.env };
 
@@ -62,6 +65,10 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery + hard gate)',
     llmProviderService = {
       findFirstActiveTextModel: jest.fn(),
     };
+    telegramNotifyService = {
+      sendMessage: jest.fn().mockResolvedValue(true),
+      isEnabled: jest.fn().mockReturnValue(true),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -70,6 +77,7 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery + hard gate)',
         { provide: UsersService, useValue: usersService },
         { provide: LlmProviderService, useValue: llmProviderService },
         { provide: LlmProviderConfigService, useValue: { getActiveProvider: jest.fn(), getActiveModel: jest.fn() } },
+        { provide: TelegramNotifyService, useValue: telegramNotifyService },
       ],
     }).compile();
 
@@ -98,10 +106,43 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery + hard gate)',
     usersService.findFirstAdmin.mockResolvedValue(makeAdmin());
     llmProviderService.findFirstActiveTextModel.mockResolvedValue({ provider: 'openrouter', model: 'gpt-4o' });
     ideasService.generateGroundedIdeasForCron.mockResolvedValue([]);
+    telegramNotifyService.isEnabled.mockReturnValue(false); // Telegram off — no empty-run message
 
     await service.runNightly();
 
     expect(ideasService.saveGeneration).not.toHaveBeenCalled();
+    expect(telegramNotifyService.sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('sends a Telegram message when the run ends empty AND Telegram is enabled (no silent dead runs)', async () => {
+    process.env.IDEAS_NIGHTLY_ENABLED = 'true';
+    process.env.IDEAS_NIGHTLY_MODEL = '';
+
+    usersService.findFirstAdmin.mockResolvedValue(makeAdmin());
+    llmProviderService.findFirstActiveTextModel.mockResolvedValue({ provider: 'openrouter', model: 'gpt-4o' });
+    ideasService.generateGroundedIdeasForCron.mockResolvedValue([]);
+    telegramNotifyService.isEnabled.mockReturnValue(true);
+
+    await service.runNightly();
+
+    expect(ideasService.saveGeneration).not.toHaveBeenCalled();
+    expect(telegramNotifyService.sendMessage).toHaveBeenCalledTimes(1);
+    expect(telegramNotifyService.sendMessage.mock.calls[0][0]).toContain('בלי רעיונות grounded');
+  });
+
+  it('does NOT send a Telegram message on an empty run when Telegram is disabled', async () => {
+    process.env.IDEAS_NIGHTLY_ENABLED = 'true';
+    process.env.IDEAS_NIGHTLY_MODEL = '';
+
+    usersService.findFirstAdmin.mockResolvedValue(makeAdmin());
+    llmProviderService.findFirstActiveTextModel.mockResolvedValue({ provider: 'openrouter', model: 'gpt-4o' });
+    ideasService.generateGroundedIdeasForCron.mockResolvedValue([]);
+    telegramNotifyService.isEnabled.mockReturnValue(false);
+
+    await service.runNightly();
+
+    expect(ideasService.saveGeneration).not.toHaveBeenCalled();
+    expect(telegramNotifyService.sendMessage).not.toHaveBeenCalled();
   });
 
   it('calls generateGroundedIdeasForCron then saves each grounded result', async () => {
@@ -131,6 +172,70 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery + hard gate)',
       expect(call[0]).toBe(1); // admin.id
       expect(call[5]).toEqual({ nightly: true, unread: true });
     }
+  });
+
+  it('pushes a Telegram summary of the grounded ideas when the run finishes', async () => {
+    process.env.IDEAS_NIGHTLY_ENABLED = 'true';
+    process.env.IDEAS_NIGHTLY_MODEL = '';
+
+    usersService.findFirstAdmin.mockResolvedValue(makeAdmin());
+    llmProviderService.findFirstActiveTextModel.mockResolvedValue({ provider: 'openrouter', model: 'gpt-4o' });
+    ideasService.generateGroundedIdeasForCron.mockResolvedValue([
+      makeGroundedResult('ניהול חשבוניות', 7),
+      makeGroundedResult('אנליטיקה למפתחים', 5),
+    ]);
+    ideasService.saveGeneration.mockResolvedValue(1);
+
+    await service.runNightly();
+
+    expect(telegramNotifyService.sendMessage).toHaveBeenCalledTimes(1);
+    const [message] = telegramNotifyService.sendMessage.mock.calls[0];
+    expect(message).toContain('ריצת הלילה הסתיימה — <b>2 נושאים, 2 רעיונות חדשים</b>');
+    expect(message).toContain('📌 <b>ניהול חשבוניות</b>');
+    expect(message).toContain('📌 <b>אנליטיקה למפתחים</b>');
+    expect(message).toContain('ניהול חשבוניות idea — 7/10');
+  });
+
+  it('logs an explicit failure line when Telegram is enabled but the push fails', async () => {
+    process.env.IDEAS_NIGHTLY_ENABLED = 'true';
+    process.env.IDEAS_NIGHTLY_MODEL = '';
+
+    usersService.findFirstAdmin.mockResolvedValue(makeAdmin());
+    llmProviderService.findFirstActiveTextModel.mockResolvedValue({ provider: 'openrouter', model: 'gpt-4o' });
+    ideasService.generateGroundedIdeasForCron.mockResolvedValue([makeGroundedResult('נושא', 7)]);
+    ideasService.saveGeneration.mockResolvedValue(1);
+    telegramNotifyService.isEnabled.mockReturnValue(true);
+    telegramNotifyService.sendMessage.mockResolvedValue(false);
+
+    const warnSpy = jest.spyOn(Logger.prototype, 'warn');
+    await service.runNightly();
+
+    // "ריצה הצליחה, התראה נכשלה" — the run's success must not look like a
+    // silent failure, and the notification failure must not look like a run
+    // failure.
+    const tgWarn = warnSpy.mock.calls.find((args) => String(args[0]).includes('Telegram'));
+    expect(tgWarn).toBeDefined();
+    expect(String(tgWarn?.[0])).toContain('succeeded, but the Telegram notification failed');
+    warnSpy.mockRestore();
+  });
+
+  it('does not log a Telegram failure line when Telegram is not configured', async () => {
+    process.env.IDEAS_NIGHTLY_ENABLED = 'true';
+    process.env.IDEAS_NIGHTLY_MODEL = '';
+
+    usersService.findFirstAdmin.mockResolvedValue(makeAdmin());
+    llmProviderService.findFirstActiveTextModel.mockResolvedValue({ provider: 'openrouter', model: 'gpt-4o' });
+    ideasService.generateGroundedIdeasForCron.mockResolvedValue([makeGroundedResult('נושא', 7)]);
+    ideasService.saveGeneration.mockResolvedValue(1);
+    telegramNotifyService.isEnabled.mockReturnValue(false);
+    telegramNotifyService.sendMessage.mockResolvedValue(false);
+
+    const warnSpy = jest.spyOn(Logger.prototype, 'warn');
+    await service.runNightly();
+
+    const tgWarn = warnSpy.mock.calls.find((args) => String(args[0]).includes('Telegram'));
+    expect(tgWarn).toBeUndefined();
+    warnSpy.mockRestore();
   });
 
   it('uses IDEAS_NIGHTLY_MODEL env override when present', async () => {
