@@ -1,4 +1,8 @@
 # Documentation Handoff
+## 2026-08-19 — ✅ Bridge now logs ignored foreign-chat messages
+
+**User asked "מה קורה אם אנונימי שולח לבוטים?" — verified both bots are chat-gated (only 661157823).** Command bot already logged `ignored chat <id>`; the bridge silently discarded. Added the same log line to `tg-bridge.mjs` `pollTelegram`: `ignored chat <chatId> from <senderId>: <text-60ch>`. Bridge restarted (PID 47512), clean start.
+
 ## 2026-08-19 — ✅ TOKEN ROTATED + single source of truth: bridge reads backend/.env
 
 **User revoked the exposed token in BotFather and provided a new one.** Verified: new token `getMe` OK, old token `401 Unauthorized` — exposure closed.
