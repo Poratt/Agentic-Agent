@@ -1,4 +1,111 @@
 # Documentation Handoff
+## 2026-08-19 — ✅ DONE: gemma is now the nightly default (user approval) — live-verified end-to-end
+
+**User: "gemma עכשיו"** — the quality gate closed: manual test (session 95, 4 ideas ~2 min) + content read + approval.
+- **Switch:** `backend/.env` — `IDEAS_NIGHTLY_MODEL=openrouter/google/gemma-4-31b-it:free` is the ACTIVE default (glm demoted to a commented fallback). Verified the app reads it: `dotenv` reports gemma. :3000 restarted (PID 43868).
+- **Live proof (not just a config edit):** triggered a real nightly run 20:44→20:53 (~9 min): **3 grounded sessions (96-98) × 15 ideas** — every LLM call on gemma, zero empty-content. Topics: COPPA/GDPR kids-products checker (Shopify), Amazon FBA net-profit calculator, Etsy image-license manager. Telegram summary pushed with the new HTML bold.
+- **Honest limit:** 3 of 5 target sessions — grounding is search-bound (SearXNG noise, known), not the model (glm: 0; gemma: 15).
+- **Verified:** log + DB (MySQL via `mysql2` — tables `saved_idea_sessions`/`saved_ideas`).
+- **Files touched:** `backend/.env` (python edit — dotfile rule), documents. No architecture-diagram change (env config).
+- **Next exact step:** commit/push accumulated work — per the user's earlier protocol the gemma switch is its OWN commit, separate from the rest (contracts, Telegram feature, hardening, command bot, formatting).
+
+## 2026-08-19 — ✅ DONE: Telegram formatting upgrade — HTML parse_mode everywhere (bold renders, escaping guaranteed)
+
+**User:** "שתי כוכביות לא מעצב פה את הטקסט" → asked to upgrade. Implemented across all three send paths:
+- **`scripts/tg-html-send.js` (NEW)** — session-send helper: `{{b}}…{{/b}}` → `<b>`, auto-escapes `& < >`, sends with `parse_mode='HTML'`. Usage: `node scripts/tg-html-send.js relay|command <utf8-file>`.
+- **`telegram-notify.service.ts`** — exported `esc()`; `buildNightlyIdeasMessage` now emits `<b>` counts + topics and escapes LLM-supplied domain/title/description; `trySend` adds `parse_mode:'HTML'`. Empty-run message is static Hebrew — safe as-is.
+- **`scripts/telegram-command-bot.js`** — `sendMessage` auto-escapes + converts `{{b}}` markers; command names bolded in interim/final replies.
+- **Why HTML over MarkdownV2:** MarkdownV2 requires escaping Hebrew punctuation (`.` `,` `!` `?` `(` `)` …) — ONE unescaped char 400s the whole send; HTML only needs `& < >` escaped, and that is now centralized in esc()/toHtml.
+- **Verified:** backend **438/438 (45 suites, +2 esc tests)** · build exit 0 · responder restarted (PID 35112) · **:3000 restarted (PID 29280, dist carries parse_mode)** · live test message sent (message_id 112): `{{b}}מודגש{{/b}}` + `5 & 6 < 7 > 4` — bold + escaping confirmed.
+- **Files touched:** `scripts/tg-html-send.js` (NEW), `telegram-notify.service.ts` (+spec), `ideas-tasks.service.spec.ts` (bold assertions), `telegram-command-bot.js`, `AGENTS.md`, documents.
+- **Next exact step:** user confirms the bold render on the phone; then commit/push accumulated work.
+
+## 2026-08-19 — ✅ DONE: standalone command bot (FreeBuzCommandBot) — relay drops "/"-commands, so commands now execute outside Freebuff
+
+**Root problem (user's empirical isolation test, option 3):** menu commands tapped in Telegram were SENT and CONSUMED by the relay bot but NEVER reached the session — the Freebuff relay drops "/"-prefixed messages. The orchestrator cannot be modified from this repo, so the fix is a SEPARATE bot that owns command execution entirely.
+- **New standalone responder — `scripts/telegram-command-bot.js` (FreeBuzCommandBot, token `TELEGRAM_COMMAND_BOT_TOKEN` in `backend/.env`, chat-gated to 661157823):** long-polling `getUpdates` loop executing `/status /git /tests /build /restart_backend /stop /help` directly via the Bot API — no Freebuff in the loop, no 5-minute warnings. Test modes: `--test <cmd>` (prints replies, no Telegram) / `--test-stop <cmd>` (starts a command, /stops after 3s). Only ONE polling instance (409 otherwise).
+- **Empirically verified (real runs, not "should work"):** /help /status /git fast ✅ · /tests — backend jest **436/436 + frontend ng test 502/502**, real exit codes captured via `echo EXIT=$?` (a `| tail` pipe masks jest's exit code) ✅ · /build **exit 0** ✅ · /restart_backend — real kill+rebuild+start with a poll-until-listening loop (boot takes ~5-10s; a fixed 3s sleep missed it — found and fixed) ✅ · /stop — driver started a REAL jest run and killed it (`taskkill //T` tree, `killed=true`, correct "/tests" label) ✅.
+- **Two bugs found + fixed during the pass:** (1) `exec('(cmd &)')` hangs forever — the backgrounded child inherits exec's stdio pipes so the callback never fires (hit live with /restart_backend: backend DID restart, command never returned). Fix: `runDetached()` = `spawn('bash', ['-c', cmd], {detached: true, stdio: 'ignore'})` + `unref()`. (2) `/stop` routed through `executeCommand` overwrote the running command's busy label (replied "stopped /stop"). Fix: `/stop` calls `cmdStop()` directly (control-plane reads worker state).
+- **Also fixed:** Git Bash MSYS mangles `/`-prefixed argv (path conversion) — test modes take the command WITHOUT a leading slash; registration script now prefers `TELEGRAM_COMMAND_BOT_TOKEN` (runs on the command bot by default; relay bot via explicit env).
+- **Live state:** responder running PID 40480 (polling started, zero errors after 60s+). ⚠️ **User must press Start on FreeBuzCommandBot** — a bot cannot message a chat it hasn't been started in (the ack attempt returned HTTP 400). After Start, the menu button + commands work end-to-end.
+- **Relay bot menu CLEARED (user: "אז צריך לשנות את התפריט פה"):** the @freebuzbot chat was showing a commands menu that can never work (relay drops "/"). Cleared via `setMyCommands {commands: []}` + `setChatMenuButton {type: default}` — verified: `getMyCommands` = `[]`, `getChatMenuButton(chat 661157823)` = `{type: default}` (button hidden). ⚠️ Quirk documented: `getChatMenuButton()` WITHOUT chat_id still reports `{type: commands}` despite 4 ok:true sets (bare/chat_id/scope-default via python AND curl) — Telegram-side quirk; the user's chat (the only chat with this bot) reads default, which is what the user sees. Client may need a chat reopen to drop the cached button.
+- **Files touched:** `scripts/telegram-command-bot.js` (NEW), `scripts/telegram-bot-commands.js` (token resolution), `backend/.env` + `.env.example` (python precision edit — dotfile rule), `AGENTS.md` (Telegram section), documents.
+- **Next exact step:** user presses Start on FreeBuzCommandBot and fires menu commands — replies arrive directly from the bot; I verify via `C:/tmp/command-bot.log`. Then: commit/push the accumulated work.
+
+## 2026-08-19 — ✅ DONE: Telegram menu commands + commands button for the bridge bot (registered + empirically tested)
+
+**User spec (full prompt via Telegram):** `/` menu + slash commands for the Freebuff bridge bot, so the user controls the agent from Telegram instead of free text.
+- **Registered (verified via getters):** `setMyCommands` ok + `setChatMenuButton {type:"commands"}` ok; readback = `/status /git /tests /build /restart_backend /stop /help`. Persisted in `scripts/telegram-bot-commands.js` (idempotent, token from `backend/.env`).
+- **List decision:** `/approve` DROPPED (no pending-approval flow exists for this bridge — the CONFIRMATION_REQUIRED flow lives in agentic-admin's own chat, not the Telegram bridge) — flagged to user; `/help` added. `/nightly` offered as a future option.
+- **Honest scope note:** the Freebuff ORCHESTRATOR is not modifiable from this repo (hard-coded, documented). Commands are handled IN-SESSION: they arrive as relayed messages, the agent executes and replies via `sendMessage`. Behavior contract documented in AGENTS.md: immediate "מתחיל…" reply, interim updates for slow ops, clear errors.
+- **Empirical command runs (all documented):** /status (idle, :3000 up) · /git (17 modified/untracked, 5-commit log) · /tests (**backend 436/436 + frontend 502/502, exit 0 ×2**) · /build (**ng build exit 0**) · /restart_backend (**PID 1080, :3000 up 19:04:40**) · /stop — documented, NOT fully testable without a deliberately-running long task (the real abort is the client's Stop; honest limitation).
+- **Files touched:** `scripts/telegram-bot-commands.js` (NEW), `AGENTS.md` (Telegram commands section), documents.
+- **Next exact step:** user opens the Telegram chat (reopen if the menu doesn't refresh immediately — known Telegram UI cache), fires the commands, and reports what they see; then decide on gemma default (separate commit) and/or commit/push the accumulated work.
+
+## 2026-08-19 — ✅ DONE: empty-run notification LIVE; gemma manual quality-test done — default REVERTED to glm (user's decision: quality gate before default)
+
+**#1 — empty-run notification (user approved without hesitation):** `runNightly` sends "🌙 ריצת הלילה הסתיימה בלי רעיונות grounded..." when the run ends empty AND Telegram is enabled. **LIVE on :3000.** (Root cause of the earlier "no message" reports: glm-4.7-flash returned `"no content or tool calls"` ×3 in validation → 0 grounded → silent by design.)
+
+**#2 — gemma nightly model (user: "NOT default until content quality approved"):** the user correctly flagged that switching the idea-generation model is a CONTENT-QUALITY decision, not a reliability patch — and that documented gemma quality issues (Cannlytics translation, different context) mean "stable ≠ good content". Followed their protocol:
+1. **Manual test run with gemma** (session 95, 18:57→18:59, ~2 min): produced **1 grounded session / 4 ideas** (vs glm: 22 min + 0 grounded). Ideas read + assessed: coherent GDPR/compliance niche, natural Hebrew (no translation issues), strong ChatGPT/Zapier differentiation, honest validation caveats; ⚠️ same-pattern saturation within the domain, 1/5 grounding rate (SearXNG noise, not the model). Quality verdict: **good — recommended for default, user's final call**.
+2. **Default REVERTED to glm** (`cloude-flare/@cf/zai-org/glm-4.7-flash`) in `backend/.env`; gemma kept as a commented manual-test option. **:3000 restarted (PID 45408, 18:59) on glm + empty-run notification.**
+3. When the user approves: switch `IDEAS_NIGHTLY_MODEL` to gemma **in a SEPARATE commit** (their requirement), restart, re-verify.
+
+**Verification:** backend `npx jest --runInBand` **436/436 (45 suites, +2)** · build exit 0 · Telegram message with the 4 ideas was auto-sent at 18:59 (user should have received it — the feature's first real delivery).
+
+**Files touched:** `ideas-tasks.service.ts` (+spec ×2, +1 adjusted), `backend/.env` (python edit — default glm, gemma commented), documents.
+
+**Next exact step:** user's verdict on gemma quality → if approved, switch default in a separate commit; else commit/push the accumulated work (contracts + Telegram feature + hardening + empty-run notification).
+
+## 2026-08-19 — ✅ DONE: Telegram push hardening — selective retry + explicit failure log (user-driven edge case)
+
+**User's point:** the send-failure path was "logged but easy to miss, no retry" — exactly the edge-case class found today everywhere else (OAuth state overwrite, lazy tabs). Fixed with two additions, per user's spec:
+- **Retry — transient only:** network/DNS/timeout + HTTP 5xx → up to **3 attempts** with fixed backoff **500ms/1000ms** (total ~1.5s — never stalls the run for minutes). **Terminal failures are NOT retried**: missing config, API `ok:false` (expired token, unknown chat, blocked bot) and HTTP 4xx — a retry cannot fix them and would only waste time (the user explicitly required this distinction: "לא retry גורף על הכל").
+- **Explicit failure line in runNightly:** when Telegram IS enabled and `sendMessage` returns false → `logger.warn('Nightly ideas generation succeeded, but the Telegram notification failed — see TelegramNotifyService logs above')`. The run's success and the push's failure are both visible and distinguishable; when Telegram is NOT configured, no misleading line.
+- **Empirical tests (fake timers, not "should work"):** network error → exactly 3 calls at the exact gaps (verified at t=499/500/1499/1500); 5xx → 3 attempts then false; **4xx → 1 call, ok:false → 1 call (no retry, proven)**, recovery → succeeds on attempt 2; runNightly warns explicitly when enabled+fails, silent when disabled.
+
+**Verification:** backend `npx jest --runInBand` **434/434 (45 suites, +5)** · build exit 0 · mojibake clean.
+
+**Files touched:** `telegram-notify.service.ts` (+spec), `ideas-tasks.service.ts` (+spec), documents.
+
+## 2026-08-19 — ✅ DONE: nightly ideas → Telegram push (with the ideas themselves, not just "ready")
+
+**User request:** "יכול לשלוח את הרעיונות עם ההתראה בטלגרם?" — the nightly-run notification should carry the generated ideas, not just a completion ping. Closes the fire-and-forget gap (7-8 min run with zero feedback) with a one-way push.
+
+**Implementation (3 new/updated files + module + env + tests):**
+- `ideas/telegram-notify.service.ts` (NEW) — `TelegramNotifyService.sendMessage(text)`: POSTs a **JSON body** to `https://api.telegram.org/bot<TOKEN>/sendMessage` (Hebrew-safe — no form/curl mangling; the known gotcha). Config: `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (both required, else warn + return false). **Never throws** — failures log and return false, so the cron can't be broken by a notification problem. Exported pure `buildNightlyIdeasMessage(grounded)` — Hebrew header with topic/idea counts, per-domain list sorted by score desc (top 5), truncated descriptions, "… ועוד N רעיונות", hard-capped at 4000 chars (Telegram limit).
+- `ideas-tasks.service.ts` — after the save loop: `await telegramNotifyService.sendMessage(buildNightlyIdeasMessage(grounded))`. Fires for BOTH the 04:00 cron and the manual admin trigger (same `runNightly()`). No message when 0 grounded (nothing to report).
+- `ideas.module.ts` — `HttpModule` import + `TelegramNotifyService` provider.
+- `backend/.env` — real values added (gitignored): `@freebuzbot` → chat `661157823` (same bot/chat the Freebuff agent uses, from AGENTS.md — user can swap). `.env.example` — documented optional section.
+
+**Verification:** backend `npx jest --runInBand` **429/429 (45 suites, +1 suite, +9 tests)** · `npm run build` exit 0 · mojibake clean. Architecture diagram UPDATED (new external provider: Telegram Bot API — module graph, nightly sequence, notes).
+
+**⚠️ Not live until the backend rebuilds/restarts on :3000** (user's instance). Also note: the bot must be allowed to message the chat — `@freebuzbot` already messages this chat, so it should work out of the box.
+
+**Files touched:** `telegram-notify.service.ts` (+spec NEW), `ideas-tasks.service.ts` (+spec), `ideas.module.ts`, `.env` / `.env.example` (dotfiles — python precision edit, str_replace refuses them), `documents/{HANDOFF,STATUS,LOG,architecture-diagram}.md`.
+
+**Next exact step:** rebuild+restart the backend on :3000, then `POST /ideas/nightly/trigger` (admin) to see the Telegram summary live — or just wait for the 04:00 cron.
+
+## 2026-08-19 — ✅ DONE: single-use contract audit — callback hidden from LLM + triggerNightly EXACTLY-ONCE (reviewer's open follow-up closed)
+
+**Reviewer's open item ("audit all agent-visible tools for one-time external action nature") is now CLOSED.** Audited all **73 agent-visible tools** (75 spec endpoints − confirmAction/streamChat already hidden; MCP disabled by default). Classification:
+- **One-time external user action:** `GoogleCalendarController_auth` (contract already present from the auth-loop fix) + **`GoogleCalendarController_callback`** (was missing — the external redirect target).
+- **One-time fire-and-forget (re-calling is harmful):** **`IdeasController_triggerNightly`** (was missing — each call starts a new ~7.5-min background run).
+- **Other 70 tools: reviewed, NOT applicable** — data/CRUD; video polling is by-design (`getVideo` explicitly instructs polling); `generateImage`'s hosted URL is a *result*, not a user action; batch enrichments are internal jobs with no external step.
+
+**Fixes (3 files + spec):**
+1. `google-calendar.controller.ts` — `callback` description now carries an explicit **NEVER-call contract** ("external redirect target — the agent has no browser session and no valid code/state, so calling it always fails; job ends at presenting the /calendar/auth URL; verify afterwards with GET /calendar/events").
+2. `swagger-tools.parser.ts` — **`GoogleCalendarController_callback` added to `HIDDEN_FROM_LLM`**: the strongest form of "call exactly zero times" — the model cannot even attempt it (same rationale as confirmAction/streamChat).
+3. `ideas.controller.ts` — `triggerNightly` description: **"call EXACTLY ONCE per request — returns immediately, run continues ~7-8 min in the background; do NOT re-call to check progress; do NOT report ideas as ready — they appear in history when done."**
+
+**Verification:** backend `npx jest --runInBand` **420/420 (44 suites, +1 new callback-exclusion test)** · `npm run build` exit 0 · `swagger-spec.json` regenerated (git diff = exactly the 2 new description strings — a transient backend boot rewrote it with the new text).
+
+**⚠️ Live note:** backend on :3000 still needs a rebuild+restart to serve these descriptions (and the earlier auth-loop fix) — the user runs their own instance.
+
+**Files touched:** `google-calendar.controller.ts`, `ideas.controller.ts`, `swagger-tools.parser.ts` (+spec), `swagger-spec.json`, documents.{HANDOFF,STATUS,LOG}. No architecture-diagram change (module boundaries and parser flow unchanged — the diagram documents modules, not individual tools).
+
+**Next exact step:** user's go on pushing (2 unpushed commits `7c156ab`+`ae4d071` + this work) · or the Telegram nightly-completion notification (proposed earlier — one-way push, closes the fire-and-forget gap cheaply).
+
 ## 2026-08-19 — ✅ CLOSED (reviewer pass): OAuth flow logging + single-use contract tracked
 
 **Reviewer's two notes on the auth-loop fix (`6b7ebe2`) — both handled:** (1) implement the flow logging, don't leave it as an option — done; (2) record the nuance behind "not a global orchestration bug" as a tracked follow-up — done, not fixed.

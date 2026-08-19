@@ -241,11 +241,22 @@ done/<feature>.md        ← completed
 
 ## MCP & External Integrations
 
-### Telegram MCP Plugin
+### Telegram (FreeBuff bot)
 
-- Tool: `mcp__plugin_telegram_telegram__reply`
+**IMPORTANT (verified 2026-08-19, Freebuff Desktop v0.0.65): Freebuff does NOT load user MCP servers.** The orchestrator hard-codes `mcpServers: { freebuff: ... }` and contains no code that reads `mcp.json` / `.agents/mcp.json`. Do NOT attempt MCP config for Telegram — it will never connect.
+
+Working method: call the Telegram Bot API directly via `curl` (no MCP needed).
+
+- Bot: `@freebuzbot` (token `8890696703:AAH7q20SFKtmtGtMkF3uzIpGFIsUrMJ4m0Q` stored in `C:\Users\porat\.agents\mcp.json` — unused by Freebuff but kept as reference).
+- My chat id: `661157823`.
+- Read new messages: `curl -s "https://api.telegram.org/bot<TOKEN>/getUpdates?limit=10"` — newest updates at the end.
+- Reply: `curl -s -H "Content-Type: application/json" --data-binary @<json-file> "https://api.telegram.org/bot<TOKEN>/sendMessage"` with `{"chat_id": 661157823, "text": "..."}`.
+- **UTF-8 gotcha:** Git Bash `curl` with Hebrew text inline breaks encoding. Always write the JSON payload to a file first (Windows path, e.g. `C:/tmp/tg-reply.json`), then `--data-binary @<path>`.
 - Usage: Use ONLY when explicitly instructed by the user in the active terminal session.
+- **Telegram reply formatting (user rules, 2026-08-19):** (1) NO literal markdown — `**bold**` renders as asterisks (no parse_mode by default) and annoyed the user. (2) UPGRADED same day — all sends now use `parse_mode='HTML'` so bold renders. Convention: session/responder sends mark bold with `{{b}}...{{/b}}` (auto-converted to `<b>`, everything else auto-escaped `& < >` — via `scripts/tg-html-send.js` and the responder's `toHtml`); the nightly ideas push uses `esc()` + explicit `<b>` in `buildNightlyIdeasMessage`. Never put raw `<`/`&` in message text. (3) NO DUPLICATES (user rule, 2026-08-19): the Freebuff client mirrors the session's final reply to Telegram, so routine answers are session-only — do NOT hand-send the same content again. Hand-send via `scripts/tg-html-send.js` ONLY for interim updates during long tasks (mid-run, not duplicates). Session replies must also stay markdown-free so the mirrored copy renders clean. Session sends: write the UTF-8 payload to a file, then `node scripts/tg-html-send.js relay|command <file>` (relay = @freebuzbot, command = FreeBuzCommandBot).
 - Never trigger autonomous external messages without direct confirmation.
+- **Telegram menu commands — SUPERSEDED on the relay bot (cleared 2026-08-19):** `/status` (current state), `/git` (status + log -5), `/tests` (full backend jest + frontend ng test), `/build` (ng build, exit code), `/restart_backend` (:3000 fresh dist), `/stop` (halt current work), `/help`. The relay bot (@freebuzbot) DROPS "/"-prefixed messages (verified empirically — the menu was tapped, messages consumed, never delivered), so its menu button + command list were CLEARED (`setMyCommands []` + `setChatMenuButton default`) to stop showing dead commands. Command ownership now lives in FreeBuzCommandBot (below). Free text still works on the relay bot. `/approve` deliberately never registered — no pending-approval flow exists for this bridge.
+- **Standalone command bot — FreeBuzCommandBot (`scripts/telegram-command-bot.js`, token `TELEGRAM_COMMAND_BOT_TOKEN` in `backend/.env`):** the relay DROPS `/`-prefixed messages (verified 2026-08-19 — user tapped menu commands, they never reached the session), so the command bot is a long-polling responder that executes `/status /git /tests /build /restart_backend /stop /help` itself and replies directly — no Freebuff in the loop, no 5-minute warnings. Chat filter: only `661157823`. Only ONE instance may poll (409 otherwise). Start it with `(node scripts/telegram-command-bot.js < /dev/null > C:/tmp/command-bot.log 2>&1 &)` from repo root; test modes: `--test <cmd>` (no leading slash — Git Bash mangles `/` args) and `--test-stop <cmd>` (starts a command, /stops after 3s). Implementation notes: `run()` uses `shell:'bash'` and exit codes are captured via `echo EXIT=$?` (pipes mask jest's exit code); the :3000 restart uses a detached `spawn` with `stdio:'ignore'` — never `exec('(cmd &)')`, the backgrounded child holds exec's pipes and hangs the callback forever (hit 2026-08-19); /stop routes directly to `cmdStop` (via `executeCommand` it overwrites the running command's busy label).
 
 ## Playwright Testing / Browser Rules
 

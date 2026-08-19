@@ -84,6 +84,7 @@ flowchart TD
     CurrencyApi[Currency API]
     JaneApi[Jane API / Store Page]
     AgnesAI[Agnes AI API\ntext / image / video]
+    TelegramApi[Telegram Bot API\nnightly ideas summary]
   end
 
   User --> Shell
@@ -126,7 +127,7 @@ flowchart TD
   McpBridge --> WeatherMcp
   CurrencyModule --> CurrencyApi
   StrainHunterModule --> JaneApi
-  IdeasModule --> LlmModule & WebSearchModule
+  IdeasModule --> LlmModule & WebSearchModule & TelegramApi
 ```
 
 ## Chat And Tool Execution Flow
@@ -258,7 +259,7 @@ flowchart TB
     StrainHunter["StrainHunterModule\nJane API fetch and normalized items"]
     Terpene["TerpeneModule\nterpene catalog with effects, role lookup"]
     Genetics["GeneticsModule\nstrain lineage catalog with parent1/parent2/origin, role lookup"]
-    Ideas["IdeasModule\nbusiness idea generator\nSignals: SearXNG + HN Algolia + PullPush (Reddit archive), LLM, SSE progress\nPersistence: saved_idea_sessions\n+ saved_ideas (cascade)\nNightly cron: @Cron 04:00"]
+    Ideas["IdeasModule\nbusiness idea generator\nSignals: SearXNG + HN Algolia + PullPush (Reddit archive), LLM, SSE progress\nPersistence: saved_idea_sessions\n+ saved_ideas (cascade)\nNightly cron: @Cron 04:00\nNightly completion push: Telegram summary (optional)"]
   end
 
   Auth & Users --> UsersDb[(users)]
@@ -482,6 +483,7 @@ sequenceDiagram
   participant DB as Database
   participant UI as IdeasPage
   participant History as IdeasHistory
+  participant Telegram as Telegram Bot API
 
   Cron->>Cron: @Cron('0 0 4 * * *') [IDEAS_NIGHTLY_ENABLED=true]
   Cron->>Cron: resolve admin user + model
@@ -499,6 +501,8 @@ sequenceDiagram
     Service->>DB: INSERT saved_idea_session (nightly=true, unread=true)
     Service->>DB: INSERT saved_ideas [cascade]
   end
+
+  Cron->>Telegram: sendMessage(Hebrew summary of grounded ideas) [when TELEGRAM_BOT_TOKEN + CHAT_ID set]
 
   UI->>API: GET /ideas/nightly/unread-count
   API-->>UI: N unread sessions
@@ -550,3 +554,4 @@ sequenceDiagram
 - **Ideas module** (`IdeasModule`) is a business idea generator: `POST /ideas/generate` (sync) and `GET /ideas/generate/stream` (SSE progress). The service runs a 3-phase agentic loop — SearXNG signal gathering → LLM idea generation → per-idea validation — with 60s overall timeout, partial results via `Promise.allSettled`, and weighted rate limiting via `IdeasThrottlerGuard` (extends `ThrottlerGuard`, loops `increment()` `max(count,1)` times). The frontend `IdeasPage` uses `PageStates` and consumes the SSE stream via raw `fetch` + `AbortController`.
 - **Ideas persistence:** Every generation (manual or nightly) is persisted to `saved_idea_sessions` + `saved_ideas` tables (FK cascade on delete). Persistence is best-effort in the stream handler — wrapped in try/catch so save failures never break the SSE response. The history page (`/ideas/history`) loads past sessions via `GET /ideas/sessions` with optional `?nightly=` and `?favorites=` filters.
 - **Ideas nightly cron:** `IdeasTasksService` runs at 04:00 server time when `IDEAS_NIGHTLY_ENABLED=true`. It first discovers topics via `IdeasService.discoverTopics()` — the LLM generates 4 English search queries (`DISCOVERY_QUERY_GENERATION_PROMPT`), then each query fans out to three signal channels in parallel: SearXNG (best-effort — its engines are frequently suspended/CAPTCHA'd as self-hosted bots), HN Algolia (`searchHackerNews`, no key) and PullPush Reddit archive (`searchRedditArchive`, no key); the latter two return only trusted-domain URLs by construction, and `isTrustedSignalUrl` filters the SearXNG noise. The LLM extracts `DiscoveredTopic[]` via `TOPIC_DISCOVERY_PROMPT`, where `domain` is Hebrew (for display) and `searchQuery` is the English search term. For each topic it calls `generateIdeas(domain, count, userId, model, searchQuery)`: signals and competitor searches hit SearXNG with English-only queries anchored on `searchQuery` (never mixed Hebrew/English), while idea titles/descriptions/scores stay Hebrew. Results save with `nightly=true, unread=true`. The `IdeasPage` calls `GET /ideas/nightly/unread-count` on load and shows a banner with a link to history. `POST /ideas/nightly/mark-read` clears the unread flag.
+- **Ideas Telegram notification:** when `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` are set (both optional), `IdeasTasksService` pushes a Hebrew summary of the generated ideas (sorted by score, capped at 5 per topic, hard-capped at 4000 chars) to the Telegram Bot API (`sendMessage`, JSON body — Hebrew-safe) when the nightly run finishes. `TelegramNotifyService` never throws — failures are logged and skipped, so notifications can never break the cron. The same push fires for the manual admin trigger (`POST /ideas/nightly/trigger`) since it calls `runNightly()`.

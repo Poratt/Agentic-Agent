@@ -2,6 +2,64 @@
 
 Last updated: 2026-08-19
 
+## 2026-08-19 — ✅ DONE: gemma is the nightly default (user approved) — live-verified
+
+- **Switch:** `IDEAS_NIGHTLY_MODEL=openrouter/google/gemma-4-31b-it:free` active in `.env` (glm = commented fallback), :3000 restarted (PID 43868).
+- **Live run (triggered, watched to completion):** 3 grounded sessions (96-98) × 15 ideas in ~9 min — zero empty-content (glm's failure mode). Topics: COPPA/GDPR (Shopify), FBA profit calculator, Etsy image manager. Telegram push with bold summary sent.
+- **Honest limit:** 3/5 target sessions — search-bound grounding (SearXNG noise, known), not the model.
+- **Commit plan:** gemma switch = its OWN commit (user's protocol) — separate from contracts/Telegram/command-bot work.
+
+## 2026-08-19 — ✅ DONE: Telegram formatting upgrade — HTML parse_mode everywhere
+
+- **Why:** `**bold**` rendered as literal asterisks (sendMessage has no parse_mode by default) — user: "סתם מעצבן". Asked to upgrade.
+- **What:** all three send paths now use `parse_mode='HTML'` — session helper `scripts/tg-html-send.js` (NEW, `{{b}}` markers + auto-escape `& < >`), nightly push (`esc()` + `<b>` in `buildNightlyIdeasMessage`), command responder (`toHtml()` + `{{b}}`). HTML chosen over MarkdownV2: MarkdownV2 needs escaping of Hebrew punctuation (one miss = whole send 400s); HTML only `& < >`.
+- **Verified:** backend **438/438 (45 suites, +2 esc tests)** · build 0 · :3000 restarted (PID 29280) · responder restarted (PID 35112) · live test message (112) with bold + escaped specials.
+- **Next:** user confirms render; then commit/push accumulated work.
+
+## 2026-08-19 — ✅ DONE: standalone command bot (FreeBuzCommandBot) — relay drops "/"-commands, commands now execute outside Freebuff
+
+- **Why:** user's empirical isolation test (option 3) proved the Freebuff relay consumes but never delivers "/"-prefixed messages. Orchestrator not modifiable → separate bot that handles commands itself.
+- **New:** `scripts/telegram-command-bot.js` — long-polling responder for `/status /git /tests /build /restart_backend /stop /help`, chat-gated (661157823), replies directly via Bot API. Token `TELEGRAM_COMMAND_BOT_TOKEN` in `backend/.env`. **Live: PID 40480, polling, 0 errors.**
+- **Empirically verified:** all 7 commands run for real — /tests (backend 436/436 + frontend 502/502), /build (exit 0), /restart_backend (real restart with poll-until-up), /stop (killed a real running jest — tree kill).
+- **Bugs found+fixed in the pass:** `exec('(cmd &)')` hangs forever → detached spawn with stdio ignore; /stop busy-label overwrite → direct `cmdStop()` routing; MSYS `/`-argv mangling → test modes without a slash.
+- **Relay bot menu CLEARED (user request):** @freebuzbot's commands menu was a lie (relay drops "/") → `setMyCommands []` + `setChatMenuButton default`. Verified: commands=[] and user chat (661157823)=default. Quirk: bot-wide getter without chat_id still returns `{type:commands}` after 4 ok:true sets (python+curl, bare/chat_id/scope) — Telegram-side; user's chat is what shows.
+- **Next:** user presses **Start** on FreeBuzCommandBot (bots can't message un-started chats — 400), fires menu commands → I verify via `C:/tmp/command-bot.log`. Then commit/push accumulated work.
+
+## 2026-08-19 — ✅ DONE: Telegram menu commands + commands button (bridge bot)
+
+- **Registered + verified via API readback:** `/status /git /tests /build /restart_backend /stop /help` — `setMyCommands` ok, `setChatMenuButton {type:commands}` ok. Script: `scripts/telegram-bot-commands.js` (idempotent). `/approve` dropped (no pending-approval flow in this bridge); `/help` added.
+- **Command behavior (in-session):** immediate "מתחיל…", interim updates, clear errors — documented in AGENTS.md. Orchestrator itself NOT modifiable (honest scope).
+- **Empirically run (documented):** /git (17 changes) · /tests (**backend 436/436, frontend 502/502, exit 0 ×2**) · /build (**exit 0**) · /restart_backend (**PID 1080, :3000 up**) · /status (idle) · /stop (documented — real abort = client Stop).
+- **Next:** user tests the menu in the Telegram UI (reopen chat if stale); then gemma default decision + commit/push.
+
+## 2026-08-19 — ✅ DONE: empty-run notification LIVE; gemma tested manually — default reverted to glm (quality gate)
+
+- **Fix 1 (approved, live):** empty-run Telegram message when enabled — every trigger answers, no silent dead runs. **Live on :3000.**
+- **Fix 2 (user's quality gate):** gemma was tested in ONE manual run (session 95: 1 grounded session, 4 ideas, ~2 min vs glm's 22 min + 0 grounded). Ideas read + assessed — good quality (natural Hebrew, strong differentiation, honest caveats). **Default REVERTED to glm** in `.env` per user protocol; gemma = commented option. Switch to default only after user approval, in a SEPARATE commit.
+- **Verified:** backend **436/436 (45 suites, +2)** · build 0 · **:3000 on glm + empty-run notification (PID 45408).** Telegram message with the 4 ideas auto-sent at 18:59 (first real delivery).
+- **Next:** user's verdict on gemma → separate-commit switch, or commit/push accumulated work.
+
+## 2026-08-19 — ✅ DONE: Telegram push hardening — selective retry + explicit failure log
+
+- **Retry (transient only):** network/DNS/timeout + HTTP 5xx → 3 attempts, backoff 500/1000ms (~1.5s total). No retry for terminal failures (missing config, `ok:false` = expired token/unknown chat, HTTP 4xx) — verified empirically, not just described.
+- **runNightly:** explicit warn "ריצה הצליחה, התראה נכשלה" ONLY when Telegram is enabled — success/failure of the run vs the push are distinguishable in the log; no misleading line when disabled.
+- **Verified:** backend **434/434 (45 suites, +5 fake-timer tests with exact-gap assertions)** · build exit 0.
+
+## 2026-08-19 — ✅ DONE: nightly ideas → Telegram push (ideas included, not just "ready")
+
+- **New:** `TelegramNotifyService` (`ideas/telegram-notify.service.ts`) + pure `buildNightlyIdeasMessage(grounded)` — Hebrew summary (counts, per-topic ideas sorted by score desc, top 5, 4000-char cap). `runNightly()` sends it when done — fires for the 04:00 cron AND the manual admin trigger. JSON body (Hebrew-safe), never throws, skips silently when env not set.
+- **Config:** `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` in `backend/.env` (real values: `@freebuzbot` → chat 661157823) + documented in `.env.example`.
+- **Verified:** backend **429/429 (45 suites, +9)** · build exit 0 · architecture diagram updated (Telegram Bot API as external provider).
+- **⚠️ Live on :3000 after rebuild+restart** (user's instance) — then `POST /ideas/nightly/trigger` to see it live.
+
+## 2026-08-19 — ✅ DONE: single-use contract audit — all 73 agent tools classified; callback hidden from LLM; triggerNightly EXACTLY-ONCE
+
+- **Audit result (73 agent-visible tools):** only 2 tools needed contracts — `GoogleCalendarController_callback` (one-time external redirect target — was missing) and `IdeasController_triggerNightly` (one-time fire-and-forget — was missing). `auth` already had its contract. Other 70: reviewed, NOT applicable (data/CRUD, by-design polling, result URLs, internal batch jobs).
+- **Fixes:** (1) `callback` — NEVER-call contract in description AND added to `HIDDEN_FROM_LLM` (model can't even attempt it — strongest form of "call exactly zero times"); (2) `triggerNightly` — "call EXACTLY ONCE per request; run takes ~7-8 min in background; don't re-call to check progress (each call starts a new run); don't report ideas as ready — they appear in history when done".
+- **Verified:** backend **420/420 (44 suites, +1 new test)** · `npm run build` exit 0 · `swagger-spec.json` regenerated (diff = exactly the 2 new descriptions).
+- **⚠️ Backend :3000** still needs rebuild+restart to serve these (user's instance).
+- **Uncommitted:** this work + `AGENTS.md` (Telegram section, pre-existing). 2 unpushed commits (`7c156ab`, `ae4d071`) await push.
+
 ## 2026-08-19 — ✅ CLOSED (reviewer): OAuth flow logging implemented + single-use contract tracked as follow-up
 
 - **Reviewer instruction 1 — implement the logging, don't leave it as an option (done):** `google-calendar.service.ts` now logs the OAuth state lifecycle (`[OAuthAuth]` issued vs reused with userId + expiry; `[OAuthCallback]` success + rejected-with-reason). A future "OAuth state is invalid or expired" incident is diagnosable from the log alone — no more DB digging with timestamps. Never logs the state value itself (CSRF secret).
