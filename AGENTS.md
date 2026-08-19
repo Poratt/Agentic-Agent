@@ -247,7 +247,7 @@ done/<feature>.md        ← completed
 
 Working method: call the Telegram Bot API directly via `curl` (no MCP needed).
 
-- Bot: `@freebuzbot` (token `8890696703:AAH7q20SFKtmtGtMkF3uzIpGFIsUrMJ4m0Q` stored in `C:\Users\porat\.agents\mcp.json` — unused by Freebuff but kept as reference).
+- Bot: `@freebuzbot` — token in `backend/.env` as `TELEGRAM_BOT_TOKEN` (NEVER commit tokens; the relay also keeps a copy in `C:\Users\porat\.agents\mcp.json`, unused by Freebuff but kept as reference).
 - My chat id: `661157823`.
 - Read new messages: `curl -s "https://api.telegram.org/bot<TOKEN>/getUpdates?limit=10"` — newest updates at the end.
 - Reply: `curl -s -H "Content-Type: application/json" --data-binary @<json-file> "https://api.telegram.org/bot<TOKEN>/sendMessage"` with `{"chat_id": 661157823, "text": "..."}`.
