@@ -1,4 +1,13 @@
 # Documentation Handoff
+## 2026-08-19 — 🔴 SECURITY: @freebuzbot token exposed in public repo — rotation REQUIRED
+
+**GitHub secret-scanning alert:** the relay bot token was committed in `3667b2a` (AGENTS.md#L250) to a **PUBLIC** repo. Anyone can read it and control @freebuzbot.
+- **Done:** `de7b41c` removes the token from AGENTS.md (now points to `backend/.env` `TELEGRAM_BOT_TOKEN`) + pushed. `git log -S` confirms the token entered history in exactly ONE commit (3667b2a); old myCBoBot token never hit git.
+- **⚠️ REQUIRED USER ACTION:** revoke in @BotFather (`/revoke` on @freebuzbot → get new token). Token rotation is the only real fix; history rewrite alone doesn't un-expose it.
+- **After user provides the new token, update 3 local copies:** `backend/.env` (`TELEGRAM_BOT_TOKEN`), `C:\Users\porat\.agents\mcp.json`, and `~/.freebuff-bridge/tg-bridge.mjs` (hard-coded `botToken` line 22) — then restart the bridge. The bridge will be dead once the old token is revoked (409/401 on getUpdates) until updated.
+- **Optional, pending user OK:** purge the token from git history (`git filter-repo` + force push) — hygiene only, rotation is the real fix.
+- **Lesson recorded:** NEVER put real tokens in AGENTS.md / docs — they're committed to a public repo; reference `backend/.env` instead.
+
 ## 2026-08-19 — ✅ PUSHED: accumulated work committed per protocol (6 commits → origin/main)
 
 **User: "commit לפי הפרוטוקול (gemma בנפרד)?"** — committed + pushed 6 commits (`9aab391..3667b2a`):
