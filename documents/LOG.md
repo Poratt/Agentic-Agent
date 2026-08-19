@@ -1,5 +1,11 @@
 # Documentation Change Log
 
+## 2026-08-19 AM — Manual nightly trigger must refresh the sessions list (ideas-history)
+- **Decision — every mutation path that can create sessions must end with a list refresh:** the SSE generate flow refreshes on `phase:'done'`; the manual `POST /ideas/nightly/trigger` path (fire-and-forget) refreshed only the expanded session, so newly created sessions were invisible until a manual refresh. Rule: after any action that can add a row, refetch the list (with the current filter) before refreshing details.
+- **Decision — fire-and-forget trigger ≠ refresh-at-trigger solves it:** the POST returns immediately while the run takes ~7.5 min; refreshing at trigger time confirms the refetch fires but the new session lands only when the run completes + the next natural refetch. Full closure would need poll-until-new-session or a completion signal — flagged to the user, NOT implemented (scope discipline; the requested fix is the refetch).
+- **Side-finding — dead UI state:** `triggerSuccess` is set in the component but never rendered in the template — the "התוצאות יופיעו בהיסטוריה לאחר סיום" message is invisible. Separate tiny fix candidate.
+- **No architecture diagram change** — component behavior + store action ordering only.
+
 ## 2026-08-19 AL — Agent auth loop: tool description + loop-breaker rescue (consent URL must reach the user)
 - **Decision — OAuth-style tools need an explicit "call once, present, stop" contract in their tool description:** a tool that returns a URL for the USER to click is not "done" from the model's perspective — without an explicit stop instruction the model re-calls it every iteration and the loop breaker (which was never designed to surface a consent link) eats the result. The tool description is the cheapest prevention; the breaker rescue is the safety net.
 - **Decision — loop-breaker failure must not destroy user-actionable artifacts:** the per-tool cap discarded the collected AuthUrl render card + URL, leaving the user with only a Hebrew error. Rescue path: inject the already-obtained URL as a tool message, give the model ONE final no-tools turn to write the link, and attach the collected render blocks to that message (streaming).

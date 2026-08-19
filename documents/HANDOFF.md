@@ -1,4 +1,18 @@
 # Documentation Handoff
+## 2026-08-19 — ✅ FIXED: manual nightly trigger doesn't refresh the sessions list (ideas-history)
+
+**User-reported inconsistency:** `IdeasHistory.triggerNightly()` refreshed only the EXPANDED session (`loadSession(expandedId)`) — never the list. The normal `generate()` flow calls `loadSessions()` on `phase:'done'`. So a session created by a manual nightly run didn't appear until a manual "רענן" click.
+
+**Empirical repro (live, before fix):** click trigger → network shows ONLY `/ideas/nightly/trigger` — no `GET /ideas/sessions` after it.
+
+**Fix (1 component + spec):** `ideas-history.ts` — extracted `currentFilterParams()` (shared with `refresh()`, dedupes the nightly/favorites params), `triggerNightly()` now: trigger → `await loadSessions(currentFilterParams())` → `await loadSession(expandedId)` (list first, then refresh the details of the previously-expanded session).
+
+**Verification:** frontend `npx ng test --watch=false` **497/497 (56 suites, +2 new)** — triggerNightly calls loadSessions({}), calls loadSessions({nightly:true}) + loadSession(5) with expanded+filter, and does NOT call loadSession without an expanded session · `ng build` exit 0 · **live after fix:** `/ideas/nightly/trigger@8976` → `/ideas/sessions@8984` (8ms later) — automatic refresh confirmed.
+
+**⚠️ Honest limitation surfaced during verification:** `POST /ideas/nightly/trigger` is fire-and-forget (returns immediately; the run takes ~7.5 min). The refresh therefore fires at TRIGGER time — it does NOT wait for the run to finish. The new session appears only after the run completes AND the next natural refetch (page visit / manual refresh / filter switch). To fully close "session appears without any refresh" you'd need a poll-until-completion (refetch every ~20-30s while the run is active, stop when a new nightly session appears) or a backend completion signal. **Decision pending — not implemented (out of the requested scope).**
+
+**Cosmetic bug found while in there (NOT fixed, separate):** `triggerSuccess` signal is set in the component but NEVER rendered in `ideas-history.html` — the "התוצאות יופיעו בהיסטוריה לאחר סיום" message is invisible. Candidate for a tiny follow-up fix.
+
 ## 2026-08-19 — ✅ FIXED: agent loops on /calendar/auth — user never got the consent link (sessions 227+228)
 
 **Symptom:** asking "מה יש לי מחר ביומן?" → agent calls `GoogleCalendarController_auth` 3× in one turn → loop breaker fires → user never sees the Google consent URL (live repro in session 228, even AFTER the idempotency fix).

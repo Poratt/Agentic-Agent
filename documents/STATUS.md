@@ -2,6 +2,15 @@
 
 Last updated: 2026-08-19
 
+## 2026-08-19 — ✅ FIXED: manual nightly trigger doesn't refresh the sessions list
+
+- **Bug:** `triggerNightly()` refreshed only the expanded session, never the list (inconsistent with `generate()` which calls `loadSessions()` on done). New nightly session invisible until manual "רענן".
+- **Empirically reproduced:** trigger click → only `/ideas/nightly/trigger` in network, no `GET /ideas/sessions` after.
+- **Fix:** `currentFilterParams()` helper (shared with `refresh()`) + `triggerNightly()` → `loadSessions(params)` then `loadSession(expandedId)`. **Live-verified:** trigger → `/ideas/sessions` fires 8ms later.
+- **Verified:** frontend **497/497** (+2 tests) · `ng build` exit 0.
+- ⚠️ **Limitation (surfaced honestly):** trigger is fire-and-forget (~7.5 min run) — refresh happens at trigger time, so the new session appears only after the run completes + next refetch. Poll-until-completion or backend completion signal = follow-up decision.
+- 🐛 **Cosmetic side-find:** `triggerSuccess` message set but never rendered in the template — invisible. Separate tiny fix candidate.
+
 ## 2026-08-19 — ✅ FIXED: agent auth loop — consent URL never reached the user (sessions 227+228)
 
 - **Symptom:** "מה יש לי מחר ביומן?" → agent calls `GoogleCalendarController_auth` 3× in one turn → breaker → user never sees the consent link (reproduced live in 228, even post-idempotency).
