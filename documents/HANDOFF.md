@@ -1,4 +1,13 @@
 # Documentation Handoff
+## 2026-08-19 — ✅ Telegram scripts moved OUT of the repo → ~/.freebuff-bridge/scripts/ (user: privacy)
+
+**User asked why the scripts live in the repo — after the token incident they contain personal info (chat id, project layout).** Moved all 3 to the global bridge dir (like the bridge itself):
+- `scripts/{telegram-command-bot,telegram-bot-commands,tg-html-send}.js` → `~/.freebuff-bridge/scripts/` (git rm + pushed)
+- **ROOT fix:** the scripts previously resolved the project root via `path.resolve(__dirname,'..')` — that breaks outside the repo. Now `const ROOT = process.env.PROJECT_PATH || 'C:\\Porat\\Practice\\ai\\agentic-admin'` (same pattern as the bridge).
+- **Verified from the new location:** `--test help` and `--test git` (real log output — ROOT works), `node -c` syntax ×3, and `telegram-bot-commands.js` registration (setMyCommands ok, token read from `backend/.env` via ROOT).
+- **Updated:** AGENTS.md (paths → `~/.freebuff-bridge/scripts/…`), `backend/.env.example` (comment).
+- **Lesson:** the scripts are personal tooling tied to THIS machine/project — the repo stays clean; the bridge dir is their home (gitignored by nature, outside the repo).
+
 ## 2026-08-19 — ✅ Bridge now logs ignored foreign-chat messages
 
 **User asked "מה קורה אם אנונימי שולח לבוטים?" — verified both bots are chat-gated (only 661157823).** Command bot already logged `ignored chat <id>`; the bridge silently discarded. Added the same log line to `tg-bridge.mjs` `pollTelegram`: `ignored chat <chatId> from <senderId>: <text-60ch>`. Bridge restarted (PID 47512), clean start.
