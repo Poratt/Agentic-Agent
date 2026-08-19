@@ -1,4 +1,13 @@
 # Documentation Handoff
+## 2026-08-19 — ✅ css-nesting-check.mjs moved to ~/.claude/hooks/ (user-approved)
+
+**User asked who runs it — found: Claude Code hooks (PreToolUse/Write + PostToolUse/Edit|Write), 2 configs × 2 refs each; ZCode refs are dead (policy ignores hooks, proven earlier).** Moved:
+- `scripts/css-nesting-check.mjs` → `~/.claude/hooks/css-nesting-check.mjs` (sits with the other 5 hooks)
+- Updated 4 refs: `~/.claude/settings.local.json` (2) + `.claude/settings.local.json` (2) → new path, via parsed-JSON edit (raw string replace failed on escaped backslashes). Note: `.claude/settings.local.json` is GITIGNORED — only the script was tracked.
+- **Verified from new location:** flat CSS → `{decision:block}` exit 2 (correct message); nested → exit 0. Script unchanged, only its home moved.
+- `git rm scripts/css-nesting-check.mjs` (repo now has only `ensure-searxng.js` left in scripts/). No other repo refs.
+- **Scope honesty:** this only serves Claude Code — Freebuff has no hook mechanism (CSS nesting is enforced here via AGENTS.md rules).
+
 ## 2026-08-19 — ✅ Telegram scripts moved OUT of the repo → ~/.freebuff-bridge/scripts/ (user: privacy)
 
 **User asked why the scripts live in the repo — after the token incident they contain personal info (chat id, project layout).** Moved all 3 to the global bridge dir (like the bridge itself):
