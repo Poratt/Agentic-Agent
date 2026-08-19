@@ -1,4 +1,19 @@
 # Documentation Handoff
+## 2026-08-19 — ✅ PUSHED: accumulated work committed per protocol (6 commits → origin/main)
+
+**User: "commit לפי הפרוטוקול (gemma בנפרד)?"** — committed + pushed 6 commits (`9aab391..3667b2a`):
+1. `b540a5a` feat(agent-tools): OAuth callback hidden from LLM + EXACTLY-ONCE contracts (callback, triggerNightly)
+2. `a060648` feat(ideas): nightly → Telegram push — HTML formatting, selective retry, empty-run notice
+3. `88dc183` feat(scripts): FreeBuzCommandBot standalone responder + menu registration + tg-html-send helper
+4. `3667b2a` docs: HANDOFF/STATUS/LOG/architecture-diagram + AGENTS.md (Telegram method, no-duplicates rule)
+5. + the 2 previously-unpushed commits (`7c156ab` OAuth logging, `ae4d071` docs)
+
+**Gemma note (protocol nuance):** the gemma switch lives in `backend/.env` — gitignored (contains tokens), so it has NO commit by design; it stays local-only on the user's machine, which is the "separate" the protocol wanted. No tracked gemma change exists.
+
+**Bridge state:** alive through Freebuff restarts (PID 28668, single lock), replied through 18:07, `pending_update_count: 0`. Orchestrator re-discovered per-run from its stderr log (port-agnostic).
+
+**Next exact step:** nothing pending in git — tree should be clean except this doc update. Open long-term items: SearXNG proxy decision, translation quality beyond the map, test-coverage gaps.
+
 ## 2026-08-19 — ✅ DONE: gemma is now the nightly default (user approval) — live-verified end-to-end
 
 **User: "gemma עכשיו"** — the quality gate closed: manual test (session 95, 4 ideas ~2 min) + content read + approval.
