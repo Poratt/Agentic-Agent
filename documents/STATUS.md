@@ -2,6 +2,13 @@
 
 Last updated: 2026-08-19
 
+## 2026-08-19 — ✅ CLOSED (reviewer): OAuth flow logging implemented + single-use contract tracked as follow-up
+
+- **Reviewer instruction 1 — implement the logging, don't leave it as an option (done):** `google-calendar.service.ts` now logs the OAuth state lifecycle (`[OAuthAuth]` issued vs reused with userId + expiry; `[OAuthCallback]` success + rejected-with-reason). A future "OAuth state is invalid or expired" incident is diagnosable from the log alone — no more DB digging with timestamps. Never logs the state value itself (CSRF secret).
+- **Reviewer instruction 2 — nuance on "not a global orchestration bug" (recorded as follow-up, not fixed):** the mechanism (breaker + sequential await) is sound, but the REAL gap is a missing behavioral default: any tool that returns a one-time action the user must complete externally (OAuth today; SMS approval / payment / external redirect tomorrow) is exposed to the same re-call loop until its description carries an explicit "EXACTLY ONCE" contract. **Open follow-up:** audit all tools for "one-time action + wait for external user action" nature and give each the explicit single-use contract.
+- **Verified:** backend **419/419 (44 suites, +2 new logger tests)** · `npm run build` exit 0.
+- **Committed:** `feat` (service + spec) + `docs` (HANDOFF/STATUS/LOG).
+
 ## 2026-08-19 — ✅ FIXED: triggerSuccess message now rendered (ideas-history cosmetic)
 
 - **Bug:** `triggerSuccess` set in `triggerNightly()` but never rendered in the template — the trigger confirmation was invisible.

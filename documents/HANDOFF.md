@@ -1,4 +1,14 @@
 # Documentation Handoff
+## 2026-08-19 — ✅ CLOSED (reviewer pass): OAuth flow logging + single-use contract tracked
+
+**Reviewer's two notes on the auth-loop fix (`6b7ebe2`) — both handled:** (1) implement the flow logging, don't leave it as an option — done; (2) record the nuance behind "not a global orchestration bug" as a tracked follow-up — done, not fixed.
+
+**Logging (2 files):** `google-calendar.service.ts` — the OAuth state lifecycle is now fully logged: `getAuthUrl` logs `[OAuthAuth] userId=N — issued new state (valid until …)` vs `— reusing fresh state (valid until …)`, `handleCallback` logs `[OAuthCallback] userId=N — tokens stored, state cleared` on success and `[OAuthCallback] state rejected (unknown|expired) — userId=…` on failure. The state VALUE is never logged (CSRF secret — only userId + expiry). Value: a future "OAuth state is invalid or expired" incident is now diagnosable from the log sequence (how many auth calls, was the state reused or overwritten, did the callback arrive) — the exact thing that required DB timestamp digging in session 227. `google-calendar.service.spec.ts` — 2 new tests assert the log lines via `Logger.prototype` spies (logger silenced in the shared beforeEach).
+
+**Verification:** backend `npx jest --runInBand` **419/419 (44 suites, +2)** · `npm run build` exit 0. Committed (`feat` + `docs`).
+
+**Open follow-up (reviewer, explicitly NOT now):** audit all agent-visible tools for "one-time action the user must complete externally" nature (OAuth today; SMS approval, payment, external redirect tomorrow) — each is exposed to the same re-call loop until its description carries an explicit "call EXACTLY ONCE, present, stop" contract. The auth-loop fix proved the mechanism is fine; the missing piece is a behavioral default, not a mechanism bug.
+
 ## 2026-08-19 — ✅ DONE: sidebar sessions load lazily on first dropdown open (branch: sidebar-lazy-loading, merged ff-only)
 
 **Problem:** `MainSidebar.ngOnInit` called `chatStore.loadSessions()` + `ideasStore.loadSessions()` on every page load — baseline measured: `/admin-agent/sessions` + `/ideas/sessions` @343ms with zero interaction. **Goal (user):** defer to first dropdown open, like the lazy settings tabs.

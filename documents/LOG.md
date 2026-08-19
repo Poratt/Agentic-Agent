@@ -1,5 +1,10 @@
 # Documentation Change Log
 
+## 2026-08-19 AU — OAuth flow lifecycle logging (reviewer-requested closure of the auth-loop work)
+- **Architectural decision — one-time external-action flows must be diagnosable from the log alone:** the "OAuth state is invalid or expired" incident (session 227) required DB timestamp digging to prove the overwrite sequence. The flow now logs its full lifecycle: `[OAuthAuth]` issued-vs-reused (userId + expiry, never the state value — it is a CSRF secret) and `[OAuthCallback]` success or rejected-with-reason (unknown vs expired). Rule: when a failure is only explainable by reconstructing a call sequence, that sequence must be in the logs by default.
+- **Decision — reviewer-endorsed gap, tracked not fixed:** "not a global orchestration bug" is technically correct (breaker + sequential await are sound), but the real exposure is a missing behavioral default — any tool returning a one-time action the user must complete externally (OAuth today; SMS approval / payment / redirect tomorrow) re-enters the same loop until its description carries "call EXACTLY ONCE, present, stop". Follow-up open: audit all tools for this nature and add the explicit single-use contract.
+- **No architecture diagram change** — service-level logging + a documented follow-up; module boundaries unchanged.
+
 ## 2026-08-19 AO — Confirmation banner: fixed toast + animate in/out (no CLS)
 - **Architectural decision — transient confirmations must not move the document:** an in-flow banner pushes content down on appear and up on dismiss (CLS). The banner is now a `position: fixed` top-center toast (`inset-inline: 0; margin-inline: auto; width: fit-content` — logical centering leaves `transform` free for animations). Live-measured: first list row stayed at 164.7px across the full lifecycle (delta 0.03px = sub-pixel) — zero layout shift.
 - **Decision — reuse existing keyframes:** enter = `slideDown` (opacity+translate, already global), exit = `fadeOut` via a `bannerClosing` signal (5s → `.closing` → 200ms → removed at 5.3s) — same closing-state pattern as strain-hunter-settings' exit animations. Zero new keyframes, `prefers-reduced-motion` disables.
