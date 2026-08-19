@@ -48,10 +48,14 @@ export class SwaggerToolsParser {
    * confirm its own dangerous actions (H3 self-confirmation bug).
    * The query-stream endpoint is excluded too — the LLM calling it would
    * spawn a nested full agent run with no depth limit (H5 recursion bug).
+   * The Google Calendar OAuth callback is the external redirect target —
+   * the agent has no browser session and no valid code/state, so calling it
+   * can only fail and tempts the same re-call loop the auth tool had.
    */
   private static readonly HIDDEN_FROM_LLM = new Set([
     'AdminAgentController_confirmAction',
     'AdminAgentController_streamChat',
+    'GoogleCalendarController_callback',
   ]);
 
   getTools(): LlmToolSchema[] {

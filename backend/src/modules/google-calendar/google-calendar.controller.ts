@@ -124,7 +124,8 @@ export class GoogleCalendarController {
         summary: 'Handle Google OAuth callback',
         summaryHe: 'מטפלים בהפנייה חזרה מ-Google אחרי אישור הגישה',
         description:
-            'Handles the OAuth callback from Google. Validates the CSRF state, exchanges the authorization code for tokens, and stores the refresh token server-side, encrypted. Typically called automatically by Google after user consent.',
+            'Handles the OAuth callback from Google. Validates the CSRF state, exchanges the authorization code for tokens, and stores the refresh token server-side, encrypted. Typically called automatically by Google after user consent.\n\n' +
+            'Agent instructions: NEVER call this tool yourself. It is the external redirect target — after the user completes Google\'s consent screen, Google redirects their browser here with the code and state. The agent has no browser session and no valid code/state to pass, so calling it will always fail. Your job ends at presenting the /calendar/auth URL to the user and waiting; afterwards, verify the connection by calling GET /calendar/events.',
     } as CustomApiOperationOptions)
     @ApiQuery({
         name: 'code',

@@ -262,7 +262,8 @@ export class IdeasController {
     summaryHe: 'מריץ את מחולל הרעיונות הלילי ידנית',
     toolIcon: 'ph-lightning',
     description:
-      'Triggers the same flow as the nightly cron: discovers trending topics via web search + LLM, then generates and persists ideas for each. Admin only.',
+      'Triggers the same flow as the nightly cron: discovers trending topics via web search + LLM, then generates and persists ideas for each. Admin only.\n\n' +
+      'Agent instructions: call this tool EXACTLY ONCE per request. It returns immediately — the run continues in the background for roughly 7-8 minutes. Do NOT re-call it to check progress (each call starts a new background run) and do NOT report the ideas as ready: the results appear in the ideas history when the run completes.',
   } as CustomApiOperationOptions)
   @ApiOkResponse({ description: 'Nightly generation triggered successfully.' })
   @ApiForbiddenResponse({ description: 'Only admin users can trigger nightly generation.' })

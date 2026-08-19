@@ -2,14 +2,15 @@ import { SwaggerToolsParser } from './swagger-tools.parser';
 import { Reflector } from '@nestjs/core';
 
 /**
- * C5 H3 + H5 — verify that getTools() excludes AdminAgentController_confirmAction
- * (LLM self-confirmation) and AdminAgentController_streamChat (agent recursion).
+ * C5 H3 + H5 + H6 — verify that getTools() excludes AdminAgentController_confirmAction
+ * (LLM self-confirmation), AdminAgentController_streamChat (agent recursion),
+ * and GoogleCalendarController_callback (external OAuth redirect target).
  *
  * The parser reads the real swagger-spec.json in its constructor, so tests
  * work against the actual spec rather than mocks. The denylist filter runs
- * after spec loading — if it works, tool count drops by exactly 2.
+ * after spec loading — if it works, tool count drops by exactly 3.
  */
-describe('SwaggerToolsParser — C5 H3 + H5: confirmAction + streamChat hidden from LLM', () => {
+describe('SwaggerToolsParser — C5 H3 + H5 + H6: confirmAction + streamChat + callback hidden from LLM', () => {
   let parser: SwaggerToolsParser;
   let toolNames: string[];
 
@@ -24,6 +25,12 @@ describe('SwaggerToolsParser — C5 H3 + H5: confirmAction + streamChat hidden f
 
   it('streamChat (query-stream) is excluded from the LLM tool list', () => {
     expect(toolNames).not.toContain('AdminAgentController_streamChat');
+  });
+
+  it('callback (OAuth redirect target) is excluded from the LLM tool list', () => {
+    // The agent has no browser session or code/state — calling it can only fail
+    // and tempts the same re-call loop the auth tool had (sessions 227-228).
+    expect(toolNames).not.toContain('GoogleCalendarController_callback');
   });
 
   it('dangerous operations are still exposed (no over-filtering)', () => {
@@ -46,12 +53,12 @@ describe('SwaggerToolsParser — C5 H3 + H5: confirmAction + streamChat hidden f
     expect(endpoint?.path).toContain('query-stream');
   });
 
-  it('confirmAction + streamChat are the only tools filtered (total = spec tools minus 2)', () => {
-    // The real spec currently loads 75 tools; with the denylist it is 73.
+  it('confirmAction + streamChat + callback are the only tools filtered (total = spec tools minus 3)', () => {
+    // The real spec currently loads 75 tools; with the denylist it is 72.
     // Band is a sanity guard for over/under-filtering, tolerant to tool churn.
-    // If someone adds more tools to the denylist, this test will need updating
-    expect(toolNames.length).toBeGreaterThanOrEqual(71);
-    expect(toolNames.length).toBeLessThanOrEqual(75); // tolerance for spec changes
+    // If someone adds more tools to the denylist, this test will need updating.
+    expect(toolNames.length).toBeGreaterThanOrEqual(70);
+    expect(toolNames.length).toBeLessThanOrEqual(74); // tolerance for spec changes
   });
 });
 

@@ -1632,7 +1632,7 @@
     },
     "/calendar/callback": {
       "get": {
-        "description": "Handles the OAuth callback from Google. Validates the CSRF state, exchanges the authorization code for tokens, and stores the refresh token server-side, encrypted. Typically called automatically by Google after user consent.",
+        "description": "Handles the OAuth callback from Google. Validates the CSRF state, exchanges the authorization code for tokens, and stores the refresh token server-side, encrypted. Typically called automatically by Google after user consent.\n\nAgent instructions: NEVER call this tool yourself. It is the external redirect target — after the user completes Google's consent screen, Google redirects their browser here with the code and state. The agent has no browser session and no valid code/state to pass, so calling it will always fail. Your job ends at presenting the /calendar/auth URL to the user and waiting; afterwards, verify the connection by calling GET /calendar/events.",
         "operationId": "GoogleCalendarController_callback",
         "parameters": [
           {
@@ -3311,7 +3311,7 @@
     },
     "/ideas/nightly/trigger": {
       "post": {
-        "description": "Triggers the same flow as the nightly cron: discovers trending topics via web search + LLM, then generates and persists ideas for each. Admin only.",
+        "description": "Triggers the same flow as the nightly cron: discovers trending topics via web search + LLM, then generates and persists ideas for each. Admin only.\n\nAgent instructions: call this tool EXACTLY ONCE per request. It returns immediately — the run continues in the background for roughly 7-8 minutes. Do NOT re-call it to check progress (each call starts a new background run) and do NOT report the ideas as ready: the results appear in the ideas history when the run completes.",
         "operationId": "IdeasController_triggerNightly",
         "parameters": [],
         "responses": {
