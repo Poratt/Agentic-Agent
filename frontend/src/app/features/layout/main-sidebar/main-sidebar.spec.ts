@@ -16,12 +16,14 @@ describe('MainSidebar', () => {
     deleteSession: ReturnType<typeof vi.fn>;
     recentSessions: ReturnType<typeof vi.fn>;
     currentSessionId: ReturnType<typeof vi.fn>;
+    loading: ReturnType<typeof vi.fn>;
   };
   let ideasStoreMock: {
     loadSessions: ReturnType<typeof vi.fn>;
     deleteSession: ReturnType<typeof vi.fn>;
     recentSessions: ReturnType<typeof vi.fn>;
     currentSessionId: ReturnType<typeof vi.fn>;
+    historyLoading: ReturnType<typeof vi.fn>;
   };
   let authStoreMock: {
     userRole: ReturnType<typeof vi.fn>;
@@ -49,12 +51,14 @@ describe('MainSidebar', () => {
       deleteSession: vi.fn(),
       recentSessions: vi.fn().mockReturnValue([]),
       currentSessionId: vi.fn().mockReturnValue(null),
+      loading: vi.fn().mockReturnValue(false),
     };
     ideasStoreMock = {
       loadSessions: vi.fn(),
       deleteSession: vi.fn(),
       recentSessions: vi.fn().mockReturnValue([]),
       currentSessionId: vi.fn().mockReturnValue(null),
+      historyLoading: vi.fn().mockReturnValue(false),
     };
     authStoreMock = {
       userRole: vi.fn().mockReturnValue(UserRole.Admin),
@@ -120,5 +124,22 @@ describe('MainSidebar', () => {
     component.confirmDeleteIdea();
     expect(ideasStoreMock.deleteSession).toHaveBeenCalledWith(7);
     expect(component.pendingDeleteIdeaSessionId()).toBeNull();
+  });
+
+  it('does NOT load sessions on init (lazy loading)', () => {
+    expect(chatStoreMock.loadSessions).not.toHaveBeenCalled();
+    expect(ideasStoreMock.loadSessions).not.toHaveBeenCalled();
+  });
+
+  it('loadChatSessionsOnce loads chat sessions only the first time', () => {
+    component.loadChatSessionsOnce();
+    component.loadChatSessionsOnce();
+    expect(chatStoreMock.loadSessions).toHaveBeenCalledTimes(1);
+  });
+
+  it('loadIdeaSessionsOnce loads idea sessions only the first time', () => {
+    component.loadIdeaSessionsOnce();
+    component.loadIdeaSessionsOnce();
+    expect(ideasStoreMock.loadSessions).toHaveBeenCalledTimes(1);
   });
 });

@@ -41,19 +41,28 @@
                 <span class="ph ph-lightbulb nav-icon"></span>
                 <span class="nav-label">מחולל רעיונות</span>
             </button>
-            @if (ideasStore.recentSessions().length > 0) {
-                <app-dropdown #ideasDropdown [position]="'bottom-right'" (closed)="pendingDeleteIdeaSessionId.set(null)">
-                    <button
-                        button
-                        class="transparent-btn icon-only sm dropdown-trigger-btn"
-                        type="button"
-                        (click)="navigateToIdeas(); ideasDropdown.hideDropdown(); $event.stopPropagation()"
-                        appTooltip
-                        text="היסטוריית רעיונות"
-                    >
-                        <span class="ph ph-feather"></span>
-                    </button>
-                    <div content class="fade-in">
+            <app-dropdown
+                #ideasDropdown
+                [position]="'bottom-right'"
+                (closed)="pendingDeleteIdeaSessionId.set(null)"
+                (opened)="loadIdeaSessionsOnce()"
+            >
+                <button
+                    button
+                    class="transparent-btn icon-only sm dropdown-trigger-btn"
+                    type="button"
+                    (click)="navigateToIdeas(); ideasDropdown.hideDropdown(); $event.stopPropagation()"
+                    appTooltip
+                    text="היסטוריית רעיונות"
+                >
+                    <span class="ph ph-feather"></span>
+                </button>
+                <div content class="fade-in">
+                    @if (ideasStore.historyLoading()) {
+                        <div class="nav-sub-loading">
+                            <span class="custom-loader sm"></span>
+                        </div>
+                    } @else if (formattedIdeaSessions().length > 0) {
                         <div class="nav-sub-list">
                             @for (session of formattedIdeaSessions(); track session.id) {
                                 <div class="nav-sub-item stagger stagger-up" [class.active]="ideasStore.currentSessionId() === session.id">
@@ -92,9 +101,11 @@
                                 </div>
                             }
                         </div>
-                    </div>
-                </app-dropdown>
-            }
+                    } @else {
+                        <div class="nav-sub-empty">אין רעיונות שמורים עדיין</div>
+                    }
+                </div>
+            </app-dropdown>
         </div>
 
         <div class="nav-item-chat">
@@ -102,19 +113,28 @@
                 <span class="ph ph-chat-circle-text nav-icon"></span>
                 <span class="nav-label">צ'אט</span>
             </button>
-            @if (chatStore.recentSessions().length > 0) {
-                <app-dropdown #chatDropdown [position]="'bottom-right'" (closed)="pendingDeleteSessionId.set(null)">
-                    <button
-                        button
-                        class="transparent-btn icon-only sm dropdown-trigger-btn"
-                        type="button"
-                        (click)="navigateTo(); chatDropdown.hideDropdown(); $event.stopPropagation()"
-                        appTooltip
-                        text="היסטוריית שיחות"
-                    >
-                        <span class="ph ph-feather"></span>
-                    </button>
-                    <div content class="fade-in">
+            <app-dropdown
+                #chatDropdown
+                [position]="'bottom-right'"
+                (closed)="pendingDeleteSessionId.set(null)"
+                (opened)="loadChatSessionsOnce()"
+            >
+                <button
+                    button
+                    class="transparent-btn icon-only sm dropdown-trigger-btn"
+                    type="button"
+                    (click)="navigateTo(); chatDropdown.hideDropdown(); $event.stopPropagation()"
+                    appTooltip
+                    text="היסטוריית שיחות"
+                >
+                    <span class="ph ph-feather"></span>
+                </button>
+                <div content class="fade-in">
+                    @if (chatStore.loading()) {
+                        <div class="nav-sub-loading">
+                            <span class="custom-loader sm"></span>
+                        </div>
+                    } @else if (formattedSessions().length > 0) {
                         <div class="nav-sub-list">
                             @for (session of formattedSessions(); track session.id) {
                                 <div class="nav-sub-item stagger stagger-up" [class.active]="chatStore.currentSessionId() === session.id">
@@ -153,9 +173,11 @@
                                 </div>
                             }
                         </div>
-                    </div>
-                </app-dropdown>
-            }
+                    } @else {
+                        <div class="nav-sub-empty">אין שיחות עדיין</div>
+                    }
+                </div>
+            </app-dropdown>
         </div>
     </nav>
 

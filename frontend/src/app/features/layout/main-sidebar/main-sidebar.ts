@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy, ViewChild } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthStore } from '../../../core/store/auth.store';
@@ -18,7 +18,7 @@ const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed';
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './main-sidebar.css',
 })
-export class MainSidebar implements OnInit {
+export class MainSidebar {
     protected authStore = inject(AuthStore);
     protected chatStore = inject(ChatStore);
     protected ideasStore = inject(IdeasStore);
@@ -32,8 +32,25 @@ export class MainSidebar implements OnInit {
     public pendingDeleteSessionId = signal<number | null>(null);
     public pendingDeleteIdeaSessionId = signal<number | null>(null);
 
-    ngOnInit() {
+    private chatSessionsLoaded = false;
+    private ideaSessionsLoaded = false;
+
+    // Sessions load lazily on the FIRST dropdown open (not on every page
+    // load) — same spirit as the lazy settings tabs. The flag makes repeated
+    // opens free (no refetch, state preserved).
+    loadChatSessionsOnce() {
+        if (this.chatSessionsLoaded) {
+            return;
+        }
+        this.chatSessionsLoaded = true;
         this.chatStore.loadSessions();
+    }
+
+    loadIdeaSessionsOnce() {
+        if (this.ideaSessionsLoaded) {
+            return;
+        }
+        this.ideaSessionsLoaded = true;
         this.ideasStore.loadSessions();
     }
 

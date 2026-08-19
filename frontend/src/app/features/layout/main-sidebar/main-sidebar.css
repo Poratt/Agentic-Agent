@@ -41,6 +41,18 @@
 	}
 
 
+	.nav-sub-loading {
+		display: flex;
+		justify-content: center;
+		padding: var(--space-6) 0;
+	}
+
+	.nav-sub-empty {
+		padding: var(--space-3);
+		font-size: var(--font-size-sm);
+		color: var(--color-text-muted);
+	}
+
 	.nav-sub-list {
 		display: flex;
 		flex-direction: column;

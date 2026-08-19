@@ -13,6 +13,7 @@ export class Dropdown implements OnDestroy {
     private readonly hoverOpenDelayMs = 200;
     private openHoverTimeout: ReturnType<typeof setTimeout> | null = null;
 
+    public opened = output<void>();
     public closed = output<void>();
 
     public dropdownTrigger = signal(false);
@@ -37,6 +38,7 @@ export class Dropdown implements OnDestroy {
 
         this.openHoverTimeout = setTimeout(() => {
             this.dropdownTrigger.set(true);
+            this.opened.emit();
             this.openHoverTimeout = null;
         }, this.hoverOpenDelayMs);
     }
