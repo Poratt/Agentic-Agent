@@ -8,7 +8,7 @@ Last updated: 2026-08-20
 - **Reviewer-approved fix:** NEW `core/services/translation-tracker.ts` (singleton, dedup by Hebrew name) + genetics records map misses + terpene records every LLM translation + `buildTranslationTrackerSection()` appended to the nightly Telegram summary (both the grounded summary AND the empty-run message), capped with the rest at 4000 chars. Empty tracker → '' → summary unchanged.
 - **Semantics:** in-memory since process start ("מאז אתחול" in the message); monthly persistence = the future B (DB table, not JSON — reviewer point 3).
 - **Verified:** backend **449/449 (46 suites, +11)** · build exit 0 · mojibake clean.
-- **Next:** commit/push (user's call).
+- **✅ COMMITTED (2026-08-20):** `066e9b1` — tree clean, ready for push.
 
 ## 2026-08-19 — ✅ FIXED: genetics tooltip flash — zero frames at wrong pos (real fix, not the 60ms delay)
 

@@ -17,7 +17,9 @@
 
 **Files touched:** NEW `core/services/translation-tracker.{ts,spec.ts}`, `genetics.service.{ts,spec}`, `terpene.service.{ts,spec}`, `telegram-notify.service.{ts,spec}`, `ideas-tasks.service.{ts,spec}`, documents. No architecture-diagram change (internal tracking + message content; Telegram edge already exists).
 
-**Next exact step:** commit/push (user's call) — then the log+Telegram loop becomes the real "who updates the map" answer: harvest the section, add entries to `HEBREW_STRAIN_NAMES` + spec, repeat monthly.
+**✅ COMMITTED (2026-08-20):** `066e9b1 feat(backend): surface LLM translation misses in nightly Telegram summary` — 13 files (+2 new). Reviewer's scope question answered: the tracker is a plain ES-module singleton (`export const translationTracker = new TranslationTracker()` — the class isn't even exported), NOT a NestJS provider — Node's module cache guarantees ONE instance per process for all consumers (genetics/terpene/telegram-notify), so `Scope.REQUEST` structurally cannot apply.
+
+**Next exact step (no further code needed):** the log+Telegram loop is now the real "who updates the map" answer — harvest the nightly section, add entries to `HEBREW_STRAIN_NAMES` + spec, repeat. (Known limitation, already recorded: in-memory tracker resets on :3000 restarts — the future B decision is a DB table.)
 
 ## 2026-08-19 — ✅ FIXED: genetics tooltip flash — "appears on button, then jumps up" (zero frames at wrong pos)
 
