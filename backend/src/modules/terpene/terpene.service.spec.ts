@@ -6,6 +6,7 @@ import { TerpeneService } from './terpene.service';
 import { Terpene } from './entities/terpene.entity';
 import { LlmClientService } from '../llm/services/llm-client.service';
 import { WebSearchService } from '../web-search/web-search.service';
+import { translationTracker } from '../../core/services/translation-tracker';
 
 function makeTerpene(overrides: Partial<Terpene> = {}): Terpene {
   return {
@@ -30,6 +31,7 @@ describe('TerpeneService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    translationTracker.reset();
 
     repo = {
       find: jest.fn(),
@@ -296,6 +298,42 @@ describe('TerpeneService', () => {
         const result = await service.enrichSingle('Nonexistent');
 
         expect(result).toBeNull();
+      });
+    });
+
+    describe('translation tracker harvest (2026-08-20)', () => {
+      it('records every LLM translation into the tracker (no map baseline exists for terpenes)', async () => {
+        const existing = makeTerpene({ name: 'אובמה ראנטז' });
+        repo.findOne.mockResolvedValue(existing);
+        repo.save.mockResolvedValue(existing);
+        webSearchService.search.mockResolvedValue({
+          success: true,
+          result: { results: [], answer: undefined },
+        } as any);
+        // קריאה 1: תרגום → 'Obama Runtz'; קריאה 2: העשרה
+        llmClientService.generateResponse
+          .mockResolvedValueOnce({ content: 'Obama Runtz' } as any)
+          .mockResolvedValueOnce({
+            content: JSON.stringify({
+              terpenes: [
+                {
+                  name: 'אובמה ראנטז',
+                  description: 'desc',
+                  scent: 'scent',
+                  effects: 'calm',
+                  color: '#FF0000',
+                },
+              ],
+            }),
+          } as any);
+
+        const result = await service.enrichSingle('אובמה ראנטז');
+
+        expect(result).not.toBeNull();
+        expect(translationTracker.terpeneTranslationCount()).toBe(1);
+        const record = translationTracker.recentTerpeneTranslations(1)[0];
+        expect(record.hebrew).toBe('אובמה ראנטז');
+        expect(record.english).toBe('Obama Runtz');
       });
     });
 

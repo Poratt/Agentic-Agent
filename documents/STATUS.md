@@ -1,6 +1,14 @@
 # Project Documentation Status
 
-Last updated: 2026-08-19
+Last updated: 2026-08-20
+
+## 2026-08-20 — ✅ DONE: translation-harvest tracker (Option A) — map misses in the nightly Telegram summary
+
+- **User question:** who updates `HEBREW_STRAIN_NAMES` when a new strain enters with genetics not in the map? Honest answer was nobody (manual edits only); LLM fallback covers new strains but LLM results are never persisted and misses were invisible.
+- **Reviewer-approved fix:** NEW `core/services/translation-tracker.ts` (singleton, dedup by Hebrew name) + genetics records map misses + terpene records every LLM translation + `buildTranslationTrackerSection()` appended to the nightly Telegram summary (both the grounded summary AND the empty-run message), capped with the rest at 4000 chars. Empty tracker → '' → summary unchanged.
+- **Semantics:** in-memory since process start ("מאז אתחול" in the message); monthly persistence = the future B (DB table, not JSON — reviewer point 3).
+- **Verified:** backend **449/449 (46 suites, +11)** · build exit 0 · mojibake clean.
+- **Next:** commit/push (user's call).
 
 ## 2026-08-19 — ✅ FIXED: genetics tooltip flash — zero frames at wrong pos (real fix, not the 60ms delay)
 
@@ -9,7 +17,7 @@ Last updated: 2026-08-19
 - **Reverted:** 60ms animation-delay hack in `tooltip.css` (no longer needed — tooltip hidden during render).
 - **Files:** `strain-hunter.ts` (2 types + 3 setters), `strain-hunter.html` (2 visibility bindings), `tooltip.css` (revert).
 - **Verified:** frontend **502/502 (56 suites)**, `ng build` exit 0.
-- **Next:** user hovers genetics + terpene; commit.
+- **✅ COMMITTED + PUSHED (2026-08-20):** `288c94e` — tree clean, synced with origin/main. Closed.
 
 ## 2026-08-19 — ✅ DONE: gemma is the nightly default (user approved) — live-verified
 

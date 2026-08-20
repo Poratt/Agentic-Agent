@@ -1,4 +1,24 @@
 # Documentation Handoff
+## 2026-08-20 — ✅ DONE: translation-harvest tracker (reviewer's Option A) — map misses now visible in the nightly Telegram summary
+
+**User question → reviewer approval:** "אם אנחנו מטפלים באיכות תרגום, מי מעדכן את המפה כשנכנס זן חדש למלאי?" — the honest answer was NOBODY (hardcoded `HEBREW_STRAIN_NAMES` const, manual edits only). The reviewer rejected the naive "debug log" answer (a log nobody scans = unimplemented) and approved A-with-extensions: log + tracker + **visible delivery via the existing nightly Telegram push**, + terpene instrumentation, + a DB-table note for the future B.
+
+**Implemented (7 files + 2 new):**
+- **NEW `core/services/translation-tracker.ts`** — module-level singleton (one backend process): records genetics map misses + terpene LLM translations, deduped by Hebrew name (count = distinct new strains, latest wins), capped at 200, `reset()` for tests.
+- **`genetics.service.ts`** `translateToEnglish` — on map miss + successful LLM translation: `recordGeneticsMiss(name, translated)` + debug log (the harvest queue).
+- **`terpene.service.ts`** `translateToEnglish` — records EVERY LLM translation (no map baseline exists → this builds the data for a future terpene map).
+- **`telegram-notify.service.ts`** — new exported `buildTranslationTrackerSection()` ('' when empty — quiet days stay clean; names escaped for HTML parse_mode); appended inside `buildNightlyIdeasMessage` BEFORE the 4000-char cap, so the tracker block can never push the message past Telegram's 4096 limit.
+- **`ideas-tasks.service.ts`** — empty-run Telegram message ALSO carries the section (a no-ideas night must not swallow the misses report).
+- **Semantics:** in-memory = "מאז אתחול" (honest label in the message) — NOT true monthly persistence; that's the B decision (DB table, per reviewer point 3, e.g. alongside `GoogleCalendarTokenEntity`).
+
+**Message example:** `🧬 <b>מפת גנטיקה (מאז אתחול):</b> 3 שמות חדשים — אוראוז→Oreoz, …` + `🧪 <b>טרפנים (מאז אתחול):</b> …`.
+
+**Verification:** backend `npx jest --runInBand` **449/449 (46 suites, +11 tests)** · `npm run build` exit 0 · mojibake clean. (Tooling note: the FIRST full run timed out at 600s because a stale 3.3GB jest from the killed run was still consuming the machine — after it exited, the same suite ran in 29s.)
+
+**Files touched:** NEW `core/services/translation-tracker.{ts,spec.ts}`, `genetics.service.{ts,spec}`, `terpene.service.{ts,spec}`, `telegram-notify.service.{ts,spec}`, `ideas-tasks.service.{ts,spec}`, documents. No architecture-diagram change (internal tracking + message content; Telegram edge already exists).
+
+**Next exact step:** commit/push (user's call) — then the log+Telegram loop becomes the real "who updates the map" answer: harvest the section, add entries to `HEBREW_STRAIN_NAMES` + spec, repeat monthly.
+
 ## 2026-08-19 — ✅ FIXED: genetics tooltip flash — "appears on button, then jumps up" (zero frames at wrong pos)
 
 **Symptom (user):** genetics tooltip rendered briefly on/near the source button, then jumped to the correct position above. User explicitly required: **not even 1ms at the wrong position** — tooltip must render in place on the very first frame.
@@ -18,7 +38,7 @@
 
 **Verified:** frontend `npx ng test --watch=false` **502/502 (56 suites)**, `npx ng build` exit 0 (CSS-budget warning pre-existing, not from this change).
 
-**Next exact step:** user verifies no jump (hover a genetics + a terpene button); then commit.
+**✅ COMMITTED + PUSHED by the user (2026-08-20):** `288c94e fix(tooltip): kill genetics+terpene tooltip jump` — tree clean, synced with origin/main.
 
 ## 2026-08-19 — ✅ css-nesting-check.mjs moved to ~/.claude/hooks/ (user-approved)
 

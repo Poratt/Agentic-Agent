@@ -12,6 +12,7 @@ import {
 } from './constants/terpene-enrich-prompts.constant';
 import { deriveThemeColors } from '../../core/utils/color-contrast.util';
 import { WebSearchService } from '../web-search/web-search.service';
+import { translationTracker } from '../../core/services/translation-tracker';
 
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
 const DEFAULT_COLOR = '#808080';
@@ -289,6 +290,11 @@ export class TerpeneService {
             });
             const translated = response.content?.trim();
             if (translated && !HEBREW_REGEX.test(translated)) {
+                // לטרפנים אין מפה קשיחה — כל תרגום LLM נרשם בטראקר כך
+                // שהסיכום הלילי בטלגרם בונה בהדרגה את הבסיס למפת טרפנים
+                // עתידית (איזה שמות בכלל עוברים דרך ה-LLM).
+                translationTracker.recordTerpeneTranslation(name, translated);
+                this.logger.debug(`[translate] terpene "${name}" → LLM: "${translated}"`);
                 return translated;
             }
         } catch (error: unknown) {

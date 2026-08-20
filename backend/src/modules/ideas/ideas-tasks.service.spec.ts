@@ -7,6 +7,7 @@ import { LlmProviderService } from '../llm-provider/llm-provider.service';
 import { LlmProviderConfigService } from '../llm/services/llm-provider-config.service';
 import { TelegramNotifyService } from './telegram-notify.service';
 import { User } from '../users/entities/user.entity';
+import { translationTracker } from '../../core/services/translation-tracker';
 
 function makeAdmin(): User {
   return { id: 1, role: 1 as any } as User;
@@ -48,6 +49,7 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery + hard gate)',
 
   beforeEach(async () => {
     process.env = { ...originalEnv };
+    translationTracker.reset();
     delete process.env.IDEAS_NIGHTLY_ENABLED;
     delete process.env.IDEAS_NIGHTLY_COUNT;
     delete process.env.IDEAS_NIGHTLY_TOPIC_COUNT;
@@ -128,6 +130,24 @@ describe('IdeasTasksService — nightly cron (Phase 3 + discovery + hard gate)',
     expect(ideasService.saveGeneration).not.toHaveBeenCalled();
     expect(telegramNotifyService.sendMessage).toHaveBeenCalledTimes(1);
     expect(telegramNotifyService.sendMessage.mock.calls[0][0]).toContain('בלי רעיונות grounded');
+  });
+
+  it('carries the translation-harvest block on an empty run when the tracker holds records', async () => {
+    process.env.IDEAS_NIGHTLY_ENABLED = 'true';
+    process.env.IDEAS_NIGHTLY_MODEL = '';
+    translationTracker.recordGeneticsMiss('אוראוז', 'Oreoz');
+
+    usersService.findFirstAdmin.mockResolvedValue(makeAdmin());
+    llmProviderService.findFirstActiveTextModel.mockResolvedValue({ provider: 'openrouter', model: 'gpt-4o' });
+    ideasService.generateGroundedIdeasForCron.mockResolvedValue([]);
+    telegramNotifyService.isEnabled.mockReturnValue(true);
+
+    await service.runNightly();
+
+    expect(telegramNotifyService.sendMessage).toHaveBeenCalledTimes(1);
+    const [message] = telegramNotifyService.sendMessage.mock.calls[0];
+    expect(message).toContain('בלי רעיונות grounded');
+    expect(message).toContain('אוראוז→Oreoz');
   });
 
   it('does NOT send a Telegram message on an empty run when Telegram is disabled', async () => {

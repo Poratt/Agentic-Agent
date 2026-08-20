@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpService } from '@nestjs/axios';
 import { of, throwError } from 'rxjs';
-import { TelegramNotifyService, buildNightlyIdeasMessage, esc, GroundedCronResult } from './telegram-notify.service';
+import { TelegramNotifyService, buildNightlyIdeasMessage, buildTranslationTrackerSection, esc, GroundedCronResult } from './telegram-notify.service';
+import { translationTracker } from '../../core/services/translation-tracker';
 
 function makeGrounded(domain: string, scores: number[], descriptions?: string[]): GroundedCronResult {
   return {
@@ -83,6 +84,38 @@ describe('buildNightlyIdeasMessage — Hebrew summary of the nightly run', () =>
 
     expect(msg.length).toBe(4000);
     expect(msg.endsWith('…')).toBe(true);
+  });
+});
+
+describe('buildTranslationTrackerSection — nightly harvest block', () => {
+  beforeEach(() => {
+    translationTracker.reset();
+  });
+
+  it('returns an empty string when nothing was recorded (quiet day — summary stays clean)', () => {
+    expect(buildTranslationTrackerSection()).toBe('');
+  });
+
+  it('renders genetics misses and terpene translations with escaped names', () => {
+    translationTracker.recordGeneticsMiss('אוראוז', 'Oreoz');
+    translationTracker.recordTerpeneTranslation('ריח <גבוה>', 'Strong & Scent');
+
+    const section = buildTranslationTrackerSection();
+
+    expect(section).toContain('מפת גנטיקה');
+    expect(section).toContain('1 שמות חדשים');
+    expect(section).toContain('אוראוז→Oreoz');
+    expect(section).toContain('טרפנים');
+    // parse_mode='HTML' — שמות מ-LLM/מלאי אף פעם לא מהימנים
+    expect(section).toContain('ריח &lt;גבוה&gt;→Strong &amp; Scent');
+  });
+
+  it('is included in buildNightlyIdeasMessage when records exist', () => {
+    translationTracker.recordGeneticsMiss('אוראוז', 'Oreoz');
+
+    const msg = buildNightlyIdeasMessage([makeGrounded('ניהול חשבוניות', [7])]);
+
+    expect(msg).toContain('אוראוז→Oreoz');
   });
 });
 

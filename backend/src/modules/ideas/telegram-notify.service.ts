@@ -2,11 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import type { DiscoveredTopic, GenerateIdeasResponse } from './interfaces/idea.interface';
+import { translationTracker } from '../../core/services/translation-tracker';
 
 const TELEGRAM_API = 'https://api.telegram.org';
 const MAX_MESSAGE_CHARS = 4000;
 const MAX_IDEAS_PER_DOMAIN = 5;
 const MAX_DESCRIPTION_CHARS = 100;
+const MAX_TRACKER_EXAMPLES = 5;
 const MAX_SEND_ATTEMPTS = 3;
 // Short fixed backoff between attempts — total extra delay ~1.5s, so a
 // flaky Telegram network never stalls the nightly run for minutes.
@@ -27,11 +29,16 @@ export function esc(text: string): string {
 
 /**
  * Builds the Hebrew summary sent when the nightly ideas run finishes.
- * Pure function — exported for direct unit testing. Returns HTML-ready text
- * (escaped dynamic content + explicit <b> tags) — sendMessage sends it with
- * parse_mode='HTML'.
- * Ideas per domain are sorted by validation score (best first) and capped,
- * and the whole message is capped at Telegram's 4096-char limit.
+ * Exported for direct unit testing. Returns HTML-ready text (escaped dynamic
+ * content + explicit <b> tags) — sendMessage sends it with parse_mode='HTML'.
+ * Ideas per domain are sorted by validation score (best first) and capped.
+ *
+ * When the translation tracker holds records (genetics map misses / terpene
+ * LLM translations from enrichment — see core/services/translation-tracker),
+ * a short harvest block is appended: "N new strains entered the inventory
+ * with names the hardcoded map doesn't cover" becomes a visible work queue
+ * instead of a forgotten debug log. The whole message is capped at 4000
+ * chars (Telegram's 4096 limit) — tracker block included.
  */
 export function buildNightlyIdeasMessage(grounded: GroundedCronResult[]): string {
   const totalIdeas = grounded.reduce((sum, g) => sum + (g.response.result?.length ?? 0), 0);
@@ -61,11 +68,40 @@ export function buildNightlyIdeasMessage(grounded: GroundedCronResult[]): string
 
   lines.push('', 'פרטים מלאים בהיסטוריית הרעיונות באפליקציה.');
 
-  const full = lines.join('\n');
+  const full = `${lines.join('\n')}${buildTranslationTrackerSection()}`;
   if (full.length <= MAX_MESSAGE_CHARS) {
     return full;
   }
   return `${full.slice(0, MAX_MESSAGE_CHARS - 1)}…`;
+}
+
+/**
+ * The translation-harvest block appended to the nightly Telegram summary.
+ * Empty string when the tracker holds nothing (quiet days keep the summary
+ * clean). Names are escaped (parse_mode='HTML') — they come from inventory
+ * data / LLM output, never trusted. Counts are distinct Hebrew names since
+ * process start (see TranslationTracker).
+ */
+export function buildTranslationTrackerSection(): string {
+  const lines: string[] = [];
+
+  const geneticsMisses = translationTracker.recentGeneticsMisses(MAX_TRACKER_EXAMPLES);
+  if (geneticsMisses.length > 0) {
+    lines.push(
+      `🧬 <b>מפת גנטיקה (מאז אתחול):</b> ${translationTracker.geneticsMissCount()} שמות חדשים — ` +
+        geneticsMisses.map((r) => `${esc(r.hebrew)}→${esc(r.english)}`).join(', '),
+    );
+  }
+
+  const terpeneTranslations = translationTracker.recentTerpeneTranslations(MAX_TRACKER_EXAMPLES);
+  if (terpeneTranslations.length > 0) {
+    lines.push(
+      `🧪 <b>טרפנים (מאז אתחול):</b> ${translationTracker.terpeneTranslationCount()} תרגומי LLM — ` +
+        terpeneTranslations.map((r) => `${esc(r.hebrew)}→${esc(r.english)}`).join(', '),
+    );
+  }
+
+  return lines.length > 0 ? `\n${lines.join('\n')}` : '';
 }
 
 /**

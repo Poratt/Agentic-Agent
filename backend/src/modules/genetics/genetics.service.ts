@@ -15,6 +15,7 @@ import {
 import { deriveThemeColors } from '../../core/utils/color-contrast.util';
 import { WebSearchService } from '../web-search/web-search.service';
 import { CannlyticsService } from '../cannlytics/cannlytics.service';
+import { translationTracker } from '../../core/services/translation-tracker';
 
 const VALID_TYPES = new Set(['היברידי', 'סאטיבה', 'אינדיקה']);
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
@@ -507,6 +508,11 @@ export class GeneticsService {
             });
             const translated = response.content?.trim();
             if (translated && !HEBREW_REGEX.test(translated)) {
+                // חטיאת מפה = זן חדש שנכנס למלאי בלי ערך במפה הקשיחה.
+                // נרשם בטראקר כך שהסיכום הלילי בטלגרם ידווח עליו — תור קציר
+                // לעדכון המפה במקום לוג debug שנשכח.
+                translationTracker.recordGeneticsMiss(name, translated);
+                this.logger.debug(`[translate] map miss "${name}" → LLM: "${translated}"`);
                 return translated;
             }
         } catch (error: unknown) {

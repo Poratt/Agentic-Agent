@@ -5,7 +5,7 @@ import { UsersService } from '../users/users.service';
 import { LlmProviderService } from '../llm-provider/llm-provider.service';
 import { LlmProviderConfigService } from '../llm/services/llm-provider-config.service';
 import { LlmProvider } from '../llm/types/llm.types';
-import { TelegramNotifyService, buildNightlyIdeasMessage } from './telegram-notify.service';
+import { TelegramNotifyService, buildNightlyIdeasMessage, buildTranslationTrackerSection } from './telegram-notify.service';
 
 /**
  * Nightly ideas generation cron.
@@ -73,8 +73,12 @@ export class IdeasTasksService {
       // for a working one that just hasn't finished.
       this.logger.warn('Nightly ideas generation produced 0 grounded sessions — nothing to save');
       if (this.telegramNotifyService.isEnabled()) {
+        // גם ריצה ריקה נושאת את בלוק קציר התרגומים — אחרת יום בלי רעיונות
+        // יבלע לחלוטין את הדיווח על חטאות מפה (buildTranslationTrackerSection
+        // מחזיר מחרוזת ריקה כשאין רשומות, אז ההודעה נשארת כמו שהייתה).
         await this.telegramNotifyService.sendMessage(
-          '🌙 ריצת הלילה הסתיימה בלי רעיונות grounded — לא נוצרו שמירות חדשות. אפשר לנסות שוב מאוחר יותר.',
+          '🌙 ריצת הלילה הסתיימה בלי רעיונות grounded — לא נוצרו שמירות חדשות. אפשר לנסות שוב מאוחר יותר.' +
+            buildTranslationTrackerSection(),
         );
       }
       return;

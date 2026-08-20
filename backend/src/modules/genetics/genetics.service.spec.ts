@@ -9,6 +9,7 @@ import { Genetics } from './entities/genetics.entity';
 import { LlmClientService } from '../llm/services/llm-client.service';
 import { WebSearchService } from '../web-search/web-search.service';
 import { CannlyticsService } from '../cannlytics/cannlytics.service';
+import { translationTracker } from '../../core/services/translation-tracker';
 
 function makeGenetics(overrides: Partial<Genetics> = {}): Genetics {
   return {
@@ -39,6 +40,7 @@ describe('GeneticsService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    translationTracker.reset();
 
     repo = {
       find: jest.fn(),
@@ -394,6 +396,78 @@ describe('GeneticsService', () => {
         const result = await service.enrichSingle('Nonexistent');
 
         expect(result).toBeNull();
+      });
+    });
+
+    describe('translation tracker harvest (2026-08-20)', () => {
+      it('records a map miss into the tracker when the LLM translates a Hebrew name', async () => {
+        const existing = makeGenetics({ name: 'אובמה ראנטז' });
+        repo.findOne.mockResolvedValue(existing);
+        repo.save.mockResolvedValue(existing);
+
+        cannlyticsService.getEnglishName.mockReturnValue(null); // map miss → LLM translation
+        cannlyticsService.getStrain.mockResolvedValue(null);
+        httpService.get.mockReturnValue(of({ data: { data: [] } }) as any);
+        webSearchService.search.mockResolvedValue({
+          success: true,
+          result: { results: [], answer: undefined },
+        } as any);
+        // קריאה 1: תרגום → 'Obama Runtz'; קריאה 2: העשרה
+        llmClientService.generateResponse
+          .mockResolvedValueOnce({ content: 'Obama Runtz' } as any)
+          .mockResolvedValueOnce({
+            content: JSON.stringify({
+              genetics: [
+                {
+                  name: 'אובמה ראנטז',
+                  description: 'desc',
+                  parent1: 'x',
+                  parent2: 'y',
+                  origin: 'USA',
+                  type: 'היברידי',
+                  color: '#FF0000',
+                },
+              ],
+            }),
+          } as any);
+
+        const result = await service.enrichSingle('אובמה ראנטז');
+
+        expect(result).not.toBeNull();
+        expect(translationTracker.geneticsMissCount()).toBe(1);
+        const record = translationTracker.recentGeneticsMisses(1)[0];
+        expect(record.hebrew).toBe('אובמה ראנטז');
+        expect(record.english).toBe('Obama Runtz');
+      });
+
+      it('does NOT record when the hardcoded map covers the name', async () => {
+        const existing = makeGenetics({ name: 'Gorilla Glue' });
+        repo.findOne.mockResolvedValue(existing);
+        repo.save.mockResolvedValue(existing);
+
+        cannlyticsService.getEnglishName.mockReturnValue('Gorilla Glue'); // map hit — חינם, לא LLM
+        cannlyticsService.getStrain.mockResolvedValue(null);
+        httpService.get.mockReturnValue(of({ data: { data: [] } }) as any);
+        webSearchService.search.mockResolvedValue({
+          success: true,
+          result: { results: [], answer: undefined },
+        } as any);
+        llmClientService.generateResponse.mockResolvedValue({
+          content: JSON.stringify({
+            genetics: [
+              {
+                name: 'Gorilla Glue',
+                description: 'desc',
+                type: 'היברידי',
+                color: '#FF0000',
+              },
+            ],
+          }),
+        } as any);
+
+        await service.enrichSingle('Gorilla Glue');
+
+        expect(translationTracker.geneticsMissCount()).toBe(0);
       });
     });
 
