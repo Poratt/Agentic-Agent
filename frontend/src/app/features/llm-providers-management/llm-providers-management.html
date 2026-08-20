@@ -6,10 +6,11 @@
             </div>
         }
         @case (PageStates.Error) {
-            <div class="page-state error-state">
+            <div class="page-state error-state stagger stagger-up">
                 <span class="icon ph ph-warning"></span>
                 <h4 class="title">An error occurred while loading LLM providers.</h4>
                 <p class="subtitle">Please try again later.</p>
+                <button class="primary-btn sm" type="button" (click)="llmProviderStore.reload()">Try again</button>
             </div>
         }
         @case (PageStates.Empty) {

@@ -4,12 +4,11 @@
         <h4 class="title"><span class="shimmer-text">טוען נתוני מסד נתונים...</span></h4>
     </div>
 } @else if (error()) {
-    <div class="page-state error-state">
+    <div class="page-state error-state stagger stagger-up">
         <span class="icon ph ph-warning-circle"></span>
         <h4 class="title">שגיאה בטעינת נתונים</h4>
         <p class="subtitle">{{ error() }}</p>
-        <button type="button" class="primary-btn outlined" (click)="loadStorage()">
-            <i class="ph ph-arrow-clockwise"></i>
+        <button type="button" class="primary-btn sm" (click)="loadStorage()">
             נסה שוב
         </button>
     </div>

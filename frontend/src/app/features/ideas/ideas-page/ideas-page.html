@@ -15,10 +15,10 @@
                 <app-ideas-progress [phase]="store.phase()" [statusText]="store.statusText()" />
             }
             @case (PageStates.Error) {
-                <div class="page-state error-state">
+                <div class="page-state error-state stagger stagger-up">
                     <span class="icon ph ph-warning"></span>
                     <h4 class="title">{{ store.error() }}</h4>
-                    <button class="primary-btn filled" type="button" (click)="store.generate()">נסה שוב</button>
+                    <button class="primary-btn sm" type="button" (click)="store.generate()">נסה שוב</button>
                 </div>
             }
             @case (PageStates.Empty) {
@@ -87,9 +87,10 @@
                             <span class="ph ph-circle-notch ph-spin xl"></span>
                         </div>
                     } @else if (sessionError()) {
-                        <div class="page-state error-state">
+                        <div class="page-state error-state stagger stagger-up">
                             <span class="icon ph ph-warning"></span>
                             <h4 class="title">{{ sessionError() }}</h4>
+                            <button class="primary-btn sm" type="button" (click)="loadSessionIdeas()">נסה שוב</button>
                         </div>
                     } @else if (displayIdeas().length === 0) {
                         <div class="page-empty-state stagger stagger-up">

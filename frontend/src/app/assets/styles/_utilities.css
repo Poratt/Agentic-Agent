@@ -386,6 +386,19 @@
     border: none;
     border-radius: 0;
   }
+
+  /* Error state mirrors .page-empty-state: no glass card, staggered
+     children (templates add `stagger stagger-up`), primary icon. */
+  &.error-state {
+    background: none;
+    border: none;
+    border-radius: 0;
+    animation: none;
+
+    .icon {
+      color: var(--color-primary);
+    }
+  }
 }
 
 

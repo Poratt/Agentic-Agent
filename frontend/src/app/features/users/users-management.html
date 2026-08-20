@@ -5,10 +5,11 @@
         </div>
     }
     @case (PageStates.Error) {
-        <div class="page-state error-state">
+        <div class="page-state error-state stagger stagger-up">
             <span class="icon ph ph-warning"></span>
             <h4 class="title">אירעה שגיאה בטעינת המשתמשים.</h4>
             <p class="subtitle">אנא נסה שוב מאוחר יותר.</p>
+            <button class="primary-btn sm" type="button" (click)="usersStore.reload()">נסה שוב</button>
         </div>
     }
     @case (PageStates.Empty) {

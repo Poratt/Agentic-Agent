@@ -55,10 +55,15 @@ export class IdeasPage implements OnInit {
 
     if (mode === 'all') return;
 
+    await this.loadSessionIdeas();
+  }
+
+  /** Reloads the current nightly/favorites session list (retry path). */
+  protected async loadSessionIdeas(): Promise<void> {
     this.sessionLoading.set(true);
     this.sessionError.set(null);
     try {
-      await this.store.loadSessions(mode === 'nightly' ? { nightly: true } : { favorites: true });
+      await this.store.loadSessions(this.viewMode() === 'nightly' ? { nightly: true } : { favorites: true });
     } catch {
       this.sessionError.set('טעינת הרעיונות נכשלה');
     } finally {

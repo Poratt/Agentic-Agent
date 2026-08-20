@@ -2,6 +2,36 @@
 
 Last updated: 2026-08-20
 
+## 2026-08-20 — ✅ FIXED: chat bot (bridge) silent no-reply — Freebuff premium-slot collision → mimo + /reset + /status
+
+- **Diagnosis (DB-proven):** every recent bridge message got `freebuff-slot-taken` — Freebuff allows only ONE tab per premium model (deepseek/deepseek-v4-flash); the bridge thread collided with the active session. Not stuck (idle/error) — rejected. Also explains the earlier daily-limit message.
+- **Fix (tg-bridge.mjs, outside repo):** model → `mimo/mimo-v2.5`; added **`/reset`** (fresh thread on next message) + **`/status`** (model/thread state) — previously ALL `/` messages were silently dropped.
+- **Verified empirically:** message posted to bridge thread while this session active on deepseek → real reply "עובד 🟢" (6s) vs slot-taken before. Thread idle/completed on mimo. Bridge restarted (PID 11628).
+- **Caveat:** UI "Unlimited" tag ≠ no concurrency limit — the live test is the proof; watch mimo speed.
+- **Follow-up (DONE):** `/status` → `model/ctx/branch` with bold keys. ctx% = last message `metrics_json.context` (usedTokens/threshold → 10%, DB-proven); branch = git rev-parse with shell:bash (cmd fails on Windows); HTML per backend esc() convention. Bridge restarted (PID 35116).
+- **Follow-up 2 (DONE):** ctx% line includes Unicode progress bar (`ctxBar`, width 10) — `ctx: 10% █░░░░░░░░░`. Live proof: user's real /status at 11:00:40 returned all three fields. Bridge restarted (PID 36248).
+- **✅ USER-VERIFIED (screenshots):** /status 14:00 → `model: mimo/mimo-v2.5 / ctx: 10% / branch: main` (bold keys); 14:03 → + progress bar after ctx%. Both render correctly.
+- **Follow-up 3 (DONE):** `/model` command — list/switch models with tier tags, persists to state.json, enforces immediately on the thread. Model list sourced from the orchestrator (not guessed). Premium models warn; orchestrator can reply `rejected:true` when the premium slot is taken (verified). Fixed unescaped `<שם>` HTML 400 bug found in live testing.
+- **⚠️ LIVE INCIDENT (14:14, resolved):** `/model deepseek/deepseek-v4-flash` while the user's TUI tab was on the same model → slot-taken on every message; bridge waited 5 min; queued `/model mimo` processed only after restart. Fixed (API enforce mimo + state.json + restart), verified (probe "עובד 🟢", idle/completed). Lesson: /model works but target model must not be in use by an active tab — mimo is the safe default.
+
+## 2026-08-20 — ✅ DONE: TELEGRAM_COMMAND_BOT_TOKEN rotated (exposed live token) + command bot restarted
+## 2026-08-20 — ✅ DONE: error-state unified app-wide — mirrors page-empty-state (stagger stagger-up) + נסה שוב button everywhere
+
+- **Goal (user request):** make `PageStates.Error` look like `page-empty-state` — `stagger stagger-up` entrance, no glass-card chrome — and give every error block a **נסה שוב** retry button. Checked across the WHOLE app: 9 error blocks in 8 files (dashboard, users-management, llm-providers-management, chat-history, strain-hunter, ideas-history, ideas-page ×2, database-monitor-settings).
+- **CSS (global, one rule — affects all pages at once):** `_utilities.css` — new `.page-state.error-state` nested variant strips the glass card (`background/border/radius: none`) + `animation: none`, icon → primary color (matches `page-empty-state`).
+- **Reduced-motion hardening (bonus, the backlog-flagged gap):** `_animations.css` — `@media (prefers-reduced-motion: reduce)`: `.stagger > * { animation: none; opacity: 1 }` — stagger children previously stayed INVISIBLE under reduced motion (base `.stagger > *` opacity:0). Fixes the 4 existing empty states too.
+- **Buttons:** all 9 blocks now carry `primary-btn sm` labeled **נסה שוב** (llm-providers English: "Try again"); unified the old mixed labels (`רענן` in chat-history/ideas-history → נסה שוב; filled/outlined variants → sm) and added the 4 missing buttons: dashboard/users (`usersStore.reload()`), llm-providers (`llmProviderStore.reload()`), ideas-page session-level (new `loadSessionIdeas()` in ideas-page.ts — extracted from `setViewMode` so retry works despite the same-mode early return).
+- **Verified:** `npx ng test --watch=false` 502/502 pass · `npx ng build` exit 0 (only pre-existing strain-hunter.css budget warning). No mojibake (only legit ג׳ in mock.ts).
+
+
+## 2026-08-20 — ✅ DONE: TELEGRAM_COMMAND_BOT_TOKEN rotated (exposed live token) + command bot restarted
+
+- **Exposure:** FreeBuzCommandBot token pasted in plaintext into Telegram chat at 16:46; verified LIVE (`getMe` ok) before acting → rotation required, not optional.
+- **Done:** user revoked in BotFather + wrote new token to `backend/.env` → I restarted the command bot (kill 35112 → relaunch same interpreter/path). Relay (`TELEGRAM_BOT_TOKEN` @freebuzbot) never exposed, never touched.
+- **False alarm defused:** 19:58 `Unauthorized` in old bridge.log ≠ dead relay — current relay token getMe ok, lock PID alive, state.json mtime today (polling fine); transient window from 22:59 token fix + 23:12 restart, stale log only.
+- **Verified:** new token getMe ok · old token **401** (revoke took) · getUpdates ok · poller alive (PID 32880), zero errors after one-time restart 409 · `--test status` ok · live test message `message_id: 28`.
+- **Open (non-blocking):** who/what fixed `.env` at 22:59 — if not a prior session's manual edit, worth checking for an uncontrolled `.env` writer. Full record: LOG.md BF.
+
 ## 2026-08-20 — ✅ DONE: translation-harvest tracker (Option A) — map misses in the nightly Telegram summary
 
 - **User question:** who updates `HEBREW_STRAIN_NAMES` when a new strain enters with genetics not in the map? Honest answer was nobody (manual edits only); LLM fallback covers new strains but LLM results are never persisted and misses were invisible.

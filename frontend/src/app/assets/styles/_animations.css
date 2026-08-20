@@ -496,4 +496,11 @@
   .fade-in {
     animation: none;
   }
+
+  /* Stagger children start at opacity 0 — without the animation they would
+     stay invisible. Make them fully visible instead. */
+  .stagger > * {
+    animation: none;
+    opacity: 1;
+  }
 }

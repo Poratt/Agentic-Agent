@@ -1,4 +1,62 @@
 # Documentation Handoff
+## 2026-08-20 — ✅ DONE: error-state UI unified app-wide (mirrors page-empty-state: stagger stagger-up + נסה שוב button)
+
+**User request:** make `PageStates.Error` look like `page-empty-state` (`stagger stagger-up`, no glass card) + a **נסה שוב** retry button, and check this state across the whole app.
+
+**Done (all 9 error blocks / 8 files):**
+1. **CSS — one global rule:** `_utilities.css` — `.page-state.error-state` now strips the glass card (`background/border/radius: none`, `animation: none`) and colors the icon primary, mirroring `page-empty-state`. All pages restyled at once (the "global vs variant" open question → global won, because the user asked for app-wide consistency).
+2. **Reduced-motion fix (backlog-flagged gap):** `_animations.css` — `.stagger > * { animation: none; opacity: 1 }` under `prefers-reduced-motion` — stagger children previously stayed invisible (base rule starts them at opacity 0). This also hardens the 4 existing empty states.
+3. **Retry buttons unified:** all blocks use `primary-btn sm` + "נסה שוב" (llm-providers: "Try again"); added the 4 missing ones — dashboard/users → `usersStore.reload()`, llm-providers → `llmProviderStore.reload()`, ideas-page session-level → new `loadSessionIdeas()` (extracted from `setViewMode` because its same-mode guard made a direct retry impossible).
+
+**Verified:** baseline 502/502 → after change 502/502; `npx ng build` exit 0 (only pre-existing strain-hunter.css budget warning); no mojibake. Backlog entry moved to DONE in STATUS.md.
+
+**Next:** nothing pending on this task. Open items remain: SearXNG proxy decision, translation-quality beyond the map, in-memory tracker restart limitation (future B = DB table).
+
+---
+## 2026-08-20 — ✅ FIXED: bridge thread rejected by Freebuff "premium slot" — model switched to mimo + /reset & /status commands added
+
+**Symptom (user):** command bot works; chat bot (relay bridge) showed typing but never answered, then "⚠️ לא קיבלתי תשובה מ-Freebuff תוך 5 דקות". User asked about context reset / new session.
+
+**Diagnosis (DB-proven, not guessed):** every recent bridge message got `freebuff-slot-taken` in the thread (13:07, 13:12, 13:34): "Another tab is using a premium model (deepseek/deepseek-v4-flash). Switch this tab to an unlimited model, or change the other tab." Root cause: Freebuff allows only ONE tab per premium model at a time — the bridge thread (3c673501, model deepseek/deepseek-v4-flash) collided with the active session tab (f4e1fdf3, same model). The thread was NOT stuck (turn_state idle + outcome error) — it was rejected. Also explains the earlier daily-limit message: same model, same premium/free-tier limits.
+
+**Fix (tg-bridge.mjs, outside repo — user-approved):**
+1. `CONFIG.model`: `deepseek/deepseek-v4-flash` → **`mimo/mimo-v2.5`** (only other model in use; non-premium). Thread model re-enforced via ensureThread's /agent call on bridge restart.
+2. New commands in the poll loop (previously ALL `/`-prefixed messages were silently dropped — that's why /reset never worked): **`/reset`** (threadId → null, next message creates a fresh thread via ensureThread; ack reply sent) and **`/status`** (model + thread id + active/no-thread).
+
+**Verified empirically (reviewer's protocol):** while THIS session (f4e1fdf3) was active on deepseek, posted a message to the bridge thread directly → REAL reply "עובד 🟢" (seq 558, 6s) vs slot-taken at 13:34 before the fix. Thread: turn_state idle, outcome completed, model mimo/mimo-v2.5. Bridge restarted (PID 11628), syntax-checked via bun build.
+
+**Caveat (reviewer's):** "Unlimited" tag in the Freebuff UI ≠ no concurrency limits — the empirical test above is the proof for mimo specifically. Also watch response speed (mimo "Balanced" may be slower than deepseek flash — the original "fast model" comment). If too slow, pick another non-premium model and re-test.
+
+**Follow-up (same session, DONE):** `/status` redesigned to `model/ctx/branch` with bold keys (HTML parse_mode ONLY for /status — generic sendReply stays plain text so agent replies can't break). Data sources verified, not assumed: **ctx%** = last message's `metrics_json.context`: `usedTokens/compactionThresholdTokens` (41937/400000 → 10%) — NOT in the thread API, found in the SQLite DB; **branch** = `git rev-parse --abbrev-ref HEAD` with `shell: 'bash'` (Windows default cmd fails) + `cwd: PROJECT_PATH` → `main`; **HTML convention** reused from backend `esc()` in telegram-notify.service.ts. Bridge restarted (PID 35116), syntax-checked via bun build.
+
+**Follow-up 2 (DONE):** ctx% line now carries a Unicode text progress bar — `ctxBar(percent, width=10)` = `█`×filled + `░`×rest (e.g. `ctx: 10% █░░░░░░░░░`); renders on every Telegram client, standard CLI convention. Live proof pre-bar: user's real `/status` at 11:00:40 returned `model: mimo/mimo-v2.5 | ctx: 10% | branch: main`. Bridge restarted (PID 36248), syntax-checked.
+
+**✅ LIVE-VERIFIED by user (screenshots, 14:00 + 14:03):** /status renders `model: mimo/mimo-v2.5` / `ctx: 10% █░░░░░░░░░` / `branch: main` — bold keys AND the Unicode progress bar both display correctly in the Telegram client. Bridge fully working: real replies, /status with bar, /reset for fresh threads.
+
+**Follow-up 3 (DONE):** new **`/model`** command — no-arg lists current model + known options (tier-tagged), `/model <name>` validates against `KNOWN_MODELS`, persists to `state.json` (survives restarts — verified: `loaded persisted model` on restart), and enforces on the existing thread IMMEDIATELY via `/api/thread/:id/agent`. Model list VERIFIED from the Freebuff orchestrator source (SUPPORTED_FREEBUFF_MODELS + premium flags + desktop premium-bucket list), not guessed: mimo-v2.5/flash = unlimited, v4-pro/gpt-5.6-luna/minimax-m3 = premium (⚠️ warning + orchestrator may reply `rejected:true` when the premium slot (limit 1) is taken — verified live). Fixed a real HTML bug found in testing: unescaped `<שם>` in the list reply 400'd Telegram (can't parse entities) — now `&lt;שם&gt;`.
+
+**⚠️ LIVE INCIDENT (14:14, resolved):** user tried `/model deepseek/deepseek-v4-flash` while THIS session tab was running the SAME model → every following message got `freebuff-slot-taken` again (Freebuff: one tab per premium bucket; when the user's TUI tab holds the model, the bridge thread on the same model is rejected — exactly the documented warning). The bridge then sat in waitForReply (5 min), so the queued `/model mimo/mimo-v2.5` was only processed after restart. Resolution: enforced mimo via API + fixed state.json model + restart → verified working (probe replied "עובד 🟢" in 5s, thread idle/completed on mimo). Lesson: the /model command WORKS, but switching the bridge to a model the user's active tab uses will reproduce slot-taken by design — mimo stays the safe default while the TUI is on flash.
+
+**Follow-up 4 (DONE — user question "why 2/3 on both models"):** Freebuff counts per BUCKET not per model — the user's tab (flash) + bridge thread (mimo) = 2 of 3 unlimited slots, shown on EVERY unlimited model card. Also found the REAL limited-tier rule: tier limited → unlimited bucket limit = 0 AND the only allowed model is mimo (`LIMITED_FREEBUFF_MODEL_IDS=[mimo]`). This is the true cause of the 14:14 flash block (not merely "premium") — mimo is the ONLY model guaranteed in both tiers.
+
+**Follow-up 5 (DONE — user: "yesterday this didn't happen", DB-proven):** yesterday had ZERO slot-taken despite TWO tabs on flash (user tab + bridge thread, created 17:33) — full tier allows multiple tabs on one model. The trigger is the DAILY QUOTA: first "Daily limit reached" today at 11:21 → tier dropped to limited → slot-taken started 13:07. So: the block = limited-tier consequence of spent quota, NOT tab collision per se. mimo remains the only always-safe model.
+
+**Next:** nothing pending — bridge healthy on mimo (PID 13720). /model works, but flash/pro/luna/minimax are full-tier-only; mimo is the always-safe default.
+
+## 2026-08-20 — ✅ DONE: TELEGRAM_COMMAND_BOT_TOKEN rotated + command bot restarted (live-token exposure)
+
+**What happened:** FreeBuzCommandBot's token (`TELEGRAM_COMMAND_BOT_TOKEN`) was pasted in plaintext into the Telegram chat at 16:46 (during command-bot setup) — sat in DB/log cleartext for hours. Reviewer approved immediate rotation; user revoked in BotFather, wrote the NEW token to `backend/.env`.
+
+**Steps completed:** (1) verified OLD token was live (`getMe` ok) BEFORE revoke — a real exposed token must be rotated; (2) user revoked + updated `.env`; (3) restarted command bot (killed PID 35112, relaunched `node scripts/telegram-command-bot.js` from `~/.freebuff-bridge`, log `C:/tmp/command-bot.log`).
+
+**False alarm defused:** the 19:58 `Unauthorized` in the old bridge.log was NOT the relay dying — current `TELEGRAM_BOT_TOKEN` getMe → ok, bridge.lock PID alive, state.json mtime today (polling fine). Transient window (token fixed 22:59, bridge restarted 23:12); stale log didn't show the newer process. Relay bot never at risk — only the command-bot token was exposed.
+
+**Verification (all green):** new token getMe ok · old token getMe **401** (revoke took) · getUpdates ok · poller alive (PID 32880), zero errors post-restart (the one 409 was the restart overlapping the old process's long-poll — self-resolved) · `--test status` ran the real handler with the new token · live test message sent (`message_id: 28`).
+
+**Residue:** old token still in DB/chat history (dead — 401, not urgent). **Open question:** who/what fixed `.env` at 22:59 (reviewer — if it wasn't a prior session's manual edit, check for an uncontrolled `.env` writer). Full record in LOG.md BF.
+
+**Next:** no pending code work — this session was ops (rotation + restart).
+
 ## 2026-08-20 — ✅ DONE: translation-harvest tracker (reviewer's Option A) — map misses now visible in the nightly Telegram summary
 
 **User question → reviewer approval:** "אם אנחנו מטפלים באיכות תרגום, מי מעדכן את המפה כשנכנס זן חדש למלאי?" — the honest answer was NOBODY (hardcoded `HEBREW_STRAIN_NAMES` const, manual edits only). The reviewer rejected the naive "debug log" answer (a log nobody scans = unimplemented) and approved A-with-extensions: log + tracker + **visible delivery via the existing nightly Telegram push**, + terpene instrumentation, + a DB-table note for the future B.
