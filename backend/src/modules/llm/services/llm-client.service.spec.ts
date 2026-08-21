@@ -189,3 +189,204 @@ describe('LlmClientService.extendVideo — C3 SSRF on sourceVideoUrl', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+describe('LlmClientService.createVideoTask — transient retry on queue_full/5xx', () => {
+  let service: LlmClientService;
+  const fetchMock = jest.fn();
+
+  function makeMockResponse(opts: {
+    status: number;
+    body?: unknown;
+    text?: string;
+    headers?: Record<string, string>;
+  }) {
+    const text = opts.text ?? (opts.body !== undefined ? JSON.stringify(opts.body) : '');
+    const json = opts.body ?? (opts.text ? JSON.parse(opts.text) : {});
+    const headers = opts.headers ?? {};
+    return {
+      status: opts.status,
+      ok: opts.status >= 200 && opts.status < 300,
+      headers: {
+        get: (name: string): string | null => {
+          const key = name.toLowerCase();
+          return Object.prototype.hasOwnProperty.call(headers, key)
+            ? headers[key]
+            : null;
+        },
+      },
+      text: async () => text,
+      json: async () => json,
+    };
+  }
+
+  beforeEach(() => {
+    service = makeService();
+    fetchMock.mockReset();
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    // Stub provider resolution so the test never touches DB / DNS.
+    jest.spyOn(service as any, 'assertCapability').mockResolvedValue(undefined);
+    jest.spyOn(service as any, 'getProviderConnection').mockResolvedValue({
+      baseUrl: 'https://api.agnes-ai.com/v1',
+      apiKey: 'test-key',
+      dbProvider: { key: 'agnes-ai' },
+    });
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    delete (globalThis as any).fetch;
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  const baseRequest = {
+    provider: 'agnes-ai',
+    model: 'agnes-video',
+    prompt: 'a calm ocean wave',
+  };
+
+  it('retries up to 3 times on 503 + video_queue_full, then throws the original error', async () => {
+    fetchMock.mockResolvedValue(
+      makeMockResponse({
+        status: 503,
+        body: { code: 'video_queue_full', message: 'video queue is full, please retry later' },
+      }),
+    );
+
+    const promise = service.createVideoTask(baseRequest);
+    const expectation = expect(promise).rejects.toThrow(/Agnes video creation failed \(503\)/);
+    await jest.advanceTimersByTimeAsync(5_000);
+    await expectation;
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('does NOT retry on 4xx (terminal client error)', async () => {
+    fetchMock.mockResolvedValue(
+      makeMockResponse({ status: 400, body: { code: 'bad_request', message: 'invalid model' } }),
+    );
+
+    await expect(service.createVideoTask(baseRequest)).rejects.toThrow(/Agnes video creation failed \(400\)/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries up to 3 times on generic 5xx (non-queue_full body)', async () => {
+    fetchMock.mockResolvedValue(
+      makeMockResponse({ status: 500, body: { code: 'internal_error', message: 'oops' } }),
+    );
+
+    const promise = service.createVideoTask(baseRequest);
+    const expectation = expect(promise).rejects.toThrow(/Agnes video creation failed \(500\)/);
+    await jest.advanceTimersByTimeAsync(5_000);
+    await expectation;
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('succeeds on attempt 2 after a transient 503 (queue_full)', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        makeMockResponse({
+          status: 503,
+          body: { code: 'video_queue_full', message: 'video queue is full, please retry later' },
+        }),
+      )
+      .mockResolvedValueOnce(
+        makeMockResponse({ status: 200, body: { video_id: 'vid_ok', status: 'queued' } }),
+      );
+
+    const promise = service.createVideoTask(baseRequest);
+    await jest.advanceTimersByTimeAsync(5_000);
+    const result = await promise;
+    expect(result.videoId).toBe('vid_ok');
+    expect(result.status).toBe('queued');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries transport errors (TypeError) and succeeds on attempt 2', async () => {
+    fetchMock
+      .mockRejectedValueOnce(new TypeError('fetch failed'))
+      .mockResolvedValueOnce(
+        makeMockResponse({ status: 200, body: { video_id: 'vid_t', status: 'queued' } }),
+      );
+
+    const promise = service.createVideoTask(baseRequest);
+    await jest.advanceTimersByTimeAsync(5_000);
+    const result = await promise;
+    expect(result.videoId).toBe('vid_t');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries once on 429 with Retry-After=2s, succeeds on attempt 2', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        makeMockResponse({
+          status: 429,
+          body: { code: 'rate_limit_exceeded', message: 'allows 2 requests per 1 minute' },
+          headers: { 'retry-after': '2' },
+        }),
+      )
+      .mockResolvedValueOnce(
+        makeMockResponse({ status: 200, body: { video_id: 'vid_429', status: 'queued' } }),
+      );
+
+    const promise = service.createVideoTask(baseRequest);
+    await jest.advanceTimersByTimeAsync(35_000); // covers Retry-After=2s plus slack
+    const result = await promise;
+    expect(result.videoId).toBe('vid_429');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('does NOT retry on 429 when no Retry-After header is present (terminal)', async () => {
+    fetchMock.mockResolvedValue(
+      makeMockResponse({
+        status: 429,
+        body: { code: 'rate_limit_exceeded', message: 'no header' },
+      }),
+    );
+
+    await expect(service.createVideoTask(baseRequest)).rejects.toThrow(
+      /Agnes video creation failed \(429\)/,
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does NOT retry on 429 when Retry-After=45 exceeds the 30s cap (terminal)', async () => {
+    fetchMock.mockResolvedValue(
+      makeMockResponse({
+        status: 429,
+        body: { code: 'rate_limit_exceeded', message: 'wait too long' },
+        headers: { 'retry-after': '45' },
+      }),
+    );
+
+    await expect(service.createVideoTask(baseRequest)).rejects.toThrow(
+      /Agnes video creation failed \(429\)/,
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('429 followed by 429 — second one is terminal (single Retry-After budget exhausted)', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        makeMockResponse({
+          status: 429,
+          body: { code: 'rate_limit_exceeded', message: '1st' },
+          headers: { 'retry-after': '1' },
+        }),
+      )
+      .mockResolvedValueOnce(
+        makeMockResponse({
+          status: 429,
+          body: { code: 'rate_limit_exceeded', message: '2nd' },
+          headers: { 'retry-after': '1' },
+        }),
+      );
+
+    const promise = service.createVideoTask(baseRequest);
+    const expectation = expect(promise).rejects.toThrow(/Agnes video creation failed \(429\)/);
+    await jest.advanceTimersByTimeAsync(5_000); // first 1s wait
+    await expectation;
+    // First 429 honored the Retry-After; second 429 finds the budget empty → terminal.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+

@@ -109,7 +109,7 @@ export class LlmController {
     summaryHe: 'יוצרים תמונות מרהיבות על בסיס טקסט עם Agnes Image',
     toolIcon: 'ph-palette',
     description:
-      'Sends a text prompt (optionally with input images) to an Agnes image-generation model and returns a hosted URL or Base64 JSON. Resolves the provider/model from modelId when provided, otherwise falls back to the first active image-capability model.',
+      'Sends a text prompt (optionally with input images for image-to-image edits) to an Agnes image-generation model and returns a STILL image (URL or Base64 JSON). USE ONLY when the user wants a static image (poster, artwork, illustration, image-to-image edit). DO NOT use for motion / animation / video — for those use LlmController_createVideo. Resolves the provider/model from modelId when provided, otherwise falls back to the first active image-capability model.',
   } as CustomApiOperationOptions)
   @ApiBody({ type: GenerateImageDto })
   @ApiOkResponse({
@@ -157,7 +157,7 @@ export class LlmController {
     summaryHe: 'מפיקים סרטונים מרהיבים מבוססי טקסט או תמונה עם Agnes Video',
     toolIcon: 'ph-video-camera',
     description:
-      'Submits a text (or image) prompt to an Agnes video model and returns a video id immediately. Poll the status with GET /llm/video/:videoId. The HTTP create response is not blocked on generation.',
+      'Submits a text prompt (optionally with an attached image as starting frame) to an Agnes video model and returns a video task. USE when the user wants a moving video / clip / animation, especially when an attached image should animate (image-to-video, ti2vid). DO NOT use for still images — use LlmController_generateImage. Poll the status with GET /llm/video/:videoId. The HTTP create response is not blocked on generation.',
   } as CustomApiOperationOptions)
   @ApiBody({ type: CreateVideoTaskDto })
   @ApiCreatedResponse({

@@ -1,4 +1,95 @@
 # Documentation Handoff
+## ## 2026-08-20 — ✅ DONE: 429 Retry-After handling in createVideoTask + tool-description disambiguation (image vs video)
+
+**Symptom (real log)**: Studio media → "Data graphics, ambient garage lights flickering" + attached image → flow hit real 503 `video_queue_full` (OK with retry) then died on **429 `rate_limit_exceeded: allows 2 requests per 1 minute(s)`**. The previous retry scope was "5xx/queue_full/network only" — 4xx was terminal, so 429 surfaced raw to the UI. Separately the chat-agent LLM picked `LlmController_generateImage` 3 times in a row (loop-broken) instead of `createVideo`, even though the user wanted motion.
+
+**Two surgical fixes (4 files:** `llm-client.service.ts` + `llm-client.service.spec.ts` + `llm.controller.ts` + auto-regenerated `swagger-spec.json`):
+
+**Fix 1 — 429 honoring `Retry-After` (existing retry extended):**
+- `createVideoTask` in `LlmClientService` now classifies HTTP 429 as transient — with **a single bounded `Retry-After` retry, capped at 30s**. If the header is absent or > 30s, the 429 immediately surfaces as a terminal error (UI-friendly, no long stalls). Bounded to **one** `Retry-After` cycle (rateLimitBudget=1) so the loop cannot chain forever even when the API keeps saying "wait 5s".
+- 5xx + 503+`video_queue_full` + transport (`TypeError` / `AbortError`) behavior untouched. 4xx other than 429 still terminal.
+- Live proof from the file: 4th attempt counter `MAX_RATE_LIMIT_WAIT_MS = 30_000` + `rateLimitBudget = 1`. Log hits `[createVideoTask] attempt N/3 failed (HTTP 429 rate limit) — retrying after Xms (Retry-After: Ns)`.
+
+**Fix 2 — Tool-description cross-reference (forces the LLM to pick the right tool):**
+- `LlmController.generateImage.description` now reads "USE ONLY when the user wants a static image ... DO NOT use for motion/animation/video — for those use LlmController_createVideo."
+- `LlmController.createVideo.description` now reads "USE when the user wants a moving video / clip / animation, especially when an attached image should animate (image-to-video, ti2vid). DO NOT use for still images — use LlmController_generateImage."
+- The descriptions are exactly what the LLM reads when picking tools (via the swagger-tools.parser and `swagger-spec.json`). Mirrors the previous auth-loop fix (2026-08-19) where tool descriptions were the cheapest prevention; the rescue was the safety net.
+
+**Tests (4 new in `llm-client.service.spec.ts`, `makeMockResponse` extended with `headers`):**
+1. `retries once on 429 with Retry-After=2s, succeeds on attempt 2` — proves the bounded auto-recovery.
+2. `does NOT retry on 429 when no Retry-After header is present (terminal)` — proves no header = no wait.
+3. `does NOT retry on 429 when Retry-After=45 exceeds the 30s cap (terminal)` — proves the cap.
+4. `429 followed by 429 — second one is terminal (single Retry-After budget exhausted)` — proves single-cycle protection.
+
+**Verification**: `npx jest --runInBand` **458/458 (46 suites, +4 vs prior 454)** · `npm run build` exit 0 · no mojibake · swagger-spec.json auto-regenerated on backend boot (git diff confirmed). No architecture-diagram change (retry + tool description only, no module/request-flow change).
+
+**Files touched**: `backend/src/modules/llm/services/llm-client.service.ts` (+92/-25), `backend/src/modules/llm/services/llm-client.service.spec.ts` (+201), `backend/src/modules/llm/llm.controller.ts` (description strings), `backend/swagger-spec.json` (auto-regenerated, description strings). Diff stat: 286 insertions, 15 deletions across 4 files.
+
+**Not changed**: studio media UI still surfaces raw English error if all retries exhaust — UX-friendly Hebrew error is a separate scope. The chat-agent prompt itself was NOT touched — the fix is in the tool descriptions (where the LLM picks which tool) rather than in the agent's system message.
+
+---
+## 2026-08-20 — ✅ DONE: video queue_full transient retry in LlmClientService.createVideoTask
+
+**Symptom**: Agnes occasionally returns `503 video_queue_full` ("video queue is full, please retry later"); the studio media video tab surfaced the raw error to the user with no retry — every retry had to be manual.
+
+**Fix (surgical, 2 files)**:
+- `backend/src/modules/llm/services/llm-client.service.ts` — `createVideoTask`: bounded retry loop around the existing `fetch` to `${baseUrl}/videos`. **3 attempts, fixed backoff 1s+2s** (~3s total, never stalls the UI). Transient classification:
+  - **Retry:** HTTP 5xx (status ≥ 500) OR body contains `"video_queue_full"` OR transport errors (`TypeError`, `AbortError`).
+  - **No retry:** 4xx (terminal client error — a retry cannot fix it).
+- Same final error message (`Agnes video creation failed (${status}): ${text.slice(0, 500)}`) on exhaustion — preserves current UX error rendering. All log lines use `this.logger.warn` with `[createVideoTask] attempt N/3 failed (...)` so the failure pattern is greppable.
+
+**Why a focused loop instead of the existing `withRetry`?** The existing helper (`MAX_RETRIES=4`, exponential 1.5/3/6s) handles 5xx generally but the user spec is exactly 3 attempts / 1s+2s. Surgical: don't touch the existing helper, just wrap `createVideoTask`. Same `withRetry` keeps working elsewhere untouched.
+
+**Tests (5 new, fake timers)** in `llm-client.service.spec.ts`:
+1. `retries up to 3 times on 503 + video_queue_full, then throws` — proves retry count + preserved error message.
+2. `does NOT retry on 4xx (terminal client error)` — proves terminal detection.
+3. `retries up to 3 times on generic 5xx (non-queue_full body)` — proves 5xx retry without the discriminator.
+4. `succeeds on attempt 2 after a transient 503 (queue_full)` — proves recovery.
+5. `retries transport errors (TypeError) and succeeds on attempt 2` — proves network-error retry.
+
+Real logger output during the failure case proves backoff: `[createVideoTask] attempt 1/3 failed (HTTP 503) — retrying in 1000ms` → `[createVideoTask] attempt 2/3 failed (HTTP 503) — retrying in 2000ms`.
+
+**Verification**: backend `npx jest --runInBand` **454/454 (46 suites, +5)** · `npm run build` exit 0 · no mojibake. Studio UI untouched (still shows the raw English error if all 3 attempts fail — UX refinement is a separate scope).
+
+**Files touched**: `backend/src/modules/llm/services/llm-client.service.ts` (+61/-11), `backend/src/modules/llm/services/llm-client.service.spec.ts` (+113). No architecture-diagram change (internal retry logic in a single method, no module/request flow change).
+
+---
+2026-08-20 — 💬 Q&A: chat agent cannot use video understanding yet (decision: Option A later, not now)
+
+**User asked:** "הסוכן בצ'אט (frontend/src/app/features/chat/chat/chat.html) גם יכול להשתמש בזה?" — can the in-app chat agent use the video-understand capability?
+
+**Verified answer: NO today.** The chat pipeline is image-only end-to-end: frontend `accept="image/*"` + `file.type.startsWith('image/')` (8MB); backend `agent-request.dto.ts` validates only `data:image/...;base64,`; the video-understand skill (`~/.agents/skills/video-understand/scripts/process_video.py`) is terminal-only (me, the coding agent). The chat agent DOES already see attached still images (passed to LLM on iteration 0 in `queryDatabase`/`queryDatabaseStream`).
+
+**Options presented (user chose "just explain, don't implement now"):**
+- **A (recommended) — `analyze_video` agent tool:** user pastes a YouTube URL in chat → agent calls the tool → backend runs the verified pipeline → returns transcript+analysis as context. Fits the existing 73-tool swagger-parser architecture + visible step icons in chat.
+- **B — upload video in composer** (like images): needs multipart upload endpoint, heavier.
+- **C — native video to gemini:** not viable for generic chat models.
+
+**Next (whenever user wants):** Option A — new backend endpoint (runs process_video.py, returns transcript), auto-exposed via swagger parser as a tool; no frontend change needed for YouTube links.
+
+---
+## 2026-08-20 — ✅ DONE: video-understand skill installed + ALL providers verified E2E (gemini / openrouter / groq / yt-dlp)
+
+**User request:** install `jrusso1020/video-understand-skills` (Claude Code skill for video understanding/transcription), verify ffmpeg/yt-dlp, run check_providers against backend/.env, install deps, test end-to-end.
+
+**Done (all verified live):**
+1. **Skill installed** at `~/.agents/skills/video-understand` (copy of `skills/video-understand` — SKILL.md + scripts; Freebuff loads from ~/.agents/skills, same as caveman/ponytail). check_providers.py = stdlib-only.
+2. **Deps:** `pip install google-generativeai openai groq` ✅. ffmpeg ✅ (2026-01-29) · yt-dlp ✅ — **was outdated (2026.01.29 → update needed)**, upgraded to **2026.08.19** (the old one failed YouTube extraction: HTTP 400/403 + "no JS runtime" warnings).
+3. **Providers (check_providers + live runs):** gemini (native, GEMINI_API_KEY) ✅ · openrouter (google/gemini-3-flash-preview via OpenAI SDK) ✅ · groq whisper (`whisper-large-v3-turbo`) ✅ · ffmpeg offline fallback present.
+4. **Live tests:** 5s generated test-pattern video (ffmpeg lavfi) → gemini read colors/countdown/tone correctly. User's 15s screen recording (Idea History page, lightning-bolt click, triggerSuccess banner) → gemini + openrouter both analyzed it. groq `--asr-only` on silent recording → returned whisper's known "Thank you." silence-hallucination (expected, not a bug). **Full E2E: groq --asr-only on `jNQXAC9IVRw` ("Me at the zoo") → accurate 4-segment transcript** (yt-dlp download → ASR; only "fronts" vs "trunks" — minor whisper error).
+
+**Bugs found & fixed along the way:**
+- **`GROQ_BASE_URL` pollution (root cause of groq 404):** user's GROK→GROQ rename moved `GROK_BASE_URL`'s value to `GROQ_BASE_URL=https://api.groq.com/openai/v1` — the groq SDK already defaults to that URL → double `/openai/v1` prefix → `404 Unknown request URL: POST /openai/v1/openai/v1/audio/transcriptions`. Fixed: deleted the line (SDK default is correct). App code reads NO GROK/GROQ/XAI env vars (only OPENROUTER/NVIDIA/AGNES/OLLAMA/REQUESTY) → rename broke nothing.
+- **`PIXAZO_AUTH_HEADER` unquoted space (broke `source .env` line 112):** value `Ocp-Apim-Subscription-Key: <key>` has a space → bash split it into command+arg → "command not found" at line 112 (NOT a bare token — was misread as such earlier). User chose to KEEP Pixazo as option → quoted the value: `PIXAZO_AUTH_HEADER="Ocp-Apim-Subscription-Key: ..."`. `source .env` now fully clean.
+- **Pixazo usage check:** ZERO references in code/.env.example/docs/git — 3 orphan keys in backend/.env only (kept per user decision).
+
+**Verification:** check_providers.py exit 0 with env → gemini+openrouter+ffmpeg+groq, recommended gemini, `tools_missing: []`. All 3 provider live runs exit 0 (note: `| tail` masks exit codes — verified via output + JSON). `source .env` clean. No repo code changed (env-only + external skill dir) → no ng test/build needed; no architecture-diagram change (tooling only, no module boundaries).
+
+**Notes for later:** skill uses deprecated `google.generativeai` (FutureWarning → `google.genai`) — works, upgrade only if gemini becomes the main path. Hebrew OCR in video frames is garbled (`�����`) on gemini flash — English/context fine, Hebrew text lost.
+
+**Next:** pipeline 100% verified — use the skill via `python ~/.agents/skills/video-understand/scripts/process_video.py <source> [--asr-only|--provider X]` with env loaded from backend/.env. yt-dlp needs periodic updates (pip -U).
+
+---
 ## 2026-08-20 — ✅ DONE: error-state UI unified app-wide (mirrors page-empty-state: stagger stagger-up + נסה שוב button)
 
 **User request:** make `PageStates.Error` look like `page-empty-state` (`stagger stagger-up`, no glass card) + a **נסה שוב** retry button, and check this state across the whole app.

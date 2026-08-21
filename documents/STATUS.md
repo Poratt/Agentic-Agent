@@ -2,6 +2,30 @@
 
 Last updated: 2026-08-20
 
+## 2026-08-20 — ✅ DONE: 429 Retry-After handling in createVideoTask + tool-description disambiguation (image vs video)
+
+- **Problem**: real 429 (`rate_limit_exceeded: 2 req/min`) from Agnes surfaced raw; separately, chat-agent LLM called `LlmController_generateImage` 3 times in a row when user said video (loop-broken).
+- **Fix 1 (4 files, +4 tests, 458/458)**: `createVideoTask` now treats HTTP 429 as transient — single `Retry-After` retry capped at 30s, bounded to one cycle (`rateLimitBudget=1`). 5xx/queue_full/transport unchanged. Tool descriptions on `LlmController_generateImage` and `LlmController_createVideo` now cross-reference each other ("USE ONLY for static", "USE for motion/animation") so the LLM picks the right tool — mirrors the 2026-08-19 auth-loop fix.
+- **Verified**: `npx jest --runInBand` 458/458 (46 suites, +4 new) · `npm run build` exit 0 · swagger-spec.json auto-regenerated · no mojibake.
+
+## 2026-08-20 — ✅ DONE: video queue_full transient retry in LlmClientService.createVideoTask
+
+- **Problem**: 503 `video_queue_full` from Agnes was surfaced raw to the studio media video tab — every retry manual.
+- **Fix (2 files, +5 tests, 454/454)**: `createVideoTask` now wraps the raw fetch in a bounded retry loop — **3 attempts, fixed 1s+2s backoff**. Retry on: HTTP 5xx OR body `"video_queue_full"` OR `TypeError`/`AbortError`. Don't retry: 4xx. Same final error message on exhaustion.
+- **Verified**: `npx jest --runInBand` 454/454 (46 suites, +5 tests) · `npm run build` exit 0. Existing `withRetry` untouched.
+
+## 2026-08-20 — 💬 Q&A: chat agent + video understanding — NOT wired yet (decision recorded)
+
+- **Q:** can the in-app chat agent (chat.html) use video understanding? **A: no today** — chat pipeline is image-only (frontend `image/*` + 8MB; backend DTO `data:image/...;base64,`); the video-understand skill is terminal-only. Chat agent already sees attached still images (LLM iteration 0).
+- **Decision (user):** don't implement now. When wanted: **Option A** — `analyze_video` agent tool (backend endpoint runs `process_video.py`, swagger parser auto-exposes it; paste YouTube URL in chat, agent answers from transcript).
+
+## 2026-08-20 — ✅ DONE: video-understand skill installed + all providers verified E2E
+
+- **Skill:** `jrusso1020/video-understand-skills` → `~/.agents/skills/video-understand` (Freebuff loads from ~/.agents/skills). ffmpeg/yt-dlp ✅ (yt-dlp UPDATED 2026.01.29 → 2026.08.19 — old version failed YouTube extraction). Deps: `pip install google-generativeai openai groq`.
+- **Providers live-verified:** gemini (test-pattern video + user's 15s screen recording) ✅ · openrouter (same recording, google/gemini-3-flash-preview) ✅ · groq whisper (silent recording → expected "Thank you." silence-hallucination; **"Me at the zoo" E2E → accurate transcript**) ✅.
+- **Fixed en route (backend/.env, gitignored):** (1) `GROQ_BASE_URL` deleted — user's GROK→GROQ rename carried the URL, doubling the SDK's default `/openai/v1` → 404. SDK default correct. (2) `PIXAZO_AUTH_HEADER` quoted — unquoted space in value broke `source .env` line 112 (looked like a bare token; it was a space in an unquoted value). Pixazo kept per user decision (dead config, zero code refs).
+- **Verified:** check_providers exit 0 (gemini+openrouter+ffmpeg+groq, recommended gemini), `source .env` clean, all live runs exit 0. No repo code changed → no tests/build; no architecture-diagram change (tooling only).
+
 ## 2026-08-20 — ✅ FIXED: chat bot (bridge) silent no-reply — Freebuff premium-slot collision → mimo + /reset + /status
 
 - **Diagnosis (DB-proven):** every recent bridge message got `freebuff-slot-taken` — Freebuff allows only ONE tab per premium model (deepseek/deepseek-v4-flash); the bridge thread collided with the active session. Not stuck (idle/error) — rejected. Also explains the earlier daily-limit message.

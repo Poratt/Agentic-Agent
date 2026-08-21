@@ -444,19 +444,89 @@ export class LlmClientService {
       ...(Object.keys(extraBody).length > 0 ? { extra_body: extraBody } : {}),
     };
 
-    const res = await fetch(`${baseUrl}/videos`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(120_000),
-    });
+    // Transient retry — Agnes occasionally returns HTTP 503 with body
+    // `{"code":"video_queue_full",...}` when its queue is busy, generic
+    // network/timeout failures, and HTTP 429 rate limits. Bounded:
+    // 5xx / queue_full use fixed 1s + 2s backoff (max ~3s); 429 honors the
+    // `Retry-After` response header once, capped at 30s — never stalls the
+    // studio UI longer than 30s. Other 4xx are terminal (client problem a
+    // retry cannot fix).
+    const MAX_ATTEMPTS = 3;
+    const BACKOFFS_MS = [1000, 2000];
+    const MAX_RATE_LIMIT_WAIT_MS = 30_000;
+    let rateLimitBudget = 1;
+    const isTransportError = (err: unknown): boolean =>
+      err instanceof TypeError || (err instanceof Error && err.name === 'AbortError');
 
-    if (!res.ok) {
+    let res!: Response;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+      try {
+        res = await fetch(`${baseUrl}/videos`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(120_000),
+        });
+      } catch (err) {
+        if (!isTransportError(err) || attempt === MAX_ATTEMPTS) {
+          throw err;
+        }
+        const delay = BACKOFFS_MS[attempt - 1] ?? 1000;
+        this.logger.warn(
+          `[createVideoTask] attempt ${attempt}/${MAX_ATTEMPTS} failed (transport: ${(err as Error).message ?? 'unknown'}) — retrying in ${delay}ms`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+
+      if (res.ok) {
+        break;
+      }
+
       const text = await res.text();
-      throw new Error(`Agnes video creation failed (${res.status}): ${text.slice(0, 500)}`);
+      const status = res.status;
+
+      // 429 rate limit — single retry honoring Retry-After (capped at 30s;
+      // no Retry-After / oversized wait / exhausted budget = terminal).
+      if (status === 429) {
+        const retryAfterHeader = res.headers?.get?.('retry-after');
+        const retryAfterSec = retryAfterHeader ? Number(retryAfterHeader) : Number.NaN;
+        const validWaitMs =
+          Number.isFinite(retryAfterSec) && retryAfterSec > 0
+            ? retryAfterSec * 1000
+            : 0;
+
+        if (
+          validWaitMs > 0 &&
+          validWaitMs <= MAX_RATE_LIMIT_WAIT_MS &&
+          rateLimitBudget > 0 &&
+          attempt < MAX_ATTEMPTS
+        ) {
+          rateLimitBudget -= 1;
+          this.logger.warn(
+            `[createVideoTask] attempt ${attempt}/${MAX_ATTEMPTS} failed (HTTP 429 rate limit) — retrying after ${validWaitMs}ms (Retry-After: ${retryAfterSec}s)`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, validWaitMs));
+          continue;
+        }
+        throw new Error(`Agnes video creation failed (${status}): ${text.slice(0, 500)}`);
+      }
+
+      // 5xx / queue_full — bounded retry with fixed 1s + 2s backoff.
+      const isTransient = status >= 500 || text.includes('video_queue_full');
+
+      if (!isTransient || attempt === MAX_ATTEMPTS) {
+        throw new Error(`Agnes video creation failed (${status}): ${text.slice(0, 500)}`);
+      }
+
+      const delay = BACKOFFS_MS[attempt - 1] ?? 1000;
+      this.logger.warn(
+        `[createVideoTask] attempt ${attempt}/${MAX_ATTEMPTS} failed (HTTP ${status}) — retrying in ${delay}ms`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
 
     const json = (await res.json()) as {
