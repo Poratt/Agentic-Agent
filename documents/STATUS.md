@@ -1,6 +1,98 @@
 # Project Documentation Status
 
-Last updated: 2026-08-20
+Last updated: 2026-08-25
+
+## 2026-08-25 — ✅ DONE: custom sort badge — "1" fixed, PrimeNG badge hidden, grouping
+
+- **Root causes (verified in PrimeNG source):** (1) "1" missing — SortIcon's `sortOrder` signal doesn't change when a 2nd column is added → OnPush never re-renders → internal badge skipped for the initial column. (2) Doubling — CSS `display:none` couldn't override the badge host's **inline** `[style.display]` binding → needed `!important`.
+- **Fix (4 files):** `getSortOrderIndex` + `sortTick` (header re-renders after each sort) + stable `initialSortMeta` ref; header `.sort-icon-group` (icon+badge grouped); CSS hides PrimeNG's badge with `!important`; specs updated (+1).
+- **Verified**: `ng test` 509/509 (57 files) · `ng build` exit 0.
+
+## 2026-08-25 — ✅ DONE: manual removableSort — 3-click sort cycle (asc → desc → reset)
+
+- **Request (manager):** `removableSort` is not a real attribute in 22.0.0 — implement removal manually: click 1 asc, 2 desc, 3 reset.
+- **Fix (3 files):** HTML — removed the bogus `removableSort` attr; TS — `lastSort` tracker + third-click detection → `resetSort()` (`table().reset()` clears PrimeNG sort state + icons, `event.data` restored to `rawItems` order by id, `activeSortField` null); spec — +1 cycle test.
+- **Verified**: `ng test` 508/508 (57 files) · `ng build` exit 0.
+
+## 2026-08-25 — ✅ DONE: sortTable unsorted-restore + manager premises fact-checked
+
+- **Fact-check (PrimeNG 22.0.0 source):** (1) NO `badge > 1` condition — badges render 1..N when 2+ columns sorted (proven by `sort-badge.spec.ts`); custom badge NOT implemented (duplicate of the library). (2) `removableSort` input doesn't exist in 22.0.0 — empty `multiSortMeta` never emitted; the defensive fix is still right.
+- **Fix (2 files):** `sortTable` — `event.field && event.order` guard (fixes single-mode `order: 0` being `?? 1` → false ascending sort) + unsorted fallback restores original `rawItems` order by id + clears `activeSortField`. +1 spec test.
+- **Verified**: `ng test` 507/507 (57 files) · `ng build` exit 0.
+
+## 2026-08-25 — ✅ DONE: sort badge "1" verified rendering + PrimeNG behavior proven by spec
+
+- **Task:** ensure the first sorted column shows its ordinal (1) in multi-sort; final badge polish already applied (border color-mix + tabular-nums).
+- **Verification (new `sort-badge.spec.ts`, 2 tests):** renders a real `p-table` (`sortMode="multiple"`, `multiSortMeta` with 2 entries) → badges render as `['1', '2']` (first column INCLUDED). Second test: 1 sorted column → no badge (PrimeNG 22 default — `getMultiSortMetaIndex` gates on `length > 1`). So `[showInitialSortBadge]="true"` (default true) + length ≥ 2 ⇒ every sorted column shows 1..N.
+- **Manager screenshot note:** "2,3,4 without 1" likely = price showed the neutral sort-alt icon (not in multiSortMeta) while 3 other columns were sorted — the ordinal of the first actually-sorted column is 1.
+- **Verified**: `ng test` 506/506 (57 files, +2) · `ng build` exit 0.
+
+## 2026-08-25 — ✅ DONE: `[showInitialSortBadge]="true"` added to strain-hunter p-table
+
+- Added per user request. PrimeNG default is already `true`; the badge for the initial sort column renders only when `multiSortMeta.length > 1` (22.0.0 source). If the "1" still doesn't show, next step = investigate meta state on click.
+- **Verified**: `ng test` 504/504 · `ng build` exit 0.
+
+## 2026-08-25 — ✅ DONE: sort badge polish — semi-transparent border + tabular-nums
+
+- **Request (manager):** soften the badge border (glass look, ~40% alpha) + `font-variant-numeric: tabular-nums` for optical digit alignment.
+- **Fix (1 file, `_primeng-overrides.css`)**: border → `color-mix(in srgb, var(--color-primary) 40%, transparent)`; added `font-variant-numeric: tabular-nums`.
+- **Note (manager's optional #3):** no number on the first sorted column is PrimeNG's default — first column shows only the arrow. Not changed; easy to add if wanted.
+- **Verified**: `npx ng build` exit 0.
+
+## 2026-08-25 — ✅ DONE: multi-sort badge restyled — ghost chip instead of solid accent dot
+
+- **Request (manager):** `.p-sortable-column-badge` too heavy/dominant — reads as a notification badge, not sort priority.
+- **Fix (1 file, `_primeng-overrides.css`)**: 15px w/h, `--font-size-xxs` text, ghost look — `background: var(--color-primary-glow-bg)`, `1px solid var(--color-primary)` border, `var(--color-primary)` text, radius-pill, inline-flex centered, small gap after the sort icon.
+- **Verified**: `npx ng build` exit 0.
+
+## 2026-08-25 — ✅ DONE: strain-hunter empty state now matches strain-hunter-settings (inside the table)
+
+- **Request:** the table's empty state should look like the settings tables' empty state.
+- **Fix (2 files):** `strain-hunter.ts` — `pageState` no longer returns `Empty` (Ready when not loading/error); `strain-hunter.html` — removed the page-level `PageStates.Empty` block, and `#emptymessage` now renders the settings pattern: `page-state table-empty-state` with `ph-magnifying-glass-minus` icon + "לא נמצאו זנים התואמים לחיפוש." + subtitle (dynamic colspan). `.table-empty-state` is a global utility (`_utilities.css`) — no CSS change.
+- **Verified**: `npx ng test --watch=false` 504/504 (56 suites) · `npx ng build` exit 0.
+
+## 2026-08-25 — ✅ DONE: multi-column sort (Ctrl/Cmd+click) in strain-hunter table
+
+- **Request (manager):** PrimeNG native multi-sort — `sortMode="multiple"` + `multiSortMeta` + chained comparator.
+- **Fix (3 files):** `strain-hunter.html` — `sortMode="multiple"`, `[multiSortMeta]="[{ field: 'price', order: 1 }]"` replaces `[sortField]`. `strain-hunter.ts` — `sortTable` handles `event.multiSortMeta` (chained `compareSortValues` per column, `activeSortField` = first meta), single-column fallback kept. `strain-hunter.spec.ts` — multi-sort priority test (price → expiry).
+- **Verified**: `npx ng test --watch=false` 504/504 (56 suites, +1) · `npx ng build` exit 0.
+
+## 2026-08-25 — ✅ DONE: expiry sort fixed — MM/YY sorted chronologically (not as string)
+
+- **Bug (manager report):** `expiry` column (MM/YY format) sorted as string — "01/28" (Jan 2028) before "02/27" (Feb 2027). Wrong order.
+- **Fix (manager's option 2):** `sortValue()` in `strain-hunter.ts` — special case for `field === 'expiry'`: parses MM/YY → `(2000+yy)*100 + mm` for numeric comparison. Existing numeric/string infrastructure reused.
+- **Test:** `strain-hunter.spec.ts` — proves `sortTable` puts `01/27` before `02/27` before `01/28`.
+- **Verified**: `npx ng test --watch=false` 503/503 (56 suites, +1) · `npx ng build` exit 0.
+
+## 2026-08-25 — ✅ DONE: scrollbar-gutter stable — no more layout shift when table results → empty state
+
+- **Bug (manager report):** scrollbar (~15px) appears with table results, disappears on empty state → whole layout jumps. Seen on strain-hunter, likely elsewhere.
+- **Fix (2 CSS files, manager's solution 1)**: `scrollbar-gutter: stable` on `.content-shell` (`_layout.css` — the app's page scroll container, fixes every page) + `.p-datatable-wrapper` (`_primeng-overrides.css` — PrimeNG scrollable tables). The track is always reserved → zero width delta between states.
+- **Verified**: `npx ng build` exit 0.
+
+## 2026-08-25 — ✅ DONE: search-clear-btn layout shift fixed (always-DOM + CSS visibility)
+
+- **Bug (manager report):** typing in search → `<div class="form-field-has-icon">` jumps right, pushing filter icons. Root cause: `@if (query())` conditional rendering toggled the `:has(.search-clear-btn)` rule in `_forms.css`, which changes `input.form-control` padding — with `content-box` the input outer width shifts 48px.
+- **Fix (8 files, 7 buttons)**: every `.search-clear-btn` is now always in the DOM — `@if` replaced by `[class.is-visible]="query()"`, and `_forms.css` hides the button via `:not(.is-visible) { opacity: 0; visibility: hidden; pointer-events: none }` with `transition: opacity`. The `:has()` rule stays permanently active → input padding stable → zero layout delta on typing. Applies to all 7 search fields (strain-hunter, drawer, llm-providers, users, settings×2, chat-history).
+- **Verified**: `npx ng test --watch=false` 502/502 (56 suites) · `npx ng build` exit 0.
+
+## 2026-08-25 — ✅ DONE: search-clear-btn added to all 7 search fields (consistent with strain-hunter-settings pattern)
+
+- **Request**: add the clear button (`.search-clear-btn`) to every search field, matching `strain-hunter-settings` pattern.
+- **Fix (6 files)**: strain-hunter.html (new `[value]="searchQuery()"` + `@if` button + `type="text"`), matching-preferences-drawer.html (button + `type="text"`), llm-providers-management (`.html` + `.ts` — new `globalFilter` signal + `clearGlobalFilter()`), users-management (`.html` + `.ts` — same pattern). All use `type="text"` (no double × with native search clear). `aria-label="נקה חיפוש"` consistent.
+- **Verified**: `npx ng test --watch=false` 502/502 (56 suites) · `npx ng build` exit 0.
+
+## 2026-08-25 — ✅ DONE: strain-hunter search input now feeds the summary count (like every other filter)
+
+- **Request**: search-box results must affect `summary-value` (סה"כ זנים) like every other filter.
+- **Fix (2 files)**: search moved from PrimeNG table `filterGlobal` into the `items()` computed — new `searchQuery` signal; `items()` filters across `searchColumns()` (same `symbols` special-case as `activeFilters`); `[globalFilterFields]` + `filterGlobal` removed. Zero-hit → page Empty state (consistent with other filters).
+- **Verified**: `npx ng test --watch=false` 502/502 (56 suites) · `npx ng build` exit 0 (pre-existing budget warning only) · graphify updated · no architecture-diagram change.
+
+## 2026-08-25 — ✅ DONE: strain-hunter filter-node pills compacted to terpene-node size
+
+- **Request**: shrink ALL `.filter-node` pills (grow-type, origin-strain, country, marketer/manufacturer/brand) to the compact terpene-pill size — "do it smart".
+- **Fix (1 file, `strain-hunter.css`)**: base `.filter-node` sets `font-size: var(--font-size-xxs)` (10px) + `.ph` icons scale via `font-size: 1em` — one rule for all variants (prior per-variant `.grow-filter-node, .origin-strain-node` rule deleted as redundant). Terpene pills unchanged; `.package-type-cell` icon unaffected.
+- **Verified**: `npx ng build` exit 0 (pre-existing budget warning only, file 9.44kB) · graphify updated · no architecture-diagram change.
 
 ## 2026-08-20 — ✅ DONE: 429 Retry-After handling in createVideoTask + tool-description disambiguation (image vs video)
 
