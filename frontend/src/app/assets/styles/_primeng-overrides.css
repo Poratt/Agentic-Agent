@@ -4,6 +4,12 @@
 
 /* ── Tables ─────────────────────────────────────────────────────────────── */
 
+/* Reserve the scrollbar track in scrollable tables — toggling between
+   many rows and the empty state must not shift the table content. */
+.p-datatable-wrapper {
+  scrollbar-gutter: stable;
+}
+
 .catalog-table {
   table-layout: fixed !important;
   width: 100% !important;
@@ -31,6 +37,40 @@
   .p-datatable-sort-icon {
     width: var(--space-6);
     height: var(--space-6);
+  }
+
+  /* PrimeNG 22.0.0's internal sort badge is hidden — its SortIcon skips the
+     badge for the initial sort column (the sortOrder signal doesn't change
+     when another column is added, so the OnPush component never re-renders).
+     We render our own badge in the header, grouped with the sort icon.
+     `!important` is required: the badge host binds `[style.display]`
+     inline, which no ordinary CSS rule can override. */
+  p-sort-icon .p-sortable-column-badge {
+    display: none !important;
+  }
+
+  .sort-icon-group {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .sort-icon-group .p-sortable-column-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    min-width: 15px;
+    padding: 0;
+    font-size: var(--font-size-xxs);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-primary);
+    background: var(--color-primary-glow-bg);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+    border-radius: var(--radius-pill);
   }
 
   .p-datatable-thead {

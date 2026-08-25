@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
+import { By } from '@angular/platform-browser';
+import { Table } from 'primeng/table';
 import { StrainHunter } from './strain-hunter';
 import { MatchingEngineStore } from '../../core/store/matching-engine.store';
 import { TerpeneStore } from '../../core/store/terpene.store';
@@ -18,12 +20,22 @@ describe('StrainHunter', () => {
     };
 
     const mockMatchingEngine = {
-        calculateScore: vi.fn((item: any) => ({ ...item, score: 50, penalty: false, penaltyIngredient: null, breakdown: {} })),
+        calculateScore: vi.fn((item: any) => ({
+            ...item,
+            score: 50,
+            penalty: false,
+            penaltyIngredient: null,
+            breakdown: {},
+        })),
         hasAnyPreference: vi.fn(() => false),
         prefState: vi.fn(() => 'neutral' as const),
         weights: vi.fn(() => ({ terpene: 60, genetics: 40 })),
         prefs: vi.fn(() => ({})),
-        topScored: vi.fn((items: any[], limit = 5) => items.slice(0, limit).map(item => ({ ...item, score: 50, penalty: false, penaltyIngredient: null, breakdown: {} }))),
+        topScored: vi.fn((items: any[], limit = 5) =>
+            items
+                .slice(0, limit)
+                .map((item) => ({ ...item, score: 50, penalty: false, penaltyIngredient: null, breakdown: {} })),
+        ),
         cyclePref: vi.fn(),
         setWeight: vi.fn(),
         setPref: vi.fn(),
@@ -58,6 +70,92 @@ describe('StrainHunter', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('sorts expiry MM/YY chronologically, not as strings', () => {
+        const event: any = {
+            field: 'expiry',
+            order: 1,
+            data: [
+                { id: 1, expiry: '01/28' },
+                { id: 2, expiry: '02/27' },
+                { id: 3, expiry: '01/27' },
+            ],
+        };
+        component.sortTable(event);
+        expect(event.data.map((row: any) => row.expiry)).toEqual(['01/27', '02/27', '01/28']);
+    });
+
+    it('sorts using multiSortMeta across multiple fields by priority', () => {
+        const event: any = {
+            multiSortMeta: [
+                { field: 'price', order: 1 },
+                { field: 'expiry', order: 1 },
+            ],
+            data: [
+                { id: 1, price: 100, expiry: '02/27' },
+                { id: 2, price: 100, expiry: '01/27' },
+                { id: 3, price: 50, expiry: '01/28' },
+            ],
+        };
+        component.sortTable(event);
+        expect(event.data.map((row: any) => row.id)).toEqual([3, 2, 1]);
+    });
+
+    it('restores original order when sorting is removed', () => {
+        component.rawItems.set([{ id: 1 }, { id: 2 }, { id: 3 }] as any);
+
+        const event: any = {
+            multiSortMeta: [],
+            data: [{ id: 3 }, { id: 1 }, { id: 2 }],
+        };
+
+        component.sortTable(event);
+        expect(event.data.map((row: any) => row.id)).toEqual([1, 2, 3]);
+        expect(component.activeSortField()).toBeNull();
+    });
+
+    it('cycles single-column sort asc → desc → reset on the third click', () => {
+        component.rawItems.set([
+            { id: 1, price: 100 },
+            { id: 2, price: 50 },
+            { id: 3, price: 75 },
+        ] as any);
+
+        const data = [
+            { id: 1, price: 100 },
+            { id: 2, price: 50 },
+            { id: 3, price: 75 },
+        ];
+        const asc: any = { multiSortMeta: [{ field: 'price', order: 1 }], data: [...data] };
+        component.sortTable(asc);
+        expect(asc.data.map((row: any) => row.id)).toEqual([2, 3, 1]);
+
+        const desc: any = { multiSortMeta: [{ field: 'price', order: -1 }], data: [...asc.data] };
+        component.sortTable(desc);
+        expect(desc.data.map((row: any) => row.id)).toEqual([1, 3, 2]);
+
+        const reset: any = { multiSortMeta: [{ field: 'price', order: 1 }], data: [...desc.data] };
+        component.sortTable(reset);
+        expect(reset.data.map((row: any) => row.id)).toEqual([1, 2, 3]);
+        expect(component.activeSortField()).toBeNull();
+    });
+
+    it('getSortOrderIndex returns ordinals including the first column', () => {
+        component.rawItems.set([{ id: 1, name: 'x' }] as any);
+        (component as any).loading.set(false);
+        (component as any).error.set(null);
+        fixture.detectChanges();
+
+        const table = fixture.debugElement.query(By.directive(Table))?.componentInstance as any;
+        expect(table).toBeTruthy();
+        table.multiSortMeta = [
+            { field: 'price', order: 1 },
+            { field: 'expiry', order: -1 },
+        ];
+        expect(component.getSortOrderIndex('price')).toBe(1);
+        expect(component.getSortOrderIndex('expiry')).toBe(2);
+        expect(component.getSortOrderIndex('name')).toBeNull();
     });
 
     describe('ringDashOffset', () => {

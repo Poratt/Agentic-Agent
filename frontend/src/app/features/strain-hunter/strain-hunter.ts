@@ -125,7 +125,7 @@ type TerpeneTooltipPos = {
         MatchingPreferencesDrawer,
         Tooltip,
         ScoreTooltip,
-        TooltipDirective
+        TooltipDirective,
     ],
     templateUrl: './strain-hunter.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -170,8 +170,12 @@ export class StrainHunter implements OnInit {
         growType: 'גידול',
         thc: 'THC',
         cbd: 'CBD',
-
     };
+    /** Stable reference for the default multi-sort — avoids the array-literal
+        reset: each CD re-evaluates a literal into a new array, which PrimeNG's
+        input-sync effect interprets as a "change" and resets the internal
+        multiSortMeta, dropping user-added columns. */
+    readonly initialSortMeta = [{ field: 'price', order: 1 }];
     private readonly preferredColumns = [
         'name',
         'matchScore',
@@ -229,7 +233,15 @@ export class StrainHunter implements OnInit {
     filtersExpanded = signal(false);
 
     activeFilters = signal<StrainHunterFilter[]>([]);
+    searchQuery = signal('');
     activeSortField = signal<string | null>(null);
+
+    /** Previous single-click sort — lets the third click (asc → desc → reset) be detected. */
+    private lastSort: { field: string; order: number } | null = null;
+
+    /** Bumped on every sort interaction so the header re-renders and the custom
+        sort badge re-reads the table's multiSortMeta. */
+    readonly sortTick = signal(0);
 
     constructor() {
         this.hydrateFilters();
@@ -255,6 +267,7 @@ export class StrainHunter implements OnInit {
     items = computed<StrainRow[]>(() => {
         const raw = this.rawItems();
         const filters = this.activeFilters();
+        const query = this.searchQuery().trim().toLowerCase();
         const [priceMin, priceMax] = this.priceRange();
         const [boundsMin, boundsMax] = this.priceBounds();
         const hasPriceFilter = priceMin > boundsMin || priceMax < boundsMax;
@@ -267,14 +280,32 @@ export class StrainHunter implements OnInit {
                 }
             }
 
+            if (query) {
+                const hit = this.searchColumns().some((field) => {
+                    const valueToCompare =
+                        field === 'symbols'
+                            ? this.getSymbols(item.symbols)
+                                  .map((s) => s.alt)
+                                  .join(', ')
+                            : this.formatValue(item[field]);
+                    return valueToCompare.trim().toLowerCase().includes(query);
+                });
+                if (!hit) {
+                    return false;
+                }
+            }
+
             if (filters.length === 0) return true;
 
             return filters.every((filter) => {
                 const val = filter.value.toLowerCase().trim();
                 return filter.fields.some((field) => {
-                    const valueToCompare = field === "symbols"
-                        ? this.getSymbols(item.symbols).map(s => s.alt).join(", ")
-                        : this.formatValue(item[field]);
+                    const valueToCompare =
+                        field === 'symbols'
+                            ? this.getSymbols(item.symbols)
+                                  .map((s) => s.alt)
+                                  .join(', ')
+                            : this.formatValue(item[field]);
                     return valueToCompare.trim().toLowerCase().includes(val);
                 });
             });
@@ -290,7 +321,9 @@ export class StrainHunter implements OnInit {
         if (this.error()) {
             return PageStates.Error;
         }
-        return this.items().length > 0 ? PageStates.Ready : PageStates.Empty;
+        // Empty results render inside the table (settings-style #emptymessage)
+        // instead of replacing it with a page-level empty state.
+        return PageStates.Ready;
     });
 
     columns = computed(() => {
@@ -310,7 +343,12 @@ export class StrainHunter implements OnInit {
             return key === 'matchScore' || keys.has(key);
         });
         const extraColumns = Array.from(keys).filter((key) => {
-            return !this.preferredColumns.includes(key) && !this.embeddedColumns.includes(key) && key !== 'id' && key !== 'name';
+            return (
+                !this.preferredColumns.includes(key) &&
+                !this.embeddedColumns.includes(key) &&
+                key !== 'id' &&
+                key !== 'name'
+            );
         });
 
         return [...knownColumns, ...extraColumns];
@@ -344,7 +382,9 @@ export class StrainHunter implements OnInit {
                 next: (response) => {
                     const items = response.result.items ?? [];
                     this.rawItems.set(items);
-                    this.lastUpdated.set(response.result.lastScrapedAt ? new Date(response.result.lastScrapedAt) : null);
+                    this.lastUpdated.set(
+                        response.result.lastScrapedAt ? new Date(response.result.lastScrapedAt) : null,
+                    );
 
                     let min = Infinity;
                     let max = -Infinity;
@@ -362,10 +402,7 @@ export class StrainHunter implements OnInit {
                         this.priceRange.set([bounds[0], bounds[1]]);
                     } else {
                         const [rMin, rMax] = this.priceRange();
-                        this.priceRange.set([
-                            Math.max(bounds[0], rMin),
-                            Math.min(bounds[1], rMax),
-                        ]);
+                        this.priceRange.set([Math.max(bounds[0], rMin), Math.min(bounds[1], rMax)]);
                     }
 
                     this.loading.set(false);
@@ -392,7 +429,7 @@ export class StrainHunter implements OnInit {
     }
 
     toggleFilters() {
-        this.filtersExpanded.update(v => !v);
+        this.filtersExpanded.update((v) => !v);
     }
 
     isPriceFilterActive(): boolean {
@@ -433,15 +470,26 @@ export class StrainHunter implements OnInit {
         const key = `${filterFields.join('|')}:${filterValue.toLowerCase()}`;
 
         this.activeFilters.update((prev) => {
-            if (prev.some((filter) => {
-                return filter.key === key;
-            })) {
+            if (
+                prev.some((filter) => {
+                    return filter.key === key;
+                })
+            ) {
                 return prev.filter((filter) => {
                     return filter.key !== key;
                 });
             }
 
-            return [...prev, { key, fields: filterFields, label: filterLabel, value: filterValue, name: FILTER_FIELD_NAMES[filterFields[0]] ?? filterFields[0] }];
+            return [
+                ...prev,
+                {
+                    key,
+                    fields: filterFields,
+                    label: filterLabel,
+                    value: filterValue,
+                    name: FILTER_FIELD_NAMES[filterFields[0]] ?? filterFields[0],
+                },
+            ];
         });
         this.clearTooltip();
     }
@@ -524,11 +572,12 @@ export class StrainHunter implements OnInit {
         // Same dynamic positioning as the terpene tooltip: open ABOVE when
         // there is room, otherwise BELOW — consistent behavior across both.
         const openUp = rect.top >= this.tooltipHeight + this.tooltipGap;
-        const top = openUp
-            ? rect.top - this.tooltipHeight - this.tooltipGap
-            : rect.bottom + TOOLTIP_GAP;
+        const top = openUp ? rect.top - this.tooltipHeight - this.tooltipGap : rect.bottom + TOOLTIP_GAP;
         const chipCenter = rect.left + rect.width / 2;
-        const left = Math.max(TOOLTIP_GAP, Math.min(chipCenter - TOOLTIP_W / 2, window.innerWidth - TOOLTIP_W - TOOLTIP_GAP));
+        const left = Math.max(
+            TOOLTIP_GAP,
+            Math.min(chipCenter - TOOLTIP_W / 2, window.innerWidth - TOOLTIP_W - TOOLTIP_GAP),
+        );
 
         const timeout = setTimeout(() => {
             this.tooltip.set({ name, category: 'genetics', top, left, ready: false });
@@ -559,9 +608,10 @@ export class StrainHunter implements OnInit {
                 if (!el) return;
                 const tipHeight = el.getBoundingClientRect().height;
                 const gap = which === 'tooltip' ? TOOLTIP_GAP : this.tooltipGap;
-                const top = btnRect.top >= tipHeight + gap
-                    ? btnRect.top - tipHeight - gap // real room above — open there
-                    : btnRect.bottom + gap; // otherwise below
+                const top =
+                    btnRect.top >= tipHeight + gap
+                        ? btnRect.top - tipHeight - gap // real room above — open there
+                        : btnRect.bottom + gap; // otherwise below
                 if (which === 'tooltip') {
                     const cur = this.tooltip();
                     if (cur) this.tooltip.set({ ...cur, top, ready: true });
@@ -584,7 +634,10 @@ export class StrainHunter implements OnInit {
         const top = rect.bottom + TOOLTIP_GAP;
         const targetWidth = 260; // Approx score tooltip max width from layout
         const chipCenter = rect.left + rect.width / 2;
-        const left = Math.max(TOOLTIP_GAP, Math.min(chipCenter - targetWidth / 2, window.innerWidth - targetWidth - TOOLTIP_GAP));
+        const left = Math.max(
+            TOOLTIP_GAP,
+            Math.min(chipCenter - targetWidth / 2, window.innerWidth - targetWidth - TOOLTIP_GAP),
+        );
 
         const timeout = setTimeout(() => {
             this.activeScoreTooltip.set({ breakdown, top, left });
@@ -603,22 +656,83 @@ export class StrainHunter implements OnInit {
     }
 
     applyGlobalFilter(event: Event) {
-        this.table()?.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+        this.searchQuery.set((event.target as HTMLInputElement).value);
     }
 
     sortTable(event: SortEvent): void {
-        if (!event.data || !event.field) {
+        this.sortTick.update((value) => value + 1);
+
+        if (!event.data) {
             return;
         }
 
-        const field = this.resolveSortField(event.field);
-        const order = event.order ?? 1;
+        // Single-column click — cycles asc (1) → desc (-1) → reset. PrimeNG 22
+        // has no built-in sort removal in multiple mode, so the reset is manual.
+        if (event.multiSortMeta?.length === 1) {
+            const meta = event.multiSortMeta[0];
+            const field = this.resolveSortField(meta.field);
+            const order = meta.order ?? 1;
 
-        this.activeSortField.set(field);
+            if (order === 1 && this.lastSort?.field === field && this.lastSort.order === -1) {
+                this.resetSort(event.data);
+                return;
+            }
 
-        event.data.sort((first, second) => {
-            return this.compareSortValues(first?.[field], second?.[field], field) * order;
-        });
+            this.lastSort = { field, order };
+            this.activeSortField.set(field);
+
+            event.data.sort((first, second) => {
+                return this.compareSortValues(first?.[field], second?.[field], field) * order;
+            });
+            return;
+        }
+
+        // Multi-column sort (Ctrl/Cmd + click) — chained comparisons, one per column.
+        if (event.multiSortMeta && event.multiSortMeta.length > 1) {
+            this.lastSort = null;
+
+            const metas = event.multiSortMeta.map((meta) => ({
+                field: this.resolveSortField(meta.field),
+                order: meta.order ?? 1,
+            }));
+
+            this.activeSortField.set(metas[0]?.field ?? null);
+
+            event.data.sort((first, second) => {
+                for (const meta of metas) {
+                    const comparison = this.compareSortValues(first?.[meta.field], second?.[meta.field], meta.field);
+                    if (comparison !== 0) {
+                        return comparison * meta.order;
+                    }
+                }
+                return 0;
+            });
+            return;
+        }
+
+        // Single-sort-mode fallback (plain click).
+        if (event.field && event.order) {
+            const field = this.resolveSortField(event.field);
+            const order = event.order;
+            this.lastSort = { field, order };
+            this.activeSortField.set(field);
+
+            event.data.sort((first, second) => {
+                return this.compareSortValues(first?.[field], second?.[field], field) * order;
+            });
+            return;
+        }
+
+        // Unsorted (sort removed) — restore the original backend order.
+        this.resetSort(event.data);
+    }
+
+    private resetSort(data: any[]): void {
+        this.lastSort = null;
+        this.activeSortField.set(null);
+        this.table()?.reset();
+        const rawIndex = new Map(this.rawItems().map((item, index) => [item.id, index]));
+        data.sort((first, second) => (rawIndex.get(first.id) ?? 0) - (rawIndex.get(second.id) ?? 0));
     }
 
     columnLabel(column: string): string {
@@ -733,9 +847,7 @@ export class StrainHunter implements OnInit {
         const rect = el.getBoundingClientRect();
 
         const openUp = rect.top >= this.tooltipHeight + this.tooltipGap;
-        const top = openUp
-            ? rect.top - this.tooltipHeight - this.tooltipGap
-            : rect.bottom + this.tooltipGap;
+        const top = openUp ? rect.top - this.tooltipHeight - this.tooltipGap : rect.bottom + this.tooltipGap;
 
         const chipCenter = rect.left + rect.width / 2;
         const left = Math.max(
@@ -755,16 +867,16 @@ export class StrainHunter implements OnInit {
     countryFlagUrl(value: unknown): string {
         const country = this.formatValue(value);
         const flags: Record<string, string> = {
-            'ישראל': 'il',
-            'קנדה': 'ca',
-            'פורטוגל': 'pt',
-            'אורוגוואי': 'uy',
-            'אוגנדה': 'ug',
-            'ספרד': 'es',
-            'גרמניה': 'de',
-            'מרוקו': 'ma',
-            'דנמרק': 'dk',
-            'הולנד': 'nl',
+            ישראל: 'il',
+            קנדה: 'ca',
+            פורטוגל: 'pt',
+            אורוגוואי: 'uy',
+            אוגנדה: 'ug',
+            ספרד: 'es',
+            גרמניה: 'de',
+            מרוקו: 'ma',
+            דנמרק: 'dk',
+            הולנד: 'nl',
         };
 
         const code = flags[country];
@@ -862,7 +974,9 @@ export class StrainHunter implements OnInit {
     }
 
     terpeneClass(name: string): string {
-        return this.isSortingByScore() && this.isTerpeneLiked(name) ? 'terpene-node filter-node liked' : 'terpene-node filter-node';
+        return this.isSortingByScore() && this.isTerpeneLiked(name)
+            ? 'terpene-node filter-node liked'
+            : 'terpene-node filter-node';
     }
 
     private toTerpeneFilter(value: string): TerpeneFilter | null {
@@ -906,6 +1020,15 @@ export class StrainHunter implements OnInit {
             return null;
         }
 
+        if (field === 'expiry') {
+            // MM/YY compares chronologically — "02/27" < "01/28", while the
+            // string order ("01/28" < "02/27") is wrong.
+            const [mm, yy] = formattedValue.split('/').map(Number);
+            if (Number.isFinite(mm) && Number.isFinite(yy)) {
+                return (2000 + yy) * 100 + mm;
+            }
+        }
+
         if (this.numericSortColumns.has(field)) {
             return this.toNumber(formattedValue);
         }
@@ -915,6 +1038,20 @@ export class StrainHunter implements OnInit {
 
     private resolveSortField(columnField: string): string {
         return columnField === 'matchScore' ? 'score' : columnField;
+    }
+
+    /** Returns the 1-based sort index for a column, or null if not multi-sorted.
+        Tracks sortTick so the header re-renders after every sort interaction
+        (PrimeNG 22.0.0's own SortIcon skips the badge for the initial column
+        because its sortOrder signal doesn't change when a new column is added). */
+    getSortOrderIndex(column: string): number | null {
+        this.sortTick();
+        const metas = this.table()?.multiSortMeta;
+        if (!metas || metas.length <= 1) {
+            return null;
+        }
+        const index = metas.findIndex((meta) => meta.field === column);
+        return index !== -1 ? index + 1 : null;
     }
 
     private toNumber(value: string): number | null {
@@ -933,8 +1070,8 @@ export class StrainHunter implements OnInit {
             typeof error.error?.message === 'string'
                 ? error.error.message
                 : typeof error.error === 'string'
-                    ? error.error
-                    : '';
+                  ? error.error
+                  : '';
 
         return serverMessage || 'טעינת נתוני הזנים נכשלה.';
     }

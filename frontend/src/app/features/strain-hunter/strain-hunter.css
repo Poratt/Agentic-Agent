@@ -236,10 +236,14 @@
     color: inherit;
     cursor: pointer;
     font: inherit;
+    /* Compact pill size shared by every filter node (terpene pills
+       already inherit the same size from their .terpenes container). */
+    font-size: var(--font-size-xxs);
     transition: var(--transition-fast), transform 160ms ease-out;
 
     .ph {
-      font-size: var(--font-size-xs);
+      /* Scale icons with the pill instead of holding them at --font-size-xs. */
+      font-size: 1em;
     }
 
     &:active {

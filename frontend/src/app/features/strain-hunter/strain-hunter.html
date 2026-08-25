@@ -63,11 +63,21 @@
                         <input
                             pInputText
                             class="form-control"
-                            type="search"
+                            type="text"
                             placeholder="חיפוש בטבלה..."
+                            [value]="searchQuery()"
                             [disabled]="loading()"
                             (input)="applyGlobalFilter($event)"
                         />
+                        <button
+                            type="button"
+                            class="icon-only transparent-btn sm search-clear-btn"
+                            [class.is-visible]="searchQuery()"
+                            aria-label="נקה חיפוש"
+                            (click)="searchQuery.set('')"
+                        >
+                            <span class="ph ph-x"></span>
+                        </button>
                     </div>
                     @if (isAdmin()) {
                         <button
@@ -205,20 +215,14 @@
             </div>
         }
 
-        @case (PageStates.Empty) {
-            <div class="page-state empty-state">
-                <span class="icon ph ph-table"></span>
-                <h4 class="title">לא נמצאו נתוני זנים.</h4>
-            </div>
-        }
-
         @case (PageStates.Ready) {
             <div class="glass-effect card table-container">
                 <p-table
                     #table
-                    [sortField]="'price'"
+                    sortMode="multiple"
+                    [showInitialSortBadge]="true"
+                    [multiSortMeta]="initialSortMeta"
                     [value]="items()"
-                    [globalFilterFields]="searchColumns()"
                     [scrollable]="true"
                     [customSort]="true"
                     scrollHeight="flex"
@@ -228,7 +232,15 @@
                         <tr>
                             @for (column of columns(); track column) {
                                 <th [pSortableColumn]="column">
-                                    <div class="sortable-column-header"><span>{{ columnLabel(column) }}</span> <p-sort-icon [field]="column" /></div>
+                                    <div class="sortable-column-header">
+                                        <span>{{ columnLabel(column) }}</span>
+                                        <span class="sort-icon-group">
+                                            <p-sort-icon [field]="column" />
+                                            @if (getSortOrderIndex(column); as sortIdx) {
+                                                <span class="p-sortable-column-badge">{{ sortIdx }}</span>
+                                            }
+                                        </span>
+                                    </div>
                                 </th>
                             }
                         </tr>
@@ -535,7 +547,13 @@
 
                     <ng-template #emptymessage>
                         <tr>
-                            <td [attr.colspan]="columns().length">לא נמצאו תוצאות.</td>
+                            <td [attr.colspan]="columns().length">
+                                <div class="page-state table-empty-state">
+                                    <span class="icon ph ph-magnifying-glass-minus"></span>
+                                    <h4 class="title">לא נמצאו זנים התואמים לחיפוש.</h4>
+                                    <p class="subtitle">נסה לשנות את מונחי החיפוש או לנקות את הסינון.</p>
+                                </div>
+                            </td>
                         </tr>
                     </ng-template>
                 </p-table>
