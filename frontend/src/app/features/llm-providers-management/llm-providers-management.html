@@ -28,10 +28,20 @@
                         <input
                             pInputText
                             type="text"
+                            [value]="globalFilter()"
                             (input)="applyGlobalFilter($event)"
                             placeholder="Search LLM providers..."
                             class="form-control"
                         />
+                        <button
+                            type="button"
+                            class="icon-only transparent-btn sm search-clear-btn"
+                            [class.is-visible]="globalFilter()"
+                            aria-label="Clear search"
+                            (click)="clearGlobalFilter()"
+                        >
+                            <span class="ph ph-x"></span>
+                        </button>
                     </div>
                 </div>
 
@@ -59,9 +69,15 @@
                     <ng-template #header>
                         <tr>
                             <th class="col-expand"></th>
-                            <th pSortableColumn="key"><div class="sortable-column-header">Name <p-sort-icon field="key" /></div></th>
-                            <th pSortableColumn="baseUrl"><div class="sortable-column-header">baseUrl <p-sort-icon field="baseUrl" /></div></th>
-                            <th class="col-count" pSortableColumn="modelsCount"><div class="sortable-column-header">Models <p-sort-icon field="modelsCount" /></div></th>
+                            <th pSortableColumn="key">
+                                <div class="sortable-column-header">Name <p-sort-icon field="key" /></div>
+                            </th>
+                            <th pSortableColumn="baseUrl">
+                                <div class="sortable-column-header">baseUrl <p-sort-icon field="baseUrl" /></div>
+                            </th>
+                            <th class="col-count" pSortableColumn="modelsCount">
+                                <div class="sortable-column-header">Models <p-sort-icon field="modelsCount" /></div>
+                            </th>
                             <th class="col-actions"></th>
                         </tr>
                     </ng-template>
@@ -162,9 +178,17 @@
                                             <ng-template #header>
                                                 <tr>
                                                     <th class="col-expand xs"></th>
-                                                    <th pSortableColumn="label"><div class="sortable-column-header">Model <p-sort-icon field="label" /></div></th>
-                                                    <th class="col-status" pSortableColumn="active"><div class="sortable-column-header">Active <p-sort-icon field="active" /></div></th>
-                                                    <th class="col-perf" pSortableColumn="performanceScore"><div class="sortable-column-header">Performance <p-sort-icon field="performanceScore" /></div></th>
+                                                    <th pSortableColumn="label">
+                                                        <div class="sortable-column-header">Model <p-sort-icon field="label" /></div>
+                                                    </th>
+                                                    <th class="col-status" pSortableColumn="active">
+                                                        <div class="sortable-column-header">Active <p-sort-icon field="active" /></div>
+                                                    </th>
+                                                    <th class="col-perf" pSortableColumn="performanceScore">
+                                                        <div class="sortable-column-header">
+                                                            Performance <p-sort-icon field="performanceScore" />
+                                                        </div>
+                                                    </th>
                                                     <th class="col-test"></th>
                                                     <th class="col-actions-xs"></th>
                                                 </tr>

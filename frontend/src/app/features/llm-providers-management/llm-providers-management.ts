@@ -43,7 +43,7 @@ export interface LlmProviderView extends Omit<LlmProvider, 'models'> {
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './llm-providers-management.html',
-    styleUrl: './llm-providers-management.css'
+    styleUrl: './llm-providers-management.css',
 })
 export class LlmProvidersManagement implements OnInit {
     private table = viewChild<Table>('table');
@@ -56,6 +56,7 @@ export class LlmProvidersManagement implements OnInit {
     protected messageService = inject(MessageService);
     protected readonly PageStates = PageStates;
     protected readonly globalFilterFields = ['id', 'key', 'label', 'baseUrl', 'createdAt'];
+    globalFilter = signal('');
 
     ngOnInit(): void {
         this.llmProviderStore.loadUserDefaultModel();
@@ -73,14 +74,14 @@ export class LlmProvidersManagement implements OnInit {
         label: ['', [Validators.required]],
         baseUrl: ['', [Validators.required, Validators.pattern(/^https?:\/\/.*/)]],
         apiKey: [''],
-        active: [true]
+        active: [true],
     });
 
     // Reactive Forms for Model dialog
     modelForm: FormGroup = this.fb.group({
         key: ['', [Validators.required, Validators.pattern(/^\S+$/)]],
         label: ['', [Validators.required]],
-        active: [true]
+        active: [true],
     });
 
     editingProviderId = signal<number | null>(null);
@@ -96,12 +97,12 @@ export class LlmProvidersManagement implements OnInit {
     isAdmin = computed(() => this.authStore.userRole() === UserRole.Admin);
 
     llmProviders = computed<LlmProviderView[]>(() => {
-        const providers = this.llmProviderStore.providers().filter(p => p.active);
+        const providers = this.llmProviderStore.providers().filter((p) => p.active);
 
-        return providers.map(provider => ({
+        return providers.map((provider) => ({
             ...provider,
             modelsCount: (provider.models || []).length,
-            models: (provider.models || []).map(model => {
+            models: (provider.models || []).map((model) => {
                 const results = model.testResults || [];
                 const totalTests = results.length;
 
@@ -109,10 +110,10 @@ export class LlmProvidersManagement implements OnInit {
                     return { ...model, hasTests: false, latencyAverage: 0, successPercentage: 0, performanceScore: -1 };
                 }
 
-                const successfulTests = results.filter(r => r.status === 'success').length;
+                const successfulTests = results.filter((r) => r.status === 'success').length;
                 const successPercentage = Math.round((successfulTests / totalTests) * 100);
 
-                const successfulResults = results.filter(r => r.status === 'success');
+                const successfulResults = results.filter((r) => r.status === 'success');
                 let latencyAverage = 0;
 
                 if (successfulResults.length > 0) {
@@ -120,16 +121,16 @@ export class LlmProvidersManagement implements OnInit {
                     latencyAverage = Math.round(totalLatency / successfulResults.length);
                 }
 
-                const performanceScore = (successPercentage * 100000) - latencyAverage;
+                const performanceScore = successPercentage * 100000 - latencyAverage;
 
                 return {
                     ...model,
                     hasTests: true,
                     latencyAverage,
                     successPercentage,
-                    performanceScore
+                    performanceScore,
                 };
-            })
+            }),
         }));
     });
 
@@ -137,7 +138,7 @@ export class LlmProvidersManagement implements OnInit {
     modelDialogProviderLabel = computed(() => {
         const providerId = this.editingModelProviderId();
         if (providerId === null) return '';
-        return this.llmProviders().find(p => p.id === providerId)?.label ?? '';
+        return this.llmProviders().find((p) => p.id === providerId)?.label ?? '';
     });
 
     // modelDialogTitle defined later
@@ -145,7 +146,10 @@ export class LlmProvidersManagement implements OnInit {
     // Provider dialog title computed property (replaces hardcoded header="Provider")
     providerDialogTitle = computed(() => {
         const mode = this.editingProviderId() !== null ? 'Edit' : 'New';
-        const label = this.editingProviderId() !== null ? this.llmProviders().find(p => p.id === this.editingProviderId())?.label ?? '' : '';
+        const label =
+            this.editingProviderId() !== null
+                ? (this.llmProviders().find((p) => p.id === this.editingProviderId())?.label ?? '')
+                : '';
         return `${mode} Provider${label ? ' | ' + label : ''}`;
     });
 
@@ -156,7 +160,14 @@ export class LlmProvidersManagement implements OnInit {
     });
 
     applyGlobalFilter(event: Event) {
-        this.table()?.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+        const value = (event.target as HTMLInputElement).value;
+        this.globalFilter.set(value);
+        this.table()?.filterGlobal(value, 'contains');
+    }
+
+    clearGlobalFilter() {
+        this.globalFilter.set('');
+        this.table()?.filterGlobal('', 'contains');
     }
 
     toggleProviderActive(providerId: number, currentStatus: boolean) {
@@ -176,7 +187,7 @@ export class LlmProvidersManagement implements OnInit {
                 label: 'Cancel',
                 text: true,
                 severity: 'primary',
-                size: 'small'
+                size: 'small',
             },
             acceptButtonProps: {
                 label: 'Delete',
@@ -190,10 +201,10 @@ export class LlmProvidersManagement implements OnInit {
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Deleted',
-                    detail: 'Provider has been deleted successfully.'
+                    detail: 'Provider has been deleted successfully.',
                 });
-            }
-        }
+            },
+        };
 
         this.confirmService.confirm(confirm);
     }
@@ -207,7 +218,7 @@ export class LlmProvidersManagement implements OnInit {
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Test Complete',
-                    detail: 'Model test completed successfully.'
+                    detail: 'Model test completed successfully.',
                 });
             },
             error: (err) => {
@@ -215,15 +226,15 @@ export class LlmProvidersManagement implements OnInit {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Test Failed',
-                    detail: err?.error?.message || 'Unknown error'
+                    detail: err?.error?.message || 'Unknown error',
                 });
                 this.llmProviderStore.reload();
-            }
+            },
         });
     }
 
     toggleProvider(providerId: number) {
-        this.expandedProviders.update(state => ({ ...state, [providerId]: !state[providerId] }));
+        this.expandedProviders.update((state) => ({ ...state, [providerId]: !state[providerId] }));
     }
 
     isProviderExpanded(providerId: number): boolean {
@@ -231,7 +242,7 @@ export class LlmProvidersManagement implements OnInit {
     }
 
     toggleModel(modelId: number) {
-        this.expandedModels.update(state => ({ ...state, [modelId]: !state[modelId] }));
+        this.expandedModels.update((state) => ({ ...state, [modelId]: !state[modelId] }));
     }
 
     isModelExpanded(modelId: number): boolean {
@@ -264,7 +275,7 @@ export class LlmProvidersManagement implements OnInit {
             label: provider.label,
             baseUrl: provider.baseUrl,
             apiKey: '',
-            active: provider.active
+            active: provider.active,
         });
         this.editingProviderId.set(provider.id);
         this.providerDialogVisible.set(true);
@@ -290,7 +301,7 @@ export class LlmProvidersManagement implements OnInit {
             if (!payload.apiKey) delete payload.apiKey;
             this.llmProviderStore.createProvider(payload);
         } else {
-            const original = this.llmProviders().find(p => p.id === id);
+            const original = this.llmProviders().find((p) => p.id === id);
             const payload: Partial<LlmProvider> = {};
             if (original) {
                 if (formValue.key !== original.key) payload.key = formValue.key;
@@ -320,7 +331,7 @@ export class LlmProvidersManagement implements OnInit {
         this.modelForm.patchValue({
             key: model.key,
             label: model.label,
-            active: model.active
+            active: model.active,
         });
         this.editingModelProviderId.set(providerId);
         this.editingModelId.set(model.id);
@@ -351,14 +362,14 @@ export class LlmProvidersManagement implements OnInit {
             this.messageService.add({
                 severity: 'success',
                 summary: 'Created',
-                detail: 'Model has been created successfully.'
+                detail: 'Model has been created successfully.',
             });
         } else {
             this.llmProviderStore.updateModel(providerId, modelId, payload);
             this.messageService.add({
                 severity: 'success',
                 summary: 'Updated',
-                detail: 'Model has been updated successfully.'
+                detail: 'Model has been updated successfully.',
             });
         }
 
@@ -378,7 +389,7 @@ export class LlmProvidersManagement implements OnInit {
                 label: 'Cancel',
                 text: true,
                 severity: 'primary',
-                size: 'small'
+                size: 'small',
             },
             acceptButtonProps: {
                 label: 'Deactivate',
@@ -392,9 +403,9 @@ export class LlmProvidersManagement implements OnInit {
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Deactivated',
-                    detail: 'Model has been deactivated successfully.'
+                    detail: 'Model has been deactivated successfully.',
                 });
-            }
+            },
         };
         this.confirmService.confirm(confirm);
     }
@@ -412,7 +423,7 @@ export class LlmProvidersManagement implements OnInit {
                 label: 'Cancel',
                 text: true,
                 severity: 'primary',
-                size: 'small'
+                size: 'small',
             },
             acceptButtonProps: {
                 label: 'Delete',
@@ -426,9 +437,9 @@ export class LlmProvidersManagement implements OnInit {
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Deleted',
-                    detail: 'Test result has been deleted successfully.'
+                    detail: 'Test result has been deleted successfully.',
                 });
-            }
+            },
         };
         this.confirmService.confirm(confirm);
     }
@@ -446,7 +457,7 @@ export class LlmProvidersManagement implements OnInit {
                 label: 'Cancel',
                 text: true,
                 severity: 'primary',
-                size: 'small'
+                size: 'small',
             },
             acceptButtonProps: {
                 label: 'Delete All',
@@ -460,9 +471,9 @@ export class LlmProvidersManagement implements OnInit {
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Deleted',
-                    detail: 'All test results have been deleted successfully.'
+                    detail: 'All test results have been deleted successfully.',
                 });
-            }
+            },
         };
         this.confirmService.confirm(confirm);
     }
@@ -473,7 +484,7 @@ export class LlmProvidersManagement implements OnInit {
         this.messageService.add({
             severity: 'success',
             summary: 'Default Set',
-            detail: `"${model.label}" is now the default model.`
+            detail: `"${model.label}" is now the default model.`,
         });
     }
 
@@ -483,7 +494,7 @@ export class LlmProvidersManagement implements OnInit {
             this.messageService.add({
                 severity: 'success',
                 summary: 'Copied',
-                detail: 'Model key copied to clipboard.'
+                detail: 'Model key copied to clipboard.',
             });
         });
     }

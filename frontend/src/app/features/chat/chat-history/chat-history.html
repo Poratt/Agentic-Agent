@@ -16,16 +16,15 @@
                             placeholder="חפש שיחה..."
                             class="form-control"
                         />
-                        @if (hasSearch()) {
-                            <button
-                                type="button"
-                                class="icon-only transparent-btn sm search-clear-btn"
-                                aria-label="נקה חיפוש"
-                                (click)="searchClear()"
-                            >
-                                <i class="ph ph-x"></i>
-                            </button>
-                        }
+                        <button
+                            type="button"
+                            class="icon-only transparent-btn sm search-clear-btn"
+                            [class.is-visible]="hasSearch()"
+                            aria-label="נקה חיפוש"
+                            (click)="searchClear()"
+                        >
+                            <i class="ph ph-x"></i>
+                        </button>
                     </div>
                 </div>
 

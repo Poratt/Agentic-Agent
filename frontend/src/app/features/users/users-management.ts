@@ -1,4 +1,4 @@
-import { Component, inject, computed, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, computed, viewChild, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InputTextModule } from 'primeng/inputtext';
 import { Table, TableModule } from 'primeng/table';
@@ -43,6 +43,7 @@ export class UsersManagement {
         { field: 'createdAt', label: 'תאריך הרשמה' },
     ];
     protected readonly globalFilterFields = ['id', 'fullName', 'email', 'roleLabel', 'roleHeLabel', 'createdAt'];
+    globalFilter = signal('');
 
     pageState = computed(() => this.usersStore.pageState());
     tableUsers = computed<UserTableRow[]>(() =>
@@ -58,7 +59,14 @@ export class UsersManagement {
     );
 
     applyGlobalFilter(event: Event) {
-        this.table()?.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+        const value = (event.target as HTMLInputElement).value;
+        this.globalFilter.set(value);
+        this.table()?.filterGlobal(value, 'contains');
+    }
+
+    clearGlobalFilter() {
+        this.globalFilter.set('');
+        this.table()?.filterGlobal('', 'contains');
     }
 
     toggleRole(userId: number, currentRole: UserRole) {

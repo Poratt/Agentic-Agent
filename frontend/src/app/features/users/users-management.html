@@ -34,10 +34,20 @@
                                 <input
                                     pInputText
                                     type="text"
+                                    [value]="globalFilter()"
                                     (input)="applyGlobalFilter($event)"
                                     placeholder="חפש משתמש..."
                                     class="form-control"
                                 />
+                                <button
+                                    type="button"
+                                    class="icon-only transparent-btn sm search-clear-btn"
+                                    [class.is-visible]="globalFilter()"
+                                    aria-label="נקה חיפוש"
+                                    (click)="clearGlobalFilter()"
+                                >
+                                    <span class="ph ph-x"></span>
+                                </button>
                             </div>
                         </div>
 
