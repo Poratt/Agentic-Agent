@@ -1,6 +1,13 @@
 # Project Documentation Status
 
-Last updated: 2026-08-25
+Last updated: 2026-08-26
+
+## 2026-08-26 — ✅ DONE: agent tool 401 loop — internal token cache outlived the JWT
+
+- **Bug (real log):** after ~5 min of a chat session, agent tool calls on `/genetics` 401'd and the LLM looped 3× until AgentLoopBreaker. Root cause: `getInternalToken` cached JWTs for 10m (`INTERNAL_TOKEN_TTL_MS`) while signing with `expiresIn: '5m'` — cached tokens 5-10m old were expired JWTs.
+- **Fix:** `INTERNAL_TOKEN_TTL_MS` → `4 * 60 * 1000` (below the 5m JWT) + regression test (reuse at +1m, re-sign at +6m) in `agent-tool-executor.service.h4.spec.ts`.
+- **Verified**: backend `npx jest --runInBand` **459/459** (46 suites, +1). Watch-mode backend auto-recompiles — no manual restart needed.
+- **Also logged (not code bugs):** OmniRoute `auto/best-free` has no tool-calling target (400) — pick a tool-capable model; NVIDIA 429 rate limit — transient.
 
 ## 2026-08-25 — ✅ DONE: custom sort badge — "1" fixed, PrimeNG badge hidden, grouping
 

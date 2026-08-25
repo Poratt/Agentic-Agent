@@ -1,4 +1,17 @@
 # Documentation Handoff
+## 2026-08-26 — ✅ DONE: agent tool 401 loop fixed — internal token cache outlived the JWT
+
+**Symptom (real log):** chat agent calls started 401-ing on `/genetics` (`Request failed with status code 401`) and the LLM retried the same tool 3× → `AgentLoopBreaker` broke the turn. Earlier tool calls (strain-hunter/terpenes) in the same session had worked.
+
+**Root cause:** `AgentToolExecutorService.getInternalToken` signs a JWT with `expiresIn: '5m'` but the cache TTL was `INTERNAL_TOKEN_TTL_MS = 10 * 60 * 1000`. Every call between 5-10 minutes after the first sign reused an EXPIRED JWT → passport jwt strategy → 401. Timeline proof: token signed ~0:44:18, all calls worked until ~0:49, 401s began 0:52:41 (token 8.5 min old).
+
+**Fix (1 file + 1 test):** `agent-tool-executor.service.ts` — `INTERNAL_TOKEN_TTL_MS = 4 * 60 * 1000` (comment documents the invariant: cache TTL must stay below the 5m JWT expiry). Regression test added to `agent-tool-executor.service.h4.spec.ts` — fake timers: reuse at +1m, re-sign at +6m (would have 401'd under the old 10m cache). **Verified**: backend `npx jest --runInBand` **459/459** (46 suites, +1). No architecture-diagram change (internal cache constant).
+
+**Also in the log (not code bugs, for the manager):** OmniRoute `auto/best-free` returns `400 No target ... supports tool calling` — the combo routes to a model without tool support, and the agent NEEDS tools; pick a tool-capable model. NVIDIA `429` rate limit — transient provider quota, retried 4× and failed. Both are model/provider choices, not defects.
+
+**Context (same night, before this):** the MiniMax Music feature (branch `feature/minimax-music`) was fully canceled per the user — branch deleted, uncommitted code discarded, DB rows (gmi-cloud provider id 31 + minimax-music-3.0 model id 121) deleted, `llm_models.capability` enum restored to 3 values, backend rebuilt from `main` and the port-3000 process stopped (user runs it themselves in watch mode now).
+
+---
 ## 2026-08-25 — ✅ DONE: custom sort badge — "1" fixed, PrimeNG badge hidden, grouping
 
 **Symptom chain (user reports):** the "1" badge appeared only after ctrl+clicking the first column again; then with the custom badge the 2+ ordinals showed doubled.

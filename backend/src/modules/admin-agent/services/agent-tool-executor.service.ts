@@ -32,7 +32,9 @@ export class AgentToolExecutorService {
   private readonly logger = new Logger(AgentToolExecutorService.name);
   private readonly pendingActions = new Map<string, PendingAction>();
   private readonly internalTokenCache = new Map<number, { token: string; expiresAt: number }>();
-  private readonly INTERNAL_TOKEN_TTL_MS = 10 * 60 * 1000;
+  // Must stay below the internal JWT `expiresIn` (5m) — a cached token whose JWT
+  // already expired produces 401s on agent tool calls (seen 2026-08-26: 5-10min window).
+  private readonly INTERNAL_TOKEN_TTL_MS = 4 * 60 * 1000;
 
   constructor(
     @InjectRepository(User)

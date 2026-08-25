@@ -138,3 +138,69 @@ describe('H4: safe target URL guard in AgentToolExecutorService', () => {
     });
   });
 });
+
+describe('internal token cache — re-signs before the JWT expires', () => {
+  let userRepository: any;
+  let httpService: any;
+  let jwtService: any;
+  let configService: any;
+  let parser: any;
+  let mcpBridge: any;
+  let service: AgentToolExecutorService;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    userRepository = { findOne: jest.fn() };
+    httpService = { request: jest.fn() };
+    jwtService = { sign: jest.fn().mockReturnValue('token-A') };
+    configService = {
+      get: jest.fn((key: string, fallback?: any) => (key === 'PORT' ? 3000 : fallback)),
+    };
+    parser = {
+      getEndpoint: jest.fn(),
+      resolveArguments: jest.fn(),
+      requiresConfirmation: jest.fn().mockReturnValue(false),
+    };
+    mcpBridge = {
+      hasTool: jest.fn().mockReturnValue(false),
+      callTool: jest.fn(),
+    };
+
+    service = new AgentToolExecutorService(
+      userRepository,
+      httpService,
+      jwtService,
+      configService,
+      parser,
+      mcpBridge,
+    );
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('never hands out a cached token older than the internal JWT 5m expiry', async () => {
+    userRepository.findOne.mockResolvedValue({ id: 7, email: 'a@b.c', role: 'user' });
+
+    // First sign → cached.
+    const headers1 = await (service as any).getSystemHeadersForUser(7);
+    expect(headers1.Authorization).toBe('Bearer token-A');
+    expect(jwtService.sign).toHaveBeenCalledTimes(1);
+
+    // +1m: still inside the JWT lifetime → cached token reused.
+    jest.advanceTimersByTime(60_000);
+    const headers2 = await (service as any).getSystemHeadersForUser(7);
+    expect(headers2.Authorization).toBe('Bearer token-A');
+    expect(jwtService.sign).toHaveBeenCalledTimes(1);
+
+    // Old cache TTL was 10m while the JWT only lives 5m → calls between 5-10m
+    // sent an expired JWT and got 401 (seen live 2026-08-26). Now the cache
+    // re-signs at 4m, well inside the JWT lifetime.
+    jest.advanceTimersByTime(5 * 60_000); // total 6m after first sign
+    jwtService.sign.mockReturnValue('token-B');
+    const headers3 = await (service as any).getSystemHeadersForUser(7);
+    expect(headers3.Authorization).toBe('Bearer token-B');
+    expect(jwtService.sign).toHaveBeenCalledTimes(2);
+  });
+});
