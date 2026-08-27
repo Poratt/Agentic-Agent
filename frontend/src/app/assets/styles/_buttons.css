@@ -389,6 +389,34 @@ button.star-btn {
   }
 }
 
+/* 4e. Icon circle toggle — add/remove compare (pill, primary tint). */
+.icon-circle-toggle {
+  flex: 0 0 var(--space-14);
+  width: var(--space-14);
+  height: var(--space-14);
+  padding: var(--space-2);
+  justify-content: center;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary-glow);
+  background: var(--color-primary-glow-bg);
+  border-radius: var(--radius-pill);
+  opacity: 0.75;
+
+  &:hover,
+  &:focus-visible,
+  &.is-selected {
+    opacity: 1;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 var(--space-2) var(--color-primary-glow-bg);
+  }
+
+  &.is-selected {
+    color: var(--color-success);
+    border-color: var(--color-success);
+    background: var(--color-success-bg);
+  }
+}
+
 /* 5. Links */
 a {
   text-decoration: none;

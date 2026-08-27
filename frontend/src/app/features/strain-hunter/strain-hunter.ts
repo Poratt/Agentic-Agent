@@ -1,6 +1,17 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, effect, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+    Component,
+    DestroyRef,
+    ElementRef,
+    OnInit,
+    computed,
+    effect,
+    inject,
+    signal,
+    viewChild,
+    ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { SortEvent } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
@@ -98,6 +109,11 @@ type TerpeneFilter = {
     label: string;
 };
 
+type ComparisonSort = {
+    field: string;
+    order: 1 | -1;
+};
+
 const TOOLTIP_W = 240;
 const TOOLTIP_GAP = 8;
 const TOOLTIP_DELAY_MS = 400;
@@ -140,6 +156,11 @@ export class StrainHunter implements OnInit {
     protected isAdmin = computed(() => this.authStore.userRole() === UserRole.Admin);
     private base = `${environment.apiUrl}/strain-hunter`;
     private table = viewChild<Table>('table');
+    private compareTable = viewChild<Table>('compareTable');
+    protected hostContainer = inject(ElementRef).nativeElement as HTMLElement;
+    private readonly destroyRef = inject(DestroyRef);
+    readonly showScrollTop = signal(false);
+    private scrollContainer: HTMLElement | null = null;
     private requestSubscription: Subscription | null = null;
     private readonly numericSortColumns = new Set(['price', 'catalogPrice', 'matchScore']);
     private readonly textCollator = new Intl.Collator('he', { numeric: true, sensitivity: 'base' });
@@ -154,6 +175,7 @@ export class StrainHunter implements OnInit {
         characterization: 'אפיון',
         enName: 'שם באנגלית',
         isNew: 'חדש',
+        rating: 'רייטינג',
         deal: 'מבצע',
         marketer: 'משווק',
         manufacturer: 'מגדל',
@@ -222,6 +244,10 @@ export class StrainHunter implements OnInit {
     selectedImageUrl = signal<string | null>(null);
     imageDialogVisible = signal(false);
     matchDrawerVisible = signal(false);
+    /** Ids of strains picked for comparison (selection order, session-only). */
+    compareIds = signal<(string | number)[]>([]);
+    compareDialogVisible = signal(false);
+    comparisonSort = signal<ComparisonSort | null>(null);
     readonly lastUpdated = signal<Date | null>(null);
     readonly tooltip = signal<TooltipPos | null>(null);
     readonly activeScoreTooltip = signal<ScoreTooltipPos | null>(null);
@@ -363,6 +389,25 @@ export class StrainHunter implements OnInit {
         this.load(false);
     }
 
+    ngAfterViewInit() {
+        // The app scrolls the layout's .content-shell, an ancestor of this page.
+        // Match by the declared overflow (not scrollHeight, which is 0 until the
+        // async data fills the page) so we bind before content loads.
+        let el = this.hostContainer.parentElement;
+        while (el && !['auto', 'scroll'].includes(getComputedStyle(el).overflowY)) {
+            el = el.parentElement;
+        }
+        this.scrollContainer = el;
+        const onScroll = () => this.showScrollTop.set((this.scrollContainer?.scrollTop ?? 0) > 300);
+        el?.addEventListener('scroll', onScroll, { passive: true });
+        this.destroyRef.onDestroy(() => el?.removeEventListener('scroll', onScroll));
+        onScroll();
+    }
+
+    scrollToTop(): void {
+        this.scrollContainer?.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     load(forceRefresh = false) {
         this.requestSubscription?.unsubscribe();
 
@@ -436,6 +481,122 @@ export class StrainHunter implements OnInit {
         const [priceMin, priceMax] = this.priceRange();
         const [boundsMin, boundsMax] = this.priceBounds();
         return priceMin > boundsMin || priceMax < boundsMax;
+    }
+
+    toggleCompare(item: { id: string | number }) {
+        this.compareIds.update((ids) =>
+            ids.includes(item.id) ? ids.filter((id) => id !== item.id) : [...ids, item.id],
+        );
+    }
+
+    isInCompare(id: unknown): boolean {
+        return this.compareIds().includes(id as string | number);
+    }
+
+    clearComparison() {
+        this.compareIds.set([]);
+        this.comparisonSort.set(null);
+        this.compareDialogVisible.set(false);
+    }
+
+    openCompareDialog() {
+        this.compareDialogVisible.set(true);
+    }
+
+    /** Compared rows resolved from rawItems (not the filtered view) so later
+     *  filter/search changes never drop selected strains; selection order kept.
+     *  ponytail: linear lookup per id — fine at table scale. */
+    compareItems = computed(() => {
+        const raw = this.rawItems();
+        return this.compareIds()
+            .map((id) => raw.find((item) => item?.id === id))
+            .filter((item) => item !== undefined)
+            .map((item) => this.matchingEngine.calculateScore(item));
+    });
+
+    /** Dialog columns — exact duplicate of main table columns.
+     *  Previously filtered out `name` and appended thc/cbd/deal/rating extras,
+     *  which made the comparison row visually different. Now 1:1 with `columns()`. */
+    comparisonColumns = computed(() => this.columns());
+
+    /** Comparison-table sort — exact duplicate of `sortTable` contract
+     *  (multiSortMeta chaining, 3-click reset), but restores to selection order. */
+    sortCompareTable(event: SortEvent): void {
+        this.sortTick.update((value) => value + 1);
+
+        if (!event.data) {
+            return;
+        }
+
+        // Single-column click — cycles asc → desc → reset.
+        if (event.multiSortMeta?.length === 1) {
+            const meta = event.multiSortMeta[0];
+            const field = this.resolveSortField(meta.field);
+            const order = meta.order ?? 1;
+
+            if (order === 1 && this.comparisonSort()?.field === field && this.comparisonSort()?.order === -1) {
+                this.comparisonSort.set(null);
+                this.compareTable()?.reset();
+                this.restoreCompareOrder(event.data);
+                return;
+            }
+
+            this.comparisonSort.set({ field, order: order as 1 | -1 });
+            event.data.sort((first, second) => {
+                return this.compareSortValues(first?.[field], second?.[field], field) * order;
+            });
+            return;
+        }
+
+        // Multi-column sort (Ctrl/Cmd + click)
+        if (event.multiSortMeta && event.multiSortMeta.length > 1) {
+            const metas = event.multiSortMeta.map((meta) => ({
+                field: this.resolveSortField(meta.field),
+                order: meta.order ?? 1,
+            }));
+            this.comparisonSort.set({ field: metas[0].field, order: metas[0].order as 1 | -1 });
+            event.data.sort((first, second) => {
+                for (const meta of metas) {
+                    const comparison = this.compareSortValues(first?.[meta.field], second?.[meta.field], meta.field);
+                    if (comparison !== 0) {
+                        return comparison * meta.order;
+                    }
+                }
+                return 0;
+            });
+            return;
+        }
+
+        // Single-sort-mode fallback
+        if (event.field && event.order) {
+            const field = this.resolveSortField(event.field);
+            const order = event.order;
+
+            if (order === 1 && this.comparisonSort()?.field === field && this.comparisonSort()?.order === -1) {
+                this.comparisonSort.set(null);
+                this.compareTable()?.reset();
+                this.restoreCompareOrder(event.data);
+                return;
+            }
+
+            this.comparisonSort.set({ field, order: order as 1 | -1 });
+            event.data.sort((first, second) => {
+                return this.compareSortValues(first?.[field], second?.[field], field) * order;
+            });
+            return;
+        }
+
+        // Unsorted — restore selection order.
+        this.comparisonSort.set(null);
+        this.compareTable()?.reset();
+        this.restoreCompareOrder(event.data);
+    }
+
+    /** customSort mutates the compareItems array in place, so a reset must
+     *  re-sort it back to the compareIds selection order. */
+    private restoreCompareOrder(data: any[]): void {
+        const index = new Map(this.compareIds().map((id, i) => [id, i]));
+        data.sort((first, second) => (index.get(first.id) ?? 0) - (index.get(second.id) ?? 0));
     }
 
     openMatchDrawer() {

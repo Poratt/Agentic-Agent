@@ -1,6 +1,85 @@
 # Project Documentation Status
 
-Last updated: 2026-08-26
+Last updated: 2026-08-27
+
+## 2026-08-27 — ✅ DONE: comparison dialog cells no longer filter the main table
+
+- **Problem:** clickable cells in the comparison dialog called `applyDataFilter(...)`, mutating the main table's filters behind the dialog.
+- **Fix (`strain-hunter.html`, dialog body):** converted filter `<button>`s to inert `<span>`s (NEW tag, growType, characterization badges, genetics/parents, terpenes, country, packageType, marketer/manufacturer/brand); removed symbols click/keydown. Kept `toggleCompare`, `openImageDialog`, tooltips, `נקה הכל`. Styling unchanged (same classes).
+- **Verified:** full frontend 516/516 (57 files); `npx ng build` exit 0 (existing budget warning only, 8.89KB). No architecture-diagram change. No commit/push.
+
+## 2026-08-27 — ✅ DONE: scroll-to-top button on Strain Hunter
+
+- **Request:** add a scroll-up button that appears once the user scrolls down a little.
+- **Fix (3 files):** `strain-hunter.html` — `.scroll-top-btn` gated by `@if (showScrollTop())`; `strain-hunter.ts` — `showScrollTop` signal + `ngAfterViewInit` finds the scrollable `.content-shell` ancestor, passive scroll listener (>300px), `DestroyRef` cleanup, `scrollToTop()` smooth-scrolls; `strain-hunter.css` — fixed bottom-start (bottom-left RTL), z-index 40, `--shadow-soft`. +1 spec test.
+- **Verified:** targeted 63/63; full frontend 516/516 (57 files); `npx ng build` exit 0 (existing budget warning now 8.86KB). `git diff --check` clean. No architecture-diagram change. No commit/push.
+
+## 2026-08-27 — ✅ DONE: compare button to start of action row, search field to end
+
+- **Request:** move "פתח השוואת זנים" button to the start of the header action row, search field to its end.
+- **Fix (1 file, `strain-hunter.html`):** pure DOM reorder in `.action-row` — compare button (conditional) first, search field last. No CSS/TS change.
+- **Verified:** targeted strain-hunter 62/62; `npx ng build` exit 0 (existing budget warning only). No architecture-diagram change. No commit/push.
+
+## 2026-08-27 — ✅ FIXED: comparison table showed all strains instead of only the selected ones
+
+- **Bug (user report):** the comparison dialog table rendered the full filtered strain view, not just the selected strains.
+- **Root cause (3 dialog-`p-table` wiring bugs, `strain-hunter.html:603-613`):** `#table` (not `#compareTable` → `compareTable()` viewChild always undefined → sort-reset no-op); `[value]="items()"` (not `compareItems()`); `(sortFunction)="sortTable($event)"` (not `sortCompareTable`).
+- **Fix (1 file, `strain-hunter.html`):** dialog `p-table` → `#compareTable`, `[value]="compareItems()"`, `(sortFunction)="sortCompareTable($event)"`. No TS change — `compareItems`/`sortCompareTable`/`restoreCompareOrder` already existed and are now actually driven.
+- **Verified:** targeted strain-hunter 62/62; full frontend 515/515 (57 files); `npx ng build` exit 0 (existing `strain-hunter.css` budget warning only, 8.73KB vs 8KB); `git diff --check` clean. No architecture-diagram change. No commit/push.
+
+## 2026-08-26 — ✅ DONE: comparison table rebuilt as a real p-table (no custom CSS) on `feature/strain-comparison`
+
+- Deleted ALL agent-invented comparison CSS from `_primeng-overrides.css` (dialog/mask/table/strain-info/image/empty-state + `app-strain-hunter .compare-toggle-btn`) and reverted `.sortable-column-header` back into `.p-datatable-thead` — file now matches HEAD exactly.
+- Rebuilt the comparison dialog as a real `p-table` identical to the main table: same `glass-effect card table-container` wrapper, same `sortable-column-header`/`sort-icon-group` header, same body cell templates (strain-main-details, score-ring, characterization, price, origin, country, package-type, market), same `table-empty-state` empty state.
+- `sortCompareTable` customSort (asc→desc→reset) replaced `sortedCompareItems`/`sortComparison`/`comparisonSortOrder`; `restoreCompareOrder` restores selection order on reset (customSort mutates the array in place).
+- `.compare-toggle-btn` → generic `.icon-circle-toggle` in `_buttons.css`.
+- Verified: targeted 62/62; full frontend 515/515 (57 files); `npx ng build` exit 0; `git diff --check` clean; graphify updated. Existing `strain-hunter.css` budget warning remains at 9.44KB vs 8KB. No architecture-diagram change. No commit/push.
+- **Follow-up (visual parity):** the comparison `match-ring` was rendering without gradients — PrimeNG projects the dialog to `body`, so the `url(#ringGradientSuccess)` reference couldn't reliably resolve the component-root `<defs>`. Copied the same `<svg class="gradient-defs-svg">` (4 linearGradients) inside the comparison `<p-dialog>` so the IDs are available in the projected DOM. Strokes now match the main table.
+
+## 2026-08-26 — ✅ DONE: comparison CSS deduplication on `feature/strain-comparison`
+
+- Reused global `user-profile`, `row-title`, `row-label`, `row-label--bold`, `row-subtitle`, and `transparent-btn warning-btn` patterns.
+- Removed duplicate comparison-specific text/group/remove-button CSS; kept only unique table layout constraints.
+- Preserved existing `sortable-column-header` and `p-sort-icon` styling.
+- Verified: targeted strain-hunter 62/62; full frontend 515/515; `npx ng build` exit 0; `git diff --check` clean; graphify updated.
+- Existing `strain-hunter.css` budget warning remains at 9.44KB vs 8KB. No architecture-diagram change. No commit/push.
+
+## 2026-08-26 — ✅ DONE: comparison strain info spacing on `feature/strain-comparison`
+
+- Grouped comparison image and copy under `.comparison-strain-main`.
+- Added `justify-content: space-between` to `.comparison-strain-info`, separating content group from remove action.
+- Verified: `npx ng build` exit 0; `git diff --check` clean; graphify updated.
+- Existing `strain-hunter.css` budget warning remains at 9.44KB vs 8KB. No architecture-diagram change. No commit/push.
+
+## 2026-08-26 — ✅ DONE: comparison table sorting on `feature/strain-comparison`
+
+- Added clickable `sortable-column-header` controls to comparison property headers.
+- Added ascending/descending/reset cycle, caret indicators, `aria-sort`, and keyboard focus styling.
+- Comparison rows now render in sorted order without changing main-table sorting.
+- Verified: targeted strain-hunter 62/62; full frontend 515/515; `npx ng build` exit 0; `git diff --check` clean; graphify updated.
+- Existing `strain-hunter.css` budget warning remains at 9.44KB vs 8KB. No architecture-diagram change. No commit/push.
+
+## 2026-08-26 — ✅ DONE: comparison dialog polish on `feature/strain-comparison`
+
+- Fixed RTL direction: title right, close X left.
+- Increased mask opacity/blur and made comparison panel opaque to prevent text overlap.
+- Removed redundant bottom `סגור`; top X is now the sole close control. `נקה הכל` remains on the right and outlined.
+- Removed `comparison-dialog-summary` so dialog opens directly on comparison data.
+- Translated `rating` column label to `רייטינג`.
+- Moved `enName` under the Hebrew name in the strain column; removed its standalone comparison column.
+- Centered compare-toggle icon with `justify-content: center`.
+- Added explicit RTL boundary between sticky `זן` and `התאמה` columns.
+- Moved overlay styles to `_primeng-overrides.css`; component CSS warning reduced to 9.44KB vs 8KB.
+- Verified: targeted 61/61; full frontend 514/514; `npx ng build` exit 0; `git diff --check` clean. Follow-up removal also passes targeted test/build.
+- No architecture-diagram change. No commit/push.
+
+## 2026-08-26 — ✅ DONE: strain comparison UI on `feature/strain-comparison`
+
+- Added session-only selection to Strain Hunter with add/remove controls in each name cell.
+- Added RTL comparison dialog: selected strains as rows, properties as columns, individual removal, clear-all, sticky strain column, and horizontal scrolling with no selection limit.
+- Added 5 comparison specs.
+- Verified: targeted 61/61; full frontend `npx ng test --watch=false` 514/514 (57 files); `npx ng build` exit 0. Existing `strain-hunter.css` budget warning remains.
+- No architecture-diagram change: component-local UI state only. No commit/push.
 
 ## 2026-08-26 — ✅ DONE: agent tool 401 loop — internal token cache outlived the JWT
 

@@ -12,52 +12,58 @@
 }
 
 /* --- PrimeNG Confirm Dialog RTL --- */
-.p-confirmdialog.p-dialog {
-  direction: rtl;
-  text-align: right;
-  min-width: 400px !important;
+.p-dialog {
+  &.rtl {
+    direction: rtl;
+  }
 
-  .p-dialog-header {
+  .p-confirmdialog {
     direction: rtl;
     text-align: right;
-    width: 100%;
-    padding: var(--space-6) var(--space-8);
-    border-bottom: none !important;
+    min-width: 400px !important;
 
-    .p-dialog-title {
-      margin: 0;
-      flex: 1;
+    .p-dialog-header {
+      direction: rtl;
+      text-align: right;
+      width: 100%;
+      padding: var(--space-6) var(--space-8);
+      border-bottom: none !important;
+
+      .p-dialog-title {
+        margin: 0;
+        flex: 1;
+      }
+
+      .p-dialog-header-icons {
+        position: absolute;
+        left: var(--space-6);
+        top: 50%;
+        transform: translateY(-50%);
+      }
     }
 
-    .p-dialog-header-icons {
-      position: absolute;
-      left: var(--space-6);
-      top: 50%;
-      transform: translateY(-50%);
+    .p-dialog-content {
+      direction: rtl;
+      text-align: right;
+      padding: var(--space-4) var(--space-8) var(--space-8);
+      border-top: none !important;
     }
-  }
 
-  .p-dialog-content {
-    direction: rtl;
-    text-align: right;
-    padding: var(--space-4) var(--space-8) var(--space-8);
-    border-top: none !important;
-  }
+    .p-dialog-footer {
+      direction: rtl;
+      justify-content: flex-end;
+      padding: 0 var(--space-8) var(--space-8);
+      border-top: none !important;
+    }
 
-  .p-dialog-footer {
-    direction: rtl;
-    justify-content: flex-end;
-    padding: 0 var(--space-8) var(--space-8);
-    border-top: none !important;
-  }
+    .p-confirmdialog-message {
+      text-align: right;
+      direction: rtl;
+    }
 
-  .p-confirmdialog-message {
-    text-align: right;
-    direction: rtl;
-  }
-
-  .p-confirmdialog-icons {
-    display: none !important;
+    .p-confirmdialog-icons {
+      display: none !important;
+    }
   }
 }
 

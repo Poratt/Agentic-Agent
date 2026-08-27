@@ -1,28 +1,4 @@
-<svg width="0" height="0" class="gradient-defs-svg">
-    <defs>
-        <linearGradient id="ringGradientSuccess" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="var(--color-success)" />
-            <stop offset="100%" stop-color="var(--color-success)" stop-opacity="0.35" />
-        </linearGradient>
-
-        <linearGradient id="ringGradientPrimary" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="var(--color-primary)" />
-            <stop offset="100%" stop-color="var(--color-primary-glow)" stop-opacity="0.35" />
-        </linearGradient>
-
-        <linearGradient id="ringGradientWarning" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="var(--color-warning)" />
-            <stop offset="100%" stop-color="var(--color-warning)" stop-opacity="0.35" />
-        </linearGradient>
-
-        <linearGradient id="ringGradientDanger" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="var(--color-danger)" />
-            <stop offset="100%" stop-color="var(--color-danger)" stop-opacity="0.35" />
-        </linearGradient>
-    </defs>
-</svg>
-
-<div class="page-content">
+﻿<div #hostContainer class="page-content">
     <div class="page-header fade-in">
         <div class="header-row">
             <div class="header-content">
@@ -31,6 +7,19 @@
 
             <div class="header-actions">
                 <div class="action-row">
+                    @if (compareIds().length > 0) {
+                        <button
+                            class="primary-btn icon-only"
+                            type="button"
+                            (click)="openCompareDialog()"
+                            aria-label="פתח השוואת זנים"
+                            appTooltip
+                            text="פתח השוואת זנים"
+                        >
+                            <span class="ph ph-scales"></span>
+                            <span class="icon-badge">{{ compareIds().length }}</span>
+                        </button>
+                    }
                     @if (activeFilters().length > 0 || isPriceFilterActive()) {
                         <button
                             class="transparent-btn icon-only"
@@ -58,27 +47,6 @@
                         }
                     </button>
 
-                    <div class="form-field-has-icon sm">
-                        <span class="field-icon ph ph-magnifying-glass"></span>
-                        <input
-                            pInputText
-                            class="form-control"
-                            type="text"
-                            placeholder="חיפוש בטבלה..."
-                            [value]="searchQuery()"
-                            [disabled]="loading()"
-                            (input)="applyGlobalFilter($event)"
-                        />
-                        <button
-                            type="button"
-                            class="icon-only transparent-btn sm search-clear-btn"
-                            [class.is-visible]="searchQuery()"
-                            aria-label="נקה חיפוש"
-                            (click)="searchQuery.set('')"
-                        >
-                            <span class="ph ph-x"></span>
-                        </button>
-                    </div>
                     @if (isAdmin()) {
                         <button
                             class="primary-btn icon-only"
@@ -103,6 +71,27 @@
                     >
                         <span class="ph ph-sliders"></span>
                     </button>
+                    <div class="form-field-has-icon sm">
+                        <span class="field-icon ph ph-magnifying-glass"></span>
+                        <input
+                            pInputText
+                            class="form-control"
+                            type="text"
+                            placeholder="חיפוש בטבלה..."
+                            [value]="searchQuery()"
+                            [disabled]="loading()"
+                            (input)="applyGlobalFilter($event)"
+                        />
+                        <button
+                            type="button"
+                            class="icon-only transparent-btn sm search-clear-btn"
+                            [class.is-visible]="searchQuery()"
+                            aria-label="נקה חיפוש"
+                            (click)="searchQuery.set('')"
+                        >
+                            <span class="ph ph-x"></span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="action-row summary-row">
@@ -282,6 +271,22 @@
                                                         (keydown.enter)="openImageDialog(item.imageUrl)"
                                                     />
                                                 }
+                                                <button
+                                                    class="icon-circle-toggle"
+                                                    type="button"
+                                                    [class.is-selected]="isInCompare(item.id)"
+                                                    [attr.aria-pressed]="isInCompare(item.id)"
+                                                    [attr.aria-label]="isInCompare(item.id) ? 'הסר מההשוואה' : 'הוסף להשוואה'"
+                                                    appTooltip
+                                                    [text]="isInCompare(item.id) ? 'הסר מההשוואה' : 'הוסף להשוואה'"
+                                                    (click)="toggleCompare(item)"
+                                                >
+                                                    <span
+                                                        class="ph"
+                                                        [class.ph-plus-circle]="!isInCompare(item.id)"
+                                                        [class.ph-check-circle]="isInCompare(item.id)"
+                                                    ></span>
+                                                </button>
                                                 @if (hasDisplayValue(item.batch)) {
                                                     <span class="strain-batch">{{ item.batch }}</span>
                                                 }
@@ -560,6 +565,18 @@
             </div>
         }
     }
+    @if (showScrollTop()) {
+        <button
+            class="scroll-top-btn primary-btn icon-only"
+            type="button"
+            (click)="scrollToTop()"
+            aria-label="חזרה לראש העמוד"
+            appTooltip
+            text="חזרה לראש העמוד"
+        >
+            <span class="ph ph-arrow-up"></span>
+        </button>
+    }
 </div>
 
 <app-matching-preferences-drawer [(visible)]="matchDrawerVisible" [items]="rawItems()" />
@@ -580,6 +597,328 @@
             <img [src]="selectedImageUrl()" alt="Strain" class="full-image" />
         }
     </div>
+</p-dialog>
+
+<p-dialog
+    [(visible)]="compareDialogVisible"
+    [modal]="true"
+    [dismissableMask]="true"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: 'min(92vw, 1400px)' }"
+    (onHide)="compareDialogVisible.set(false)"
+    styleClass="glass-effect table-container rtl"
+    header="השוואת זנים"
+>
+    <p-table
+        #compareTable
+        sortMode="multiple"
+        [showInitialSortBadge]="true"
+        [multiSortMeta]="initialSortMeta"
+        [value]="compareItems()"
+        [scrollable]="true"
+        [customSort]="true"
+        scrollHeight="flex"
+        (sortFunction)="sortCompareTable($event)"
+    >
+        <ng-template #header>
+            <tr>
+                @for (column of columns(); track column) {
+                    <th [pSortableColumn]="column">
+                        <div class="sortable-column-header">
+                            <span>{{ columnLabel(column) }}</span>
+                            <span class="sort-icon-group">
+                                <p-sort-icon [field]="column" />
+                                @if (getSortOrderIndex(column); as sortIdx) {
+                                    <span class="p-sortable-column-badge">{{ sortIdx }}</span>
+                                }
+                            </span>
+                        </div>
+                    </th>
+                }
+            </tr>
+        </ng-template>
+        <ng-template #body let-item>
+            <tr>
+                @for (column of columns(); track column) {
+                    <td>
+                        @if (column === 'name') {
+                            <div class="strain-main-details">
+                                <div class="right-side">
+                                    @if (item.isNew === true) {
+                                        <span class="strain-new-tag"> NEW </span>
+                                    }
+                                    @if (hasDisplayValue(item.growType)) {
+                                        <span class="filter-node grow-filter-node">
+                                            <span [ngClass]="'ph ' + growTypeIconClass(item.growType)"></span>
+                                            <span>{{ formatValue(item.growType) }}</span>
+                                        </span>
+                                    }
+                                    @if (hasDisplayValue(item.imageUrl)) {
+                                        <img
+                                            class="strain-thumbnail"
+                                            [src]="item.imageUrl"
+                                            alt=""
+                                            role="button"
+                                            tabindex="0"
+                                            (click)="openImageDialog(item.imageUrl)"
+                                            (keydown.enter)="openImageDialog(item.imageUrl)"
+                                        />
+                                    }
+                                    <button
+                                        class="icon-circle-toggle"
+                                        type="button"
+                                        [class.is-selected]="isInCompare(item.id)"
+                                        [attr.aria-pressed]="isInCompare(item.id)"
+                                        [attr.aria-label]="isInCompare(item.id) ? 'הסר מההשוואה' : 'הוסף להשוואה'"
+                                        appTooltip
+                                        [text]="isInCompare(item.id) ? 'הסר מההשוואה' : 'הוסף להשוואה'"
+                                        (click)="toggleCompare(item)"
+                                    >
+                                        <span
+                                            class="ph"
+                                            [class.ph-plus-circle]="!isInCompare(item.id)"
+                                            [class.ph-check-circle]="isInCompare(item.id)"
+                                        ></span>
+                                    </button>
+                                    @if (hasDisplayValue(item.batch)) {
+                                        <span class="strain-batch">{{ item.batch }}</span>
+                                    }
+                                </div>
+                                <div class="left-side">
+                                    @if (hasDisplayValue(item.productUrl)) {
+                                        <a [href]="item.productUrl" target="_blank" class="strain-heb-name link">
+                                            {{ formatValue(item.name) }}
+                                        </a>
+                                    } @else {
+                                        <span class="strain-heb-name">{{ formatValue(item.name) }}</span>
+                                    }
+                                    @if (hasDisplayValue(item.enName)) {
+                                        <span class="strain-en-name" dir="ltr">{{ formatValue(item.enName) }}</span>
+                                    }
+
+                                    @if (item.penalty === true && hasDisplayValue(item.penaltyIngredient)) {
+                                        <span class="badge badge-danger badge-compact">
+                                            <span class="ph ph-prohibit"></span>
+                                            <span>{{ formatValue(item.penaltyIngredient) }}</span>
+                                        </span>
+                                    }
+
+                                    @if (hasDisplayValue(item.thc) || hasDisplayValue(item.cbd)) {
+                                        <span class="strain-cannabinoids">
+                                            @if (hasDisplayValue(item.thc)) {
+                                                <span>THC: {{ item.thc }}</span>
+                                            }
+                                            @if (hasDisplayValue(item.cbd)) {
+                                                <span class="divider">|</span>
+                                                <span>CBD: {{ item.cbd }}</span>
+                                            }
+                                        </span>
+                                    }
+
+                                    @if (hasDisplayValue(item.rating)) {
+                                        <span class="strain-rating">
+                                            <span class="ph ph-star ph-fill"></span>
+                                            <span>{{ formatValue(item.rating) }}</span>
+                                        </span>
+                                    }
+
+                                    @if (hasDisplayValue(item.deal)) {
+                                        <span class="strain-deal">
+                                            <span class="ph ph-gift"></span>
+                                            <span>{{ formatValue(item.deal) }}</span>
+                                        </span>
+                                    }
+
+                                    @if (getSymbols(item.symbols).length > 0) {
+                                        <div class="strain-symbols">
+                                            @for (symbol of getSymbols(item.symbols); track symbol.url) {
+                                                <img
+                                                    class="strain-symbol"
+                                                    [src]="symbol.url"
+                                                    [alt]="symbol.alt"
+                                                    appTooltip
+                                                    [text]="symbol.alt"
+                                                    [imageUrl]="symbol.url"
+                                                    tooltipPosition="top"
+                                                    appendTo="body"
+                                                />
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        } @else if (column === 'matchScore') {
+                            <div
+                                class="score-ring-wrapper"
+                                (mouseenter)="onScoreRingEnter(item.breakdown, $event)"
+                                (mouseleave)="onScoreRingLeave()"
+                            >
+                                <svg
+                                    class="match-ring"
+                                    [class]="ringColorClass(item.score)"
+                                    viewBox="0 0 40 40"
+                                    width="40"
+                                    height="40"
+                                    aria-hidden="true"
+                                >
+                                    <circle class="ring-track" cx="20" cy="20" r="18" />
+                                    <circle
+                                        class="ring-fill"
+                                        cx="20"
+                                        cy="20"
+                                        r="18"
+                                        [attr.stroke-dasharray]="ringCircumference"
+                                        [attr.stroke-dashoffset]="ringDashOffset(item.score)"
+                                    />
+                                </svg>
+                                <span class="score-ring-text">{{ item.score }}</span>
+                            </div>
+                        } @else if (column === 'characterization') {
+                            <div class="characterization-cell">
+                                @if (hasDisplayValue(item.packageType)) {
+                                    <span class="family-badge package-badge">
+                                        {{ formatValue(item.packageType) }}
+                                    </span>
+                                }
+                                @if (hasDisplayValue(item.category)) {
+                                    <span class="family-badge category-badge">
+                                        {{ formatValue(item.category) }}
+                                    </span>
+                                }
+                                @if (hasDisplayValue(item.family)) {
+                                    <span class="family-badge family-badge" [ngClass]="getFamilyClass(item.family)">
+                                        {{ formatFamilyHebrew(item.family) }}
+                                    </span>
+                                }
+                            </div>
+                        } @else if (column === 'price') {
+                            <div class="strain-price-cell">
+                                <span class="strain-current-price">{{ formatValue(item.price) }}</span>
+                                @if (hasDisplayValue(item.catalogPrice)) {
+                                    <span class="strain-catalog-price">{{ formatValue(item.catalogPrice) }}</span>
+                                }
+                            </div>
+                        } @else if (column == 'originStrain') {
+                            <div class="strain-origin-cell">
+                                <div class="root-nodes">
+                                    @if (hasDisplayValue(item.originStrain)) {
+                                        <span
+                                            [class]="geneticsClass(formatValue(item.originStrain)) + ' origin-strain-node'"
+                                            (mouseenter)="onGeneticsEnter(item.originStrain, $event)"
+                                            (mouseleave)="onTooltipLeave()"
+                                        >
+                                            <span class="ph ph-dna"></span>
+                                            {{ formatValue(item.originStrain) }}
+                                        </span>
+                                    }
+                                    <div class="parents-cell">
+                                        @if (hasDisplayValue(item.parent1)) {
+                                            <span
+                                                [class]="geneticsClass(formatValue(item.parent1))"
+                                                (mouseenter)="onGeneticsEnter(item.parent1, $event)"
+                                                (mouseleave)="onTooltipLeave()"
+                                            >
+                                                <span class="ph ph-dna"></span>
+                                                {{ formatValue(item.parent1) }}
+                                            </span>
+                                        }
+                                        <span></span>
+                                        @if (hasDisplayValue(item.parent2)) {
+                                            <span
+                                                [class]="geneticsClass(formatValue(item.parent2))"
+                                                (mouseenter)="onGeneticsEnter(item.parent2, $event)"
+                                                (mouseleave)="onTooltipLeave()"
+                                            >
+                                                <span class="ph ph-dna"></span>
+                                                {{ formatValue(item.parent2) }}
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                                @if (splitTerpenes(item.terpenes).length > 0) {
+                                    <div class="terpenes">
+                                        <span class="ph ph-leaf"></span>
+                                        <div class="terpene-list stagger stagger-scale-up">
+                                            @for (terpene of splitTerpenes(item.terpenes); track terpene.label) {
+                                                <span
+                                                    [class]="terpeneClass(terpene.name)"
+                                                    (mouseenter)="onTerpeneHover(terpene.name, $event)"
+                                                    (mouseleave)="onTerpeneLeave()"
+                                                >
+                                                    {{ terpene.label }}
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        } @else if (column === 'countryOfOrigin') {
+                            @if (hasDisplayValue(item.countryOfOrigin)) {
+                                <span class="country-filter filter-node">
+                                    @if (countryFlagUrl(item.countryOfOrigin)) {
+                                        <img class="country-flag" [src]="countryFlagUrl(item.countryOfOrigin)" alt="" aria-hidden="true" />
+                                    }
+                                    <span>{{ formatValue(item.countryOfOrigin) }}</span>
+                                </span>
+                            }
+                        } @else if (column === 'packageType') {
+                            <span
+                                class="package-type-cell filter-node"
+                                [attr.aria-label]="formatValue(item.packageType)"
+                                appTooltip
+                                [text]="formatValue(item.packageType)"
+                            >
+                                <span class="ph package-type-icon" [ngClass]="packageTypeIconClass(item.packageType)"></span>
+                            </span>
+                        } @else if (column === 'marketer') {
+                            <div class="market-cell">
+                                @if (hasDisplayValue(item.marketer)) {
+                                    <span class="filter-node">
+                                        <span class="ph ph-storefront"></span>
+                                        <span>{{ formatValue(item.marketer) }}</span>
+                                    </span>
+                                }
+                                @if (hasDisplayValue(item.manufacturer)) {
+                                    <span class="filter-node">
+                                        <span class="ph ph-tree-palm"></span>
+                                        <span>{{ formatValue(item.manufacturer) }}</span>
+                                    </span>
+                                }
+                                @if (hasDisplayValue(item.brand)) {
+                                    <span class="filter-node">
+                                        <span class="ph ph-cube-focus"></span>
+                                        <span>{{ formatValue(item.brand) }}</span>
+                                    </span>
+                                }
+                            </div>
+                        } @else {
+                            {{ formatValue(item[column]) }}
+                        }
+                    </td>
+                }
+            </tr>
+        </ng-template>
+
+        <ng-template #emptymessage>
+            <tr>
+                <td [attr.colspan]="columns().length">
+                    <div class="page-state table-empty-state">
+                        <span class="icon ph ph-magnifying-glass-minus"></span>
+                        <h4 class="title">לא נמצאו זנים התואמים לחיפוש.</h4>
+                        <p class="subtitle">נסה לשנות את מונחי החיפוש או לנקות את הסינון.</p>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+    <ng-template #footer>
+        <button class="transparent-btn outlined sm" type="button" (click)="clearComparison()">
+            <span class="ph ph-trash"></span>
+            נקה הכל
+        </button>
+    </ng-template>
 </p-dialog>
 
 <app-matching-preferences-drawer [(visible)]="matchDrawerVisible" [items]="rawItems()" />

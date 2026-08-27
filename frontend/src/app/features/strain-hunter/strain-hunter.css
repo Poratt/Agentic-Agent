@@ -1,452 +1,450 @@
-:host {
-  display: block;
-
-  /* Active filters row is split into _strain-hunter-filters.css to keep this
+/* Active filters row is split into _strain-hunter-filters.css to keep this
      file under the component-style budget. */
 
-  /* ── Smooth accordion for filter panel ── */
-  .collapsible-row {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows var(--transition-normal);
-    overflow: hidden;
+/* ── Smooth accordion for filter panel ── */
+.collapsible-row {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--transition-normal);
+  overflow: hidden;
 
-    &.is-open {
-      grid-template-rows: 1fr;
-    }
-
-    .collapsible-inner {
-      min-height: 0;
-    }
+  &.is-open {
+    grid-template-rows: 1fr;
   }
 
-
-
-  .strain-main-details {
-    display: flex;
-    align-items: center;
-    gap: var(--space-6);
-
-    .strain-thumbnail {
-      width: 52px;
-      height: 52px;
-      object-fit: cover;
-      border-radius: var(--radius-sm);
-      flex-shrink: 0;
-      margin-top: auto;
-      cursor: pointer;
-      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-
-      &:active {
-        transform: scale(0.97);
-      }
-    }
-
-    .left-side,
-    .right-side {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-2);
-      text-align: right;
-      min-width: 120px;
-
-      .strain-heb-name {
-        color: var(--color-text-primary);
-        font-size: var(--font-size-sm);
-        font-weight: var(--font-weight-semibold);
-        text-decoration: none;
-
-        &.link:hover {
-          color: var(--color-primary);
-          text-decoration: underline;
-        }
-      }
-
-      .strain-en-name {
-        color: var(--color-text-secondary);
-        font-size: var(--font-size-xs);
-      }
-
-      .strain-cannabinoids {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--space-2);
-        font-size: 11px;
-        color: var(--color-text-secondary);
-        font-weight: var(--font-weight-semibold);
-
-        .divider {
-          color: var(--color-border);
-        }
-      }
-
-      .strain-rating,
-      .strain-deal {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--space-2);
-        font-size: var(--font-size-xs);
-        line-height: 1;
-      }
-
-      .strain-rating {
-        color: var(--color-warning);
-      }
-
-      .strain-deal {
-        color: var(--color-danger);
-      }
-
-      .strain-symbols {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--space-4);
-        margin-top: var(--space-2);
-
-        .strain-symbol {
-          width: 28px;
-          height: 28px;
-          object-fit: contain;
-          flex: 0 0 auto;
-          background: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-radius: 50%;
-          padding: 2px;
-          cursor: pointer;
-        }
-      }
-    }
-
-    .right-side {
-      justify-content: space-between;
-      align-items: center;
-      gap: var(--space-2);
-      align-self: stretch;
-    }
-
-    .strain-new-tag {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 2px var(--space-2) 0;
-      background: var(--color-success-bg);
-      border-radius: var(--radius-xs);
-      color: var(--color-success);
-      cursor: pointer;
-      font: inherit;
-      font-size: var(--font-size-xxs);
-      width: fit-content;
-      font-weight: var(--font-weight-semibold);
-      line-height: 1;
-      transition: var(--transition-colors);
-
-      &:hover {
-        border-color: var(--color-success);
-      }
-    }
-
-    .strain-batch {
-      font-size: var(--font-size-xxs);
-      color: var(--color-text-secondary);
-      text-align: center;
-      line-height: 1;
-      white-space: nowrap;
-    }
+  .collapsible-inner {
+    min-height: 0;
   }
+}
 
-  .characterization-cell {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--space-2);
 
-    .family-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: var(--space-2) var(--space-4);
-      border: none;
-      border-radius: var(--radius-sm);
-      font-size: 11px;
-      font-weight: var(--font-weight-semibold);
-      cursor: pointer;
-      line-height: 1.1;
-      transition: transform 160ms ease-out;
+.strain-main-details {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
 
-      &:active {
-        transform: scale(0.97);
-      }
-
-      &.package-badge {
-        background: var(--color-primary-glow-bg);
-        color: var(--color-primary);
-      }
-
-      &.category-badge {
-        background: var(--color-danger-glow);
-        color: var(--color-danger);
-      }
-
-      &.grow-badge {
-        background: var(--color-surface-hover);
-        color: var(--color-text-secondary);
-        border: thin solid var(--color-border);
-      }
-
-      &.family-badge {
-        color: var(--color-white);
-
-        &.family-indica {
-          background-color: var(--color-family-indica);
-        }
-
-        &.family-sativa {
-          background-color: var(--color-family-sativa);
-        }
-
-        &.family-hybrid {
-          background-color: var(--color-family-hybrid);
-        }
-      }
-    }
-  }
-
-  .strain-price-cell {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-
-    .strain-current-price {
-      color: var(--color-success);
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-semibold);
-    }
-
-    .strain-catalog-price {
-      color: var(--color-danger);
-      font-size: var(--font-size-xs);
-      text-decoration: line-through;
-    }
-  }
-
-  .filter-node {
-    padding: 1px var(--space-4);
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-xs);
-    color: inherit;
+  .strain-thumbnail {
+    width: 52px;
+    height: 52px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    margin-top: auto;
     cursor: pointer;
-    font: inherit;
-    /* Compact pill size shared by every filter node (terpene pills
-       already inherit the same size from their .terpenes container). */
-    font-size: var(--font-size-xxs);
-    transition: var(--transition-fast), transform 160ms ease-out;
-
-    .ph {
-      /* Scale icons with the pill instead of holding them at --font-size-xs. */
-      font-size: 1em;
-    }
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 
     &:active {
       transform: scale(0.97);
     }
   }
 
-  /* Pin the "last updated" cell width so the pill doesn't shift between
-     the loading placeholder and the rendered relative time. */
-  .summary-item--date {
-    .summary-value {
-      min-width: 10ch;
-      text-align: start;
-    }
-  }
-
-
-  .strain-origin-cell {
+  .left-side,
+  .right-side {
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: var(--space-2);
-    max-width: 220px;
+    text-align: right;
+    min-width: 120px;
 
-    .root-nodes {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--space-2);
+    .strain-heb-name {
+      color: var(--color-text-primary);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      text-decoration: none;
 
-      .parents-cell {
-        display: flex;
-        gap: var(--space-2);
+      &.link:hover {
+        color: var(--color-primary);
+        text-decoration: underline;
       }
     }
 
-    .terpenes {
-      display: grid;
-      grid-template-columns: max-content 1fr;
-      justify-content: center;
-      align-items: flex-start;
-      gap: var(--space-4);
-      width: min(100%, var(--search-width));
-      padding: var(--space-2);
-      border-top: thin solid var(--color-border);
-      color: var(--color-primary);
-      overflow-wrap: anywhere;
-      white-space: normal;
-      font-size: var(--font-size-xxs);
+    .strain-en-name {
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-xs);
+    }
 
-      .ph {
-        font-size: var(--font-size-md);
+    .strain-cannabinoids {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 11px;
+      color: var(--color-text-secondary);
+      font-weight: var(--font-weight-semibold);
+
+      .divider {
+        color: var(--color-border);
       }
+    }
 
-      .terpene-list {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: var(--space-2);
+    .strain-rating,
+    .strain-deal {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--font-size-xs);
+      line-height: 1;
+    }
 
+    .strain-rating {
+      color: var(--color-warning);
+    }
+
+    .strain-deal {
+      color: var(--color-danger);
+    }
+
+    .strain-symbols {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-4);
+      margin-top: var(--space-2);
+
+      .strain-symbol {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
+        flex: 0 0 auto;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 50%;
+        padding: 2px;
+        cursor: pointer;
       }
     }
   }
 
+  .right-side {
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-2);
+    align-self: stretch;
+  }
 
-  .terpene-node,
-  .filter-node {
+  .strain-new-tag {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2px var(--space-2) 0;
+    background: var(--color-success-bg);
+    border-radius: var(--radius-xs);
+    color: var(--color-success);
+    cursor: pointer;
+    font: inherit;
+    font-size: var(--font-size-xxs);
+    width: fit-content;
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+    transition: var(--transition-colors);
 
     &:hover {
+      border-color: var(--color-success);
+    }
+  }
+
+  .strain-batch {
+    font-size: var(--font-size-xxs);
+    color: var(--color-text-secondary);
+    text-align: center;
+    line-height: 1;
+    white-space: nowrap;
+  }
+}
+
+.characterization-cell {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+
+  .family-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-2) var(--space-4);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    line-height: 1.1;
+    transition: transform 160ms ease-out;
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    &.package-badge {
       background: var(--color-primary-glow-bg);
       color: var(--color-primary);
     }
 
-    &.liked {
-      background: var(--secondary-30);
-      color: var(--color-secondary);
+    &.category-badge {
+      background: var(--color-danger-glow);
+      color: var(--color-danger);
+    }
 
-      &:hover {
-        background: var(--color-secondary-glow);
-        color: var(--secondary-400);
+    &.grow-badge {
+      background: var(--color-surface-hover);
+      color: var(--color-text-secondary);
+      border: thin solid var(--color-border);
+    }
+
+    &.family-badge {
+      color: var(--color-white);
+
+      &.family-indica {
+        background-color: var(--color-family-indica);
       }
 
-    }
+      &.family-sativa {
+        background-color: var(--color-family-sativa);
+      }
 
-  }
-
-
-  .country-filter {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-
-    .country-flag {
-      width: var(--space-8);
-      height: auto;
-      flex: 0 0 auto;
+      &.family-hybrid {
+        background-color: var(--color-family-hybrid);
+      }
     }
   }
+}
 
-  .market-cell {
+.strain-price-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  .strain-current-price {
+    color: var(--color-success);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .strain-catalog-price {
+    color: var(--color-danger);
+    font-size: var(--font-size-xs);
+    text-decoration: line-through;
+  }
+}
+
+.filter-node {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 1px var(--space-4);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+  color: inherit;
+  /* cursor: pointer; */
+  font: inherit;
+  /* Compact pill size shared by every filter node (terpene pills
+       already inherit the same size from their .terpenes container). */
+  font-size: var(--font-size-xxs);
+  transition: var(--transition-fast), transform 160ms ease-out;
+
+  .ph {
+    /* Scale icons with the pill instead of holding them at --font-size-xs. */
+    font-size: 1em;
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+/* Pin the "last updated" cell width so the pill doesn't shift between
+     the loading placeholder and the rendered relative time. */
+.summary-item--date {
+  .summary-value {
+    min-width: 10ch;
+    text-align: start;
+  }
+}
+
+
+.strain-origin-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 220px;
+
+  .root-nodes {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: var(--space-2);
-    width: fit-content;
+
+    .parents-cell {
+      display: flex;
+      gap: var(--space-2);
+    }
   }
 
-  .package-type-cell {
-    display: inline-flex;
-    align-items: center;
+  .terpenes {
+    display: grid;
+    grid-template-columns: max-content 1fr;
     justify-content: center;
-    min-width: var(--space-16);
-    min-height: var(--space-16);
-    background: var(--color-primary-glow-bg);
-    border-radius: var(--radius-sm);
+    align-items: flex-start;
+    gap: var(--space-4);
+    width: min(100%, var(--search-width));
+    padding: var(--space-2);
+    border-top: thin solid var(--color-border);
     color: var(--color-primary);
+    overflow-wrap: anywhere;
+    white-space: normal;
+    font-size: var(--font-size-xxs);
 
-    .package-type-icon {
-      font-size: var(--font-size-lg);
-      line-height: 1;
+    .ph {
+      font-size: var(--font-size-md);
+    }
+
+    .terpene-list {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+
+    }
+  }
+}
+
+
+.terpene-node,
+.filter-node {
+
+  &:hover {
+    background: var(--color-primary-glow-bg);
+    color: var(--color-primary);
+  }
+
+  &.liked {
+    background: var(--secondary-30);
+    color: var(--color-secondary);
+
+    &:hover {
+      background: var(--color-secondary-glow);
+      color: var(--secondary-400);
+    }
+
+  }
+
+}
+
+
+.country-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  .country-flag {
+    width: var(--space-8);
+    height: auto;
+    flex: 0 0 auto;
+  }
+}
+
+.market-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  width: fit-content;
+}
+
+.package-type-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-16);
+  min-height: var(--space-16);
+  background: var(--color-primary-glow-bg);
+  border-radius: var(--radius-sm);
+  color: var(--color-primary);
+
+  .package-type-icon {
+    font-size: var(--font-size-lg);
+    line-height: 1;
+  }
+}
+
+.spin-animation {
+  animation: spin 0.8s linear infinite;
+}
+
+
+
+.score-ring-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+
+  .match-ring {
+    flex: 0 0 auto;
+    transform: rotate(-90deg);
+
+    .ring-track {
+      fill: none;
+      stroke: var(--color-border);
+      stroke-width: 4;
+    }
+
+    .ring-fill {
+      fill: none;
+      stroke-width: 4;
+      stroke-linecap: round;
+      transition: stroke-dashoffset var(--transition-standard);
     }
   }
 
-  .spin-animation {
-    animation: spin 0.8s linear infinite;
+  .match-ring.ring-success .ring-fill {
+    stroke: url(#ringGradientSuccess);
   }
 
-
-
-  .score-ring-wrapper {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 40px;
-    height: 40px;
-
-    .match-ring {
-      flex: 0 0 auto;
-      transform: rotate(-90deg);
-
-      .ring-track {
-        fill: none;
-        stroke: var(--color-border);
-        stroke-width: 4;
-      }
-
-      .ring-fill {
-        fill: none;
-        stroke-width: 4;
-        stroke-linecap: round;
-        transition: stroke-dashoffset var(--transition-standard);
-      }
-    }
-
-    .match-ring.ring-success .ring-fill {
-      stroke: url(#ringGradientSuccess);
-    }
-
-    .match-ring.ring-primary .ring-fill {
-      stroke: url(#ringGradientPrimary);
-    }
-
-    .match-ring.ring-warning .ring-fill {
-      stroke: url(#ringGradientWarning);
-    }
-
-    .match-ring.ring-danger .ring-fill {
-      stroke: url(#ringGradientDanger);
-    }
-
-    .score-ring-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-text-primary);
-      font-variant-numeric: tabular-nums;
-      line-height: 1;
-    }
+  .match-ring.ring-primary .ring-fill {
+    stroke: url(#ringGradientPrimary);
   }
 
-  .badge-compact .ph {
+  .match-ring.ring-warning .ring-fill {
+    stroke: url(#ringGradientWarning);
+  }
+
+  .match-ring.ring-danger .ring-fill {
+    stroke: url(#ringGradientDanger);
+  }
+
+  .score-ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
   }
+}
 
-  @media (max-width: var(--sm)) {
-    .page-content .page-header {
-      .header-row {
+.badge-compact .ph {
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: var(--sm)) {
+  .page-content .page-header {
+    .header-row {
+      align-items: stretch;
+      flex-direction: column;
+
+      .header-actions {
         align-items: stretch;
         flex-direction: column;
+      }
 
-        .header-actions {
-          align-items: stretch;
-          flex-direction: column;
-        }
-
-        .form-field-has-icon,
-        .primary-btn {
-          width: 100%;
-        }
+      .form-field-has-icon,
+      .primary-btn {
+        width: 100%;
       }
     }
   }
@@ -484,13 +482,13 @@
   display: block;
 }
 
-::ng-deep .p-dialog {
-  background: transparent !important;
-  box-shadow: none !important;
-  border: none !important;
-}
-
-::ng-deep .p-dialog .p-dialog-content {
-  background: transparent !important;
-  padding: 0 !important;
+/* Scroll-to-top — floats over the page (bottom-start = bottom-left in RTL);
+   the .content-shell is the real scroll container, so fixed-to-viewport is
+   correct. z-index keeps it below open modals/toasts (PrimeNG ~1200). */
+.scroll-top-btn {
+  position: fixed;
+  bottom: var(--space-8);
+  inset-inline-end: var(--space-8);
+  z-index: 40;
+  box-shadow: var(--shadow-soft);
 }

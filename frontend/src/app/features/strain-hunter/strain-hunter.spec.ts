@@ -72,6 +72,103 @@ describe('StrainHunter', () => {
         expect(component).toBeTruthy();
     });
 
+    describe('scroll-to-top', () => {
+        it('button is hidden until the page scrolls down', () => {
+            component.showScrollTop.set(false);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('.scroll-top-btn')).toBeNull();
+
+            component.showScrollTop.set(true);
+            fixture.detectChanges();
+            const btn = fixture.nativeElement.querySelector('.scroll-top-btn');
+            expect(btn).not.toBeNull();
+            expect(btn.getAttribute('aria-label')).toBe('חזרה לראש העמוד');
+        });
+    });
+
+    describe('comparison', () => {
+        it('adds and removes strains by id', () => {
+            const first = { id: 1, name: 'אחד' };
+            const second = { id: 2, name: 'שתיים' };
+
+            component.toggleCompare(first);
+            component.toggleCompare(second);
+            expect(component.compareIds()).toEqual([1, 2]);
+            expect(component.isInCompare(1)).toBe(true);
+
+            component.toggleCompare(first);
+            expect(component.compareIds()).toEqual([2]);
+            expect(component.isInCompare(1)).toBe(false);
+        });
+
+        it('resolves selected strains from rawItems in selection order', () => {
+            component.rawItems.set([
+                { id: 1, name: 'אחד' },
+                { id: 2, name: 'שתיים' },
+            ] as any);
+            component.toggleCompare({ id: 2 });
+            component.toggleCompare({ id: 1 });
+
+            expect(component.compareItems().map((item) => item.id)).toEqual([2, 1]);
+        });
+
+        it('keeps compared strains when active filters change', () => {
+            component.rawItems.set([{ id: 1, name: 'אחד', price: 100 }] as any);
+            component.toggleCompare({ id: 1 });
+            component.activeFilters.set([{ key: 'brand', fields: ['brand'], label: 'X', value: 'X', name: 'מותג' }]);
+
+            expect(component.items()).toEqual([]);
+            expect(component.compareItems().map((item) => item.id)).toEqual([1]);
+        });
+
+        it('mirrors main columns (1:1 with columns(), embedded fields excluded)', () => {
+            component.rawItems.set([{ id: 1, name: 'אחד', price: 100, enName: 'One', thc: '20%' }] as any);
+            component.toggleCompare({ id: 1 });
+
+            // enName/thc are embedded (rendered inside the name cell) and not
+            // promoted to standalone columns. matchScore is always in
+            // preferredColumns so the literal `key === 'matchScore'` check in
+            // columns() retains it regardless of hasAnyPreference().
+            expect(component.comparisonColumns()).toEqual(['name', 'matchScore', 'price']);
+        });
+
+        it('sorts comparison rows ascending, descending, then restores selection order', () => {
+            component.rawItems.set([
+                { id: 1, name: 'אחד', price: 100 },
+                { id: 2, name: 'שתיים', price: 50 },
+            ] as any);
+            component.toggleCompare({ id: 1 });
+            component.toggleCompare({ id: 2 });
+
+            // Selection order before any sort.
+            const base = component.compareItems();
+            expect(base.map((item) => item.id)).toEqual([1, 2]);
+
+            const asc: any = { field: 'price', order: 1, data: [...base] };
+            component.sortCompareTable(asc);
+            expect(asc.data.map((item: any) => item.id)).toEqual([2, 1]);
+
+            const desc: any = { field: 'price', order: -1, data: [...asc.data] };
+            component.sortCompareTable(desc);
+            expect(desc.data.map((item: any) => item.id)).toEqual([1, 2]);
+
+            // Third click — reset restores selection order.
+            const reset: any = { field: 'price', order: 1, data: [...desc.data] };
+            component.sortCompareTable(reset);
+            expect(reset.data.map((item: any) => item.id)).toEqual([1, 2]);
+        });
+
+        it('opens and clears comparison dialog', () => {
+            component.toggleCompare({ id: 1 });
+            component.openCompareDialog();
+            expect(component.compareDialogVisible()).toBe(true);
+
+            component.clearComparison();
+            expect(component.compareIds()).toEqual([]);
+            expect(component.compareDialogVisible()).toBe(false);
+        });
+    });
+
     it('sorts expiry MM/YY chronologically, not as strings', () => {
         const event: any = {
             field: 'expiry',
@@ -424,6 +521,7 @@ describe('StrainHunter', () => {
             expect(component.columnLabel('name')).toBe('שם');
             expect(component.columnLabel('price')).toBe('מחיר');
             expect(component.columnLabel('matchScore')).toBe('התאמה');
+            expect(component.columnLabel('rating')).toBe('רייטינג');
         });
 
         it('should return raw key for unknown column', () => {
